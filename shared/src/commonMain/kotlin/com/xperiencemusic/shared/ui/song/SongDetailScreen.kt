@@ -88,6 +88,7 @@ import com.xperiencemusic.shared.resources.song_original_key
 import com.xperiencemusic.shared.resources.song_recording_actions
 import com.xperiencemusic.shared.resources.song_recording_delete
 import com.xperiencemusic.shared.resources.song_recording_meta
+import com.xperiencemusic.shared.resources.song_recording_offline
 import com.xperiencemusic.shared.resources.song_recording_reference
 import com.xperiencemusic.shared.resources.song_recording_set_reference
 import com.xperiencemusic.shared.resources.song_recordings_empty
@@ -307,8 +308,10 @@ private fun RecordingRow(recording: RecordingUi, canManage: Boolean, onEvent: (S
                     }
                     Text(recording.title, style = MaterialTheme.typography.titleSmall)
                 }
+                val meta = stringResource(Res.string.song_recording_meta, recording.date, recording.duration)
+                val offlineLabel = stringResource(Res.string.song_recording_offline)
                 Text(
-                    stringResource(Res.string.song_recording_meta, recording.date, recording.duration),
+                    if (recording.isAvailableOffline) "$meta · $offlineLabel" else meta,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

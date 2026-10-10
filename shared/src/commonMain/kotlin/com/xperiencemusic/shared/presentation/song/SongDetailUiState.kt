@@ -32,6 +32,7 @@ data class RecordingUi(
     val duration: String,
     val isReference: Boolean,
     val playback: PlaybackStatus = PlaybackStatus.IDLE,
+    val isAvailableOffline: Boolean = false,
 )
 
 data class VoiceTrackUi(

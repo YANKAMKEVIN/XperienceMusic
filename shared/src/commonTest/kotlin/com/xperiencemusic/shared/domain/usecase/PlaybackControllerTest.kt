@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.domain.usecase
 
 import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.repository.AudioUrlProvider
+import com.xperiencemusic.shared.domain.repository.NowPlaying
 import com.xperiencemusic.shared.fakes.FakeAudioPlayer
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -26,6 +27,7 @@ class PlaybackControllerTest {
         val controller = controllerWith()
         controller.playOrToggle(reference)
         assertEquals(listOf("https://cdn/songs/s1/r1.m4a"), player.played)
+        assertEquals(listOf(NowPlaying("Référence", "À toi la gloire")), player.nowPlaying)
         val state = controller.state.value
         assertEquals("r1", state.track?.id)
         assertTrue(state.isPlaying)

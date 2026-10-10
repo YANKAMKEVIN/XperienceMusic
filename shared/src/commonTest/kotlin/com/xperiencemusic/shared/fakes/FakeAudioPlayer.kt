@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.fakes
 
 import com.xperiencemusic.shared.domain.repository.AudioPlayer
 import com.xperiencemusic.shared.domain.repository.AudioPlayerState
+import com.xperiencemusic.shared.domain.repository.NowPlaying
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -11,7 +12,10 @@ class FakeAudioPlayer : AudioPlayer {
     val played = mutableListOf<String>()
     var stopCount = 0
 
-    override fun play(url: String) {
+    val nowPlaying = mutableListOf<NowPlaying>()
+
+    override fun play(url: String, nowPlaying: NowPlaying) {
+        this.nowPlaying += nowPlaying
         played += url
         state.value = AudioPlayerState(isPlaying = true, durationMs = 200_000)
     }

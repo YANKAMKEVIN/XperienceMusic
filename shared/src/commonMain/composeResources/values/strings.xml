@@ -61,6 +61,15 @@
     <string name="week_song_has_reference">Version de référence disponible</string>
     <string name="week_song_new">Nouveau chant · pas encore d'enregistrement</string>
 
+    <string name="week_offline_title">Écouter hors connexion</string>
+    <string name="week_offline_text">Garde sur le téléphone les %1$d enregistrements de la semaine, pour répéter sans réseau.</string>
+    <string name="week_offline_partial">%1$d sur %2$d déjà sur le téléphone</string>
+    <string name="week_offline_download">Télécharger</string>
+    <string name="week_offline_downloading">Téléchargement… %1$d/%2$d</string>
+    <string name="week_offline_done">Disponible hors connexion · %1$d enregistrements sur le téléphone</string>
+    <string name="week_offline_error">Le téléchargement s'est interrompu. Réessaie avec du réseau, il reprendra où il s'est arrêté.</string>
+    <string name="week_offline_retry">Reprendre</string>
+
     <!-- Library -->
     <string name="library_title">Chants</string>
     <string name="library_search">Rechercher un chant ou un auteur</string>
@@ -80,6 +89,7 @@
     <string name="song_recordings_title">Versions enregistrées (%1$d/%2$d)</string>
     <string name="song_recordings_empty">Pas encore de version enregistrée pour ce chant.</string>
     <string name="song_recording_reference">Référence</string>
+    <string name="song_recording_offline">Sur le téléphone</string>
     <string name="song_recording_meta">%1$s · %2$s</string>
     <string name="song_recording_set_reference">Définir comme référence</string>
     <string name="song_recording_delete">Supprimer</string>

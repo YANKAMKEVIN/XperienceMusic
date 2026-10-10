@@ -2,11 +2,14 @@ package com.xperiencemusic.shared.domain.repository
 
 import kotlinx.coroutines.flow.StateFlow
 
-/** Platform audio output. One sound at a time; [play] replaces whatever was playing. */
+/**
+ * Platform audio output. One sound at a time; [play] replaces whatever was playing. Playback goes
+ * on with the screen off, with system controls (lock screen, notification) showing [NowPlaying].
+ */
 interface AudioPlayer {
     val state: StateFlow<AudioPlayerState>
 
-    fun play(url: String)
+    fun play(url: String, nowPlaying: NowPlaying)
 
     fun pause()
 
@@ -25,3 +28,6 @@ data class AudioPlayerState(
     val hasEnded: Boolean = false,
     val hasError: Boolean = false,
 )
+
+/** What the system media controls display. */
+data class NowPlaying(val title: String, val subtitle: String)

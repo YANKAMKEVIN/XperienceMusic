@@ -46,6 +46,7 @@ class FakeSessionRepository(member: Member? = null) : SessionRepository {
     }
 
     override suspend fun signOut() {
+        failure?.let { throw it }
         state.value = SessionState.SignedOut
     }
 

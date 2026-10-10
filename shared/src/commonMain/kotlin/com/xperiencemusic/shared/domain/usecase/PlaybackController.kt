@@ -4,6 +4,7 @@ import com.xperiencemusic.shared.domain.model.PlaybackState
 import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.repository.AudioPlayer
 import com.xperiencemusic.shared.domain.repository.AudioUrlProvider
+import com.xperiencemusic.shared.domain.repository.NowPlaying
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +59,7 @@ class PlaybackController(
             try {
                 val url = urls.playableUrl(track.audioPath)
                 session.update { it.copy(isResolving = false) }
-                player.play(url)
+                player.play(url, NowPlaying(track.title, track.subtitle))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

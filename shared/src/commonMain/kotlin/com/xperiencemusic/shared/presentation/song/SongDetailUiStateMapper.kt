@@ -28,6 +28,7 @@ fun deriveSongDetailState(
     member: Member?,
     local: SongDetailLocalState,
     playback: PlaybackState = PlaybackState(),
+    offlinePaths: Set<String> = emptySet(),
 ): SongDetailUiState {
     if (song == null) return SongDetailUiState(isLoading = false, isMissing = true)
 
@@ -36,7 +37,7 @@ fun deriveSongDetailState(
     val keyNotation = if (local.notation == Notation.NASHVILLE) Notation.SOLFEGE else local.notation
     val recordings = song.recordings
         .sortedWith(compareByDescending<Recording> { it.isReference }.thenByDescending { it.recordedOn })
-        .map { it.toUi(playback.statusOf(it.id)) }
+        .map { it.toUi(playback.statusOf(it.id), it.audioPath in offlinePaths) }
 
     return SongDetailUiState(
         isLoading = false,
@@ -57,11 +58,12 @@ fun deriveSongDetailState(
     )
 }
 
-private fun Recording.toUi(playback: PlaybackStatus) = RecordingUi(
+private fun Recording.toUi(playback: PlaybackStatus, isAvailableOffline: Boolean) = RecordingUi(
     id = id,
     title = title,
     date = Formatting.shortDate(recordedOn),
     duration = Formatting.duration(durationSeconds),
     isReference = isReference,
     playback = playback,
+    isAvailableOffline = isAvailableOffline,
 )

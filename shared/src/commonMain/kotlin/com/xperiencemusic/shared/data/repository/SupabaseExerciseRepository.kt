@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.data.repository
 
+import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.mapper.toExerciseStatus
 import com.xperiencemusic.shared.data.remote.dto.ExerciseProgressDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
@@ -16,11 +17,13 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.builtins.ListSerializer
 
 /** Exercises are app content; only each member's statuses are stored in Supabase. */
 class SupabaseExerciseRepository(
     private val client: SupabaseClient,
     private val exercises: List<Exercise>,
+    private val snapshots: SnapshotStore,
 ) : ExerciseRepository {
     /** memberId -> (exerciseId -> status) */
     private val statuses = MutableStateFlow<Map<String, Map<String, ExerciseStatus>>>(emptyMap())
@@ -28,7 +31,12 @@ class SupabaseExerciseRepository(
     override fun observeSingerExercises(): Flow<List<Exercise>> = flowOf(exercises)
 
     override fun observeStatuses(memberId: String): Flow<Map<String, ExerciseStatus>> =
-        statuses.onStart { if (memberId !in statuses.value) ignoringFailures { reload(memberId) } }
+        statuses.onStart {
+            if (memberId !in statuses.value) {
+                snapshots.load(snapshotOf(memberId), ListSerializer(ExerciseProgressDto.serializer()))?.let { publish(memberId, it) }
+                ignoringFailures { reload(memberId) }
+            }
+        }
             .map { it[memberId] }
             .filterNotNull()
 
@@ -43,10 +51,17 @@ class SupabaseExerciseRepository(
         val rows = postgrestCall {
             client.from(PROGRESS).select { filter { eq("member_id", memberId) } }.decodeList<ExerciseProgressDto>()
         }
+        publish(memberId, rows)
+        snapshots.save(snapshotOf(memberId), ListSerializer(ExerciseProgressDto.serializer()), rows)
+    }
+
+    private fun publish(memberId: String, rows: List<ExerciseProgressDto>) {
         statuses.update { all -> all + (memberId to rows.associate { it.exerciseId to it.status.toExerciseStatus() }) }
     }
 
     private companion object {
         const val PROGRESS = "exercise_progress"
+
+        fun snapshotOf(memberId: String) = "progress-$memberId"
     }
 }

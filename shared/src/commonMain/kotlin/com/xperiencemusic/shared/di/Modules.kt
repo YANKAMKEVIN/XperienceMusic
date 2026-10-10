@@ -1,9 +1,14 @@
 package com.xperiencemusic.shared.di
 
+import com.xperiencemusic.shared.data.local.DeviceDataStore
+import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.local.SystemDateProvider
 import com.xperiencemusic.shared.data.remote.SupabaseConfig
 import com.xperiencemusic.shared.data.remote.createXperienceSupabaseClient
+import com.xperiencemusic.shared.data.repository.DemoAudioCache
 import com.xperiencemusic.shared.data.repository.DemoAudioUrlProvider
+import com.xperiencemusic.shared.data.repository.FileAudioCache
+import com.xperiencemusic.shared.data.repository.OfflineFirstAudioUrlProvider
 import com.xperiencemusic.shared.data.repository.InMemoryAudioStorage
 import com.xperiencemusic.shared.data.repository.SupabaseAudioUrlProvider
 import com.xperiencemusic.shared.data.repository.SupabaseAudioStorage
@@ -16,7 +21,10 @@ import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestSignInCodeUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
+import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveOfflineAudioUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
 import com.xperiencemusic.shared.domain.usecase.UploadRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
@@ -36,10 +44,12 @@ import com.xperiencemusic.shared.data.repository.InMemorySongRepository
 import com.xperiencemusic.shared.data.seed.SampleSetlist
 import com.xperiencemusic.shared.data.seed.SampleSongs
 import com.xperiencemusic.shared.data.seed.SingerExercises
+import com.xperiencemusic.shared.domain.repository.AudioCache
 import com.xperiencemusic.shared.domain.repository.AudioStorage
 import com.xperiencemusic.shared.domain.repository.AudioUrlProvider
 import com.xperiencemusic.shared.domain.repository.DateProvider
 import com.xperiencemusic.shared.domain.repository.ExerciseRepository
+import com.xperiencemusic.shared.domain.repository.LocalDataStore
 import com.xperiencemusic.shared.domain.repository.SessionRepository
 import com.xperiencemusic.shared.domain.repository.SetlistRepository
 import com.xperiencemusic.shared.domain.repository.SongRepository
@@ -74,15 +84,18 @@ val dataModule = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     // Drives the platform players, which expect the main thread.
     single { PlaybackController(get(), get(), CoroutineScope(SupervisorJob() + Dispatchers.Main)) }
+    single { SnapshotStore(get()) }
+    single<LocalDataStore> { DeviceDataStore(get(), get(), get()) }
     if (SupabaseConfig.isConfigured) {
         single { AppEnvironment(isDemo = false, demoCode = null) }
         single { createXperienceSupabaseClient() }
-        single<SessionRepository> { SupabaseSessionRepository(get(), get()) }
-        single<SongRepository> { SupabaseSongRepository(get()) }
-        single<SetlistRepository> { SupabaseSetlistRepository(get()) }
-        single<ExerciseRepository> { SupabaseExerciseRepository(get(), SingerExercises.all) }
+        single<SessionRepository> { SupabaseSessionRepository(get(), get(), get()) }
+        single<SongRepository> { SupabaseSongRepository(get(), get()) }
+        single<SetlistRepository> { SupabaseSetlistRepository(get(), get()) }
+        single<ExerciseRepository> { SupabaseExerciseRepository(get(), SingerExercises.all, get()) }
         single<AudioStorage> { SupabaseAudioStorage(get()) }
-        single<AudioUrlProvider> { SupabaseAudioUrlProvider(get()) }
+        single<AudioCache> { FileAudioCache(get(), get()) }
+        single<AudioUrlProvider> { OfflineFirstAudioUrlProvider(get(), SupabaseAudioUrlProvider(get())) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
         single<SessionRepository> { InMemorySessionRepository() }
@@ -91,6 +104,7 @@ val dataModule = module {
         single<ExerciseRepository> { InMemoryExerciseRepository(SingerExercises.all) }
         single { InMemoryAudioStorage() }
         single<AudioStorage> { get<InMemoryAudioStorage>() }
+        single<AudioCache> { DemoAudioCache() }
         single<AudioUrlProvider> { DemoAudioUrlProvider(get(), get()) }
     }
 }
@@ -115,6 +129,9 @@ val domainModule = module {
     factoryOf(::SuggestBandWeekUseCase)
     factoryOf(::UploadRecordingUseCase)
     factoryOf(::GetTodayUseCase)
+    factoryOf(::ObserveSetlistOfflineUseCase)
+    factoryOf(::DownloadSetlistUseCase)
+    factoryOf(::ObserveOfflineAudioUseCase)
 }
 
 val presentationModule = module {

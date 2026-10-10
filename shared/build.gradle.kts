@@ -97,6 +97,7 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.androidx.activity.compose)
             implementation(libs.media3.exoplayer)
+            implementation(libs.media3.session)
             implementation(libs.koin.android)
         }
         iosMain.dependencies {

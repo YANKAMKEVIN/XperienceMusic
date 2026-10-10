@@ -9,6 +9,7 @@ import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.usecase.DeleteRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveOfflineAudioUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.SetReferenceRecordingUseCase
@@ -28,12 +29,13 @@ class SongDetailViewModel(
     private val setReferenceRecording: SetReferenceRecordingUseCase,
     private val deleteRecording: DeleteRecordingUseCase,
     private val playback: PlaybackController,
+    observeOfflineAudio: ObserveOfflineAudioUseCase,
 ) : ViewModel() {
     private val local = MutableStateFlow(SongDetailLocalState())
     private val song = observeSong(songId)
 
     val state: StateFlow<SongDetailUiState> =
-        combine(song, observeCurrentMember(), local, playback.state, ::deriveSongDetailState)
+        combine(song, observeCurrentMember(), local, playback.state, observeOfflineAudio(), ::deriveSongDetailState)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongDetailUiState())
 
     fun onEvent(event: SongDetailEvent) {

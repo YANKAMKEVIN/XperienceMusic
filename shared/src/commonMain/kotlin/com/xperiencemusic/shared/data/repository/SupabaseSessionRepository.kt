@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.data.repository
 
+import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.mapper.toUpdateDto
 import com.xperiencemusic.shared.data.remote.dto.ProfileDto
@@ -33,10 +34,14 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Supabase Auth with email one-time codes. The member comes from `public.profiles`, which only
  * exists for invited emails (see the initial migration).
+ *
+ * Offline, a signed-in member is let in with the last profile saved on the phone, so songs and
+ * downloaded recordings stay usable at church without network.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SupabaseSessionRepository(
     private val client: SupabaseClient,
+    private val snapshots: SnapshotStore,
     scope: CoroutineScope,
 ) : SessionRepository {
     /** Bumped to reload the profile after onboarding or a retry. */
@@ -48,9 +53,10 @@ class SupabaseSessionRepository(
                 when (status) {
                     SessionStatus.Initializing -> SessionState.Loading
                     is SessionStatus.NotAuthenticated -> SessionState.SignedOut
-                    is SessionStatus.RefreshFailure -> SessionState.Unreachable
+                    // The stored session could not be refreshed: most likely offline.
+                    is SessionStatus.RefreshFailure -> offlineState()
                     is SessionStatus.Authenticated ->
-                        status.session.user?.let { loadState(it) } ?: SessionState.Unreachable
+                        status.session.user?.let { loadState(it) } ?: offlineState()
                 }
             }
             .stateIn(scope, SharingStarted.Eagerly, SessionState.Loading)
@@ -83,6 +89,7 @@ class SupabaseSessionRepository(
                 filter { eq("id", userId) }
             }.decodeSingle<ProfileDto>()
         }
+        snapshots.save(PROFILE_SNAPSHOT, ProfileDto.serializer(), saved)
         profileVersion.update { it + 1 }
         return saved.toDomain() ?: throw DomainException(DomainError.INVALID_INPUT)
     }
@@ -101,6 +108,7 @@ class SupabaseSessionRepository(
             val profile = client.from(PROFILES)
                 .select { filter { eq("id", user.id) } }
                 .decodeSingleOrNull<ProfileDto>()
+            profile?.let { snapshots.save(PROFILE_SNAPSHOT, ProfileDto.serializer(), it) }
             when {
                 profile == null -> SessionState.NotInvited(email)
                 else -> profile.toDomain()?.let { SessionState.Ready(it) } ?: SessionState.NeedsProfile(email)
@@ -108,11 +116,20 @@ class SupabaseSessionRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            SessionState.Unreachable
+            offlineState(user.id)
         }
+    }
+
+    /** The saved profile of [userId] (or of whoever last signed in on this phone) when offline. */
+    private fun offlineState(userId: String? = client.auth.currentUserOrNull()?.id): SessionState {
+        val cached = snapshots.load(PROFILE_SNAPSHOT, ProfileDto.serializer())
+            ?.takeIf { userId == null || it.id == userId }
+            ?.toDomain()
+        return cached?.let { SessionState.Ready(it) } ?: SessionState.Unreachable
     }
 
     private companion object {
         const val PROFILES = "profiles"
+        const val PROFILE_SNAPSHOT = "profile"
     }
 }

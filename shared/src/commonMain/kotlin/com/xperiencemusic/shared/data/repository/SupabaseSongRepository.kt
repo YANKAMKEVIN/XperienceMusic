@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.data.repository
 
+import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.mapper.toWriteDto
 import com.xperiencemusic.shared.data.remote.dto.IdDto
@@ -23,22 +24,28 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 /**
  * The whole library is small (a band's repertoire), so it is fetched in one query and kept in
- * memory; every change reloads it. An offline cache comes later.
+ * memory; every change reloads it. Offline-first: the last fetched copy is shown at once and
+ * refreshed from the server once per app session, and kept as is when there is no network.
  */
-class SupabaseSongRepository(private val client: SupabaseClient) : SongRepository {
+class SupabaseSongRepository(
+    private val client: SupabaseClient,
+    private val snapshots: SnapshotStore,
+) : SongRepository {
     private val songs = MutableStateFlow<Map<String, Song>?>(null)
     private val loading = Mutex()
+    private var hasRefreshed = false
 
     override fun observeSongs(): Flow<List<Song>> =
-        songs.onStart { ignoringFailures { loadIfNeeded() } }.filterNotNull().map { it.values.toList() }
+        songs.onStart { showSnapshotThenRefresh() }.filterNotNull().map { it.values.toList() }
 
     override fun observeSong(id: String): Flow<Song?> =
-        songs.onStart { ignoringFailures { loadIfNeeded() } }.filterNotNull().map { it[id] }
+        songs.onStart { showSnapshotThenRefresh() }.filterNotNull().map { it[id] }
 
     override suspend fun song(id: String): Song? {
         loadIfNeeded()
@@ -102,17 +109,34 @@ class SupabaseSongRepository(private val client: SupabaseClient) : SongRepositor
     }
 
     private suspend fun loadIfNeeded() {
+        if (songs.value == null) showSnapshot()
         if (songs.value == null) reload()
+    }
+
+    private suspend fun showSnapshotThenRefresh() {
+        if (songs.value == null) showSnapshot()
+        if (!hasRefreshed) ignoringFailures { reload() }
+    }
+
+    private fun showSnapshot() {
+        snapshots.load(SNAPSHOT, ListSerializer(SongDto.serializer()))?.let { cached -> publish(cached) }
     }
 
     private suspend fun reload() = loading.withLock {
         val fetched = postgrestCall {
             client.from(SONGS).select(Columns.raw(SongDto.COLUMNS)).decodeList<SongDto>()
         }
-        songs.value = fetched.associate { it.id to it.toDomain() }
+        publish(fetched)
+        snapshots.save(SNAPSHOT, ListSerializer(SongDto.serializer()), fetched)
+        hasRefreshed = true
+    }
+
+    private fun publish(dtos: List<SongDto>) {
+        songs.value = dtos.associate { it.id to it.toDomain() }
     }
 
     private companion object {
         const val SONGS = "songs"
+        const val SNAPSHOT = "songs"
     }
 }

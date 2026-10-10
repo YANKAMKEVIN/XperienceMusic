@@ -4,7 +4,21 @@ data class WeekUiState(
     val isLoading: Boolean = true,
     val setlist: WeekSetlistUi? = null,
     val canPublish: Boolean = false,
+    /** Null when the week has nothing to download. */
+    val offline: WeekOfflineUi? = null,
 )
+
+data class WeekOfflineUi(
+    val available: Int,
+    val total: Int,
+    val isComplete: Boolean,
+    val isDownloading: Boolean,
+    val hasError: Boolean,
+)
+
+sealed interface WeekEvent {
+    data object DownloadClicked : WeekEvent
+}
 
 data class WeekSetlistUi(
     val rehearsalDate: String,

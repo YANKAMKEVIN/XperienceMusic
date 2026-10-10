@@ -16,4 +16,13 @@ data class Setlist(
 data class WeeklySetlist(
     val setlist: Setlist,
     val songs: List<Song>,
-)
+) {
+    /** Everything to download to rehearse offline: every version and voice track of the week. */
+    val audioPaths: List<String>
+        get() = songs.flatMap { song -> song.recordings.map { it.audioPath } + song.voiceTracks.map { it.audioPath } }.distinct()
+}
+
+/** How much of the week's audio is on the phone. */
+data class OfflineAvailability(val available: Int, val total: Int) {
+    val isComplete: Boolean get() = total > 0 && available >= total
+}
