@@ -12,8 +12,10 @@ import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestSignInCodeUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
+import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
 import com.xperiencemusic.shared.domain.usecase.VerifySignInCodeUseCase
+import com.xperiencemusic.shared.presentation.setlisteditor.SetlistEditorViewModel
 import com.xperiencemusic.shared.presentation.signin.SignInViewModel
 import com.xperiencemusic.shared.presentation.songeditor.SongEditorViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -90,6 +92,7 @@ val domainModule = module {
     factoryOf(::SignOutUseCase)
     factoryOf(::RetrySessionUseCase)
     factoryOf(::SaveSongUseCase)
+    factoryOf(::SuggestBandWeekUseCase)
 }
 
 val presentationModule = module {
@@ -100,6 +103,7 @@ val presentationModule = module {
     viewModelOf(::ProgressViewModel)
     viewModelOf(::SongDetailViewModel)
     viewModelOf(::SignInViewModel)
+    viewModelOf(::SetlistEditorViewModel)
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
     viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get()) }
 }

@@ -17,3 +17,6 @@ data class SongRoute(val songId: String)
 /** [songId] null creates a new song. */
 @Serializable
 data class SongEditorRoute(val songId: String? = null)
+
+@Serializable
+data object SetlistEditorRoute

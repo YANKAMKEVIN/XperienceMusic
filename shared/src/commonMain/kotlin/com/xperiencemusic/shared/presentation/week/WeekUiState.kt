@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.presentation.week
 data class WeekUiState(
     val isLoading: Boolean = true,
     val setlist: WeekSetlistUi? = null,
+    val canPublish: Boolean = false,
 )
 
 data class WeekSetlistUi(

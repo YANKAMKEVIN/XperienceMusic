@@ -112,6 +112,27 @@
     <string name="action_add_song">Ajouter un chant</string>
     <string name="action_edit_song">Modifier le chant</string>
 
+    <!-- Setlist editor -->
+    <string name="setlist_editor_title">Publier la setlist</string>
+    <string name="setlist_publish">Publier</string>
+    <string name="setlist_dates_title">Dates</string>
+    <string name="setlist_rehearsal_label">Répétition</string>
+    <string name="setlist_service_label">Prestation</string>
+    <string name="setlist_change_date">Changer</string>
+    <string name="setlist_date_conflict">La prestation doit avoir lieu après la répétition.</string>
+    <string name="setlist_message_label">Message pour le groupe (facultatif)</string>
+    <string name="setlist_selected_title">Chants de la semaine (%1$d)</string>
+    <string name="setlist_selected_empty">Ajoute au moins un chant ci-dessous.</string>
+    <string name="setlist_add_title">Ajouter des chants</string>
+    <string name="setlist_move_up">Monter %1$s</string>
+    <string name="setlist_move_down">Descendre %1$s</string>
+    <string name="setlist_remove">Retirer %1$s</string>
+    <string name="setlist_add">Ajouter %1$s</string>
+    <string name="setlist_error_invalid">Vérifie les dates et ajoute au moins un chant.</string>
+    <string name="date_picker_ok">OK</string>
+    <string name="date_picker_cancel">Annuler</string>
+    <string name="action_publish_setlist">Publier la setlist</string>
+
     <!-- Progress -->
     <string name="progress_title">Ma progression</string>
     <string name="progress_profile">%1$s · %2$s</string>

@@ -28,6 +28,7 @@ import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.tab_week
 import com.xperiencemusic.shared.ui.library.LibraryScreen
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
+import com.xperiencemusic.shared.ui.setlisteditor.SetlistEditorScreen
 import com.xperiencemusic.shared.ui.song.SongDetailScreen
 import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
@@ -76,7 +77,15 @@ fun MainScaffold(onSignOut: () -> Unit) {
     ) { padding ->
         val openSong: (String) -> Unit = { id -> navController.navigate(SongRoute(id)) }
         NavHost(navController, startDestination = WeekRoute, modifier = Modifier.padding(padding)) {
-            composable<WeekRoute> { WeekScreen(onSongClick = openSong) }
+            composable<WeekRoute> {
+                WeekScreen(onSongClick = openSong, onPublish = { navController.navigate(SetlistEditorRoute) })
+            }
+            composable<SetlistEditorRoute> {
+                SetlistEditorScreen(
+                    onBack = { navController.popBackStack() },
+                    onPublished = { navController.popBackStack() },
+                )
+            }
             composable<LibraryRoute> {
                 LibraryScreen(onSongClick = openSong, onAddSong = { navController.navigate(SongEditorRoute()) })
             }

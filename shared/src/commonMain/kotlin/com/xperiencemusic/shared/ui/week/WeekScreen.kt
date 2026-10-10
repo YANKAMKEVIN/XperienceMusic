@@ -11,7 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +28,7 @@ import com.xperiencemusic.shared.presentation.week.WeekSongUi
 import com.xperiencemusic.shared.presentation.week.WeekUiState
 import com.xperiencemusic.shared.presentation.week.WeekViewModel
 import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.action_publish_setlist
 import com.xperiencemusic.shared.resources.week_empty
 import com.xperiencemusic.shared.resources.week_published_by
 import com.xperiencemusic.shared.resources.week_rehearsal
@@ -39,13 +44,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun WeekScreen(onSongClick: (String) -> Unit, viewModel: WeekViewModel = koinViewModel()) {
+fun WeekScreen(
+    onSongClick: (String) -> Unit,
+    onPublish: () -> Unit,
+    viewModel: WeekViewModel = koinViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    WeekScreenContent(state = state, onSongClick = onSongClick)
+    WeekScreenContent(state = state, onSongClick = onSongClick, onPublish = onPublish)
 }
 
 @Composable
-fun WeekScreenContent(state: WeekUiState, onSongClick: (String) -> Unit) {
+fun WeekScreenContent(state: WeekUiState, onSongClick: (String) -> Unit, onPublish: () -> Unit) {
+    Box(Modifier.fillMaxSize()) {
+        WeekBody(state, onSongClick)
+        if (state.canPublish) {
+            ExtendedFloatingActionButton(
+                onClick = onPublish,
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text(stringResource(Res.string.action_publish_setlist)) },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.l),
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeekBody(state: WeekUiState, onSongClick: (String) -> Unit) {
     val setlist = state.setlist
     when {
         state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -61,7 +85,8 @@ fun WeekScreenContent(state: WeekUiState, onSongClick: (String) -> Unit) {
 @Composable
 private fun WeekSetlist(setlist: WeekSetlistUi, onSongClick: (String) -> Unit) {
     LazyColumn(
-        contentPadding = PaddingValues(Spacing.l),
+        // Bottom room so the last song is not hidden under the publish button.
+        contentPadding = PaddingValues(start = Spacing.l, top = Spacing.l, end = Spacing.l, bottom = Spacing.xxl * 3),
         verticalArrangement = Arrangement.spacedBy(Spacing.m),
     ) {
         item {
@@ -137,6 +162,7 @@ private fun WeekScreenPreview() {
                 ),
             ),
             onSongClick = {},
+            onPublish = {},
         )
     }
 }
@@ -144,5 +170,5 @@ private fun WeekScreenPreview() {
 @Preview
 @Composable
 private fun WeekScreenEmptyPreview() {
-    AppTheme { WeekScreenContent(WeekUiState(isLoading = false), onSongClick = {}) }
+    AppTheme { WeekScreenContent(WeekUiState(isLoading = false, canPublish = true), onSongClick = {}, onPublish = {}) }
 }
