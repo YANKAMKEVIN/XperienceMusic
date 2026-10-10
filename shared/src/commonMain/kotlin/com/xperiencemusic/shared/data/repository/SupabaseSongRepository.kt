@@ -1,12 +1,15 @@
 package com.xperiencemusic.shared.data.repository
 
 import com.xperiencemusic.shared.data.mapper.toDomain
+import com.xperiencemusic.shared.data.mapper.toWriteDto
+import com.xperiencemusic.shared.data.remote.dto.IdDto
 import com.xperiencemusic.shared.data.remote.AUDIO_BUCKET
 import com.xperiencemusic.shared.data.remote.dto.SongDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
 import com.xperiencemusic.shared.data.remote.postgrestCall
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
+import com.xperiencemusic.shared.domain.model.SongDraft
 import com.xperiencemusic.shared.domain.repository.SongRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -40,6 +43,21 @@ class SupabaseSongRepository(private val client: SupabaseClient) : SongRepositor
     override suspend fun song(id: String): Song? {
         loadIfNeeded()
         return songs.value?.get(id)
+    }
+
+    override suspend fun createSong(draft: SongDraft): String {
+        val created = postgrestCall {
+            client.from(SONGS).insert(draft.toWriteDto()) { select(Columns.list("id")) }.decodeSingle<IdDto>()
+        }
+        reload()
+        return created.id
+    }
+
+    override suspend fun updateSong(id: String, draft: SongDraft) {
+        postgrestCall {
+            client.from(SONGS).update(draft.toWriteDto()) { filter { eq("id", id) } }
+        }
+        reload()
     }
 
     override suspend fun addRecording(songId: String, recording: Recording, replacingId: String?) {

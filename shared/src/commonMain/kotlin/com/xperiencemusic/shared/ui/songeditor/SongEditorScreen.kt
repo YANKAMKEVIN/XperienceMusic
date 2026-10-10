@@ -1,0 +1,189 @@
+package com.xperiencemusic.shared.ui.songeditor
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.xperiencemusic.music.chart.ChordChart
+import com.xperiencemusic.music.theory.Key
+import com.xperiencemusic.music.theory.Notation
+import com.xperiencemusic.shared.presentation.songeditor.SongEditorError
+import com.xperiencemusic.shared.presentation.songeditor.SongEditorEvent
+import com.xperiencemusic.shared.presentation.songeditor.SongEditorUiState
+import com.xperiencemusic.shared.presentation.songeditor.SongEditorViewModel
+import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.editor_artist_label
+import com.xperiencemusic.shared.resources.editor_chart_help
+import com.xperiencemusic.shared.resources.editor_chart_label
+import com.xperiencemusic.shared.resources.editor_chart_title
+import com.xperiencemusic.shared.resources.editor_edit_title
+import com.xperiencemusic.shared.resources.editor_error_title
+import com.xperiencemusic.shared.resources.editor_key_title
+import com.xperiencemusic.shared.resources.editor_new_title
+import com.xperiencemusic.shared.resources.editor_preview_title
+import com.xperiencemusic.shared.resources.editor_save
+import com.xperiencemusic.shared.resources.editor_title_label
+import com.xperiencemusic.shared.resources.editor_unknown_chords
+import com.xperiencemusic.shared.resources.error_forbidden
+import com.xperiencemusic.shared.resources.error_generic
+import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.EditorTopBar
+import com.xperiencemusic.shared.ui.components.KeyPicker
+import com.xperiencemusic.shared.ui.components.SectionTitle
+import com.xperiencemusic.shared.ui.song.ChordChartView
+import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Spacing
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+
+/** [songId] null creates a new song. */
+@Composable
+fun SongEditorScreen(
+    songId: String?,
+    onBack: () -> Unit,
+    onSaved: (String) -> Unit,
+    viewModel: SongEditorViewModel = koinViewModel(key = "editor-$songId") { parametersOf(songId) },
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.savedSongId) { state.savedSongId?.let(onSaved) }
+    SongEditorScreenContent(state = state, onEvent = viewModel::onEvent, onBack = onBack)
+}
+
+@Composable
+fun SongEditorScreenContent(
+    state: SongEditorUiState,
+    onEvent: (SongEditorEvent) -> Unit,
+    onBack: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            EditorTopBar(
+                title = stringResource(if (state.isNew) Res.string.editor_new_title else Res.string.editor_edit_title),
+                actionLabel = stringResource(Res.string.editor_save),
+                isActionEnabled = state.canSave,
+                isWorking = state.isSaving,
+                onBack = onBack,
+                onAction = { onEvent(SongEditorEvent.SaveClicked) },
+            )
+        },
+        contentWindowInsets = WindowInsets(0),
+    ) { padding ->
+        if (state.isLoading) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            return@Scaffold
+        }
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Spacing.l, vertical = Spacing.s),
+            verticalArrangement = Arrangement.spacedBy(Spacing.l),
+        ) {
+            state.error?.let { error ->
+                Text(
+                    stringResource(
+                        when (error) {
+                            SongEditorError.FORBIDDEN -> Res.string.error_forbidden
+                            SongEditorError.MISSING_TITLE -> Res.string.editor_error_title
+                            SongEditorError.NETWORK -> Res.string.error_generic
+                        },
+                    ),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            OutlinedTextField(
+                value = state.title,
+                onValueChange = { onEvent(SongEditorEvent.TitleChanged(it)) },
+                label = { Text(stringResource(Res.string.editor_title_label)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = state.artist,
+                onValueChange = { onEvent(SongEditorEvent.ArtistChanged(it)) },
+                label = { Text(stringResource(Res.string.editor_artist_label)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            SectionTitle(stringResource(Res.string.editor_key_title))
+            KeyPicker(
+                key = state.key,
+                onTonicSelected = { onEvent(SongEditorEvent.TonicSelected(it)) },
+                onModeSelected = { onEvent(SongEditorEvent.ModeSelected(it)) },
+            )
+
+            SectionTitle(stringResource(Res.string.editor_chart_title))
+            Text(
+                stringResource(Res.string.editor_chart_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedTextField(
+                value = state.chart,
+                onValueChange = { onEvent(SongEditorEvent.ChartChanged(it)) },
+                label = { Text(stringResource(Res.string.editor_chart_label)) },
+                minLines = 8,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (state.unknownChords.isNotEmpty()) {
+                Text(
+                    stringResource(Res.string.editor_unknown_chords, state.unknownChords.joinToString(", ")),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            if (state.preview.isNotEmpty() && state.chart.isNotBlank()) {
+                AppCard {
+                    SectionTitle(stringResource(Res.string.editor_preview_title), Modifier.padding(bottom = Spacing.s))
+                    ChordChartView(state.preview)
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SongEditorScreenPreview() {
+    val key = Key(7)
+    val chart = "# Refrain\n[Sol]Saint, saint, [Do]saint [Dp]"
+    AppTheme {
+        SongEditorScreenContent(
+            SongEditorUiState(
+                title = "Nouveau chant",
+                key = key,
+                chart = chart,
+                preview = ChordChart.render(chart, key, Notation.SOLFEGE),
+                unknownChords = listOf("Dp"),
+            ),
+            onEvent = {},
+            onBack = {},
+        )
+    }
+}

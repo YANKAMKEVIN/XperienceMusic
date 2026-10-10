@@ -17,6 +17,7 @@ data class SongDetailUiState(
     val recordings: List<RecordingUi> = emptyList(),
     val maxRecordings: Int = 0,
     val canManageRecordings: Boolean = false,
+    val canEditSong: Boolean = false,
     val voiceTracks: List<VoicePart> = emptyList(),
     val links: List<LinkUi> = emptyList(),
     val pendingDeletion: RecordingUi? = null,

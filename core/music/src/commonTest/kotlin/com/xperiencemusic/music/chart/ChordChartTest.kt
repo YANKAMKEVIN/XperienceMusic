@@ -15,6 +15,17 @@ class ChordChartTest {
     }
 
     @Test
+    fun `convert réécrit les accords dans une autre notation`() {
+        assertEquals("[Do]Gloire [Lam]à toi", ChordChart.convert("[1]Gloire [6m]à toi", doMajeur, Notation.SOLFEGE))
+        assertEquals("[C]Gloire [Am]à toi", ChordChart.convert("[Do]Gloire [Lam]à toi", doMajeur, Notation.LETTERS))
+    }
+
+    @Test
+    fun `unknownChords repère les fautes de frappe`() {
+        assertEquals(listOf("Dp", "N.C."), ChordChart.unknownChords("[Do][Dp][N.C.][5]", doMajeur))
+    }
+
+    @Test
     fun `render découpe les paroles sous les accords`() {
         val lines = ChordChart.render("Al[1]lé[5]luia", doMajeur, Notation.SOLFEGE)
         assertEquals(

@@ -41,6 +41,7 @@ fun deriveSongDetailState(song: Song?, member: Member?, local: SongDetailLocalSt
         recordings = recordings,
         maxRecordings = Song.MAX_RECORDINGS,
         canManageRecordings = member?.role?.can(Permission.MANAGE_RECORDINGS) == true,
+        canEditSong = member?.role?.can(Permission.EDIT_SONG) == true,
         voiceTracks = song.voiceTracks.map { it.voicePart },
         links = song.links.map { LinkUi(it.label, it.url) },
         pendingDeletion = recordings.firstOrNull { it.id == local.pendingDeletionId },

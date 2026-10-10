@@ -29,6 +29,7 @@ import com.xperiencemusic.shared.resources.tab_week
 import com.xperiencemusic.shared.ui.library.LibraryScreen
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
 import com.xperiencemusic.shared.ui.song.SongDetailScreen
+import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -76,10 +77,32 @@ fun MainScaffold(onSignOut: () -> Unit) {
         val openSong: (String) -> Unit = { id -> navController.navigate(SongRoute(id)) }
         NavHost(navController, startDestination = WeekRoute, modifier = Modifier.padding(padding)) {
             composable<WeekRoute> { WeekScreen(onSongClick = openSong) }
-            composable<LibraryRoute> { LibraryScreen(onSongClick = openSong) }
+            composable<LibraryRoute> {
+                LibraryScreen(onSongClick = openSong, onAddSong = { navController.navigate(SongEditorRoute()) })
+            }
             composable<ProgressRoute> { ProgressScreen(onSignOut = onSignOut) }
             composable<SongRoute> { entry ->
-                SongDetailScreen(songId = entry.toRoute<SongRoute>().songId, onBack = { navController.popBackStack() })
+                val songId = entry.toRoute<SongRoute>().songId
+                SongDetailScreen(
+                    songId = songId,
+                    onBack = { navController.popBackStack() },
+                    onEdit = { navController.navigate(SongEditorRoute(songId)) },
+                )
+            }
+            composable<SongEditorRoute> { entry ->
+                val songId = entry.toRoute<SongEditorRoute>().songId
+                SongEditorScreen(
+                    songId = songId,
+                    onBack = { navController.popBackStack() },
+                    onSaved = { savedId ->
+                        if (songId == null) {
+                            // A new song opens on its page, with the editor removed from the back stack.
+                            navController.navigate(SongRoute(savedId)) { popUpTo<SongEditorRoute> { inclusive = true } }
+                        } else {
+                            navController.popBackStack()
+                        }
+                    },
+                )
             }
         }
     }

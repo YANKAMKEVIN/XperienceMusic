@@ -45,3 +45,15 @@ data class SongLinkDto(
     val url: String,
     val position: Int = 0,
 )
+
+@Serializable
+data class SongWriteDto(
+    val title: String,
+    val artist: String?,
+    @SerialName("key_tonic") val keyTonic: Int,
+    @SerialName("key_mode") val keyMode: String,
+    val chart: String,
+)
+
+@Serializable
+data class IdDto(val id: String)

@@ -47,8 +47,11 @@ data class Key(val tonic: Int, val mode: Mode = Mode.MAJOR) {
         }
     }
 
+    /** "Sib", "Bb", "Fa#"… without the mode. */
+    fun tonicName(notation: Notation): String = NoteNames.name(tonic, notation, usesFlats)
+
     fun label(notation: Notation): String {
-        val name = NoteNames.name(tonic, notation, usesFlats)
+        val name = tonicName(notation)
         return when (notation) {
             Notation.LETTERS -> if (mode == Mode.MINOR) "${name}m" else name
             Notation.SOLFEGE, Notation.NASHVILLE -> if (mode == Mode.MINOR) "$name mineur" else "$name majeur"

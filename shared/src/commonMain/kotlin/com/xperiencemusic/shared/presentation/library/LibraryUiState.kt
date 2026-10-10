@@ -4,6 +4,7 @@ data class LibraryUiState(
     val query: String = "",
     val isLoading: Boolean = true,
     val songs: List<LibrarySongUi> = emptyList(),
+    val canAddSong: Boolean = false,
 )
 
 data class LibrarySongUi(

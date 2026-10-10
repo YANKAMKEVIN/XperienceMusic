@@ -11,9 +11,11 @@ import com.xperiencemusic.shared.domain.model.AppEnvironment
 import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestSignInCodeUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
+import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
 import com.xperiencemusic.shared.domain.usecase.VerifySignInCodeUseCase
 import com.xperiencemusic.shared.presentation.signin.SignInViewModel
+import com.xperiencemusic.shared.presentation.songeditor.SongEditorViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,6 +49,7 @@ import com.xperiencemusic.shared.presentation.song.SongDetailViewModel
 import com.xperiencemusic.shared.presentation.week.WeekViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -86,6 +89,7 @@ val domainModule = module {
     factoryOf(::VerifySignInCodeUseCase)
     factoryOf(::SignOutUseCase)
     factoryOf(::RetrySessionUseCase)
+    factoryOf(::SaveSongUseCase)
 }
 
 val presentationModule = module {
@@ -96,6 +100,8 @@ val presentationModule = module {
     viewModelOf(::ProgressViewModel)
     viewModelOf(::SongDetailViewModel)
     viewModelOf(::SignInViewModel)
+    // The song id is optional (null = new song), which the constructor DSL cannot resolve.
+    viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get()) }
 }
 
 private var isKoinStarted = false

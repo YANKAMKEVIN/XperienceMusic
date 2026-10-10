@@ -94,6 +94,24 @@
     <string name="error_forbidden">Tu n'as pas les droits pour cette action.</string>
     <string name="error_generic">Une erreur est survenue, réessaie.</string>
 
+    <!-- Song editor -->
+    <string name="editor_new_title">Nouveau chant</string>
+    <string name="editor_edit_title">Modifier le chant</string>
+    <string name="editor_save">Enregistrer</string>
+    <string name="editor_title_label">Titre</string>
+    <string name="editor_artist_label">Auteur / compositeur (facultatif)</string>
+    <string name="editor_key_title">Tonalité</string>
+    <string name="editor_major">Majeur</string>
+    <string name="editor_minor">Mineur</string>
+    <string name="editor_chart_title">Paroles et accords</string>
+    <string name="editor_chart_help">Mets chaque accord entre crochets juste avant la syllabe : [1]Tu es [5]saint. Chiffres (1, 4, 6m, b7), Do-Ré-Mi ou C-D-E, comme tu veux. Une ligne qui commence par # est un titre de section (# Refrain).</string>
+    <string name="editor_chart_label">Texte du chant</string>
+    <string name="editor_preview_title">Aperçu</string>
+    <string name="editor_unknown_chords">Accords non reconnus : %1$s</string>
+    <string name="editor_error_title">Le titre est obligatoire.</string>
+    <string name="action_add_song">Ajouter un chant</string>
+    <string name="action_edit_song">Modifier le chant</string>
+
     <!-- Progress -->
     <string name="progress_title">Ma progression</string>
     <string name="progress_profile">%1$s · %2$s</string>

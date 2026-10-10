@@ -15,11 +15,18 @@ object ChordChart {
     private val chordToken = Regex("""\[([^\]]*)]""")
 
     /** Rewrites every chord of [source] as Nashville numbers relative to [key]. Unknown tokens are kept. */
-    fun normalize(source: String, key: Key): String =
+    fun normalize(source: String, key: Key): String = convert(source, key, Notation.NASHVILLE)
+
+    /** Rewrites every chord of [source], read in [key], in [notation]. Unknown tokens are kept. */
+    fun convert(source: String, key: Key, notation: Notation): String =
         chordToken.replace(source) { match ->
             val chord = Chord.parse(match.groupValues[1], key)
-            if (chord == null) match.value else "[${chord.render(key, Notation.NASHVILLE)}]"
+            if (chord == null) match.value else "[${chord.render(key, notation)}]"
         }
+
+    /** Chord tokens of [source] that are not chords, e.g. typos; "N.C." and repeat marks show up too. */
+    fun unknownChords(source: String, key: Key): List<String> =
+        chordToken.findAll(source).map { it.groupValues[1] }.filter { Chord.parse(it, key) == null }.toList()
 
     fun render(source: String, key: Key, notation: Notation): List<ChartLine> =
         source.lines().map { line -> renderLine(line, key, notation) }

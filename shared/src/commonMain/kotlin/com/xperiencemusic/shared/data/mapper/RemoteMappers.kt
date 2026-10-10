@@ -7,6 +7,7 @@ import com.xperiencemusic.shared.data.remote.dto.ProfileUpdateDto
 import com.xperiencemusic.shared.data.remote.dto.RecordingDto
 import com.xperiencemusic.shared.data.remote.dto.SetlistDto
 import com.xperiencemusic.shared.data.remote.dto.SongDto
+import com.xperiencemusic.shared.data.remote.dto.SongWriteDto
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Level
@@ -16,6 +17,7 @@ import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.model.Song
+import com.xperiencemusic.shared.domain.model.SongDraft
 import com.xperiencemusic.shared.domain.model.SongLink
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.model.VoiceTrack
@@ -51,6 +53,14 @@ fun SongDto.toDomain() = Song(
         enumOrNull<VoicePart>(track.voicePart)?.let { VoiceTrack(track.id, it, track.storagePath) }
     },
     links = links.sortedBy { it.position }.map { SongLink(it.label, it.url) },
+)
+
+fun SongDraft.toWriteDto() = SongWriteDto(
+    title = title,
+    artist = artist,
+    keyTonic = key.tonic,
+    keyMode = key.mode.name,
+    chart = chart,
 )
 
 fun RecordingDto.toDomain() = Recording(

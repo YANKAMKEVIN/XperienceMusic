@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
@@ -63,6 +64,7 @@ import com.xperiencemusic.shared.presentation.song.SongDetailViewModel
 import com.xperiencemusic.shared.presentation.song.SongMessage
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.action_back
+import com.xperiencemusic.shared.resources.action_edit_song
 import com.xperiencemusic.shared.resources.error_forbidden
 import com.xperiencemusic.shared.resources.error_generic
 import com.xperiencemusic.shared.resources.notation_letters
@@ -103,10 +105,11 @@ import org.koin.core.parameter.parametersOf
 fun SongDetailScreen(
     songId: String,
     onBack: () -> Unit,
+    onEdit: () -> Unit,
     viewModel: SongDetailViewModel = koinViewModel(key = songId) { parametersOf(songId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SongDetailScreenContent(state = state, onEvent = viewModel::onEvent, onBack = onBack)
+    SongDetailScreenContent(state = state, onEvent = viewModel::onEvent, onBack = onBack, onEdit = onEdit)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,6 +118,7 @@ fun SongDetailScreenContent(
     state: SongDetailUiState,
     onEvent: (SongDetailEvent) -> Unit,
     onBack: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.message) {
@@ -132,6 +136,13 @@ fun SongDetailScreenContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.action_back))
+                    }
+                },
+                actions = {
+                    if (state.canEditSong) {
+                        IconButton(onClick = onEdit) {
+                            Icon(Icons.Filled.Edit, contentDescription = stringResource(Res.string.action_edit_song))
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -348,10 +359,12 @@ private fun SongDetailScreenPreview() {
                 ),
                 maxRecordings = 3,
                 canManageRecordings = true,
+                canEditSong = true,
                 voiceTracks = listOf(VoicePart.SOPRANO, VoicePart.ALTO),
             ),
             onEvent = {},
             onBack = {},
+            onEdit = {},
         )
     }
 }
@@ -359,5 +372,5 @@ private fun SongDetailScreenPreview() {
 @Preview
 @Composable
 private fun SongDetailScreenMissingPreview() {
-    AppTheme { SongDetailScreenContent(SongDetailUiState(isLoading = false, isMissing = true), onEvent = {}, onBack = {}) }
+    AppTheme { SongDetailScreenContent(SongDetailUiState(isLoading = false, isMissing = true), onEvent = {}, onBack = {}, onEdit = {}) }
 }
