@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Temporary launcher icon (eighth note). Replaced by the XperienceMusic logo later. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M60,34L60,64"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeColor="#F5EFE0"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M60,34Q72,38 74,50"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeColor="#E8B04A"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M50,64m-10,0a10,8 0,1 0,20 0a10,8 0,1 0,-20 0"
+        android:fillColor="#F5EFE0" />
+</vector>

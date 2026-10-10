@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">XperienceMusic</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Bienvenue dans XperienceMusic</string>
+    <string name="onboarding_subtitle">Dis-nous qui tu es dans le groupe pour personnaliser ton espace.</string>
+    <string name="onboarding_name_label">Ton prénom</string>
+    <string name="onboarding_instrument_title">Ton rôle dans la louange</string>
+    <string name="onboarding_voice_title">Ta voix</string>
+    <string name="onboarding_level_title">Ton niveau</string>
+    <string name="onboarding_submit">Commencer</string>
+
+    <string name="instrument_singer">Chantre</string>
+    <string name="instrument_piano">Piano</string>
+    <string name="instrument_bass">Basse</string>
+    <string name="instrument_drums">Batterie</string>
+
+    <string name="voice_soprano">Soprano</string>
+    <string name="voice_alto">Alto</string>
+    <string name="voice_tenor">Ténor</string>
+    <string name="voice_bass">Basse</string>
+
+    <string name="level_beginner">Débutant</string>
+    <string name="level_confirmed">Confirmé</string>
+    <string name="level_pro">Pro</string>
+
+    <!-- Navigation -->
+    <string name="tab_week">Cette semaine</string>
+    <string name="tab_library">Chants</string>
+    <string name="tab_progress">Ma progression</string>
+    <string name="action_back">Retour</string>
+
+    <!-- Week -->
+    <string name="week_title">Cette semaine</string>
+    <string name="week_rehearsal">Répétition · %1$s</string>
+    <string name="week_service">Prestation · %1$s</string>
+    <string name="week_published_by">Publiée par %1$s</string>
+    <string name="week_empty">Aucune setlist publiée pour le moment.</string>
+    <string name="week_song_has_reference">Version de référence disponible</string>
+    <string name="week_song_new">Nouveau chant · pas encore d'enregistrement</string>
+
+    <!-- Library -->
+    <string name="library_title">Chants</string>
+    <string name="library_search">Rechercher un chant ou un auteur</string>
+    <string name="library_empty">Aucun chant ne correspond à ta recherche.</string>
+    <string name="library_versions">%1$d/%2$d versions</string>
+
+    <!-- Song detail -->
+    <string name="song_key">Tonalité : %1$s</string>
+    <string name="song_original_key">tonalité d'origine : %1$s</string>
+    <string name="song_transpose_down">Descendre d'un demi-ton</string>
+    <string name="song_transpose_up">Monter d'un demi-ton</string>
+    <string name="song_transpose_reset">Revenir à l'origine</string>
+    <string name="notation_nashville">1 · 4 · 5</string>
+    <string name="notation_solfege">Do · Ré · Mi</string>
+    <string name="notation_letters">C · D · E</string>
+    <string name="song_chart_title">Paroles et accords</string>
+    <string name="song_recordings_title">Versions enregistrées (%1$d/%2$d)</string>
+    <string name="song_recordings_empty">Pas encore de version enregistrée pour ce chant.</string>
+    <string name="song_recording_reference">Référence</string>
+    <string name="song_recording_meta">%1$s · %2$s</string>
+    <string name="song_recording_set_reference">Définir comme référence</string>
+    <string name="song_recording_delete">Supprimer</string>
+    <string name="song_recording_actions">Actions sur la version</string>
+    <string name="song_delete_confirm_title">Supprimer cette version ?</string>
+    <string name="song_delete_confirm_text">« %1$s » sera retirée pour tout le groupe.</string>
+    <string name="song_delete_confirm_ok">Supprimer</string>
+    <string name="song_delete_confirm_cancel">Annuler</string>
+    <string name="song_voice_tracks_title">Pistes par voix</string>
+    <string name="song_links_title">Liens</string>
+    <string name="song_not_found">Ce chant n'existe plus.</string>
+    <string name="error_forbidden">Tu n'as pas les droits pour cette action.</string>
+    <string name="error_generic">Une erreur est survenue, réessaie.</string>
+
+    <!-- Progress -->
+    <string name="progress_title">Ma progression</string>
+    <string name="progress_profile">%1$s · %2$s</string>
+    <string name="progress_done">%1$d/%2$d exercices validés</string>
+    <string name="progress_musicians_soon_title">Le parcours musiciens arrive bientôt</string>
+    <string name="progress_musicians_soon_text">On démarre avec les chantres. Les exercices piano, basse et batterie suivront quand on pourra les pratiquer facilement en dehors du studio.</string>
+    <string name="progress_check_hold">Tenir %1$s pendant %2$d s · validation automatique</string>
+    <string name="progress_check_review">Validé par la responsable chant</string>
+    <string name="status_todo">À faire</string>
+    <string name="status_submitted">Envoyé</string>
+    <string name="status_validated">Validé</string>
+    <string name="status_to_rework">À retravailler</string>
+</resources>

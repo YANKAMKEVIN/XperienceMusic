@@ -1,0 +1,6 @@
+<resources>
+    <!-- Dark window background avoids a white flash before Compose draws. -->
+    <style name="Theme.XperienceMusic" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/xm_night</item>
+    </style>
+</resources>
