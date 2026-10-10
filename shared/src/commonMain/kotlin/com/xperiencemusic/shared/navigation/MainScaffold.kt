@@ -28,6 +28,7 @@ import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.tab_week
 import com.xperiencemusic.shared.ui.library.LibraryScreen
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
+import com.xperiencemusic.shared.ui.recordingform.RecordingFormScreen
 import com.xperiencemusic.shared.ui.setlisteditor.SetlistEditorScreen
 import com.xperiencemusic.shared.ui.song.SongDetailScreen
 import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
@@ -96,6 +97,14 @@ fun MainScaffold(onSignOut: () -> Unit) {
                     songId = songId,
                     onBack = { navController.popBackStack() },
                     onEdit = { navController.navigate(SongEditorRoute(songId)) },
+                    onAddRecording = { navController.navigate(RecordingFormRoute(songId)) },
+                )
+            }
+            composable<RecordingFormRoute> { entry ->
+                RecordingFormScreen(
+                    songId = entry.toRoute<RecordingFormRoute>().songId,
+                    onBack = { navController.popBackStack() },
+                    onSaved = { navController.popBackStack() },
                 )
             }
             composable<SongEditorRoute> { entry ->

@@ -24,11 +24,9 @@ class AddRecordingUseCase(
             is DomainResult.Success -> loaded.value
         }
 
-        val replaced = replace?.let { id ->
-            song.recordings.firstOrNull { it.id == id } ?: return DomainResult.Failure(DomainError.NOT_FOUND)
-        }
+        recordingSlotError(song, replace)?.let { return DomainResult.Failure(it) }
+        val replaced = song.recordings.firstOrNull { it.id == replace }
         val kept = song.recordings.filterNot { it.id == replaced?.id }
-        if (kept.size >= Song.MAX_RECORDINGS) return DomainResult.Failure(DomainError.RECORDING_LIMIT_REACHED)
 
         val becomesReference = kept.isEmpty() || replaced?.isReference == true || recording.isReference
         val added = recording.copy(isReference = becomesReference)
@@ -38,4 +36,11 @@ class AddRecordingUseCase(
             song.copy(recordings = updated)
         }
     }
+}
+
+/** Why a recording cannot be added to [song] (replacing [replace] if set), or null when it can. */
+internal fun recordingSlotError(song: Song, replace: String?): DomainError? {
+    if (replace != null && song.recordings.none { it.id == replace }) return DomainError.NOT_FOUND
+    val kept = song.recordings.count { it.id != replace }
+    return if (kept >= Song.MAX_RECORDINGS) DomainError.RECORDING_LIMIT_REACHED else null
 }

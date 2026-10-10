@@ -13,4 +13,5 @@ enum class DomainError {
     NOT_SIGNED_IN,
     INVALID_CODE,
     NETWORK,
+    FILE_TOO_LARGE,
 }

@@ -16,6 +16,17 @@ internal object Formatting {
     /** "14 oct. 2026" */
     fun shortDate(date: LocalDate): String = "${date.day} ${months[date.month.ordinal]} ${date.year}"
 
+    /** "4,2 Mo", "820 Ko" */
+    fun fileSize(bytes: Long): String {
+        val kilo = 1024.0
+        return if (bytes >= kilo * kilo) {
+            val tenths = (bytes / (kilo * kilo) * 10).toLong()
+            "${tenths / 10},${tenths % 10} Mo"
+        } else {
+            "${(bytes / kilo).toLong().coerceAtLeast(1)} Ko"
+        }
+    }
+
     /** "3:32" */
     fun duration(totalSeconds: Int): String {
         val minutes = totalSeconds / 60

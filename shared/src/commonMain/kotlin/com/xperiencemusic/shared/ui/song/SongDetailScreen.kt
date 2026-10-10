@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -32,6 +33,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -63,6 +65,7 @@ import com.xperiencemusic.shared.presentation.song.SongDetailUiState
 import com.xperiencemusic.shared.presentation.song.SongDetailViewModel
 import com.xperiencemusic.shared.presentation.song.SongMessage
 import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.action_add_recording
 import com.xperiencemusic.shared.resources.action_back
 import com.xperiencemusic.shared.resources.action_edit_song
 import com.xperiencemusic.shared.resources.error_forbidden
@@ -106,10 +109,17 @@ fun SongDetailScreen(
     songId: String,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    onAddRecording: () -> Unit,
     viewModel: SongDetailViewModel = koinViewModel(key = songId) { parametersOf(songId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SongDetailScreenContent(state = state, onEvent = viewModel::onEvent, onBack = onBack, onEdit = onEdit)
+    SongDetailScreenContent(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onBack = onBack,
+        onEdit = onEdit,
+        onAddRecording = onAddRecording,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,6 +129,7 @@ fun SongDetailScreenContent(
     onEvent: (SongDetailEvent) -> Unit,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    onAddRecording: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.message) {
@@ -157,7 +168,7 @@ fun SongDetailScreenContent(
             when {
                 state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 state.isMissing -> Text(stringResource(Res.string.song_not_found), Modifier.align(Alignment.Center))
-                else -> SongDetailBody(state, onEvent)
+                else -> SongDetailBody(state, onEvent, onAddRecording)
             }
         }
     }
@@ -182,7 +193,7 @@ fun SongDetailScreenContent(
 }
 
 @Composable
-private fun SongDetailBody(state: SongDetailUiState, onEvent: (SongDetailEvent) -> Unit) {
+private fun SongDetailBody(state: SongDetailUiState, onEvent: (SongDetailEvent) -> Unit, onAddRecording: () -> Unit) {
     LazyColumn(
         contentPadding = PaddingValues(start = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
         verticalArrangement = Arrangement.spacedBy(Spacing.l),
@@ -207,6 +218,14 @@ private fun SongDetailBody(state: SongDetailUiState, onEvent: (SongDetailEvent) 
         }
         items(state.recordings, key = { it.id }) { recording ->
             RecordingRow(recording, state.canManageRecordings, onEvent)
+        }
+        if (state.canManageRecordings) {
+            item {
+                OutlinedButton(onClick = onAddRecording, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
+                    Text(stringResource(Res.string.action_add_recording))
+                }
+            }
         }
         if (state.voiceTracks.isNotEmpty()) {
             item { VoiceTracks(state.voiceTracks) }
@@ -365,6 +384,7 @@ private fun SongDetailScreenPreview() {
             onEvent = {},
             onBack = {},
             onEdit = {},
+            onAddRecording = {},
         )
     }
 }
@@ -372,5 +392,5 @@ private fun SongDetailScreenPreview() {
 @Preview
 @Composable
 private fun SongDetailScreenMissingPreview() {
-    AppTheme { SongDetailScreenContent(SongDetailUiState(isLoading = false, isMissing = true), onEvent = {}, onBack = {}, onEdit = {}) }
+    AppTheme { SongDetailScreenContent(SongDetailUiState(isLoading = false, isMissing = true), onEvent = {}, onBack = {}, onEdit = {}, onAddRecording = {}) }
 }

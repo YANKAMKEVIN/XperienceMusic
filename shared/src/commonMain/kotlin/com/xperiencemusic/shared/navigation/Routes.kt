@@ -20,3 +20,6 @@ data class SongEditorRoute(val songId: String? = null)
 
 @Serializable
 data object SetlistEditorRoute
+
+@Serializable
+data class RecordingFormRoute(val songId: String)

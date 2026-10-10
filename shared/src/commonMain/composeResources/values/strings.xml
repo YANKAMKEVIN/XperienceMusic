@@ -133,6 +133,27 @@
     <string name="date_picker_cancel">Annuler</string>
     <string name="action_publish_setlist">Publier la setlist</string>
 
+    <!-- Recording form -->
+    <string name="recording_form_title">Ajouter une version</string>
+    <string name="recording_form_save">Envoyer</string>
+    <string name="recording_form_song">Pour « %1$s »</string>
+    <string name="recording_form_file_title">Fichier audio</string>
+    <string name="recording_form_pick_file">Choisir un fichier audio</string>
+    <string name="recording_form_change_file">Changer de fichier</string>
+    <string name="recording_form_file_meta">%1$s · %2$s</string>
+    <string name="recording_form_name_label">Nom de la version</string>
+    <string name="recording_form_name_hint">Ex. : Répétition du mardi</string>
+    <string name="recording_form_date_label">Enregistrée le</string>
+    <string name="recording_form_reference">Version de référence</string>
+    <string name="recording_form_reference_help">Celle que tout le groupe doit écouter en priorité.</string>
+    <string name="recording_form_full_title">Ce chant a déjà %1$d versions</string>
+    <string name="recording_form_full_help">Choisis celle que la nouvelle version remplace :</string>
+    <string name="recording_form_uploading">Envoi en cours…</string>
+    <string name="recording_form_error_unreadable">Impossible de lire ce fichier audio.</string>
+    <string name="recording_form_error_too_large">Le fichier dépasse 50 Mo. Exporte-le en MP3 ou M4A pour l'alléger.</string>
+    <string name="recording_form_error_limit">Ce chant a déjà 3 versions : choisis celle à remplacer.</string>
+    <string name="action_add_recording">Ajouter une version</string>
+
     <!-- Progress -->
     <string name="progress_title">Ma progression</string>
     <string name="progress_profile">%1$s · %2$s</string>

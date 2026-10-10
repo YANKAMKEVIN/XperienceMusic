@@ -3,6 +3,8 @@ package com.xperiencemusic.shared.di
 import com.xperiencemusic.shared.data.local.SystemDateProvider
 import com.xperiencemusic.shared.data.remote.SupabaseConfig
 import com.xperiencemusic.shared.data.remote.createXperienceSupabaseClient
+import com.xperiencemusic.shared.data.repository.InMemoryAudioStorage
+import com.xperiencemusic.shared.data.repository.SupabaseAudioStorage
 import com.xperiencemusic.shared.data.repository.SupabaseExerciseRepository
 import com.xperiencemusic.shared.data.repository.SupabaseSessionRepository
 import com.xperiencemusic.shared.data.repository.SupabaseSetlistRepository
@@ -12,9 +14,12 @@ import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestSignInCodeUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
+import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
+import com.xperiencemusic.shared.domain.usecase.UploadRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
 import com.xperiencemusic.shared.domain.usecase.VerifySignInCodeUseCase
+import com.xperiencemusic.shared.presentation.recordingform.RecordingFormViewModel
 import com.xperiencemusic.shared.presentation.setlisteditor.SetlistEditorViewModel
 import com.xperiencemusic.shared.presentation.signin.SignInViewModel
 import com.xperiencemusic.shared.presentation.songeditor.SongEditorViewModel
@@ -28,6 +33,7 @@ import com.xperiencemusic.shared.data.repository.InMemorySongRepository
 import com.xperiencemusic.shared.data.seed.SampleSetlist
 import com.xperiencemusic.shared.data.seed.SampleSongs
 import com.xperiencemusic.shared.data.seed.SingerExercises
+import com.xperiencemusic.shared.domain.repository.AudioStorage
 import com.xperiencemusic.shared.domain.repository.DateProvider
 import com.xperiencemusic.shared.domain.repository.ExerciseRepository
 import com.xperiencemusic.shared.domain.repository.SessionRepository
@@ -66,12 +72,14 @@ val dataModule = module {
         single<SongRepository> { SupabaseSongRepository(get()) }
         single<SetlistRepository> { SupabaseSetlistRepository(get()) }
         single<ExerciseRepository> { SupabaseExerciseRepository(get(), SingerExercises.all) }
+        single<AudioStorage> { SupabaseAudioStorage(get()) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
         single<SessionRepository> { InMemorySessionRepository() }
         single<SongRepository> { InMemorySongRepository(SampleSongs.all(get<DateProvider>().today())) }
         single<SetlistRepository> { InMemorySetlistRepository(SampleSetlist.forWeekOf(get<DateProvider>().today())) }
         single<ExerciseRepository> { InMemoryExerciseRepository(SingerExercises.all) }
+        single<AudioStorage> { InMemoryAudioStorage() }
     }
 }
 
@@ -93,6 +101,8 @@ val domainModule = module {
     factoryOf(::RetrySessionUseCase)
     factoryOf(::SaveSongUseCase)
     factoryOf(::SuggestBandWeekUseCase)
+    factoryOf(::UploadRecordingUseCase)
+    factoryOf(::GetTodayUseCase)
 }
 
 val presentationModule = module {
@@ -104,6 +114,7 @@ val presentationModule = module {
     viewModelOf(::SongDetailViewModel)
     viewModelOf(::SignInViewModel)
     viewModelOf(::SetlistEditorViewModel)
+    viewModelOf(::RecordingFormViewModel)
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
     viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get()) }
 }
