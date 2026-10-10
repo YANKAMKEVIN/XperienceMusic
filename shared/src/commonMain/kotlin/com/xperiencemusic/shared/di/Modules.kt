@@ -1,6 +1,22 @@
 package com.xperiencemusic.shared.di
 
 import com.xperiencemusic.shared.data.local.SystemDateProvider
+import com.xperiencemusic.shared.data.remote.SupabaseConfig
+import com.xperiencemusic.shared.data.remote.createXperienceSupabaseClient
+import com.xperiencemusic.shared.data.repository.SupabaseExerciseRepository
+import com.xperiencemusic.shared.data.repository.SupabaseSessionRepository
+import com.xperiencemusic.shared.data.repository.SupabaseSetlistRepository
+import com.xperiencemusic.shared.data.repository.SupabaseSongRepository
+import com.xperiencemusic.shared.domain.model.AppEnvironment
+import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
+import com.xperiencemusic.shared.domain.usecase.RequestSignInCodeUseCase
+import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
+import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
+import com.xperiencemusic.shared.domain.usecase.VerifySignInCodeUseCase
+import com.xperiencemusic.shared.presentation.signin.SignInViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import com.xperiencemusic.shared.data.repository.InMemoryExerciseRepository
 import com.xperiencemusic.shared.data.repository.InMemorySessionRepository
 import com.xperiencemusic.shared.data.repository.InMemorySetlistRepository
@@ -34,13 +50,24 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
-/** In-memory data with demo content; swapped for Supabase-backed repositories later. */
+/** Supabase when `local.properties` holds the project keys, otherwise an offline demo. */
 val dataModule = module {
     single<DateProvider> { SystemDateProvider() }
-    single<SessionRepository> { InMemorySessionRepository() }
-    single<SongRepository> { InMemorySongRepository(SampleSongs.all(get<DateProvider>().today())) }
-    single<SetlistRepository> { InMemorySetlistRepository(SampleSetlist.forWeekOf(get<DateProvider>().today())) }
-    single<ExerciseRepository> { InMemoryExerciseRepository(SingerExercises.all) }
+    single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+    if (SupabaseConfig.isConfigured) {
+        single { AppEnvironment(isDemo = false, demoCode = null) }
+        single { createXperienceSupabaseClient() }
+        single<SessionRepository> { SupabaseSessionRepository(get(), get()) }
+        single<SongRepository> { SupabaseSongRepository(get()) }
+        single<SetlistRepository> { SupabaseSetlistRepository(get()) }
+        single<ExerciseRepository> { SupabaseExerciseRepository(get(), SingerExercises.all) }
+    } else {
+        single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
+        single<SessionRepository> { InMemorySessionRepository() }
+        single<SongRepository> { InMemorySongRepository(SampleSongs.all(get<DateProvider>().today())) }
+        single<SetlistRepository> { InMemorySetlistRepository(SampleSetlist.forWeekOf(get<DateProvider>().today())) }
+        single<ExerciseRepository> { InMemoryExerciseRepository(SingerExercises.all) }
+    }
 }
 
 val domainModule = module {
@@ -54,6 +81,11 @@ val domainModule = module {
     factoryOf(::ObserveWeeklySetlistUseCase)
     factoryOf(::PublishSetlistUseCase)
     factoryOf(::ObserveSingerPathUseCase)
+    factoryOf(::ObserveSessionUseCase)
+    factoryOf(::RequestSignInCodeUseCase)
+    factoryOf(::VerifySignInCodeUseCase)
+    factoryOf(::SignOutUseCase)
+    factoryOf(::RetrySessionUseCase)
 }
 
 val presentationModule = module {
@@ -63,6 +95,7 @@ val presentationModule = module {
     viewModelOf(::LibraryViewModel)
     viewModelOf(::ProgressViewModel)
     viewModelOf(::SongDetailViewModel)
+    viewModelOf(::SignInViewModel)
 }
 
 private var isKoinStarted = false

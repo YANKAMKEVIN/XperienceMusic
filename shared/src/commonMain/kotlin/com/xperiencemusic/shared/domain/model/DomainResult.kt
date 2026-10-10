@@ -11,4 +11,6 @@ enum class DomainError {
     INVALID_INPUT,
     RECORDING_LIMIT_REACHED,
     NOT_SIGNED_IN,
+    INVALID_CODE,
+    NETWORK,
 }

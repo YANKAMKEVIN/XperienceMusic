@@ -1,0 +1,52 @@
+package com.xperiencemusic.shared.data.repository
+
+import com.xperiencemusic.shared.data.mapper.toExerciseStatus
+import com.xperiencemusic.shared.data.remote.dto.ExerciseProgressDto
+import com.xperiencemusic.shared.data.remote.ignoringFailures
+import com.xperiencemusic.shared.data.remote.postgrestCall
+import com.xperiencemusic.shared.domain.model.Exercise
+import com.xperiencemusic.shared.domain.model.ExerciseStatus
+import com.xperiencemusic.shared.domain.repository.ExerciseRepository
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
+
+/** Exercises are app content; only each member's statuses are stored in Supabase. */
+class SupabaseExerciseRepository(
+    private val client: SupabaseClient,
+    private val exercises: List<Exercise>,
+) : ExerciseRepository {
+    /** memberId -> (exerciseId -> status) */
+    private val statuses = MutableStateFlow<Map<String, Map<String, ExerciseStatus>>>(emptyMap())
+
+    override fun observeSingerExercises(): Flow<List<Exercise>> = flowOf(exercises)
+
+    override fun observeStatuses(memberId: String): Flow<Map<String, ExerciseStatus>> =
+        statuses.onStart { if (memberId !in statuses.value) ignoringFailures { reload(memberId) } }
+            .map { it[memberId] }
+            .filterNotNull()
+
+    override suspend fun setStatus(memberId: String, exerciseId: String, status: ExerciseStatus) {
+        postgrestCall {
+            client.from(PROGRESS).upsert(ExerciseProgressDto(memberId, exerciseId, status.name))
+        }
+        statuses.update { all -> all + (memberId to (all[memberId].orEmpty() + (exerciseId to status))) }
+    }
+
+    private suspend fun reload(memberId: String) {
+        val rows = postgrestCall {
+            client.from(PROGRESS).select { filter { eq("member_id", memberId) } }.decodeList<ExerciseProgressDto>()
+        }
+        statuses.update { all -> all + (memberId to rows.associate { it.exerciseId to it.status.toExerciseStatus() }) }
+    }
+
+    private companion object {
+        const val PROGRESS = "exercise_progress"
+    }
+}

@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -6,6 +7,40 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinxSerialization)
+}
+
+// Supabase project keys come from local.properties (git-ignored) or the environment (CI).
+// Left empty, the app runs in offline demo mode.
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+}
+
+fun supabaseSetting(property: String, env: String): String =
+    localProperties.getProperty(property) ?: System.getenv(env) ?: ""
+
+val generateSupabaseConfig by tasks.registering {
+    val url = supabaseSetting("supabase.url", "SUPABASE_URL")
+    val key = supabaseSetting("supabase.publishableKey", "SUPABASE_PUBLISHABLE_KEY")
+    val outputDir = layout.buildDirectory.dir("generated/supabaseConfig/kotlin")
+    inputs.property("url", url)
+    inputs.property("key", key)
+    outputs.dir(outputDir)
+    doLast {
+        val file = outputDir.get().file("com/xperiencemusic/shared/data/remote/SupabaseConfig.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            """
+            |package com.xperiencemusic.shared.data.remote
+            |
+            |// Generated from local.properties by :shared:generateSupabaseConfig. Do not edit.
+            |internal object SupabaseConfig {
+            |    const val URL: String = "$url"
+            |    const val PUBLISHABLE_KEY: String = "$key"
+            |    val isConfigured: Boolean get() = URL.isNotBlank() && PUBLISHABLE_KEY.isNotBlank()
+            |}
+            |""".trimMargin(),
+        )
+    }
 }
 
 kotlin {
@@ -53,6 +88,19 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
+            implementation(project.dependencies.platform(libs.supabase.bom))
+            implementation(libs.supabase.auth)
+            implementation(libs.supabase.postgrest)
+            implementation(libs.supabase.storage)
+        }
+        androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+        commonMain {
+            kotlin.srcDir(generateSupabaseConfig)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

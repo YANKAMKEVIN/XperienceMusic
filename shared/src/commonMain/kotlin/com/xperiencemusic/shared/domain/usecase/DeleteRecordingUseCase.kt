@@ -20,11 +20,13 @@ class DeleteRecordingUseCase(
             ?: return DomainResult.Failure(DomainError.NOT_FOUND)
 
         var remaining = song.recordings - deleted
-        if (deleted.isReference) {
-            val newReference = remaining.maxByOrNull { it.recordedOn }
-            remaining = remaining.map { it.copy(isReference = it.id == newReference?.id) }
+        val newReference = if (deleted.isReference) remaining.maxByOrNull { it.recordedOn } else null
+        if (newReference != null) {
+            remaining = remaining.map { it.copy(isReference = it.id == newReference.id) }
         }
-        songs.saveRecordings(songId, remaining)
-        return DomainResult.Success(song.copy(recordings = remaining))
+        return runRemote {
+            songs.deleteRecording(songId, recordingId, newReference?.id)
+            song.copy(recordings = remaining)
+        }
     }
 }

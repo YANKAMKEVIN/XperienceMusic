@@ -18,7 +18,9 @@ class PublishSetlistUseCase(
             return DomainResult.Failure(DomainError.INVALID_INPUT)
         }
         val published = setlist.copy(publishedBy = member.profile.displayName)
-        setlists.publish(published)
-        return DomainResult.Success(published)
+        return runRemote {
+            setlists.publish(published)
+            published
+        }
     }
 }

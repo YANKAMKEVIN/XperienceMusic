@@ -15,6 +15,6 @@ class CompleteOnboardingUseCase(private val sessions: SessionRepository) {
             displayName = name,
             voicePart = profile.voicePart.takeIf { profile.instrument == Instrument.SINGER },
         )
-        return DomainResult.Success(sessions.saveProfile(cleaned))
+        return runRemote { sessions.saveProfile(cleaned) }
     }
 }

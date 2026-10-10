@@ -44,7 +44,7 @@ private val tabs = listOf(
 
 /** The signed-in shell: three tabs, with the song detail pushed on top of them. */
 @Composable
-fun MainScaffold() {
+fun MainScaffold(onSignOut: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
@@ -77,7 +77,7 @@ fun MainScaffold() {
         NavHost(navController, startDestination = WeekRoute, modifier = Modifier.padding(padding)) {
             composable<WeekRoute> { WeekScreen(onSongClick = openSong) }
             composable<LibraryRoute> { LibraryScreen(onSongClick = openSong) }
-            composable<ProgressRoute> { ProgressScreen() }
+            composable<ProgressRoute> { ProgressScreen(onSignOut = onSignOut) }
             composable<SongRoute> { entry ->
                 SongDetailScreen(songId = entry.toRoute<SongRoute>().songId, onBack = { navController.popBackStack() })
             }

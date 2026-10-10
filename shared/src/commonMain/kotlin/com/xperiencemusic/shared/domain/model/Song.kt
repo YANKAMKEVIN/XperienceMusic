@@ -28,14 +28,15 @@ data class Recording(
     val title: String,
     val recordedOn: LocalDate,
     val durationSeconds: Int,
-    val audioUrl: String,
+    /** Location of the audio file in storage (a bucket path with Supabase). */
+    val audioPath: String,
     val isReference: Boolean,
 )
 
 data class VoiceTrack(
     val id: String,
     val voicePart: VoicePart,
-    val audioUrl: String,
+    val audioPath: String,
 )
 
 data class SongLink(val label: String, val url: String)

@@ -4,12 +4,15 @@ import com.xperiencemusic.music.theory.Key
 import com.xperiencemusic.shared.data.repository.InMemoryExerciseRepository
 import com.xperiencemusic.shared.data.repository.InMemorySetlistRepository
 import com.xperiencemusic.shared.data.repository.InMemorySongRepository
+import com.xperiencemusic.shared.domain.model.DomainError
+import com.xperiencemusic.shared.domain.model.DomainException
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Level
 import com.xperiencemusic.shared.domain.model.Member
 import com.xperiencemusic.shared.domain.model.MemberProfile
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Role
+import com.xperiencemusic.shared.domain.model.SessionState
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.repository.SessionRepository
@@ -18,14 +21,35 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.LocalDate
 
 class FakeSessionRepository(member: Member? = null) : SessionRepository {
-    val member = MutableStateFlow(member)
+    val state = MutableStateFlow<SessionState>(member?.let { SessionState.Ready(it) } ?: SessionState.SignedOut)
+    var failure: Exception? = null
+    val requestedCodes = mutableListOf<String>()
 
-    override fun observeCurrentMember(): Flow<Member?> = member
+    override fun observeSession(): Flow<SessionState> = state
 
-    override suspend fun currentMember(): Member? = member.value
+    override suspend fun currentMember(): Member? = (state.value as? SessionState.Ready)?.member
 
-    override suspend fun saveProfile(profile: MemberProfile): Member =
-        Member("me", profile, member.value?.role ?: Role.MEMBER).also { member.value = it }
+    override suspend fun requestCode(email: String) {
+        failure?.let { throw it }
+        requestedCodes += email
+    }
+
+    override suspend fun verifyCode(email: String, code: String) {
+        failure?.let { throw it }
+        if (code != "123456") throw DomainException(DomainError.INVALID_CODE)
+        state.value = SessionState.NeedsProfile(email)
+    }
+
+    override suspend fun saveProfile(profile: MemberProfile): Member {
+        failure?.let { throw it }
+        return Member("me", profile, currentMember()?.role ?: Role.MEMBER).also { state.value = SessionState.Ready(it) }
+    }
+
+    override suspend fun signOut() {
+        state.value = SessionState.SignedOut
+    }
+
+    override suspend fun refresh() = Unit
 }
 
 fun member(

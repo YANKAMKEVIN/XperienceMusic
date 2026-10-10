@@ -17,10 +17,25 @@ class InMemorySongRepository(initialSongs: List<Song>) : SongRepository {
 
     override suspend fun song(id: String): Song? = songs.value[id]
 
-    override suspend fun saveRecordings(songId: String, recordings: List<Recording>) {
+    override suspend fun addRecording(songId: String, recording: Recording, replacingId: String?) =
+        updateRecordings(songId) { recordings ->
+            val kept = recordings.filterNot { it.id == replacingId }
+            kept.map { if (recording.isReference) it.copy(isReference = false) else it } + recording
+        }
+
+    override suspend fun deleteRecording(songId: String, recordingId: String, newReferenceId: String?) =
+        updateRecordings(songId) { recordings ->
+            recordings.filterNot { it.id == recordingId }
+                .map { if (newReferenceId != null) it.copy(isReference = it.id == newReferenceId) else it }
+        }
+
+    override suspend fun setReference(songId: String, recordingId: String) =
+        updateRecordings(songId) { recordings -> recordings.map { it.copy(isReference = it.id == recordingId) } }
+
+    private fun updateRecordings(songId: String, transform: (List<Recording>) -> List<Recording>) {
         songs.update { all ->
             val song = all[songId] ?: return@update all
-            all + (songId to song.copy(recordings = recordings))
+            all + (songId to song.copy(recordings = transform(song.recordings)))
         }
     }
 }

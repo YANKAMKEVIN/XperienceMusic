@@ -13,6 +13,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -33,6 +34,7 @@ import com.xperiencemusic.shared.resources.progress_musicians_soon_text
 import com.xperiencemusic.shared.resources.progress_musicians_soon_title
 import com.xperiencemusic.shared.resources.progress_profile
 import com.xperiencemusic.shared.resources.progress_title
+import com.xperiencemusic.shared.resources.session_sign_out
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -42,13 +44,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun ProgressScreen(viewModel: ProgressViewModel = koinViewModel()) {
+fun ProgressScreen(onSignOut: () -> Unit, viewModel: ProgressViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ProgressScreenContent(state = state)
+    ProgressScreenContent(state = state, onSignOut = onSignOut)
 }
 
 @Composable
-fun ProgressScreenContent(state: ProgressUiState) {
+fun ProgressScreenContent(state: ProgressUiState, onSignOut: () -> Unit) {
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
@@ -88,6 +90,11 @@ fun ProgressScreenContent(state: ProgressUiState) {
                 )
             }
             items(state.exercises, key = { it.id }) { ExerciseRow(it) }
+        }
+        item {
+            TextButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
+                Text(stringResource(Res.string.session_sign_out))
+            }
         }
     }
 }
@@ -145,6 +152,7 @@ private fun ProgressScreenSingerPreview() {
                 ),
                 validatedCount = 1,
             ),
+            onSignOut = {},
         )
     }
 }
@@ -155,6 +163,7 @@ private fun ProgressScreenMusicianPreview() {
     AppTheme {
         ProgressScreenContent(
             ProgressUiState(isLoading = false, name = "Daniel", instrument = Instrument.PIANO, level = Level.PRO),
+            onSignOut = {},
         )
     }
 }

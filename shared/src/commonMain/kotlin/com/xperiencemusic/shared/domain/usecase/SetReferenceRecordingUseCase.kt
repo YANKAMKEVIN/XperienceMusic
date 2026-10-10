@@ -17,8 +17,9 @@ class SetReferenceRecordingUseCase(
         }
         if (song.recordings.none { it.id == recordingId }) return DomainResult.Failure(DomainError.NOT_FOUND)
 
-        val updated = song.recordings.map { it.copy(isReference = it.id == recordingId) }
-        songs.saveRecordings(songId, updated)
-        return DomainResult.Success(song.copy(recordings = updated))
+        return runRemote {
+            songs.setReference(songId, recordingId)
+            song.copy(recordings = song.recordings.map { it.copy(isReference = it.id == recordingId) })
+        }
     }
 }

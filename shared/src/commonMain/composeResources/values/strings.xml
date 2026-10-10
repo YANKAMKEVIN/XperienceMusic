@@ -24,6 +24,28 @@
     <string name="level_confirmed">Confirmé</string>
     <string name="level_pro">Pro</string>
 
+    <!-- Sign in -->
+    <string name="signin_title">Connexion</string>
+    <string name="signin_email_subtitle">Entre l'adresse e-mail avec laquelle le groupe t'a invité. Tu recevras un code à 6 chiffres.</string>
+    <string name="signin_email_label">Adresse e-mail</string>
+    <string name="signin_send_code">Recevoir le code</string>
+    <string name="signin_code_subtitle">Un code a été envoyé à %1$s.</string>
+    <string name="signin_code_label">Code à 6 chiffres</string>
+    <string name="signin_verify">Se connecter</string>
+    <string name="signin_change_email">Changer d'adresse</string>
+    <string name="signin_demo_hint">Mode démo, sans serveur : le code est %1$s.</string>
+    <string name="signin_error_email">Cette adresse e-mail ne semble pas valide.</string>
+    <string name="signin_error_code">Code incorrect ou expiré.</string>
+    <string name="signin_error_network">Connexion au serveur impossible. Vérifie ta connexion internet.</string>
+
+    <!-- Session -->
+    <string name="session_not_invited_title">Tu n'es pas encore dans le groupe</string>
+    <string name="session_not_invited_text">Le compte %1$s n'a pas été invité. Demande au responsable de t'ajouter, puis reconnecte-toi.</string>
+    <string name="session_unreachable_title">Connexion impossible</string>
+    <string name="session_unreachable_text">On n'arrive pas à joindre le serveur. Vérifie ta connexion internet.</string>
+    <string name="session_retry">Réessayer</string>
+    <string name="session_sign_out">Se déconnecter</string>
+
     <!-- Navigation -->
     <string name="tab_week">Cette semaine</string>
     <string name="tab_library">Chants</string>

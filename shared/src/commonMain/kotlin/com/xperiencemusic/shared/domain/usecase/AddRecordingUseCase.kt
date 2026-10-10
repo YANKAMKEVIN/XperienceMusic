@@ -32,8 +32,10 @@ class AddRecordingUseCase(
 
         val becomesReference = kept.isEmpty() || replaced?.isReference == true || recording.isReference
         val added = recording.copy(isReference = becomesReference)
-        val updated = kept.map { if (becomesReference) it.copy(isReference = false) else it } + added
-        songs.saveRecordings(songId, updated)
-        return DomainResult.Success(song.copy(recordings = updated))
+        return runRemote {
+            songs.addRecording(songId, added, replaced?.id)
+            val updated = kept.map { if (becomesReference) it.copy(isReference = false) else it } + added
+            song.copy(recordings = updated)
+        }
     }
 }
