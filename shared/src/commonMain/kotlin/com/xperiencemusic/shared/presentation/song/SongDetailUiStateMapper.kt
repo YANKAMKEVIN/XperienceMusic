@@ -4,9 +4,12 @@ import com.xperiencemusic.music.chart.ChordChart
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.Member
 import com.xperiencemusic.shared.domain.model.Permission
+import com.xperiencemusic.shared.domain.model.PlaybackState
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.presentation.common.Formatting
+import com.xperiencemusic.shared.presentation.common.PlaybackStatus
+import com.xperiencemusic.shared.presentation.common.statusOf
 
 /** Screen-local choices that are not stored anywhere. */
 data class SongDetailLocalState(
@@ -20,7 +23,12 @@ data class SongDetailLocalState(
  * Pure derivation of the screen state; the ViewModel only combines its inputs.
  * The reference recording is listed first, then the most recent.
  */
-fun deriveSongDetailState(song: Song?, member: Member?, local: SongDetailLocalState): SongDetailUiState {
+fun deriveSongDetailState(
+    song: Song?,
+    member: Member?,
+    local: SongDetailLocalState,
+    playback: PlaybackState = PlaybackState(),
+): SongDetailUiState {
     if (song == null) return SongDetailUiState(isLoading = false, isMissing = true)
 
     val displayedKey = song.key.transposedBy(local.transposeSemitones)
@@ -28,7 +36,7 @@ fun deriveSongDetailState(song: Song?, member: Member?, local: SongDetailLocalSt
     val keyNotation = if (local.notation == Notation.NASHVILLE) Notation.SOLFEGE else local.notation
     val recordings = song.recordings
         .sortedWith(compareByDescending<Recording> { it.isReference }.thenByDescending { it.recordedOn })
-        .map { it.toUi() }
+        .map { it.toUi(playback.statusOf(it.id)) }
 
     return SongDetailUiState(
         isLoading = false,
@@ -42,17 +50,18 @@ fun deriveSongDetailState(song: Song?, member: Member?, local: SongDetailLocalSt
         maxRecordings = Song.MAX_RECORDINGS,
         canManageRecordings = member?.role?.can(Permission.MANAGE_RECORDINGS) == true,
         canEditSong = member?.role?.can(Permission.EDIT_SONG) == true,
-        voiceTracks = song.voiceTracks.map { it.voicePart },
+        voiceTracks = song.voiceTracks.map { VoiceTrackUi(it.id, it.voicePart, playback.statusOf(it.id)) },
         links = song.links.map { LinkUi(it.label, it.url) },
         pendingDeletion = recordings.firstOrNull { it.id == local.pendingDeletionId },
         message = local.message,
     )
 }
 
-private fun Recording.toUi() = RecordingUi(
+private fun Recording.toUi(playback: PlaybackStatus) = RecordingUi(
     id = id,
     title = title,
     date = Formatting.shortDate(recordedOn),
     duration = Formatting.duration(durationSeconds),
     isReference = isReference,
+    playback = playback,
 )

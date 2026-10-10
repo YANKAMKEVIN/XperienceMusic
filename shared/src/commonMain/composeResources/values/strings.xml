@@ -154,6 +154,14 @@
     <string name="recording_form_error_limit">Ce chant a déjà 3 versions : choisis celle à remplacer.</string>
     <string name="action_add_recording">Ajouter une version</string>
 
+    <!-- Player -->
+    <string name="player_play">Écouter %1$s</string>
+    <string name="player_pause">Mettre en pause %1$s</string>
+    <string name="player_loading">Chargement de %1$s</string>
+    <string name="player_close">Fermer le lecteur</string>
+    <string name="player_error">Lecture impossible. Vérifie ta connexion.</string>
+    <string name="player_position">Position dans l'enregistrement</string>
+
     <!-- Progress -->
     <string name="progress_title">Ma progression</string>
     <string name="progress_profile">%1$s · %2$s</string>

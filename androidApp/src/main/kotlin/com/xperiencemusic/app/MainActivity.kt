@@ -6,6 +6,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.xperiencemusic.shared.di.initKoin
+import org.koin.android.ext.koin.androidContext
 import com.xperiencemusic.shared.navigation.XperienceMusicApp
 
 class MainActivity : ComponentActivity() {
@@ -16,7 +17,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
-        initKoin()
+        initKoin { androidContext(applicationContext) }
         setContent { XperienceMusicApp() }
     }
 }

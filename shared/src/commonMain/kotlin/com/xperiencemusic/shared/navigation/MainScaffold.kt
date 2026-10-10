@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.navigation
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -14,9 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -27,6 +30,7 @@ import com.xperiencemusic.shared.resources.tab_library
 import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.tab_week
 import com.xperiencemusic.shared.ui.library.LibraryScreen
+import com.xperiencemusic.shared.ui.player.MiniPlayer
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
 import com.xperiencemusic.shared.ui.recordingform.RecordingFormScreen
 import com.xperiencemusic.shared.ui.setlisteditor.SetlistEditorScreen
@@ -55,24 +59,10 @@ fun MainScaffold(onSignOut: () -> Unit) {
 
     Scaffold(
         bottomBar = {
-            if (isOnTab) {
-                NavigationBar {
-                    tabs.forEach { tab ->
-                        val label = stringResource(tab.label)
-                        NavigationBarItem(
-                            selected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true,
-                            onClick = {
-                                navController.navigate(tab.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = { Icon(tab.icon, contentDescription = null) },
-                            label = { Text(label) },
-                        )
-                    }
-                }
+            Column {
+                // Above the tabs, and alone at the bottom of pushed screens, so playback stays reachable.
+                MiniPlayer(isAtScreenBottom = !isOnTab)
+                if (isOnTab) TabBar(navController, destination)
             }
         },
     ) { padding ->
@@ -122,6 +112,27 @@ fun MainScaffold(onSignOut: () -> Unit) {
                     },
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun TabBar(navController: NavHostController, destination: NavDestination?) {
+    NavigationBar {
+        tabs.forEach { tab ->
+            val label = stringResource(tab.label)
+            NavigationBarItem(
+                selected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true,
+                onClick = {
+                    navController.navigate(tab.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                icon = { Icon(tab.icon, contentDescription = null) },
+                label = { Text(label) },
+            )
         }
     }
 }

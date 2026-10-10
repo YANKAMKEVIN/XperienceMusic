@@ -8,6 +8,8 @@ class InMemoryAudioStorage : AudioStorage {
 
     val paths: Set<String> get() = files.keys
 
+    fun bytes(path: String): ByteArray? = files[path]
+
     override suspend fun upload(path: String, mimeType: String, bytes: ByteArray) {
         files[path] = bytes
     }

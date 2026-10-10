@@ -3,7 +3,9 @@ package com.xperiencemusic.shared.di
 import com.xperiencemusic.shared.data.local.SystemDateProvider
 import com.xperiencemusic.shared.data.remote.SupabaseConfig
 import com.xperiencemusic.shared.data.remote.createXperienceSupabaseClient
+import com.xperiencemusic.shared.data.repository.DemoAudioUrlProvider
 import com.xperiencemusic.shared.data.repository.InMemoryAudioStorage
+import com.xperiencemusic.shared.data.repository.SupabaseAudioUrlProvider
 import com.xperiencemusic.shared.data.repository.SupabaseAudioStorage
 import com.xperiencemusic.shared.data.repository.SupabaseExerciseRepository
 import com.xperiencemusic.shared.data.repository.SupabaseSessionRepository
@@ -19,6 +21,7 @@ import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
 import com.xperiencemusic.shared.domain.usecase.UploadRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
 import com.xperiencemusic.shared.domain.usecase.VerifySignInCodeUseCase
+import com.xperiencemusic.shared.presentation.player.MiniPlayerViewModel
 import com.xperiencemusic.shared.presentation.recordingform.RecordingFormViewModel
 import com.xperiencemusic.shared.presentation.setlisteditor.SetlistEditorViewModel
 import com.xperiencemusic.shared.presentation.signin.SignInViewModel
@@ -34,6 +37,7 @@ import com.xperiencemusic.shared.data.seed.SampleSetlist
 import com.xperiencemusic.shared.data.seed.SampleSongs
 import com.xperiencemusic.shared.data.seed.SingerExercises
 import com.xperiencemusic.shared.domain.repository.AudioStorage
+import com.xperiencemusic.shared.domain.repository.AudioUrlProvider
 import com.xperiencemusic.shared.domain.repository.DateProvider
 import com.xperiencemusic.shared.domain.repository.ExerciseRepository
 import com.xperiencemusic.shared.domain.repository.SessionRepository
@@ -43,6 +47,7 @@ import com.xperiencemusic.shared.domain.usecase.AddRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.CompleteOnboardingUseCase
 import com.xperiencemusic.shared.domain.usecase.DeleteRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
@@ -55,16 +60,20 @@ import com.xperiencemusic.shared.presentation.onboarding.OnboardingViewModel
 import com.xperiencemusic.shared.presentation.progress.ProgressViewModel
 import com.xperiencemusic.shared.presentation.song.SongDetailViewModel
 import com.xperiencemusic.shared.presentation.week.WeekViewModel
+import com.xperiencemusic.shared.platform.platformModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
 
 /** Supabase when `local.properties` holds the project keys, otherwise an offline demo. */
 val dataModule = module {
     single<DateProvider> { SystemDateProvider() }
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+    // Drives the platform players, which expect the main thread.
+    single { PlaybackController(get(), get(), CoroutineScope(SupervisorJob() + Dispatchers.Main)) }
     if (SupabaseConfig.isConfigured) {
         single { AppEnvironment(isDemo = false, demoCode = null) }
         single { createXperienceSupabaseClient() }
@@ -73,13 +82,16 @@ val dataModule = module {
         single<SetlistRepository> { SupabaseSetlistRepository(get()) }
         single<ExerciseRepository> { SupabaseExerciseRepository(get(), SingerExercises.all) }
         single<AudioStorage> { SupabaseAudioStorage(get()) }
+        single<AudioUrlProvider> { SupabaseAudioUrlProvider(get()) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
         single<SessionRepository> { InMemorySessionRepository() }
         single<SongRepository> { InMemorySongRepository(SampleSongs.all(get<DateProvider>().today())) }
         single<SetlistRepository> { InMemorySetlistRepository(SampleSetlist.forWeekOf(get<DateProvider>().today())) }
         single<ExerciseRepository> { InMemoryExerciseRepository(SingerExercises.all) }
-        single<AudioStorage> { InMemoryAudioStorage() }
+        single { InMemoryAudioStorage() }
+        single<AudioStorage> { get<InMemoryAudioStorage>() }
+        single<AudioUrlProvider> { DemoAudioUrlProvider(get(), get()) }
     }
 }
 
@@ -115,15 +127,22 @@ val presentationModule = module {
     viewModelOf(::SignInViewModel)
     viewModelOf(::SetlistEditorViewModel)
     viewModelOf(::RecordingFormViewModel)
+    viewModelOf(::MiniPlayerViewModel)
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
     viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get()) }
 }
 
 private var isKoinStarted = false
 
-/** Starts Koin once per process; safe to call from every Activity creation. */
-fun initKoin() {
+/**
+ * Starts Koin once per process; safe to call from every Activity creation. [config] lets the
+ * platform add what it alone can provide (the Android context).
+ */
+fun initKoin(config: KoinAppDeclaration = {}) {
     if (isKoinStarted) return
-    startKoin { modules(dataModule, domainModule, presentationModule) }
+    startKoin {
+        config()
+        modules(platformModule, dataModule, domainModule, presentationModule)
+    }
     isKoinStarted = true
 }

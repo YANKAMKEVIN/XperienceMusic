@@ -5,14 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.music.theory.SEMITONES_PER_OCTAVE
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
+import com.xperiencemusic.shared.domain.model.PlaybackTrack
+import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.usecase.DeleteRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
+import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.SetReferenceRecordingUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,11 +27,13 @@ class SongDetailViewModel(
     observeCurrentMember: ObserveCurrentMemberUseCase,
     private val setReferenceRecording: SetReferenceRecordingUseCase,
     private val deleteRecording: DeleteRecordingUseCase,
+    private val playback: PlaybackController,
 ) : ViewModel() {
     private val local = MutableStateFlow(SongDetailLocalState())
+    private val song = observeSong(songId)
 
     val state: StateFlow<SongDetailUiState> =
-        combine(observeSong(songId), observeCurrentMember(), local, ::deriveSongDetailState)
+        combine(song, observeCurrentMember(), local, playback.state, ::deriveSongDetailState)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongDetailUiState())
 
     fun onEvent(event: SongDetailEvent) {
@@ -41,6 +47,20 @@ class SongDetailViewModel(
             SongDetailEvent.DeleteDismissed -> local.update { it.copy(pendingDeletionId = null) }
             SongDetailEvent.DeleteConfirmed -> confirmDeletion()
             SongDetailEvent.MessageShown -> local.update { it.copy(message = null) }
+            is SongDetailEvent.PlayRecordingClicked -> play { current ->
+                current.recordings.firstOrNull { it.id == event.recordingId }
+                    ?.let { PlaybackTrack(it.id, it.title, current.title, it.audioPath) }
+            }
+            is SongDetailEvent.PlayVoiceTrackClicked -> play { current ->
+                current.voiceTracks.firstOrNull { it.id == event.trackId }
+                    ?.let { PlaybackTrack(it.id, event.title, current.title, it.audioPath) }
+            }
+        }
+    }
+
+    private fun play(trackOf: (Song) -> PlaybackTrack?) {
+        viewModelScope.launch {
+            song.first()?.let(trackOf)?.let(playback::playOrToggle)
         }
     }
 

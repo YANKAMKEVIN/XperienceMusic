@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,7 +26,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.chart.ChartSegment
@@ -64,6 +65,8 @@ import com.xperiencemusic.shared.presentation.song.SongDetailEvent
 import com.xperiencemusic.shared.presentation.song.SongDetailUiState
 import com.xperiencemusic.shared.presentation.song.SongDetailViewModel
 import com.xperiencemusic.shared.presentation.song.SongMessage
+import com.xperiencemusic.shared.presentation.song.VoiceTrackUi
+import com.xperiencemusic.shared.presentation.common.PlaybackStatus
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.action_add_recording
 import com.xperiencemusic.shared.resources.action_back
@@ -94,6 +97,7 @@ import com.xperiencemusic.shared.resources.song_transpose_reset
 import com.xperiencemusic.shared.resources.song_transpose_up
 import com.xperiencemusic.shared.resources.song_voice_tracks_title
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.PlayPauseButton
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -228,7 +232,7 @@ private fun SongDetailBody(state: SongDetailUiState, onEvent: (SongDetailEvent) 
             }
         }
         if (state.voiceTracks.isNotEmpty()) {
-            item { VoiceTracks(state.voiceTracks) }
+            item { VoiceTracks(state.voiceTracks, onEvent) }
         }
         if (state.links.isNotEmpty()) {
             item { Links(state.links) }
@@ -285,16 +289,24 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
 private fun RecordingRow(recording: RecordingUi, canManage: Boolean, onEvent: (SongDetailEvent) -> Unit) {
     AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (recording.isReference) {
-                Icon(
-                    Icons.Filled.Star,
-                    contentDescription = stringResource(Res.string.song_recording_reference),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(Modifier.width(Spacing.m))
-            }
+            PlayPauseButton(
+                status = recording.playback,
+                itemLabel = recording.title,
+                onClick = { onEvent(SongDetailEvent.PlayRecordingClicked(recording.id)) },
+            )
+            Spacer(Modifier.width(Spacing.m))
             Column(Modifier.weight(1f)) {
-                Text(recording.title, style = MaterialTheme.typography.titleSmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (recording.isReference) {
+                        Icon(
+                            Icons.Filled.Star,
+                            contentDescription = stringResource(Res.string.song_recording_reference),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(end = Spacing.xs).size(16.dp),
+                        )
+                    }
+                    Text(recording.title, style = MaterialTheme.typography.titleSmall)
+                }
                 Text(
                     stringResource(Res.string.song_recording_meta, recording.date, recording.duration),
                     style = MaterialTheme.typography.labelMedium,
@@ -336,11 +348,24 @@ private fun RecordingMenu(recording: RecordingUi, onEvent: (SongDetailEvent) -> 
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun VoiceTracks(voiceTracks: List<VoicePart>) {
+private fun VoiceTracks(voiceTracks: List<VoiceTrackUi>, onEvent: (SongDetailEvent) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
         SectionTitle(stringResource(Res.string.song_voice_tracks_title))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-            voiceTracks.forEach { part -> AssistChip(onClick = {}, label = { Text(part.label()) }) }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Spacing.m),
+            verticalArrangement = Arrangement.spacedBy(Spacing.s),
+        ) {
+            voiceTracks.forEach { track ->
+                val label = track.voicePart.label()
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    PlayPauseButton(
+                        status = track.playback,
+                        itemLabel = label,
+                        onClick = { onEvent(SongDetailEvent.PlayVoiceTrackClicked(track.id, label)) },
+                    )
+                    Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = Spacing.xs))
+                }
+            }
         }
     }
 }
@@ -373,13 +398,13 @@ private fun SongDetailScreenPreview() {
                     ChartLine.Lyrics(listOf(ChartSegment("Mi", "À toi la "), ChartSegment("Si", "gloire"))),
                 ),
                 recordings = listOf(
-                    RecordingUi("1", "Répétition du mardi", "14 mai 2026", "3:32", isReference = true),
+                    RecordingUi("1", "Répétition du mardi", "14 mai 2026", "3:32", isReference = true, playback = PlaybackStatus.PLAYING),
                     RecordingUi("2", "Version acoustique", "2 août 2026", "3:18", isReference = false),
                 ),
                 maxRecordings = 3,
                 canManageRecordings = true,
                 canEditSong = true,
-                voiceTracks = listOf(VoicePart.SOPRANO, VoicePart.ALTO),
+                voiceTracks = listOf(VoiceTrackUi("s", VoicePart.SOPRANO), VoiceTrackUi("a", VoicePart.ALTO)),
             ),
             onEvent = {},
             onBack = {},

@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.presentation.song
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.VoicePart
+import com.xperiencemusic.shared.presentation.common.PlaybackStatus
 
 data class SongDetailUiState(
     val isLoading: Boolean = true,
@@ -18,7 +19,7 @@ data class SongDetailUiState(
     val maxRecordings: Int = 0,
     val canManageRecordings: Boolean = false,
     val canEditSong: Boolean = false,
-    val voiceTracks: List<VoicePart> = emptyList(),
+    val voiceTracks: List<VoiceTrackUi> = emptyList(),
     val links: List<LinkUi> = emptyList(),
     val pendingDeletion: RecordingUi? = null,
     val message: SongMessage? = null,
@@ -30,6 +31,13 @@ data class RecordingUi(
     val date: String,
     val duration: String,
     val isReference: Boolean,
+    val playback: PlaybackStatus = PlaybackStatus.IDLE,
+)
+
+data class VoiceTrackUi(
+    val id: String,
+    val voicePart: VoicePart,
+    val playback: PlaybackStatus = PlaybackStatus.IDLE,
 )
 
 data class LinkUi(val label: String, val url: String)
@@ -46,4 +54,7 @@ sealed interface SongDetailEvent {
     data object DeleteConfirmed : SongDetailEvent
     data object DeleteDismissed : SongDetailEvent
     data object MessageShown : SongDetailEvent
+    data class PlayRecordingClicked(val recordingId: String) : SongDetailEvent
+    /** [title] is the voice name as displayed, shown again in the player. */
+    data class PlayVoiceTrackClicked(val trackId: String, val title: String) : SongDetailEvent
 }
