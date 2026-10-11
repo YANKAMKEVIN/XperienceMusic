@@ -16,6 +16,7 @@ import com.xperiencemusic.shared.resources.session_retry
 import com.xperiencemusic.shared.resources.session_sign_out
 import com.xperiencemusic.shared.resources.session_unreachable_text
 import com.xperiencemusic.shared.resources.session_unreachable_title
+import com.xperiencemusic.shared.ui.brand.BrandSplash
 import com.xperiencemusic.shared.ui.onboarding.OnboardingScreen
 import com.xperiencemusic.shared.ui.session.SessionMessageScreen
 import com.xperiencemusic.shared.ui.signin.SignInScreen
@@ -38,7 +39,7 @@ private fun AppRoot(viewModel: AppViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val signOut = { viewModel.onEvent(AppEvent.SignOutClicked) }
     when (val current = state) {
-        AppUiState.Loading -> Unit
+        AppUiState.Loading -> BrandSplash()
         AppUiState.SignIn -> SignInScreen()
         AppUiState.Unreachable -> SessionMessageScreen(
             title = stringResource(Res.string.session_unreachable_title),

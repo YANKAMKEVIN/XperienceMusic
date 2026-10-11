@@ -1,8 +1,11 @@
 <resources>
-    <string name="app_name">XperienceMusic</string>
+    <string name="app_name">Xperience Music</string>
+    <string name="brand_wordmark_top">XPERIENCE</string>
+    <string name="brand_wordmark_bottom">MUSIC</string>
+    <string name="brand_tagline">RÉPÉTER · ENREGISTRER · GRANDIR</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_title">Bienvenue dans XperienceMusic</string>
+    <string name="onboarding_title">Bienvenue dans Xperience Music</string>
     <string name="onboarding_subtitle">Dis-nous qui tu es dans le groupe pour personnaliser ton espace.</string>
     <string name="onboarding_name_label">Ton prénom</string>
     <string name="onboarding_instrument_title">Ton rôle dans la louange</string>

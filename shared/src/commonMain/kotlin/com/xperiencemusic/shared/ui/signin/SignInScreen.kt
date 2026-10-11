@@ -2,7 +2,6 @@ package com.xperiencemusic.shared.ui.signin
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -15,7 +14,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,6 +47,8 @@ import com.xperiencemusic.shared.resources.signin_error_too_many
 import com.xperiencemusic.shared.resources.signin_send_code
 import com.xperiencemusic.shared.resources.signin_title
 import com.xperiencemusic.shared.resources.signin_verify
+import com.xperiencemusic.shared.ui.brand.BrandBackground
+import com.xperiencemusic.shared.ui.brand.BrandHeader
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -63,7 +63,7 @@ fun SignInScreen(viewModel: SignInViewModel = koinViewModel()) {
 @Composable
 fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
     val submit = { onEvent(SignInEvent.SubmitClicked) }
-    Surface(Modifier.fillMaxSize()) {
+    BrandBackground {
         Column(
             modifier = Modifier
                 .safeDrawingPadding()
@@ -72,7 +72,8 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                 .padding(Spacing.xl),
             verticalArrangement = Arrangement.spacedBy(Spacing.l),
         ) {
-            Text(stringResource(Res.string.signin_title), style = MaterialTheme.typography.headlineMedium)
+            BrandHeader()
+            Text(stringResource(Res.string.signin_title), style = MaterialTheme.typography.headlineSmall)
             when (state.step) {
                 SignInStep.EMAIL -> {
                     Text(stringResource(Res.string.signin_email_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)

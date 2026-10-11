@@ -2,7 +2,6 @@ package com.xperiencemusic.shared.ui.onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -13,7 +12,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +36,8 @@ import com.xperiencemusic.shared.resources.onboarding_voice_title
 import com.xperiencemusic.shared.ui.components.ChoiceChips
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.brand.BrandBackground
+import com.xperiencemusic.shared.ui.brand.BrandHeader
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -52,7 +52,7 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = koinViewModel()) {
 
 @Composable
 fun OnboardingScreenContent(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit) {
-    Surface(Modifier.fillMaxSize()) {
+    BrandBackground {
         Column(
             modifier = Modifier
                 .safeDrawingPadding()
@@ -61,7 +61,8 @@ fun OnboardingScreenContent(state: OnboardingUiState, onEvent: (OnboardingEvent)
                 .padding(Spacing.xl),
             verticalArrangement = Arrangement.spacedBy(Spacing.l),
         ) {
-            Text(stringResource(Res.string.onboarding_title), style = MaterialTheme.typography.headlineMedium)
+            BrandHeader()
+            Text(stringResource(Res.string.onboarding_title), style = MaterialTheme.typography.headlineSmall)
             Text(
                 stringResource(Res.string.onboarding_subtitle),
                 style = MaterialTheme.typography.bodyLarge,

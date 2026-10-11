@@ -1,30 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- XperienceMusic eighth note, same drawing as the iOS icon, inside the 72dp safe zone. -->
+<!-- XM monogram, same drawing as design/make_icon.swift, inside the 66dp safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:pathData="M54,18a36,36 0,1 0,0.01 0z"
-        android:strokeWidth="1.9"
-        android:strokeColor="#479D8CF5"
+        android:pathData="M26.05,71.11L45.3,42.59M26.05,42.59L45.3,71.11"
+        android:strokeWidth="6.84"
+        android:strokeColor="#F4F3FA"
         android:fillColor="#00000000" />
-    <path
-        android:pathData="M58.7,30.3h4.5v34h-4.5z"
-        android:fillColor="#F5EFE0" />
-    <path
-        android:pathData="M61,32.6C64.3,39.6 80.7,44.7 74.6,57.1"
-        android:strokeWidth="4.5"
-        android:strokeLineCap="round"
-        android:strokeColor="#E8B04A"
-        android:fillColor="#00000000" />
-    <group
-        android:pivotX="50.9"
-        android:pivotY="71.5"
-        android:rotation="-24">
+    <group android:name="m">
+        <clip-path android:pathData="M0,40.24H108V108H0Z" />
         <path
-            android:pathData="M37.3,71.5a13.6,9.5 0,1 0,27.2 0a13.6,9.5 0,1 0,-27.2 0z"
-            android:fillColor="#F5EFE0" />
+            android:pathData="M51.36,71.11L51.36,42.59L60.99,56.85L70.61,42.59"
+            android:strokeWidth="6.56"
+            android:strokeLineJoin="miter"
+            android:strokeMiterLimit="10"
+            android:fillColor="#00000000">
+            <aapt:attr name="android:strokeColor">
+                <gradient android:type="linear" android:startX="46.58" android:startY="34.04" android:endX="79.53" android:endY="75.39">
+                    <item android:offset="0" android:color="#FFB46CFF" />
+                    <item android:offset="0.5" android:color="#FF6D5BFF" />
+                    <item android:offset="1" android:color="#FF3D7BFF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+    <path android:pathData="M67.33,35.46H73.89V68.97H67.33Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="46.58" android:startY="34.04" android:endX="79.53" android:endY="75.39">
+                <item android:offset="0" android:color="#FFB46CFF" />
+                <item android:offset="0.5" android:color="#FF6D5BFF" />
+                <item android:offset="1" android:color="#FF3D7BFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M72.75,36.53C75.6,40.45 82.02,43.3 78.46,49.72"
+        android:strokeWidth="3.99"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:type="linear" android:startX="46.58" android:startY="34.04" android:endX="79.53" android:endY="75.39">
+                <item android:offset="0" android:color="#FFB46CFF" />
+                <item android:offset="0.5" android:color="#FF6D5BFF" />
+                <item android:offset="1" android:color="#FF3D7BFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <group android:pivotX="65.84" android:pivotY="69.54" android:rotation="-24">
+        <path android:pathData="M58.71,69.54a7.13,4.99 0,1 0,14.26 0a7.13,4.99 0,1 0,-14.26 0z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="46.58" android:startY="34.04" android:endX="79.53" android:endY="75.39">
+                    <item android:offset="0" android:color="#FFB46CFF" />
+                    <item android:offset="0.5" android:color="#FF6D5BFF" />
+                    <item android:offset="1" android:color="#FF3D7BFF" />
+                </gradient>
+            </aapt:attr>
+        </path>
     </group>
 </vector>
