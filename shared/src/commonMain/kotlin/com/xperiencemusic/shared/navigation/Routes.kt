@@ -23,3 +23,6 @@ data object SetlistEditorRoute
 
 @Serializable
 data class RecordingFormRoute(val songId: String)
+
+@Serializable
+data class ExerciseRoute(val exerciseId: String)

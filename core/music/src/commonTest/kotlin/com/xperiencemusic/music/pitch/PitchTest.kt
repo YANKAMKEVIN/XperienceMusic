@@ -40,6 +40,20 @@ class PitchTest {
     }
 
     @Test
+    fun `la note de référence générée est reconnue par le détecteur`() {
+        val wav = ToneGenerator.wav(midi = 57, seconds = 0.5) // La3
+        assertEquals("RIFF", wav.copyOfRange(0, 4).decodeToString())
+        val samples = FloatArray((wav.size - 44) / 2) { i ->
+            val low = wav[44 + 2 * i].toInt() and 0xFF
+            val high = wav[45 + 2 * i].toInt()
+            ((high shl 8) or low).toShort() / Short.MAX_VALUE.toFloat()
+        }
+        val detector = YinPitchDetector(sampleRate)
+        val frame = samples.copyOfRange(5_000, 5_000 + detector.minimumFrameSize)
+        assertEquals(57, Pitch.nearestNote(assertNotNull(detector.detect(frame)).frequencyHz).midi)
+    }
+
+    @Test
     fun `yin ne renvoie rien sur du silence`() {
         val detector = YinPitchDetector(sampleRate)
         assertNull(detector.detect(FloatArray(detector.minimumFrameSize)))
@@ -52,6 +66,18 @@ class PitchTest {
         val result = HoldNoteEvaluator(targetMidi = 69, requiredSeconds = 3.0).evaluate(frames, frameSeconds = 0.1)
         assertTrue(result.isSuccess)
         assertEquals(3.6, result.longestHoldSeconds, absoluteTolerance = 1e-9)
+    }
+
+    @Test
+    fun `le suivi en direct remonte l'écart et la tenue en cours`() {
+        val tracker = HoldNoteTracker(targetMidi = 69, requiredSeconds = 0.3)
+        val sharp = tracker.push(Pitch.midiToFrequency(69.2), 0.1)
+        assertEquals(20.0, sharp.centsFromTarget!!, absoluteTolerance = 0.01)
+        assertEquals(0.1, sharp.currentHoldSeconds, absoluteTolerance = 1e-9)
+        assertFalse(sharp.isSuccess)
+        tracker.push(Pitch.midiToFrequency(69.0), 0.1)
+        assertTrue(tracker.push(Pitch.midiToFrequency(68.9), 0.1).isSuccess)
+        assertNull(tracker.push(null, 0.1).centsFromTarget)
     }
 
     @Test

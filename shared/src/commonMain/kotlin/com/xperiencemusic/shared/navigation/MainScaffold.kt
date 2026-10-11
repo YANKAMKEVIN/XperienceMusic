@@ -29,6 +29,7 @@ import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.tab_library
 import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.tab_week
+import com.xperiencemusic.shared.ui.exercise.ExerciseScreen
 import com.xperiencemusic.shared.ui.library.LibraryScreen
 import com.xperiencemusic.shared.ui.player.MiniPlayer
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
@@ -80,7 +81,12 @@ fun MainScaffold(onSignOut: () -> Unit) {
             composable<LibraryRoute> {
                 LibraryScreen(onSongClick = openSong, onAddSong = { navController.navigate(SongEditorRoute()) })
             }
-            composable<ProgressRoute> { ProgressScreen(onSignOut = onSignOut) }
+            composable<ProgressRoute> {
+                ProgressScreen(onExerciseClick = { navController.navigate(ExerciseRoute(it)) }, onSignOut = onSignOut)
+            }
+            composable<ExerciseRoute> { entry ->
+                ExerciseScreen(exerciseId = entry.toRoute<ExerciseRoute>().exerciseId, onBack = { navController.popBackStack() })
+            }
             composable<SongRoute> { entry ->
                 val songId = entry.toRoute<SongRoute>().songId
                 SongDetailScreen(

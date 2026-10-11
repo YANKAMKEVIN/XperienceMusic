@@ -27,6 +27,8 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Le micro écoute ta voix pendant les exercices pour vérifier la note. Rien n'est enregistré ni envoyé.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

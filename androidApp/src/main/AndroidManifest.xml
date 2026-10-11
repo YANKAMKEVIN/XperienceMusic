@@ -5,6 +5,8 @@
     <!-- Keeps playing with the screen off; media notifications need no POST_NOTIFICATIONS grant. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- Singing exercises: the pitch is analysed on the phone, nothing is recorded or sent. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

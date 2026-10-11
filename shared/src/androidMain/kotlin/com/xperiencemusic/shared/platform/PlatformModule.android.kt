@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.platform
 import androidx.media3.exoplayer.ExoPlayer
 import com.xperiencemusic.shared.domain.repository.AudioPlayer
 import com.xperiencemusic.shared.domain.repository.FileStore
+import com.xperiencemusic.shared.domain.repository.MicrophoneInput
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -12,4 +13,5 @@ actual val platformModule: Module = module {
     single<ExoPlayer> { AndroidAudioPlayer.buildExoPlayer(androidContext()) }
     single<AudioPlayer> { AndroidAudioPlayer(androidContext(), get()) }
     single<FileStore> { AndroidFileStore(androidContext()) }
+    single<MicrophoneInput> { AndroidMicrophone() }
 }

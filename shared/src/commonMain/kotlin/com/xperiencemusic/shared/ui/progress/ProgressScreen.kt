@@ -44,13 +44,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun ProgressScreen(onSignOut: () -> Unit, viewModel: ProgressViewModel = koinViewModel()) {
+fun ProgressScreen(
+    onExerciseClick: (String) -> Unit,
+    onSignOut: () -> Unit,
+    viewModel: ProgressViewModel = koinViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ProgressScreenContent(state = state, onSignOut = onSignOut)
+    ProgressScreenContent(state = state, onExerciseClick = onExerciseClick, onSignOut = onSignOut)
 }
 
 @Composable
-fun ProgressScreenContent(state: ProgressUiState, onSignOut: () -> Unit) {
+fun ProgressScreenContent(state: ProgressUiState, onExerciseClick: (String) -> Unit, onSignOut: () -> Unit) {
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
@@ -89,7 +93,7 @@ fun ProgressScreenContent(state: ProgressUiState, onSignOut: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(top = Spacing.s),
                 )
             }
-            items(state.exercises, key = { it.id }) { ExerciseRow(it) }
+            items(state.exercises, key = { it.id }) { ExerciseRow(it, onClick = { onExerciseClick(it.id) }) }
         }
         item {
             TextButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
@@ -100,8 +104,8 @@ fun ProgressScreenContent(state: ProgressUiState, onSignOut: () -> Unit) {
 }
 
 @Composable
-private fun ExerciseRow(exercise: ExerciseUi) {
-    AppCard {
+private fun ExerciseRow(exercise: ExerciseUi, onClick: () -> Unit) {
+    AppCard(onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "${exercise.position}. ${exercise.title}",
@@ -152,6 +156,7 @@ private fun ProgressScreenSingerPreview() {
                 ),
                 validatedCount = 1,
             ),
+            onExerciseClick = {},
             onSignOut = {},
         )
     }
@@ -163,6 +168,7 @@ private fun ProgressScreenMusicianPreview() {
     AppTheme {
         ProgressScreenContent(
             ProgressUiState(isLoading = false, name = "Daniel", instrument = Instrument.PIANO, level = Level.PRO),
+            onExerciseClick = {},
             onSignOut = {},
         )
     }
