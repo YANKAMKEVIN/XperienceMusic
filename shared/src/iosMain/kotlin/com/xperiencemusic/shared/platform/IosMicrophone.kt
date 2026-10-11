@@ -5,9 +5,11 @@ import com.xperiencemusic.shared.domain.repository.MicrophoneInput
 import com.xperiencemusic.shared.domain.repository.MicrophoneUnavailableException
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
 import platform.AVFAudio.AVAudioEngine
 import platform.AVFAudio.AVAudioSession
 import platform.AVFAudio.AVAudioSessionCategoryOptionDefaultToSpeaker
@@ -19,7 +21,8 @@ import platform.AVFAudio.setActive
 
 /**
  * AVAudioEngine input tap. The tap delivers buffers of whatever size the system picks; they are
- * re-cut into frames of the requested size.
+ * re-cut into frames of the requested size. Set-up runs off the main thread: starting the audio
+ * hardware can block for seconds and must never freeze the screen.
  */
 @OptIn(ExperimentalForeignApi::class)
 class IosMicrophone : MicrophoneInput {
@@ -70,5 +73,5 @@ class IosMicrophone : MicrophoneInput {
             // Back to plain playback, as the audio player expects.
             session.setCategory(AVAudioSessionCategoryPlayback, mode = AVAudioSessionModeDefault, options = 0u, error = null)
         }
-    }
+    }.flowOn(Dispatchers.Default)
 }
