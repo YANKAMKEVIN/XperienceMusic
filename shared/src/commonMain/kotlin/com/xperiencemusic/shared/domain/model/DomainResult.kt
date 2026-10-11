@@ -16,4 +16,8 @@ enum class DomainError {
     FILE_TOO_LARGE,
     ALREADY_INVITED,
     CANNOT_CHANGE_SELF,
+
+    /** The server could not send the sign-in e-mail (its e-mail settings, not the phone's network). */
+    CODE_NOT_SENT,
+    TOO_MANY_ATTEMPTS,
 }

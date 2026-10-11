@@ -44,6 +44,8 @@ import com.xperiencemusic.shared.resources.signin_email_subtitle
 import com.xperiencemusic.shared.resources.signin_error_code
 import com.xperiencemusic.shared.resources.signin_error_email
 import com.xperiencemusic.shared.resources.signin_error_network
+import com.xperiencemusic.shared.resources.signin_error_not_sent
+import com.xperiencemusic.shared.resources.signin_error_too_many
 import com.xperiencemusic.shared.resources.signin_send_code
 import com.xperiencemusic.shared.resources.signin_title
 import com.xperiencemusic.shared.resources.signin_verify
@@ -115,6 +117,8 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                         when (error) {
                             SignInError.INVALID_EMAIL -> Res.string.signin_error_email
                             SignInError.INVALID_CODE -> Res.string.signin_error_code
+                            SignInError.CODE_NOT_SENT -> Res.string.signin_error_not_sent
+                            SignInError.TOO_MANY_ATTEMPTS -> Res.string.signin_error_too_many
                             SignInError.NETWORK -> Res.string.signin_error_network
                         },
                     ),

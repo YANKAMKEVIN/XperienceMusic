@@ -18,6 +18,7 @@ import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.providers.builtin.OTP
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
+import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -66,10 +67,21 @@ class SupabaseSessionRepository(
     override suspend fun currentMember(): Member? = (state.value as? SessionState.Ready)?.member
 
     override suspend fun requestCode(email: String) {
-        client.auth.signInWith(OTP) {
-            this.email = email
-            // Accounts are created on first sign-in; invitations decide who gets a profile.
-            createUser = true
+        try {
+            client.auth.signInWith(OTP) {
+                this.email = email
+                // Accounts are created on first sign-in; invitations decide who gets a profile.
+                createUser = true
+            }
+        } catch (e: RestException) {
+            // The server answered: the network is fine, the e-mail could not be sent.
+            throw DomainException(
+                when {
+                    e.statusCode == HTTP_TOO_MANY_REQUESTS -> DomainError.TOO_MANY_ATTEMPTS
+                    e.statusCode >= HTTP_SERVER_ERROR -> DomainError.CODE_NOT_SENT
+                    else -> throw e
+                },
+            )
         }
     }
 
@@ -130,6 +142,8 @@ class SupabaseSessionRepository(
 
     private companion object {
         const val PROFILES = "profiles"
+        const val HTTP_TOO_MANY_REQUESTS = 429
+        const val HTTP_SERVER_ERROR = 500
         const val PROFILE_SNAPSHOT = "profile"
     }
 }

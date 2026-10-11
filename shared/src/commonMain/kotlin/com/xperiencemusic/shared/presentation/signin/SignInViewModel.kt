@@ -57,6 +57,8 @@ class SignInViewModel(
         val signInError = when (error) {
             DomainError.INVALID_INPUT -> SignInError.INVALID_EMAIL
             DomainError.INVALID_CODE -> SignInError.INVALID_CODE
+            DomainError.CODE_NOT_SENT -> SignInError.CODE_NOT_SENT
+            DomainError.TOO_MANY_ATTEMPTS -> SignInError.TOO_MANY_ATTEMPTS
             else -> SignInError.NETWORK
         }
         _state.update { it.copy(isSubmitting = false, error = signInError) }
