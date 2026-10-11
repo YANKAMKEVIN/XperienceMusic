@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Permission
+import com.xperiencemusic.shared.domain.model.SyncStatus
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
+import com.xperiencemusic.shared.domain.usecase.RefreshContentUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,20 +25,28 @@ class WeekViewModel(
     observeSetlistOffline: ObserveSetlistOfflineUseCase,
     private val downloadSetlist: DownloadSetlistUseCase,
     private val getToday: GetTodayUseCase,
+    observeSyncStatus: ObserveSyncStatusUseCase,
+    private val refreshContent: RefreshContentUseCase,
 ) : ViewModel() {
     private val download = MutableStateFlow(DownloadState())
+    private val isRefreshing = MutableStateFlow(false)
 
     private data class DownloadState(val isRunning: Boolean = false, val hasFailed: Boolean = false)
+
+    private val sync = combine(observeSyncStatus(), isRefreshing) { status, refreshing -> status to refreshing }
 
     val state: StateFlow<WeekUiState> = combine(
         observeWeeklySetlist(),
         observeCurrentMember(),
         observeSetlistOffline(),
         download,
-    ) { setlist, member, offline, download ->
+        sync,
+    ) { setlist, member, offline, download, (syncStatus, refreshing) ->
         setlist.toUiState().copy(
             canPublish = member?.role?.can(Permission.PUBLISH_SETLIST) == true,
             isSetlistUpcoming = setlist?.setlist?.serviceDate?.let { it >= getToday() } == true,
+            isRefreshing = refreshing,
+            isOffline = syncStatus == SyncStatus.FAILED,
             offline = offline.takeIf { it.total > 0 }?.let {
                 WeekOfflineUi(
                     available = it.available,
@@ -52,6 +63,17 @@ class WeekViewModel(
     fun onEvent(event: WeekEvent) {
         when (event) {
             WeekEvent.DownloadClicked -> startDownload()
+            WeekEvent.RefreshPulled -> refresh()
+        }
+    }
+
+    private fun refresh() {
+        if (isRefreshing.value) return
+        isRefreshing.value = true
+        viewModelScope.launch {
+            // A failure shows as the offline banner, through the sync status.
+            refreshContent()
+            isRefreshing.value = false
         }
     }
 

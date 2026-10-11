@@ -3,13 +3,20 @@ package com.xperiencemusic.shared.domain.repository
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
+import com.xperiencemusic.shared.domain.model.SyncStatus
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Recording changes are single operations so a backend can apply them atomically. The use cases
  * decide what each operation does (which recording becomes the reference…); the backend re-checks.
  */
 interface SongRepository {
+    val syncStatus: StateFlow<SyncStatus>
+
+    /** Fetches the latest data from the server; throws when it cannot be reached. */
+    suspend fun refresh()
+
     fun observeSongs(): Flow<List<Song>>
 
     fun observeSong(id: String): Flow<Song?>

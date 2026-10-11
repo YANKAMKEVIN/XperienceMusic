@@ -11,7 +11,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -32,6 +34,7 @@ import com.xperiencemusic.shared.resources.library_search
 import com.xperiencemusic.shared.resources.library_title
 import com.xperiencemusic.shared.resources.library_versions
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -48,6 +51,7 @@ fun LibraryScreen(
     LibraryScreenContent(state = state, onEvent = viewModel::onEvent, onSongClick = onSongClick, onAddSong = onAddSong)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreenContent(
     state: LibraryUiState,
@@ -55,7 +59,11 @@ fun LibraryScreenContent(
     onSongClick: (String) -> Unit,
     onAddSong: () -> Unit,
 ) {
-    Box(Modifier.fillMaxSize()) {
+    PullToRefreshBox(
+        isRefreshing = state.isRefreshing,
+        onRefresh = { onEvent(LibraryEvent.RefreshPulled) },
+        modifier = Modifier.fillMaxSize(),
+    ) {
         LibraryList(state, onEvent, onSongClick)
         if (state.canAddSong) {
             ExtendedFloatingActionButton(
@@ -78,6 +86,7 @@ private fun LibraryList(state: LibraryUiState, onEvent: (LibraryEvent) -> Unit, 
         item {
             Text(stringResource(Res.string.library_title), style = MaterialTheme.typography.headlineMedium)
         }
+        if (state.isOffline) item { OfflineBanner() }
         item {
             OutlinedTextField(
                 value = state.query,

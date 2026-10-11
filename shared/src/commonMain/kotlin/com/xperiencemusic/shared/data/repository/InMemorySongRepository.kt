@@ -4,12 +4,18 @@ import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
 import com.xperiencemusic.shared.domain.repository.SongRepository
+import com.xperiencemusic.shared.domain.model.SyncStatus
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 class InMemorySongRepository(initialSongs: List<Song>) : SongRepository {
+    override val syncStatus: StateFlow<SyncStatus> = MutableStateFlow(SyncStatus.UP_TO_DATE)
+
+    override suspend fun refresh() = Unit
+
     private val songs = MutableStateFlow(initialSongs.associateBy { it.id })
 
     override fun observeSongs(): Flow<List<Song>> = songs.map { it.values.toList() }

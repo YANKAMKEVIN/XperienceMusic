@@ -7,10 +7,12 @@ import com.xperiencemusic.shared.data.remote.dto.IdDto
 import com.xperiencemusic.shared.data.remote.AUDIO_BUCKET
 import com.xperiencemusic.shared.data.remote.dto.SongDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
+import com.xperiencemusic.shared.data.remote.tracking
 import com.xperiencemusic.shared.data.remote.postgrestCall
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
+import com.xperiencemusic.shared.domain.model.SyncStatus
 import com.xperiencemusic.shared.domain.repository.SongRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -19,6 +21,8 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -40,6 +44,10 @@ class SupabaseSongRepository(
     private val songs = MutableStateFlow<Map<String, Song>?>(null)
     private val loading = Mutex()
     private var hasRefreshed = false
+    private val _syncStatus = MutableStateFlow(SyncStatus.IDLE)
+    override val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
+
+    override suspend fun refresh() = _syncStatus.tracking { reload() }
 
     override fun observeSongs(): Flow<List<Song>> =
         songs.onStart { showSnapshotThenRefresh() }.filterNotNull().map { it.values.toList() }
@@ -125,8 +133,9 @@ class SupabaseSongRepository(
 
     private suspend fun showSnapshotThenRefresh() {
         if (songs.value == null) showSnapshot()
-        if (!hasRefreshed) ignoringFailures { reload() }
+        if (!hasRefreshed) ignoringFailures { _syncStatus.tracking { reload() } }
     }
+
 
     private fun showSnapshot() {
         snapshots.load(SNAPSHOT, ListSerializer(SongDto.serializer()))?.let { cached -> publish(cached) }

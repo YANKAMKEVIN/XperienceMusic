@@ -29,6 +29,8 @@ import com.xperiencemusic.shared.domain.usecase.ChangeMemberRoleUseCase
 import com.xperiencemusic.shared.domain.usecase.CompleteExerciseUseCase
 import com.xperiencemusic.shared.domain.usecase.InviteMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveBandUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
+import com.xperiencemusic.shared.domain.usecase.RefreshContentUseCase
 import com.xperiencemusic.shared.domain.usecase.RemoveMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.DeleteSongUseCase
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
@@ -146,6 +148,8 @@ val domainModule = module {
     factoryOf(::RetrySessionUseCase)
     factoryOf(::SaveSongUseCase)
     factoryOf(::DeleteSongUseCase)
+    factoryOf(::RefreshContentUseCase)
+    factoryOf(::ObserveSyncStatusUseCase)
     factoryOf(::ObserveBandUseCase)
     factoryOf(::InviteMemberUseCase)
     factoryOf(::ChangeMemberRoleUseCase)

@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +42,7 @@ import com.xperiencemusic.shared.resources.week_song_has_reference
 import com.xperiencemusic.shared.resources.week_song_new
 import com.xperiencemusic.shared.resources.week_title
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -56,6 +59,7 @@ fun WeekScreen(
     WeekScreenContent(state = state, onEvent = viewModel::onEvent, onSongClick = onSongClick, onPublish = onPublish)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeekScreenContent(
     state: WeekUiState,
@@ -63,7 +67,11 @@ fun WeekScreenContent(
     onSongClick: (String) -> Unit,
     onPublish: () -> Unit,
 ) {
-    Box(Modifier.fillMaxSize()) {
+    PullToRefreshBox(
+        isRefreshing = state.isRefreshing,
+        onRefresh = { onEvent(WeekEvent.RefreshPulled) },
+        modifier = Modifier.fillMaxSize(),
+    ) {
         WeekBody(state, onEvent, onSongClick)
         if (state.canPublish) {
             ExtendedFloatingActionButton(
@@ -85,10 +93,12 @@ private fun WeekBody(state: WeekUiState, onEvent: (WeekEvent) -> Unit, onSongCli
         state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        setlist == null -> Box(Modifier.fillMaxSize().padding(Spacing.xl), contentAlignment = Alignment.Center) {
-            Text(stringResource(Res.string.week_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Scrollable so the empty state can still be pulled to refresh.
+        setlist == null -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(Spacing.xl)) {
+            if (state.isOffline) item { OfflineBanner(Modifier.padding(bottom = Spacing.l)) }
+            item { Text(stringResource(Res.string.week_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
-        else -> WeekSetlist(setlist, state.offline, onEvent, onSongClick)
+        else -> WeekSetlist(setlist, state.offline, state.isOffline, onEvent, onSongClick)
     }
 }
 
@@ -96,6 +106,7 @@ private fun WeekBody(state: WeekUiState, onEvent: (WeekEvent) -> Unit, onSongCli
 private fun WeekSetlist(
     setlist: WeekSetlistUi,
     offline: WeekOfflineUi?,
+    isOffline: Boolean,
     onEvent: (WeekEvent) -> Unit,
     onSongClick: (String) -> Unit,
 ) {
@@ -107,6 +118,7 @@ private fun WeekSetlist(
         item {
             Text(stringResource(Res.string.week_title), style = MaterialTheme.typography.headlineMedium)
         }
+        if (isOffline) item { OfflineBanner() }
         item {
             AppCard {
                 Text(

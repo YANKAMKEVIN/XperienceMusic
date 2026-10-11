@@ -5,6 +5,8 @@ data class LibraryUiState(
     val isLoading: Boolean = true,
     val songs: List<LibrarySongUi> = emptyList(),
     val canAddSong: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val isOffline: Boolean = false,
 )
 
 data class LibrarySongUi(
@@ -18,4 +20,5 @@ data class LibrarySongUi(
 
 sealed interface LibraryEvent {
     data class QueryChanged(val query: String) : LibraryEvent
+    data object RefreshPulled : LibraryEvent
 }

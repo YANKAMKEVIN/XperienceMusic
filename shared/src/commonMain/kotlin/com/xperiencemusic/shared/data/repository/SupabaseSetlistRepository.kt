@@ -4,8 +4,10 @@ import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.remote.dto.SetlistDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
+import com.xperiencemusic.shared.data.remote.tracking
 import com.xperiencemusic.shared.data.remote.postgrestCall
 import com.xperiencemusic.shared.domain.model.Setlist
+import com.xperiencemusic.shared.domain.model.SyncStatus
 import com.xperiencemusic.shared.domain.repository.SetlistRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -14,6 +16,8 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -31,6 +35,11 @@ class SupabaseSetlistRepository(
     /** Wrapped so "loaded, no setlist yet" differs from "not loaded". */
     private val latest = MutableStateFlow<Loaded?>(null)
     private var hasRefreshed = false
+    private val _syncStatus = MutableStateFlow(SyncStatus.IDLE)
+    override val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
+
+    override suspend fun refresh() = _syncStatus.tracking { reload() }
+
 
     private data class Loaded(val setlist: Setlist?)
 
@@ -40,7 +49,7 @@ class SupabaseSetlistRepository(
                 snapshots.load(SNAPSHOT, ListSerializer(SetlistDto.serializer()))
                     ?.let { cached -> latest.value = Loaded(cached.firstOrNull()?.toDomain()) }
             }
-            if (!hasRefreshed) ignoringFailures { reload() }
+            if (!hasRefreshed) ignoringFailures { _syncStatus.tracking { reload() } }
         }.filterNotNull().map { it.setlist }
 
     override suspend fun publish(setlist: Setlist) {

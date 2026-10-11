@@ -70,6 +70,8 @@
     <string name="week_offline_error">Le téléchargement s'est interrompu. Réessaie avec du réseau, il reprendra où il s'est arrêté.</string>
     <string name="week_offline_retry">Reprendre</string>
 
+    <string name="offline_banner">Hors connexion · tu vois la dernière version enregistrée sur le téléphone. Tire vers le bas pour réessayer.</string>
+
     <!-- Library -->
     <string name="library_title">Chants</string>
     <string name="library_search">Rechercher un chant ou un auteur</string>

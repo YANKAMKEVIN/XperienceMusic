@@ -6,6 +6,10 @@ data class WeekUiState(
     val canPublish: Boolean = false,
     /** The published setlist is for a service still ahead: admins edit it rather than start anew. */
     val isSetlistUpcoming: Boolean = false,
+    /** Pull-to-refresh under way. */
+    val isRefreshing: Boolean = false,
+    /** The server could not be reached: what is shown is the copy on the phone. */
+    val isOffline: Boolean = false,
     /** Null when the week has nothing to download. */
     val offline: WeekOfflineUi? = null,
 )
@@ -20,6 +24,7 @@ data class WeekOfflineUi(
 
 sealed interface WeekEvent {
     data object DownloadClicked : WeekEvent
+    data object RefreshPulled : WeekEvent
 }
 
 data class WeekSetlistUi(

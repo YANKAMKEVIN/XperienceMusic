@@ -5,6 +5,8 @@ import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
+import com.xperiencemusic.shared.domain.usecase.RefreshContentUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
@@ -52,6 +54,8 @@ class WeekViewModelTest {
             ObserveSetlistOfflineUseCase(weekly, cache),
             DownloadSetlistUseCase(weekly, cache),
             GetTodayUseCase { LocalDate(2026, 10, 10) },
+            ObserveSyncStatusUseCase(songs, setlists),
+            RefreshContentUseCase(songs, setlists),
         )
         viewModel.state.test {
             val before = expectMostRecentItem().offline!!
@@ -59,6 +63,7 @@ class WeekViewModelTest {
             assertEquals(2, before.total)
             assertFalse(viewModel.state.value.canPublish)
             assertTrue(viewModel.state.value.isSetlistUpcoming)
+            assertFalse(viewModel.state.value.isOffline)
 
             viewModel.onEvent(WeekEvent.DownloadClicked)
             val after = expectMostRecentItem().offline!!
