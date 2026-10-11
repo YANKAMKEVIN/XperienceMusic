@@ -19,6 +19,8 @@ data class SongEditorUiState(
     val error: SongEditorError? = null,
     /** Set once saved; the screen then navigates away. */
     val savedSongId: String? = null,
+    val isConfirmingDeletion: Boolean = false,
+    val isDeleted: Boolean = false,
 ) {
     val canSave: Boolean get() = !isLoading && !isSaving && title.isNotBlank()
 }
@@ -32,4 +34,7 @@ sealed interface SongEditorEvent {
     data class ModeSelected(val mode: Mode) : SongEditorEvent
     data class ChartChanged(val chart: String) : SongEditorEvent
     data object SaveClicked : SongEditorEvent
+    data object DeleteClicked : SongEditorEvent
+    data object DeleteConfirmed : SongEditorEvent
+    data object DeleteDismissed : SongEditorEvent
 }

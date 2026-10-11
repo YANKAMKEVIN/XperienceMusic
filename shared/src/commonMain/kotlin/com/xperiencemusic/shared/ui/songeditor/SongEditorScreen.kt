@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +38,9 @@ import com.xperiencemusic.shared.resources.editor_artist_label
 import com.xperiencemusic.shared.resources.editor_chart_help
 import com.xperiencemusic.shared.resources.editor_chart_label
 import com.xperiencemusic.shared.resources.editor_chart_title
+import com.xperiencemusic.shared.resources.editor_delete
+import com.xperiencemusic.shared.resources.editor_delete_text
+import com.xperiencemusic.shared.resources.editor_delete_title
 import com.xperiencemusic.shared.resources.editor_edit_title
 import com.xperiencemusic.shared.resources.editor_error_title
 import com.xperiencemusic.shared.resources.editor_key_title
@@ -46,6 +51,8 @@ import com.xperiencemusic.shared.resources.editor_title_label
 import com.xperiencemusic.shared.resources.editor_unknown_chords
 import com.xperiencemusic.shared.resources.error_forbidden
 import com.xperiencemusic.shared.resources.error_generic
+import com.xperiencemusic.shared.resources.song_delete_confirm_cancel
+import com.xperiencemusic.shared.resources.song_delete_confirm_ok
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.EditorTopBar
 import com.xperiencemusic.shared.ui.components.KeyPicker
@@ -63,10 +70,12 @@ fun SongEditorScreen(
     songId: String?,
     onBack: () -> Unit,
     onSaved: (String) -> Unit,
+    onDeleted: () -> Unit,
     viewModel: SongEditorViewModel = koinViewModel(key = "editor-$songId") { parametersOf(songId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.savedSongId) { state.savedSongId?.let(onSaved) }
+    LaunchedEffect(state.isDeleted) { if (state.isDeleted) onDeleted() }
     SongEditorScreenContent(state = state, onEvent = viewModel::onEvent, onBack = onBack)
 }
 
@@ -164,7 +173,34 @@ fun SongEditorScreenContent(
                     ChordChartView(state.preview)
                 }
             }
+            if (!state.isNew) {
+                TextButton(
+                    onClick = { onEvent(SongEditorEvent.DeleteClicked) },
+                    enabled = !state.isSaving,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.l),
+                ) {
+                    Text(stringResource(Res.string.editor_delete), color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
+    }
+
+    if (state.isConfirmingDeletion) {
+        AlertDialog(
+            onDismissRequest = { onEvent(SongEditorEvent.DeleteDismissed) },
+            title = { Text(stringResource(Res.string.editor_delete_title, state.title)) },
+            text = { Text(stringResource(Res.string.editor_delete_text)) },
+            confirmButton = {
+                TextButton(onClick = { onEvent(SongEditorEvent.DeleteConfirmed) }) {
+                    Text(stringResource(Res.string.song_delete_confirm_ok), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onEvent(SongEditorEvent.DeleteDismissed) }) {
+                    Text(stringResource(Res.string.song_delete_confirm_cancel))
+                }
+            },
+        )
     }
 }
 

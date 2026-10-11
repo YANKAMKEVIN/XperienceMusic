@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
@@ -50,12 +51,14 @@ class WeekViewModelTest {
             ObserveCurrentMemberUseCase(FakeSessionRepository(member(Role.MEMBER))),
             ObserveSetlistOfflineUseCase(weekly, cache),
             DownloadSetlistUseCase(weekly, cache),
+            GetTodayUseCase { LocalDate(2026, 10, 10) },
         )
         viewModel.state.test {
             val before = expectMostRecentItem().offline!!
             assertEquals(0, before.available)
             assertEquals(2, before.total)
             assertFalse(viewModel.state.value.canPublish)
+            assertTrue(viewModel.state.value.isSetlistUpcoming)
 
             viewModel.onEvent(WeekEvent.DownloadClicked)
             val after = expectMostRecentItem().offline!!

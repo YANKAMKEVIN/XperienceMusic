@@ -119,6 +119,9 @@
     <string name="editor_preview_title">Aperçu</string>
     <string name="editor_unknown_chords">Accords non reconnus : %1$s</string>
     <string name="editor_error_title">Le titre est obligatoire.</string>
+    <string name="editor_delete">Supprimer ce chant</string>
+    <string name="editor_delete_title">Supprimer « %1$s » ?</string>
+    <string name="editor_delete_text">Le chant, ses paroles, ses versions enregistrées et ses pistes de voix seront supprimés pour tout le groupe. Il sera aussi retiré des setlists.</string>
     <string name="action_add_song">Ajouter un chant</string>
     <string name="action_edit_song">Modifier le chant</string>
 
@@ -142,6 +145,9 @@
     <string name="date_picker_ok">OK</string>
     <string name="date_picker_cancel">Annuler</string>
     <string name="action_publish_setlist">Publier la setlist</string>
+    <string name="action_edit_setlist">Modifier la setlist</string>
+    <string name="setlist_edit_title">Modifier la setlist</string>
+    <string name="setlist_edit_hint">Les modifications remplacent la setlist de la semaine pour tout le groupe.</string>
 
     <!-- Stage -->
     <string name="stage_open">Mode scène</string>
@@ -183,6 +189,32 @@
     <string name="player_close">Fermer le lecteur</string>
     <string name="player_error">Lecture impossible. Vérifie ta connexion.</string>
     <string name="player_position">Position dans l'enregistrement</string>
+
+    <!-- Members -->
+    <string name="members_title">Membres du groupe</string>
+    <string name="members_open">Gérer les membres</string>
+    <string name="members_invite_title">Inviter quelqu'un</string>
+    <string name="members_invite_help">La personne se connecte ensuite avec cette adresse : sans invitation, l'app ne lui montre rien.</string>
+    <string name="members_invite_email">Adresse e-mail</string>
+    <string name="members_invite_button">Inviter</string>
+    <string name="members_list_title">Membres (%1$d)</string>
+    <string name="members_pending_title">Invitations en attente (%1$d)</string>
+    <string name="members_pending_help">Ces personnes ne se sont pas encore connectées.</string>
+    <string name="members_not_onboarded">Pas encore de profil</string>
+    <string name="members_me">toi</string>
+    <string name="members_change_role">Changer le rôle de %1$s</string>
+    <string name="members_remove">Retirer %1$s du groupe</string>
+    <string name="members_cancel_invitation">Annuler l'invitation de %1$s</string>
+    <string name="members_remove_title">Retirer %1$s ?</string>
+    <string name="members_remove_text">Cette personne n'aura plus accès à l'app. Tu pourras l'inviter de nouveau plus tard.</string>
+    <string name="members_remove_ok">Retirer</string>
+    <string name="members_msg_invited">Invitation enregistrée. Préviens la personne qu'elle peut se connecter.</string>
+    <string name="members_msg_already">Cette adresse est déjà invitée.</string>
+    <string name="members_msg_invalid">Cette adresse e-mail ne semble pas valide.</string>
+    <string name="members_msg_self">Tu ne peux pas modifier ou retirer ton propre accès.</string>
+    <string name="role_member">Membre</string>
+    <string name="role_content_admin">Admin contenu</string>
+    <string name="role_super_admin">Admin++</string>
 
     <!-- Progress -->
     <string name="progress_title">Ma progression</string>

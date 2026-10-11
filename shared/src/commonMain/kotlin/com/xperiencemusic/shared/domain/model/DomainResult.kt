@@ -14,4 +14,6 @@ enum class DomainError {
     INVALID_CODE,
     NETWORK,
     FILE_TOO_LARGE,
+    ALREADY_INVITED,
+    CANNOT_CHANGE_SELF,
 }

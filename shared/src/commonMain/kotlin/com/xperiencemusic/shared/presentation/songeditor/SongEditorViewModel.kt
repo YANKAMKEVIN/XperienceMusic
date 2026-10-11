@@ -8,6 +8,7 @@ import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.SongDraft
+import com.xperiencemusic.shared.domain.usecase.DeleteSongUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ class SongEditorViewModel(
     private val songId: String?,
     observeSong: ObserveSongUseCase,
     private val saveSong: SaveSongUseCase,
+    private val deleteSong: DeleteSongUseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SongEditorUiState(isLoading = songId != null, isNew = songId == null))
     val state: StateFlow<SongEditorUiState> = _state.asStateFlow()
@@ -47,6 +49,20 @@ class SongEditorViewModel(
             is SongEditorEvent.ModeSelected -> _state.update { it.withKey(it.key.copy(mode = event.mode)) }
             is SongEditorEvent.ChartChanged -> _state.update { it.withChart(event.chart) }
             SongEditorEvent.SaveClicked -> save()
+            SongEditorEvent.DeleteClicked -> _state.update { it.copy(isConfirmingDeletion = true) }
+            SongEditorEvent.DeleteDismissed -> _state.update { it.copy(isConfirmingDeletion = false) }
+            SongEditorEvent.DeleteConfirmed -> delete()
+        }
+    }
+
+    private fun delete() {
+        val id = songId ?: return
+        _state.update { it.copy(isConfirmingDeletion = false, isSaving = true, error = null) }
+        viewModelScope.launch {
+            when (val result = deleteSong(id)) {
+                is DomainResult.Success -> _state.update { it.copy(isSaving = false, isDeleted = true) }
+                is DomainResult.Failure -> _state.update { it.copy(isSaving = false, error = result.error.toEditorError()) }
+            }
         }
     }
 

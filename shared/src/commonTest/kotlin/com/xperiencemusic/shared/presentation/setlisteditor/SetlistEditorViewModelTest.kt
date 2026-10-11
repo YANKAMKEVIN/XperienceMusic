@@ -2,6 +2,9 @@ package com.xperiencemusic.shared.presentation.setlisteditor
 
 import app.cash.turbine.test
 import com.xperiencemusic.shared.domain.model.Role
+import com.xperiencemusic.shared.domain.model.Setlist
+import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
@@ -34,15 +37,40 @@ class SetlistEditorViewModelTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = SetlistEditorViewModel(
-            SearchSongsUseCase(songs),
-            PublishSetlistUseCase(FakeSessionRepository(member(Role.CONTENT_ADMIN)), setlists),
-            SuggestBandWeekUseCase { LocalDate(2026, 10, 10) },
-        )
+        viewModel = editor()
     }
 
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
+
+    private fun editor(today: LocalDate = LocalDate(2026, 10, 10)) = SetlistEditorViewModel(
+        SearchSongsUseCase(songs),
+        PublishSetlistUseCase(FakeSessionRepository(member(Role.CONTENT_ADMIN)), setlists),
+        SuggestBandWeekUseCase { today },
+        ObserveWeeklySetlistUseCase(setlists, songs),
+        GetTodayUseCase { today },
+    )
+
+    @Test
+    fun `une setlist à venir s'ouvre pour être modifiée`() = runTest {
+        setlists.publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("c", "a"), "Intro", "x"))
+        editor().state.test {
+            val state = expectMostRecentItem()
+            assertTrue(state.isEditing)
+            assertEquals(listOf("c", "a"), state.selected.map { it.id })
+            assertEquals("Intro", state.message)
+        }
+    }
+
+    @Test
+    fun `une setlist passée laisse repartir de zéro`() = runTest {
+        setlists.publish(Setlist("w", LocalDate(2026, 10, 6), LocalDate(2026, 10, 11), listOf("a"), null, "x"))
+        editor(today = LocalDate(2026, 10, 12)).state.test {
+            val state = expectMostRecentItem()
+            assertFalse(state.isEditing)
+            assertTrue(state.selected.isEmpty())
+        }
+    }
 
     @Test
     fun `les dates sont proposées et l'ordre des chants se règle`() = runTest {

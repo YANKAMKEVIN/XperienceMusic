@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
@@ -20,6 +21,7 @@ class WeekViewModel(
     observeCurrentMember: ObserveCurrentMemberUseCase,
     observeSetlistOffline: ObserveSetlistOfflineUseCase,
     private val downloadSetlist: DownloadSetlistUseCase,
+    private val getToday: GetTodayUseCase,
 ) : ViewModel() {
     private val download = MutableStateFlow(DownloadState())
 
@@ -33,6 +35,7 @@ class WeekViewModel(
     ) { setlist, member, offline, download ->
         setlist.toUiState().copy(
             canPublish = member?.role?.can(Permission.PUBLISH_SETLIST) == true,
+            isSetlistUpcoming = setlist?.setlist?.serviceDate?.let { it >= getToday() } == true,
             offline = offline.takeIf { it.total > 0 }?.let {
                 WeekOfflineUi(
                     available = it.available,

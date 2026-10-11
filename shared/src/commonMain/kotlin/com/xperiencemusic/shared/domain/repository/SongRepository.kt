@@ -21,6 +21,9 @@ interface SongRepository {
 
     suspend fun updateSong(id: String, draft: SongDraft)
 
+    /** Deletes the song with its recordings and voice tracks, audio files included. */
+    suspend fun deleteSong(id: String)
+
     /** Adds [recording], removing [replacingId] in the same step when set. */
     suspend fun addRecording(songId: String, recording: Recording, replacingId: String?)
 

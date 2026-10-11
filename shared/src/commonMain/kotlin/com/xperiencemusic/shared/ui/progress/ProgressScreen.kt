@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import com.xperiencemusic.shared.presentation.progress.ExerciseUi
 import com.xperiencemusic.shared.presentation.progress.ProgressUiState
 import com.xperiencemusic.shared.presentation.progress.ProgressViewModel
 import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.members_open
 import com.xperiencemusic.shared.resources.progress_check_hold
 import com.xperiencemusic.shared.resources.progress_check_review
 import com.xperiencemusic.shared.resources.progress_done
@@ -46,15 +48,26 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ProgressScreen(
     onExerciseClick: (String) -> Unit,
+    onManageMembers: () -> Unit,
     onSignOut: () -> Unit,
     viewModel: ProgressViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ProgressScreenContent(state = state, onExerciseClick = onExerciseClick, onSignOut = onSignOut)
+    ProgressScreenContent(
+        state = state,
+        onExerciseClick = onExerciseClick,
+        onManageMembers = onManageMembers,
+        onSignOut = onSignOut,
+    )
 }
 
 @Composable
-fun ProgressScreenContent(state: ProgressUiState, onExerciseClick: (String) -> Unit, onSignOut: () -> Unit) {
+fun ProgressScreenContent(
+    state: ProgressUiState,
+    onExerciseClick: (String) -> Unit,
+    onManageMembers: () -> Unit,
+    onSignOut: () -> Unit,
+) {
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
@@ -94,6 +107,13 @@ fun ProgressScreenContent(state: ProgressUiState, onExerciseClick: (String) -> U
                 )
             }
             items(state.exercises, key = { it.id }) { ExerciseRow(it, onClick = { onExerciseClick(it.id) }) }
+        }
+        if (state.canManageMembers) {
+            item {
+                OutlinedButton(onClick = onManageMembers, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
+                    Text(stringResource(Res.string.members_open))
+                }
+            }
         }
         item {
             TextButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
@@ -157,6 +177,7 @@ private fun ProgressScreenSingerPreview() {
                 validatedCount = 1,
             ),
             onExerciseClick = {},
+            onManageMembers = {},
             onSignOut = {},
         )
     }
@@ -169,6 +190,7 @@ private fun ProgressScreenMusicianPreview() {
         ProgressScreenContent(
             ProgressUiState(isLoading = false, name = "Daniel", instrument = Instrument.PIANO, level = Level.PRO),
             onExerciseClick = {},
+            onManageMembers = {},
             onSignOut = {},
         )
     }

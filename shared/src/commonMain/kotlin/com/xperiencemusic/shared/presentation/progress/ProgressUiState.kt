@@ -13,6 +13,7 @@ data class ProgressUiState(
     val hasPath: Boolean = false,
     val exercises: List<ExerciseUi> = emptyList(),
     val validatedCount: Int = 0,
+    val canManageMembers: Boolean = false,
 )
 
 data class ExerciseUi(

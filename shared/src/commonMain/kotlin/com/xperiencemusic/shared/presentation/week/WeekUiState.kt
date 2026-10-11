@@ -4,6 +4,8 @@ data class WeekUiState(
     val isLoading: Boolean = true,
     val setlist: WeekSetlistUi? = null,
     val canPublish: Boolean = false,
+    /** The published setlist is for a service still ahead: admins edit it rather than start anew. */
+    val isSetlistUpcoming: Boolean = false,
     /** Null when the week has nothing to download. */
     val offline: WeekOfflineUi? = null,
 )

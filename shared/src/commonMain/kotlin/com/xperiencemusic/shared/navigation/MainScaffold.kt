@@ -31,6 +31,7 @@ import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.tab_week
 import com.xperiencemusic.shared.ui.exercise.ExerciseScreen
 import com.xperiencemusic.shared.ui.library.LibraryScreen
+import com.xperiencemusic.shared.ui.members.MembersScreen
 import com.xperiencemusic.shared.ui.player.MiniPlayer
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
 import com.xperiencemusic.shared.ui.recordingform.RecordingFormScreen
@@ -86,8 +87,13 @@ fun MainScaffold(onSignOut: () -> Unit) {
                 LibraryScreen(onSongClick = openSong, onAddSong = { navController.navigate(SongEditorRoute()) })
             }
             composable<ProgressRoute> {
-                ProgressScreen(onExerciseClick = { navController.navigate(ExerciseRoute(it)) }, onSignOut = onSignOut)
+                ProgressScreen(
+                    onExerciseClick = { navController.navigate(ExerciseRoute(it)) },
+                    onManageMembers = { navController.navigate(MembersRoute) },
+                    onSignOut = onSignOut,
+                )
             }
+            composable<MembersRoute> { MembersScreen(onBack = { navController.popBackStack() }) }
             composable<ExerciseRoute> { entry ->
                 ExerciseScreen(exerciseId = entry.toRoute<ExerciseRoute>().exerciseId, onBack = { navController.popBackStack() })
             }
@@ -138,6 +144,8 @@ fun MainScaffold(onSignOut: () -> Unit) {
                             navController.popBackStack()
                         }
                     },
+                    // The song page under the editor no longer exists either.
+                    onDeleted = { navController.popBackStack<SongRoute>(inclusive = true) },
                 )
             }
         }

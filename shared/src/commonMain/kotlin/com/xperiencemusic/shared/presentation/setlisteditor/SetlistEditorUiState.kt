@@ -16,6 +16,7 @@ data class SetlistEditorUiState(
     val isPublishing: Boolean = false,
     val error: SetlistEditorError? = null,
     val isPublished: Boolean = false,
+    val isEditing: Boolean = false,
 ) {
     val canPublish: Boolean get() = !isPublishing && selected.isNotEmpty() && serviceDate >= rehearsalDate
     val hasDateConflict: Boolean get() = serviceDate < rehearsalDate

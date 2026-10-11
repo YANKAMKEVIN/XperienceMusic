@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.presentation.songeditor
 
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.shared.domain.model.Role
+import com.xperiencemusic.shared.domain.usecase.DeleteSongUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
@@ -20,6 +21,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SongEditorViewModelTest {
@@ -33,7 +36,7 @@ class SongEditorViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun viewModel(songId: String?) =
-        SongEditorViewModel(songId, ObserveSongUseCase(songs), SaveSongUseCase(sessions, songs))
+        SongEditorViewModel(songId, ObserveSongUseCase(songs), SaveSongUseCase(sessions, songs), DeleteSongUseCase(sessions, songs))
 
     @Test
     fun `modifier charge le chant et son aperçu en solfège`() = runTest {
@@ -58,6 +61,17 @@ class SongEditorViewModelTest {
         val vm = viewModel(null)
         vm.onEvent(SongEditorEvent.ChartChanged("[Do][Dp][Dp]"))
         assertEquals(listOf("Dp"), vm.state.value.unknownChords)
+    }
+
+    @Test
+    fun `supprimer demande confirmation puis efface le chant`() = runTest {
+        val vm = viewModel("s1")
+        vm.onEvent(SongEditorEvent.DeleteClicked)
+        assertTrue(vm.state.value.isConfirmingDeletion)
+        assertNotNull(songs.song("s1"))
+        vm.onEvent(SongEditorEvent.DeleteConfirmed)
+        assertTrue(vm.state.value.isDeleted)
+        assertNull(songs.song("s1"))
     }
 
     @Test

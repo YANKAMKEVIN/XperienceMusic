@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.ui.components
 import androidx.compose.runtime.Composable
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Level
+import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.instrument_bass
@@ -12,6 +13,9 @@ import com.xperiencemusic.shared.resources.instrument_singer
 import com.xperiencemusic.shared.resources.level_beginner
 import com.xperiencemusic.shared.resources.level_confirmed
 import com.xperiencemusic.shared.resources.level_pro
+import com.xperiencemusic.shared.resources.role_content_admin
+import com.xperiencemusic.shared.resources.role_member
+import com.xperiencemusic.shared.resources.role_super_admin
 import com.xperiencemusic.shared.resources.voice_alto
 import com.xperiencemusic.shared.resources.voice_bass
 import com.xperiencemusic.shared.resources.voice_soprano
@@ -44,5 +48,14 @@ fun Level.label(): String = stringResource(
         Level.BEGINNER -> Res.string.level_beginner
         Level.CONFIRMED -> Res.string.level_confirmed
         Level.PRO -> Res.string.level_pro
+    },
+)
+
+@Composable
+fun Role.label(): String = stringResource(
+    when (this) {
+        Role.MEMBER -> Res.string.role_member
+        Role.CONTENT_ADMIN -> Res.string.role_content_admin
+        Role.SUPER_ADMIN -> Res.string.role_super_admin
     },
 )

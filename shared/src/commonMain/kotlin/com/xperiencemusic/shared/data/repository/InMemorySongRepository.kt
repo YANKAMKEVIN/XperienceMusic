@@ -33,6 +33,10 @@ class InMemorySongRepository(initialSongs: List<Song>) : SongRepository {
         }
     }
 
+    override suspend fun deleteSong(id: String) {
+        songs.update { it - id }
+    }
+
     override suspend fun addRecording(songId: String, recording: Recording, replacingId: String?) =
         updateRecordings(songId) { recordings ->
             val kept = recordings.filterNot { it.id == replacingId }

@@ -2,14 +2,17 @@ package com.xperiencemusic.shared.data.mapper
 
 import com.xperiencemusic.music.theory.Key
 import com.xperiencemusic.music.theory.Mode
+import com.xperiencemusic.shared.data.remote.dto.InvitationDto
 import com.xperiencemusic.shared.data.remote.dto.ProfileDto
 import com.xperiencemusic.shared.data.remote.dto.ProfileUpdateDto
 import com.xperiencemusic.shared.data.remote.dto.RecordingDto
 import com.xperiencemusic.shared.data.remote.dto.SetlistDto
 import com.xperiencemusic.shared.data.remote.dto.SongDto
 import com.xperiencemusic.shared.data.remote.dto.SongWriteDto
+import com.xperiencemusic.shared.domain.model.BandMember
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
+import com.xperiencemusic.shared.domain.model.Invitation
 import com.xperiencemusic.shared.domain.model.Level
 import com.xperiencemusic.shared.domain.model.Member
 import com.xperiencemusic.shared.domain.model.MemberProfile
@@ -34,6 +37,17 @@ fun ProfileDto.toDomain(): Member? {
         role = enumOrNull<Role>(role) ?: Role.MEMBER,
     )
 }
+
+fun ProfileDto.toBandMember() = BandMember(
+    id = id,
+    email = email,
+    displayName = displayName,
+    role = enumOrNull<Role>(role) ?: Role.MEMBER,
+    instrument = enumOrNull<Instrument>(instrument),
+    voicePart = enumOrNull<VoicePart>(voicePart),
+)
+
+fun InvitationDto.toDomain() = Invitation(email = email, role = enumOrNull<Role>(role) ?: Role.MEMBER)
 
 fun MemberProfile.toUpdateDto() = ProfileUpdateDto(
     displayName = displayName,

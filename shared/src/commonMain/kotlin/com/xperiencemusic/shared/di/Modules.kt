@@ -9,6 +9,8 @@ import com.xperiencemusic.shared.data.remote.createXperienceSupabaseClient
 import com.xperiencemusic.shared.data.repository.DemoAudioCache
 import com.xperiencemusic.shared.data.repository.DemoAudioUrlProvider
 import com.xperiencemusic.shared.data.repository.FileAudioCache
+import com.xperiencemusic.shared.data.repository.InMemoryMembersRepository
+import com.xperiencemusic.shared.data.repository.SupabaseMembersRepository
 import com.xperiencemusic.shared.data.repository.OfflineFirstAudioUrlProvider
 import com.xperiencemusic.shared.data.repository.InMemoryAudioStorage
 import com.xperiencemusic.shared.data.repository.SupabaseAudioUrlProvider
@@ -22,7 +24,13 @@ import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestSignInCodeUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
+import com.xperiencemusic.shared.domain.usecase.CancelInvitationUseCase
+import com.xperiencemusic.shared.domain.usecase.ChangeMemberRoleUseCase
 import com.xperiencemusic.shared.domain.usecase.CompleteExerciseUseCase
+import com.xperiencemusic.shared.domain.usecase.InviteMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveBandUseCase
+import com.xperiencemusic.shared.domain.usecase.RemoveMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.DeleteSongUseCase
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.PlayReferenceNoteUseCase
 import com.xperiencemusic.shared.domain.usecase.TrackHoldNoteUseCase
@@ -34,6 +42,7 @@ import com.xperiencemusic.shared.domain.usecase.UploadRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
 import com.xperiencemusic.shared.domain.usecase.VerifySignInCodeUseCase
 import com.xperiencemusic.shared.presentation.exercise.ExerciseViewModel
+import com.xperiencemusic.shared.presentation.members.MembersViewModel
 import com.xperiencemusic.shared.presentation.player.MiniPlayerViewModel
 import com.xperiencemusic.shared.presentation.stage.StageSettingsStore
 import com.xperiencemusic.shared.presentation.stage.StageViewModel
@@ -57,6 +66,7 @@ import com.xperiencemusic.shared.domain.repository.AudioUrlProvider
 import com.xperiencemusic.shared.domain.repository.DateProvider
 import com.xperiencemusic.shared.domain.repository.ExerciseRepository
 import com.xperiencemusic.shared.domain.repository.LocalDataStore
+import com.xperiencemusic.shared.domain.repository.MembersRepository
 import com.xperiencemusic.shared.domain.repository.SessionRepository
 import com.xperiencemusic.shared.domain.repository.SetlistRepository
 import com.xperiencemusic.shared.domain.repository.SongRepository
@@ -102,6 +112,7 @@ val dataModule = module {
         single<ExerciseRepository> { SupabaseExerciseRepository(get(), SingerExercises.all, get()) }
         single<AudioStorage> { SupabaseAudioStorage(get()) }
         single<AudioCache> { FileAudioCache(get(), get()) }
+        single<MembersRepository> { SupabaseMembersRepository(get()) }
         single<AudioUrlProvider> { OfflineFirstAudioUrlProvider(get(), SupabaseAudioUrlProvider(get())) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
@@ -112,6 +123,7 @@ val dataModule = module {
         single { InMemoryAudioStorage() }
         single<AudioStorage> { get<InMemoryAudioStorage>() }
         single<AudioCache> { DemoAudioCache() }
+        single<MembersRepository> { InMemoryMembersRepository(get()) }
         single<AudioUrlProvider> { DemoAudioUrlProvider(get(), get()) }
     }
 }
@@ -133,6 +145,12 @@ val domainModule = module {
     factoryOf(::SignOutUseCase)
     factoryOf(::RetrySessionUseCase)
     factoryOf(::SaveSongUseCase)
+    factoryOf(::DeleteSongUseCase)
+    factoryOf(::ObserveBandUseCase)
+    factoryOf(::InviteMemberUseCase)
+    factoryOf(::ChangeMemberRoleUseCase)
+    factoryOf(::RemoveMemberUseCase)
+    factoryOf(::CancelInvitationUseCase)
     factoryOf(::SuggestBandWeekUseCase)
     factoryOf(::UploadRecordingUseCase)
     factoryOf(::GetTodayUseCase)
@@ -156,12 +174,13 @@ val presentationModule = module {
     viewModelOf(::RecordingFormViewModel)
     viewModelOf(::MiniPlayerViewModel)
     viewModelOf(::ExerciseViewModel)
+    viewModelOf(::MembersViewModel)
     single { StageSettingsStore() }
     viewModel { (songId: String, transpose: Int, notation: Notation) ->
         StageViewModel(songId, transpose, notation, get(), get(), get())
     }
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
-    viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get()) }
+    viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get(), get()) }
 }
 
 private var isKoinStarted = false

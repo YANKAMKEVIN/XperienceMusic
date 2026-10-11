@@ -30,6 +30,7 @@ import com.xperiencemusic.shared.presentation.week.WeekSongUi
 import com.xperiencemusic.shared.presentation.week.WeekUiState
 import com.xperiencemusic.shared.presentation.week.WeekViewModel
 import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.action_edit_setlist
 import com.xperiencemusic.shared.resources.action_publish_setlist
 import com.xperiencemusic.shared.resources.week_empty
 import com.xperiencemusic.shared.resources.week_published_by
@@ -68,7 +69,9 @@ fun WeekScreenContent(
             ExtendedFloatingActionButton(
                 onClick = onPublish,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(Res.string.action_publish_setlist)) },
+                text = {
+                    Text(stringResource(if (state.isSetlistUpcoming) Res.string.action_edit_setlist else Res.string.action_publish_setlist))
+                },
                 modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.l),
             )
         }

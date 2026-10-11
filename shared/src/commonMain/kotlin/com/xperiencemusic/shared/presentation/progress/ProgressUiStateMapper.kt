@@ -6,6 +6,7 @@ import com.xperiencemusic.shared.domain.model.ExerciseProgress
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Member
+import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.model.VoicePart
 import kotlin.math.roundToInt
 
@@ -28,6 +29,7 @@ fun deriveProgressState(member: Member?, path: List<ExerciseProgress>): Progress
         hasPath = isSinger,
         exercises = exercises,
         validatedCount = exercises.count { it.status == ExerciseStatus.VALIDATED },
+        canManageMembers = member.role.can(Permission.MANAGE_MEMBERS),
     )
 }
 

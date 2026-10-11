@@ -48,6 +48,8 @@ import com.xperiencemusic.shared.resources.setlist_add_title
 import com.xperiencemusic.shared.resources.setlist_change_date
 import com.xperiencemusic.shared.resources.setlist_date_conflict
 import com.xperiencemusic.shared.resources.setlist_dates_title
+import com.xperiencemusic.shared.resources.setlist_edit_hint
+import com.xperiencemusic.shared.resources.setlist_edit_title
 import com.xperiencemusic.shared.resources.setlist_editor_title
 import com.xperiencemusic.shared.resources.setlist_error_invalid
 import com.xperiencemusic.shared.resources.setlist_message_label
@@ -93,7 +95,7 @@ fun SetlistEditorScreenContent(
     Scaffold(
         topBar = {
             EditorTopBar(
-                title = stringResource(Res.string.setlist_editor_title),
+                title = stringResource(if (state.isEditing) Res.string.setlist_edit_title else Res.string.setlist_editor_title),
                 actionLabel = stringResource(Res.string.setlist_publish),
                 isActionEnabled = state.canPublish,
                 isWorking = state.isPublishing,
@@ -119,6 +121,15 @@ fun SetlistEditorScreenContent(
                             },
                         ),
                         color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+            if (state.isEditing) {
+                item {
+                    Text(
+                        stringResource(Res.string.setlist_edit_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }

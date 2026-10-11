@@ -67,6 +67,16 @@ class SupabaseSongRepository(
         reload()
     }
 
+    override suspend fun deleteSong(id: String) {
+        val audioPaths = songs.value?.get(id)?.let { song ->
+            song.recordings.map { it.audioPath } + song.voiceTracks.map { it.audioPath }
+        }.orEmpty()
+        // Rows of recordings, voice tracks and setlist entries go with the song (on delete cascade).
+        postgrestCall { client.from(SONGS).delete { filter { eq("id", id) } } }
+        if (audioPaths.isNotEmpty()) ignoringFailures { client.storage.from(AUDIO_BUCKET).delete(audioPaths) }
+        reload()
+    }
+
     override suspend fun addRecording(songId: String, recording: Recording, replacingId: String?) {
         postgrestCall {
             client.postgrest.rpc(

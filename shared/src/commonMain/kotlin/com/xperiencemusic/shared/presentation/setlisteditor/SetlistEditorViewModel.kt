@@ -7,6 +7,8 @@ import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.model.Song
+import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -33,6 +36,8 @@ data class SetlistDraft(
     val isPublishing: Boolean = false,
     val error: SetlistEditorError? = null,
     val isPublished: Boolean = false,
+    /** Started from the setlist already published for the coming week. */
+    val isEditing: Boolean = false,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -40,10 +45,30 @@ class SetlistEditorViewModel(
     private val searchSongs: SearchSongsUseCase,
     private val publishSetlist: PublishSetlistUseCase,
     suggestBandWeek: SuggestBandWeekUseCase,
+    observeWeeklySetlist: ObserveWeeklySetlistUseCase,
+    getToday: GetTodayUseCase,
 ) : ViewModel() {
     private val draft = MutableStateFlow(
         suggestBandWeek().let { SetlistDraft(rehearsalDate = it.rehearsalDate, serviceDate = it.serviceDate) },
     )
+
+    init {
+        // A setlist whose service is still ahead is edited rather than started from scratch.
+        viewModelScope.launch {
+            val current = observeWeeklySetlist().first()?.setlist ?: return@launch
+            if (current.serviceDate >= getToday()) {
+                draft.update {
+                    it.copy(
+                        rehearsalDate = current.rehearsalDate,
+                        serviceDate = current.serviceDate,
+                        message = current.message.orEmpty(),
+                        selectedIds = current.songIds,
+                        isEditing = true,
+                    )
+                }
+            }
+        }
+    }
 
     /** The whole library, to resolve selected songs whatever the search. */
     private val library = searchSongs("")
@@ -104,6 +129,7 @@ fun deriveSetlistEditorState(draft: SetlistDraft, library: List<Song>, matches: 
         isPublishing = draft.isPublishing,
         error = draft.error,
         isPublished = draft.isPublished,
+        isEditing = draft.isEditing,
     )
 }
 
