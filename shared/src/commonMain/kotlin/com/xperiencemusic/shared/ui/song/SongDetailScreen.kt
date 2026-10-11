@@ -97,8 +97,10 @@ import com.xperiencemusic.shared.resources.song_transpose_down
 import com.xperiencemusic.shared.resources.song_transpose_reset
 import com.xperiencemusic.shared.resources.song_transpose_up
 import com.xperiencemusic.shared.resources.song_voice_tracks_title
+import com.xperiencemusic.shared.resources.stage_open
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.PlayPauseButton
+import com.xperiencemusic.shared.ui.components.StageIcons
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -115,6 +117,7 @@ fun SongDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onAddRecording: () -> Unit,
+    onOpenStage: (transposeSemitones: Int, notation: Notation) -> Unit,
     viewModel: SongDetailViewModel = koinViewModel(key = songId) { parametersOf(songId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -124,6 +127,7 @@ fun SongDetailScreen(
         onBack = onBack,
         onEdit = onEdit,
         onAddRecording = onAddRecording,
+        onOpenStage = { onOpenStage(state.transposeSemitones, state.notation) },
     )
 }
 
@@ -135,6 +139,7 @@ fun SongDetailScreenContent(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onAddRecording: () -> Unit,
+    onOpenStage: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.message) {
@@ -173,7 +178,7 @@ fun SongDetailScreenContent(
             when {
                 state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 state.isMissing -> Text(stringResource(Res.string.song_not_found), Modifier.align(Alignment.Center))
-                else -> SongDetailBody(state, onEvent, onAddRecording)
+                else -> SongDetailBody(state, onEvent, onAddRecording, onOpenStage)
             }
         }
     }
@@ -198,7 +203,12 @@ fun SongDetailScreenContent(
 }
 
 @Composable
-private fun SongDetailBody(state: SongDetailUiState, onEvent: (SongDetailEvent) -> Unit, onAddRecording: () -> Unit) {
+private fun SongDetailBody(
+    state: SongDetailUiState,
+    onEvent: (SongDetailEvent) -> Unit,
+    onAddRecording: () -> Unit,
+    onOpenStage: () -> Unit,
+) {
     LazyColumn(
         contentPadding = PaddingValues(start = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
         verticalArrangement = Arrangement.spacedBy(Spacing.l),
@@ -207,6 +217,12 @@ private fun SongDetailBody(state: SongDetailUiState, onEvent: (SongDetailEvent) 
             item { Text(artist, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         item { KeyAndNotation(state, onEvent) }
+        item {
+            OutlinedButton(onClick = onOpenStage, modifier = Modifier.fillMaxWidth()) {
+                Icon(StageIcons.Fullscreen, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
+                Text(stringResource(Res.string.stage_open))
+            }
+        }
         item {
             AppCard {
                 SectionTitle(stringResource(Res.string.song_chart_title), Modifier.padding(bottom = Spacing.s))
@@ -413,6 +429,7 @@ private fun SongDetailScreenPreview() {
             onBack = {},
             onEdit = {},
             onAddRecording = {},
+            onOpenStage = {},
         )
     }
 }
@@ -420,5 +437,5 @@ private fun SongDetailScreenPreview() {
 @Preview
 @Composable
 private fun SongDetailScreenMissingPreview() {
-    AppTheme { SongDetailScreenContent(SongDetailUiState(isLoading = false, isMissing = true), onEvent = {}, onBack = {}, onEdit = {}, onAddRecording = {}) }
+    AppTheme { SongDetailScreenContent(SongDetailUiState(isLoading = false, isMissing = true), onEvent = {}, onBack = {}, onEdit = {}, onAddRecording = {}, onOpenStage = {}) }
 }

@@ -46,6 +46,7 @@ fun deriveSongDetailState(
         keyLabel = displayedKey.label(keyNotation),
         originalKeyLabel = song.key.label(keyNotation).takeIf { displayedKey != song.key },
         notation = local.notation,
+        transposeSemitones = local.transposeSemitones,
         chart = ChordChart.render(song.chart, displayedKey, local.notation),
         recordings = recordings,
         maxRecordings = Song.MAX_RECORDINGS,

@@ -14,6 +14,8 @@ data class SongDetailUiState(
     /** Set only while the song is transposed away from its original key. */
     val originalKeyLabel: String? = null,
     val notation: Notation = Notation.NASHVILLE,
+    /** Offset from the original key, passed on to the stage mode. */
+    val transposeSemitones: Int = 0,
     val chart: List<ChartLine> = emptyList(),
     val recordings: List<RecordingUi> = emptyList(),
     val maxRecordings: Int = 0,

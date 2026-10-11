@@ -143,6 +143,18 @@
     <string name="date_picker_cancel">Annuler</string>
     <string name="action_publish_setlist">Publier la setlist</string>
 
+    <!-- Stage -->
+    <string name="stage_open">Mode scène</string>
+    <string name="stage_close">Quitter le mode scène</string>
+    <string name="stage_text_bigger">Agrandir le texte</string>
+    <string name="stage_text_smaller">Réduire le texte</string>
+    <string name="stage_scroll_start">Défilement automatique</string>
+    <string name="stage_scroll_stop">Arrêter le défilement</string>
+    <string name="stage_faster">Plus vite</string>
+    <string name="stage_slower">Moins vite</string>
+    <string name="stage_previous">Chant précédent</string>
+    <string name="stage_next">Chant suivant</string>
+
     <!-- Recording form -->
     <string name="recording_form_title">Ajouter une version</string>
     <string name="recording_form_save">Envoyer</string>

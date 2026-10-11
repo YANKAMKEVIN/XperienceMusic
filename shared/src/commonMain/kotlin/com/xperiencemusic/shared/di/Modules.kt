@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.di
 
+import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.data.local.DeviceDataStore
 import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.local.SystemDateProvider
@@ -34,6 +35,8 @@ import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
 import com.xperiencemusic.shared.domain.usecase.VerifySignInCodeUseCase
 import com.xperiencemusic.shared.presentation.exercise.ExerciseViewModel
 import com.xperiencemusic.shared.presentation.player.MiniPlayerViewModel
+import com.xperiencemusic.shared.presentation.stage.StageSettingsStore
+import com.xperiencemusic.shared.presentation.stage.StageViewModel
 import com.xperiencemusic.shared.presentation.recordingform.RecordingFormViewModel
 import com.xperiencemusic.shared.presentation.setlisteditor.SetlistEditorViewModel
 import com.xperiencemusic.shared.presentation.signin.SignInViewModel
@@ -153,6 +156,10 @@ val presentationModule = module {
     viewModelOf(::RecordingFormViewModel)
     viewModelOf(::MiniPlayerViewModel)
     viewModelOf(::ExerciseViewModel)
+    single { StageSettingsStore() }
+    viewModel { (songId: String, transpose: Int, notation: Notation) ->
+        StageViewModel(songId, transpose, notation, get(), get(), get())
+    }
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
     viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get()) }
 }

@@ -26,3 +26,7 @@ data class RecordingFormRoute(val songId: String)
 
 @Serializable
 data class ExerciseRoute(val exerciseId: String)
+
+/** [notation] is a [com.xperiencemusic.music.theory.Notation] name; routes only carry simple types. */
+@Serializable
+data class StageRoute(val songId: String, val transposeSemitones: Int, val notation: String)

@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.chart.ChartSegment
@@ -20,13 +21,15 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 /** Lyrics with each chord printed above the syllable it falls on. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale: Float = 1f) {
+    val body = MaterialTheme.typography.bodyLarge.scaled(scale)
+    val section = MaterialTheme.typography.labelLarge.scaled(scale)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs * scale)) {
         lines.forEach { line ->
             when (line) {
                 is ChartLine.Section -> Text(
                     line.title.uppercase(),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = section,
                     color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.padding(top = Spacing.m),
                 )
@@ -34,7 +37,7 @@ fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier) {
                     if (line.segments.isEmpty()) {
                         Spacer(Modifier.height(Spacing.s))
                     } else {
-                        FlowRow { line.segments.forEach { ChartSegmentView(it) } }
+                        FlowRow { line.segments.forEach { ChartSegmentView(it, body) } }
                     }
             }
         }
@@ -46,18 +49,18 @@ fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier) {
  * word carries on in the next segment, a hyphen fills the gap so the word still reads as one.
  */
 @Composable
-private fun ChartSegmentView(segment: ChartSegment) {
+private fun ChartSegmentView(segment: ChartSegment, style: TextStyle) {
     val chordGap = Spacing.s
     Layout(
         content = {
             Text(
                 segment.chord ?: " ",
-                style = MaterialTheme.typography.bodyLarge,
+                style = style,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
-            Text(segment.lyric.ifEmpty { " " }, style = MaterialTheme.typography.bodyLarge)
-            Text("-", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(segment.lyric.ifEmpty { " " }, style = style)
+            Text("-", style = style, color = MaterialTheme.colorScheme.onSurfaceVariant)
         },
     ) { measurables, constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
@@ -77,3 +80,6 @@ private fun ChartSegmentView(segment: ChartSegment) {
         }
     }
 }
+
+private fun TextStyle.scaled(scale: Float) =
+    if (scale == 1f) this else copy(fontSize = fontSize * scale, lineHeight = lineHeight * scale)

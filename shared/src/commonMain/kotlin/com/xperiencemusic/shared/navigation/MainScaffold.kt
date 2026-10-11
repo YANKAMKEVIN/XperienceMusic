@@ -35,7 +35,9 @@ import com.xperiencemusic.shared.ui.player.MiniPlayer
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
 import com.xperiencemusic.shared.ui.recordingform.RecordingFormScreen
 import com.xperiencemusic.shared.ui.setlisteditor.SetlistEditorScreen
+import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.ui.song.SongDetailScreen
+import com.xperiencemusic.shared.ui.stage.StageScreen
 import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
 import org.jetbrains.compose.resources.StringResource
@@ -57,10 +59,12 @@ fun MainScaffold(onSignOut: () -> Unit) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
     val isOnTab = tabs.any { tab -> destination?.hasRoute(tab.routeClass) == true }
+    // The stage takes the whole screen: no tabs, no mini player.
+    val isOnStage = destination?.hasRoute(StageRoute::class) == true
 
     Scaffold(
         bottomBar = {
-            Column {
+            if (!isOnStage) Column {
                 // Above the tabs, and alone at the bottom of pushed screens, so playback stays reachable.
                 MiniPlayer(isAtScreenBottom = !isOnTab)
                 if (isOnTab) TabBar(navController, destination)
@@ -94,6 +98,24 @@ fun MainScaffold(onSignOut: () -> Unit) {
                     onBack = { navController.popBackStack() },
                     onEdit = { navController.navigate(SongEditorRoute(songId)) },
                     onAddRecording = { navController.navigate(RecordingFormRoute(songId)) },
+                    onOpenStage = { transpose, notation ->
+                        navController.navigate(StageRoute(songId, transpose, notation.name))
+                    },
+                )
+            }
+            composable<StageRoute> { entry ->
+                val route = entry.toRoute<StageRoute>()
+                StageScreen(
+                    songId = route.songId,
+                    transposeSemitones = route.transposeSemitones,
+                    notation = Notation.valueOf(route.notation),
+                    onClose = { navController.popBackStack() },
+                    onOpenSong = { nextId ->
+                        // Other songs open in their own key, keeping the notation.
+                        navController.navigate(StageRoute(nextId, 0, route.notation)) {
+                            popUpTo<StageRoute> { inclusive = true }
+                        }
+                    },
                 )
             }
             composable<RecordingFormRoute> { entry ->
