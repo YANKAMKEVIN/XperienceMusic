@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Tests and builds (Android + iOS)
+    # macOS: the iOS framework needs Xcode's toolchain.
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      # No Supabase keys here: the app builds in demo mode.
+      - name: Unit tests
+        run: ./gradlew :core:music:allTests :shared:testAndroidHostTest --continue
+      - name: Android app
+        run: ./gradlew :androidApp:assembleDebug
+      - name: iOS framework
+        run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+      - name: Test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: "**/build/reports/tests/"
+
+  database:
+    name: Database schema and access rules
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply the migrations on Supabase stand-ins and check every rule
+        run: |
+          for file in supabase/tests/supabase_stubs.sql supabase/migrations/*.sql supabase/tests/rls_test.sql; do
+            echo "::group::$file"
+            psql -v ON_ERROR_STOP=1 -q -f "$file"
+            echo "::endgroup::"
+          done
