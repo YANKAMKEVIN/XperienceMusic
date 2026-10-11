@@ -1,23 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Temporary launcher icon (eighth note). Replaced by the XperienceMusic logo later. -->
+<!-- XperienceMusic eighth note, same drawing as the iOS icon, inside the 72dp safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:pathData="M60,34L60,64"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:strokeColor="#F5EFE0"
+        android:pathData="M54,18a36,36 0,1 0,0.01 0z"
+        android:strokeWidth="1.9"
+        android:strokeColor="#479D8CF5"
         android:fillColor="#00000000" />
     <path
-        android:pathData="M60,34Q72,38 74,50"
-        android:strokeWidth="5"
+        android:pathData="M58.7,30.3h4.5v34h-4.5z"
+        android:fillColor="#F5EFE0" />
+    <path
+        android:pathData="M61,32.6C64.3,39.6 80.7,44.7 74.6,57.1"
+        android:strokeWidth="4.5"
         android:strokeLineCap="round"
         android:strokeColor="#E8B04A"
         android:fillColor="#00000000" />
-    <path
-        android:pathData="M50,64m-10,0a10,8 0,1 0,20 0a10,8 0,1 0,-20 0"
-        android:fillColor="#F5EFE0" />
+    <group
+        android:pivotX="50.9"
+        android:pivotY="71.5"
+        android:rotation="-24">
+        <path
+            android:pathData="M37.3,71.5a13.6,9.5 0,1 0,27.2 0a13.6,9.5 0,1 0,-27.2 0z"
+            android:fillColor="#F5EFE0" />
+    </group>
 </vector>

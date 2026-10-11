@@ -1,0 +1,8 @@
+<resources>
+    <!-- Android 12+ system splash: dark background with the note, then straight into the app. -->
+    <style name="Theme.XperienceMusic" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/xm_night</item>
+        <item name="android:windowSplashScreenBackground">@color/xm_night</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>
