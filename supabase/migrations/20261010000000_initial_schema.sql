@@ -436,7 +436,11 @@ create trigger touch_exercise_progress_updated_at
 -- API surface: nothing for anonymous visitors.
 -- ---------------------------------------------------------------------------------------------
 
+-- Explicit grants: the project may be created with "automatically expose new tables" off.
+-- Row level security still decides which rows each member sees or changes.
 revoke all on all tables in schema public from anon;
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
 revoke execute on all functions in schema public from public, anon;
 grant execute on function
     public.current_member_role(),
