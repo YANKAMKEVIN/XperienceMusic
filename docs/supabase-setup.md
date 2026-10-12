@@ -40,20 +40,24 @@ viendra plus tard.
 
 ## 4. Configurer la connexion par code e-mail
 
-**Authentication → Email Templates → Magic Link** : remplace le contenu par un message qui
-affiche le code, par exemple :
+1. **Authentication → SMTP** : branche un envoi d'e-mails (Gmail avec un mot de passe
+   d'application, Brevo, Resend…). Sans SMTP personnalisé, les modèles ne sont pas modifiables.
+2. **Authentication → Providers → Email** : mets **Email OTP Length** à **6** (l'app attend 6 chiffres).
+3. **Authentication → Email Templates** : mets le **même** contenu dans **Confirm signup**
+   (première connexion) et **Magic Link** (connexions suivantes), avec l'objet
+   « Ton code Xperience Music » :
 
 ```html
-<h2>Ton code XperienceMusic</h2>
-<p>Entre ce code dans l'application : <strong>{{ .Token }}</strong></p>
-<p>Il expire dans une heure.</p>
+<h2>Ton code Xperience Music</h2>
+<p style="font-size:32px;font-weight:bold;letter-spacing:6px">{{ .Token }}</p>
+<p><a href="https://yankamkevin.github.io/xperience-music-connexion/#email={{ .Email }}&code={{ .Token }}">Ouvrir Xperience Music</a></p>
+<p>Le code expire dans une heure. Si tu n'as rien demandé, ignore ce message.</p>
 ```
 
-Fais de même pour le modèle **Confirm signup** (première connexion).
-
-> L'envoi d'e-mails intégré de Supabase est limité (quelques e-mails par heure). Pour 20
-> personnes ça suffit au début ; au-delà, branche un SMTP (Brevo, Resend…) dans
-> **Project Settings → Authentication → SMTP**.
+Le lien passe par une page relais en https
+([dépôt `xperience-music-connexion`](https://github.com/YANKAMKEVIN/xperience-music-connexion)) car
+Gmail retire les liens `xperiencemusic://`. La page rouvre l'app avec le code rempli ; l'adresse et
+le code sont après « # » et ne sont jamais envoyés au serveur.
 
 ## 5. Donner les clés à l'app
 
