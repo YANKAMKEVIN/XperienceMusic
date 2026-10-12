@@ -1,6 +1,7 @@
 import React from "react";
 import {
   AbsoluteFill,
+  Audio,
   Easing,
   Img,
   Sequence,
@@ -381,6 +382,11 @@ const Outro = () => {
 export const XmPromo = () => (
   <AbsoluteFill style={{ fontFamily, backgroundColor: C.night }}>
     <Background />
+    {/* The band's recording: its first 30 s, faded in and out. */}
+    <Audio
+      src={staticFile("audio/fond.m4a")}
+      volume={(f) => interpolate(f, [0, 9, 855, 899], [0, 1, 1, 0], clamp)}
+    />
     <Sequence durationInFrames={120}>
       <Intro />
     </Sequence>
