@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -138,11 +139,15 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                         },
                     ),
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
             if (state.step == SignInStep.CODE) {
-                TextButton(onClick = { onEvent(SignInEvent.ChangeEmailClicked) }) {
+                TextButton(
+                    onClick = { onEvent(SignInEvent.ChangeEmailClicked) },
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                ) {
                     Text(stringResource(Res.string.signin_change_email))
                 }
             }

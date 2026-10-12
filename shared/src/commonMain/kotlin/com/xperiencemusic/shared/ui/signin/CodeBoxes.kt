@@ -1,6 +1,8 @@
 package com.xperiencemusic.shared.ui.signin
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -35,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.xperiencemusic.shared.ui.theme.BrandColors
@@ -59,6 +63,13 @@ fun CodeBoxes(
     LaunchedEffect(Unit) { focus.requestFocus() }
     // Checking the code: the boxes freeze and the keyboard gets out of the way.
     LaunchedEffect(enabled) { if (!enabled) keyboard?.hide() }
+    // A refused code shakes the boxes, like a head saying no.
+    val shake = remember { Animatable(0f) }
+    LaunchedEffect(isError) {
+        if (isError) {
+            for (offset in listOf(14f, -12f, 9f, -6f, 3f, 0f)) shake.animateTo(offset, tween(durationMillis = 45))
+        }
+    }
     BasicTextField(
         // The cursor always stays at the end: digits are typed and erased from the right.
         value = TextFieldValue(code, selection = TextRange(code.length)),
@@ -70,6 +81,7 @@ fun CodeBoxes(
         modifier = modifier
             .fillMaxWidth()
             .alpha(if (enabled) 1f else 0.55f)
+            .offset { IntOffset(shake.value.dp.roundToPx(), 0) }
             .focusRequester(focus)
             .semantics { contentDescription = description },
         decorationBox = {
@@ -102,8 +114,8 @@ private fun DigitBox(digit: Char?, isCurrent: Boolean, isError: Boolean, modifie
     Box(
         modifier
             .aspectRatio(0.82f)
-            .background(colors.surfaceContainer, shape)
-            .border(if (isCurrent) 2.dp else 1.dp, border, shape),
+            .background(if (isError) colors.error.copy(alpha = 0.14f) else colors.surfaceContainer, shape)
+            .border(if (isCurrent || isError) 2.dp else 1.dp, border, shape),
         contentAlignment = Alignment.Center,
     ) {
         if (digit != null) {
@@ -111,7 +123,7 @@ private fun DigitBox(digit: Char?, isCurrent: Boolean, isError: Boolean, modifie
                 digit.toString(),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = colors.onSurface,
+                color = if (isError) colors.error else colors.onSurface,
                 modifier = Modifier.scale(pop),
             )
         } else if (isCurrent) {
