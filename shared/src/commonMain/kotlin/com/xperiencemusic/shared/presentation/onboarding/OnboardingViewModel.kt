@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.presentation.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.DomainResult
+import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.MemberProfile
 import com.xperiencemusic.shared.domain.usecase.CompleteOnboardingUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,18 +22,30 @@ class OnboardingViewModel(
     fun onEvent(event: OnboardingEvent) {
         when (event) {
             is OnboardingEvent.NameChanged -> _state.update { it.copy(name = event.name) }
-            is OnboardingEvent.InstrumentSelected -> _state.update { it.copy(instrument = event.instrument) }
+            is OnboardingEvent.InstrumentSelected -> _state.update {
+                // A musician has no voice part; keep none from an earlier choice.
+                it.copy(instrument = event.instrument, voicePart = it.voicePart.takeIf { event.instrument == Instrument.SINGER })
+            }
             is OnboardingEvent.VoicePartSelected -> _state.update { it.copy(voicePart = event.voicePart) }
             is OnboardingEvent.LevelSelected -> _state.update { it.copy(level = event.level) }
-            OnboardingEvent.SubmitClicked -> submit()
+            OnboardingEvent.ContinueClicked -> next()
+            OnboardingEvent.BackClicked -> _state.update { current ->
+                current.copy(step = current.steps.getOrNull(current.stepIndex - 1) ?: current.step)
+            }
         }
+    }
+
+    private fun next() {
+        val current = _state.value
+        if (!current.canContinue) return
+        if (current.isLastStep) submit() else _state.update { it.copy(step = it.steps[it.stepIndex + 1]) }
     }
 
     private fun submit() {
         val current = _state.value
         if (!current.canSubmit) return
         val profile = MemberProfile(
-            displayName = current.name,
+            displayName = current.name.trim(),
             instrument = requireNotNull(current.instrument),
             voicePart = current.voicePart,
             level = requireNotNull(current.level),

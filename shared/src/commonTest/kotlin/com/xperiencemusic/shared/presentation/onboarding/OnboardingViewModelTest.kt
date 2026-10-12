@@ -50,11 +50,31 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `valider enregistre le profil dans la session`() = runTest {
-        viewModel.onEvent(OnboardingEvent.NameChanged("Daniel"))
+    fun `un musicien passe la question de la voix et valide à la dernière étape`() = runTest {
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        assertEquals(OnboardingStep.NAME, viewModel.state.value.step, "a name is needed first")
+        viewModel.onEvent(OnboardingEvent.NameChanged(" Daniel "))
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        assertEquals(OnboardingStep.ROLE, viewModel.state.value.step)
         viewModel.onEvent(OnboardingEvent.InstrumentSelected(Instrument.PIANO))
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        assertEquals(OnboardingStep.LEVEL, viewModel.state.value.step)
+        assertEquals(listOf(OnboardingStep.NAME, OnboardingStep.ROLE, OnboardingStep.LEVEL), viewModel.state.value.steps)
         viewModel.onEvent(OnboardingEvent.LevelSelected(Level.PRO))
-        viewModel.onEvent(OnboardingEvent.SubmitClicked)
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
         assertEquals(Instrument.PIANO, sessions.currentMember()?.profile?.instrument)
+        assertEquals("Daniel", sessions.currentMember()?.profile?.displayName)
+    }
+
+    @Test
+    fun `un chantre répond à quatre questions et peut revenir en arrière`() = runTest {
+        viewModel.onEvent(OnboardingEvent.NameChanged("Grâce"))
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        viewModel.onEvent(OnboardingEvent.InstrumentSelected(Instrument.SINGER))
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        assertEquals(OnboardingStep.VOICE, viewModel.state.value.step)
+        assertEquals(2, viewModel.state.value.stepIndex)
+        viewModel.onEvent(OnboardingEvent.BackClicked)
+        assertEquals(OnboardingStep.ROLE, viewModel.state.value.step)
     }
 }
