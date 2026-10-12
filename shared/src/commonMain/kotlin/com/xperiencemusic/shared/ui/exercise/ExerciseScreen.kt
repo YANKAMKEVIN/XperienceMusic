@@ -1,5 +1,15 @@
 package com.xperiencemusic.shared.ui.exercise
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import com.xperiencemusic.shared.resources.exercise_accompaniment
+import com.xperiencemusic.shared.resources.exercise_locked
+import com.xperiencemusic.shared.resources.exercise_step
+import com.xperiencemusic.shared.resources.exercise_success_challenge
+import com.xperiencemusic.shared.resources.exercise_success_warmup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
@@ -127,7 +137,7 @@ fun ExerciseScreenContent(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Un
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.action_back))
                     }
                 },
-                actions = { ExerciseStatusBadge(state.status, Modifier.padding(end = Spacing.l)) },
+                actions = { if (!state.isWarmUp) ExerciseStatusBadge(state.status, Modifier.padding(end = Spacing.l)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 windowInsets = WindowInsets(0),
             )
@@ -147,7 +157,7 @@ fun ExerciseScreenContent(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Un
             if (check == null) {
                 AppCard { Text(stringResource(Res.string.exercise_review_text), style = MaterialTheme.typography.bodyMedium) }
             } else {
-                AutomaticCheck(check, state.phase, onEvent)
+                AutomaticCheck(check, state, onEvent)
             }
             state.error?.let { error ->
                 Text(
@@ -166,7 +176,8 @@ fun ExerciseScreenContent(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Un
 }
 
 @Composable
-private fun AutomaticCheck(check: AutomaticCheckUi, phase: ExercisePhase, onEvent: (ExerciseEvent) -> Unit) {
+private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEvent: (ExerciseEvent) -> Unit) {
+    val phase = state.phase
     AppCard {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
@@ -186,6 +197,16 @@ private fun AutomaticCheck(check: AutomaticCheckUi, phase: ExercisePhase, onEven
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
+            if (check.isSequence) NoteSteps(check, isListening = phase == ExercisePhase.LISTENING)
+            check.accompanimentLabel?.let {
+                Text(
+                    stringResource(Res.string.exercise_accompaniment, it),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = Spacing.s),
+                )
+            }
             if (phase == ExercisePhase.LISTENING) {
                 TunerNeedle(check.needle, description = stringResource(Res.string.exercise_tuner), modifier = Modifier.padding(top = Spacing.l))
                 Row(Modifier.fillMaxWidth().padding(top = Spacing.xs)) {
@@ -221,13 +242,29 @@ private fun AutomaticCheck(check: AutomaticCheckUi, phase: ExercisePhase, onEven
                     modifier = Modifier.padding(start = Spacing.s),
                 )
             }
-            Text(stringResource(Res.string.exercise_success_text), modifier = Modifier.padding(top = Spacing.s))
+            Text(
+                stringResource(
+                    when {
+                        state.isWarmUp -> Res.string.exercise_success_warmup
+                        state.isChallenge -> Res.string.exercise_success_challenge
+                        else -> Res.string.exercise_success_text
+                    },
+                ),
+                modifier = Modifier.padding(top = Spacing.s),
+            )
             OutlinedButton(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.padding(top = Spacing.m)) {
                 Text(stringResource(Res.string.exercise_retry))
             }
         }
         ExercisePhase.LISTENING -> Live(check, onEvent)
-        ExercisePhase.READY -> {
+        ExercisePhase.READY -> if (state.isLocked) {
+            Text(
+                stringResource(Res.string.exercise_locked),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
             GradientButton(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(Res.string.exercise_start), style = MaterialTheme.typography.titleMedium)
             }
@@ -289,6 +326,45 @@ private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
                 modifier = Modifier.padding(start = Spacing.s),
             )
         }
+    }
+}
+
+/** The notes of a sequence: done ones in the gradient, the current one outlined. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun NoteSteps(check: AutomaticCheckUi, isListening: Boolean) {
+    val colors = MaterialTheme.colorScheme
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),
+    ) {
+        check.noteLabels.forEachIndexed { index, label ->
+            val isDone = isListening && index < check.currentStep
+            val isCurrent = isListening && index == check.currentStep
+            Text(
+                label,
+                style = MaterialTheme.typography.labelLarge,
+                color = when {
+                    isDone -> Color.White
+                    isCurrent -> colors.onSurface
+                    else -> colors.onSurfaceVariant
+                },
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (isDone) BrandColors.gradient else SolidColor(colors.surfaceContainerHigh))
+                    .border(if (isCurrent) 2.dp else 0.dp, if (isCurrent) colors.primary else Color.Transparent, CircleShape)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+        }
+    }
+    if (isListening) {
+        Text(
+            stringResource(Res.string.exercise_step, check.currentStep + 1, check.noteLabels.size),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = Spacing.xs),
+        )
     }
 }
 

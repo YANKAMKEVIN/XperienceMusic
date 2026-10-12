@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.music.pitch.Pitch
 import com.xperiencemusic.shared.domain.model.DomainResult
+import com.xperiencemusic.shared.domain.model.Exercise
+import com.xperiencemusic.shared.domain.model.StepState
 import com.xperiencemusic.shared.domain.model.ExerciseCheck
 import com.xperiencemusic.shared.domain.model.ExerciseProgress
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
@@ -14,7 +16,7 @@ import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
 import com.xperiencemusic.shared.domain.usecase.PlayReferenceNoteUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
-import com.xperiencemusic.shared.domain.usecase.TrackHoldNoteUseCase
+import com.xperiencemusic.shared.domain.usecase.TrackSingingUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +39,7 @@ class ExerciseViewModel(
     private val exerciseId: String,
     observeCurrentMember: ObserveCurrentMemberUseCase,
     observeSingerPath: ObserveSingerPathUseCase,
-    private val trackHoldNote: TrackHoldNoteUseCase,
+    private val trackSinging: TrackSingingUseCase,
     private val completeExercise: CompleteExerciseUseCase,
     private val playReferenceNote: PlayReferenceNoteUseCase,
     private val playback: PlaybackController,
@@ -46,17 +48,27 @@ class ExerciseViewModel(
     val state: StateFlow<ExerciseUiState> = _state.asStateFlow()
 
     private var listening: Job? = null
+    private var exercise: Exercise? = null
 
     init {
         observeCurrentMember()
             .filterNotNull()
             .flatMapLatest { member ->
                 val voicePart = member.profile.voicePart ?: VoicePart.ALTO
-                observeSingerPath(member.id, member.profile.level)
-                    .map { path -> path.firstOrNull { it.exercise.id == exerciseId }?.let { it to voicePart } }
+                observeSingerPath(member.id).map { path ->
+                    val step = path.steps.firstOrNull { it.progress.exercise.id == exerciseId }
+                    when {
+                        step != null -> Triple(step.progress, step.state == StepState.LOCKED, voicePart)
+                        path.warmUp?.id == exerciseId -> Triple(ExerciseProgress(path.warmUp, ExerciseStatus.TODO), false, voicePart)
+                        else -> null
+                    }
+                }
             }
             .filterNotNull()
-            .onEach { (progress, voicePart) -> _state.update { it.withExercise(progress, voicePart) } }
+            .onEach { (progress, isLocked, voicePart) ->
+                exercise = progress.exercise
+                _state.update { it.withExercise(progress, isLocked, voicePart) }
+            }
             .launchIn(viewModelScope)
     }
 
@@ -74,11 +86,12 @@ class ExerciseViewModel(
 
     private fun startListening() {
         val check = _state.value.check ?: return
-        if (listening?.isActive == true) return
-        // The microphone would hear the speakers otherwise.
+        if (listening?.isActive == true || _state.value.isLocked) return
+        // The microphone would hear the speakers otherwise; only a harmony's other voice plays.
         playback.stop()
+        check.accompanimentMidi?.let { playReferenceNote(it, seconds = (check.secondsEach + ACCOMPANIMENT_MARGIN_SECONDS).toInt()) }
         _state.update { it.copy(phase = ExercisePhase.LISTENING, error = null, check = check.reset()) }
-        listening = trackHoldNote(check.targetMidi, check.requiredSeconds.toDouble())
+        listening = trackSinging(check.targetMidis, check.secondsEach)
             .onEach { progress ->
                 _state.update { it.copy(check = it.check?.withProgress(progress)) }
                 if (progress.isSuccess) onSucceeded()
@@ -90,15 +103,20 @@ class ExerciseViewModel(
 
     private fun onSucceeded() {
         listening?.cancel()
-        _state.update { it.copy(phase = ExercisePhase.SUCCEEDED, status = ExerciseStatus.VALIDATED) }
+        playback.stop()
+        _state.update {
+            it.copy(phase = ExercisePhase.SUCCEEDED, status = if (it.isWarmUp) it.status else ExerciseStatus.VALIDATED)
+        }
+        val done = exercise ?: return
         viewModelScope.launch {
-            if (completeExercise(exerciseId) is DomainResult.Failure) {
+            if (completeExercise(done) is DomainResult.Failure) {
                 _state.update { it.copy(error = ExerciseError.SAVE_FAILED) }
             }
         }
     }
 
     private fun stopListening() {
+        if (listening?.isActive == true) playback.stop()
         listening?.cancel()
         _state.update { if (it.phase == ExercisePhase.LISTENING) it.copy(phase = ExercisePhase.READY) else it }
     }
@@ -108,12 +126,32 @@ class ExerciseViewModel(
     }
 }
 
-private fun ExerciseUiState.withExercise(progress: ExerciseProgress, voicePart: VoicePart): ExerciseUiState {
+private fun ExerciseUiState.withExercise(progress: ExerciseProgress, isLocked: Boolean, voicePart: VoicePart): ExerciseUiState {
     val exercise = progress.exercise
-    val check = (exercise.check as? ExerciseCheck.HoldNote)?.let { hold ->
-        val target = hold.targetMidi(voicePart)
-        this.check?.takeIf { it.targetMidi == target }
-            ?: AutomaticCheckUi(Pitch.noteLabel(target), target, hold.seconds.roundToInt())
+    val check = when (val c = exercise.check) {
+        is ExerciseCheck.HoldNote -> {
+            val target = c.targetMidi(voicePart)
+            val accompaniment = c.accompanimentMidi(voicePart)
+            AutomaticCheckUi(
+                targetNoteLabel = Pitch.noteLabel(target),
+                targetMidi = target,
+                requiredSeconds = c.seconds.roundToInt(),
+                accompanimentMidi = accompaniment,
+                accompanimentLabel = accompaniment?.let(Pitch::noteLabel),
+            )
+        }
+        is ExerciseCheck.NoteSequence -> {
+            val targets = c.targetMidis(voicePart)
+            AutomaticCheckUi(
+                targetNoteLabel = Pitch.noteLabel(targets.first()),
+                targetMidi = targets.first(),
+                requiredSeconds = c.secondsEach.roundToInt().coerceAtLeast(1),
+                targetMidis = targets,
+                noteLabels = targets.map(Pitch::noteLabel),
+                secondsEach = c.secondsEach,
+            )
+        }
+        ExerciseCheck.Review -> null
     }
     return copy(
         isLoading = false,
@@ -121,11 +159,26 @@ private fun ExerciseUiState.withExercise(progress: ExerciseProgress, voicePart: 
         instructions = exercise.instructions,
         // A success seen on this screen wins over a status still being saved.
         status = if (status == ExerciseStatus.VALIDATED) status else progress.status,
-        check = check,
+        // Keep the live attempt when the path updates mid-way.
+        check = this.check?.takeIf { it.targetMidis == check?.targetMidis } ?: check,
+        isLocked = isLocked,
+        isWarmUp = exercise.tier == Exercise.WARM_UP_TIER,
+        isChallenge = exercise.isChallenge,
     )
 }
 
-private fun AutomaticCheckUi.reset() = copy(heardNoteLabel = null, needle = null, tuning = Tuning.SILENT, holdSeconds = 0.0)
+private fun AutomaticCheckUi.reset() = copy(
+    heardNoteLabel = null,
+    needle = null,
+    tuning = Tuning.SILENT,
+    holdSeconds = 0.0,
+    currentStep = 0,
+    targetMidi = targetMidis.first(),
+    targetNoteLabel = noteLabels.first(),
+)
+
+/** The other voice keeps playing a little after the hold, in case the singer starts late. */
+private const val ACCOMPANIMENT_MARGIN_SECONDS = 20.0
 
 /** The gauge spans one semitone each way; beyond, the needle is pinned to the edge. */
 private const val NEEDLE_RANGE_CENTS = 100.0
@@ -145,5 +198,8 @@ fun AutomaticCheckUi.withProgress(progress: SingingProgress): AutomaticCheckUi {
             else -> Tuning.TOO_HIGH
         },
         holdSeconds = progress.holdSeconds,
+        currentStep = progress.stepIndex,
+        targetMidi = targetMidis[progress.stepIndex.coerceIn(targetMidis.indices)],
+        targetNoteLabel = noteLabels[progress.stepIndex.coerceIn(noteLabels.indices)],
     )
 }

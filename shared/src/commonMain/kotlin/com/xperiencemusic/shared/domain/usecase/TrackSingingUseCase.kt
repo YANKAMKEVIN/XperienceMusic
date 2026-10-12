@@ -1,6 +1,6 @@
 package com.xperiencemusic.shared.domain.usecase
 
-import com.xperiencemusic.music.pitch.HoldNoteTracker
+import com.xperiencemusic.music.pitch.NoteSequenceTracker
 import com.xperiencemusic.music.pitch.Pitch
 import com.xperiencemusic.music.pitch.YinPitchDetector
 import com.xperiencemusic.shared.domain.model.SingingProgress
@@ -10,13 +10,13 @@ import kotlinx.coroutines.flow.map
 import kotlin.math.sqrt
 
 /**
- * Listens to the microphone and follows a "hold this note" attempt. Everything is analysed on
- * the phone; no audio is stored.
+ * Listens to the microphone and follows an attempt: one note held, or several in a row. Everything
+ * is analysed on the phone; no audio is stored.
  */
-class TrackHoldNoteUseCase(private val microphone: MicrophoneInput) {
+class TrackSingingUseCase(private val microphone: MicrophoneInput) {
 
-    operator fun invoke(targetMidi: Int, requiredSeconds: Double): Flow<SingingProgress> {
-        val tracker = HoldNoteTracker(targetMidi, requiredSeconds)
+    operator fun invoke(targetMidis: List<Int>, secondsEach: Double): Flow<SingingProgress> {
+        val tracker = NoteSequenceTracker(targetMidis, secondsEach)
         var detector: YinPitchDetector? = null
         return microphone.frames(FRAME_SIZE).map { frame ->
             val yin = detector ?: YinPitchDetector(frame.sampleRate).also { detector = it }
@@ -28,9 +28,11 @@ class TrackHoldNoteUseCase(private val microphone: MicrophoneInput) {
             val progress = tracker.push(frequency, FRAME_SIZE.toDouble() / frame.sampleRate)
             SingingProgress(
                 heardMidi = frequency?.let { Pitch.nearestNote(it).midi },
-                centsFromTarget = frequency?.let { Pitch.centsFrom(targetMidi, it) },
+                centsFromTarget = frequency?.let { Pitch.centsFrom(progress.targetMidi, it) },
                 holdSeconds = progress.currentHoldSeconds,
                 isSuccess = progress.isSuccess,
+                stepIndex = progress.stepIndex,
+                completedSteps = progress.completedSteps,
             )
         }
     }

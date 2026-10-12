@@ -20,9 +20,9 @@ class ProgressViewModel(
     val state: StateFlow<ProgressUiState> = observeCurrentMember()
         .flatMapLatest { member ->
             if (member == null) {
-                flowOf(deriveProgressState(null, emptyList()))
+                flowOf(deriveProgressState(null, null))
             } else {
-                observeSingerPath(member.id, member.profile.level).map { deriveProgressState(member, it) }
+                observeSingerPath(member.id).map { deriveProgressState(member, it) }
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())

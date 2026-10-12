@@ -1,8 +1,8 @@
 package com.xperiencemusic.shared.presentation.progress
 
-import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Level
+import com.xperiencemusic.shared.domain.model.StepState
 import com.xperiencemusic.shared.domain.model.VoicePart
 
 data class ProgressUiState(
@@ -13,23 +13,28 @@ data class ProgressUiState(
     val voicePart: VoicePart? = null,
     /** False for musicians: their path is not available yet. */
     val hasPath: Boolean = false,
-    val exercises: List<ExerciseUi> = emptyList(),
-    val validatedCount: Int = 0,
+    /** Days of practice in a row. */
+    val streakDays: Int = 0,
+    val completedTiers: Int = 0,
+    val warmUp: WarmUpUi? = null,
+    val tiers: List<TierUi> = emptyList(),
     val canManageMembers: Boolean = false,
-    /** What "Start the exercise" opens: work sent back first, then the first one to do. */
-    val nextExerciseId: String? = null,
 )
 
-data class ExerciseUi(
+data class WarmUpUi(val id: String, val isDoneToday: Boolean)
+
+data class TierUi(
+    /** 1-based; the title comes from the screen's strings. */
+    val number: Int,
+    val isComplete: Boolean,
+    val steps: List<StepUi>,
+)
+
+data class StepUi(
     val id: String,
-    val position: Int,
     val title: String,
-    val instructions: String,
-    val check: ExerciseCheckUi,
-    val status: ExerciseStatus,
+    /** "La3 · 5 s", "5 notes" */
+    val detail: String,
+    val state: StepState,
+    val isChallenge: Boolean,
 )
-
-sealed interface ExerciseCheckUi {
-    data class HoldNote(val noteLabel: String, val seconds: Int) : ExerciseCheckUi
-    data object Review : ExerciseCheckUi
-}

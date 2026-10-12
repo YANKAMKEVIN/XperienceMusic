@@ -35,7 +35,7 @@ import com.xperiencemusic.shared.domain.usecase.RemoveMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.DeleteSongUseCase
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.PlayReferenceNoteUseCase
-import com.xperiencemusic.shared.domain.usecase.TrackHoldNoteUseCase
+import com.xperiencemusic.shared.domain.usecase.TrackSingingUseCase
 import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveOfflineAudioUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
@@ -165,7 +165,7 @@ val domainModule = module {
     factoryOf(::ObserveSetlistOfflineUseCase)
     factoryOf(::DownloadSetlistUseCase)
     factoryOf(::ObserveOfflineAudioUseCase)
-    factoryOf(::TrackHoldNoteUseCase)
+    factoryOf(::TrackSingingUseCase)
     factoryOf(::CompleteExerciseUseCase)
     factoryOf(::PlayReferenceNoteUseCase)
 }

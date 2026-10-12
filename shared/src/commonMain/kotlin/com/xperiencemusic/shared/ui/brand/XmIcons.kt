@@ -94,6 +94,47 @@ object XmIcons {
         }
     }
 
+    /** A flame: the practice streak. */
+    val Flame: ImageVector by lazy {
+        icon("Flame") {
+            moveTo(12f, 21f)
+            curveTo(8f, 21f, 5.5f, 18.5f, 5.5f, 15f)
+            curveTo(5.5f, 11f, 9f, 9f, 9.5f, 4.5f)
+            curveTo(12.5f, 6.5f, 13.5f, 9f, 13f, 11f)
+            curveTo(14.5f, 10.5f, 15.5f, 9.5f, 16f, 8f)
+            curveTo(17.5f, 10f, 18.5f, 12.5f, 18.5f, 15f)
+            curveTo(18.5f, 18.5f, 16f, 21f, 12f, 21f); close()
+        }
+    }
+
+    /** A medal: tiers completed. */
+    val Medal: ImageVector by lazy {
+        icon("Medal") {
+            moveTo(17f, 15f); arcToRelative(5f, 5f, 0f, true, true, -10f, 0f); arcToRelative(5f, 5f, 0f, true, true, 10f, 0f)
+            moveTo(9f, 10.8f); lineTo(6.5f, 3f); horizontalLineTo(10f); lineTo(12f, 9.5f)
+            moveTo(15f, 10.8f); lineTo(17.5f, 3f); horizontalLineTo(14f); lineTo(12f, 9.5f)
+        }
+    }
+
+    /** A padlock: steps not open yet. */
+    val Lock: ImageVector by lazy {
+        icon("Lock") {
+            moveTo(5.5f, 11f); horizontalLineTo(18.5f); verticalLineTo(20f); horizontalLineTo(5.5f); close()
+            moveTo(8.5f, 11f); verticalLineTo(8f); arcToRelative(3.5f, 3.5f, 0f, false, true, 7f, 0f); verticalLineTo(11f)
+        }
+    }
+
+    /** A trophy: the challenge that closes a tier. */
+    val Trophy: ImageVector by lazy {
+        icon("Trophy") {
+            moveTo(7.5f, 4f); horizontalLineTo(16.5f); verticalLineTo(9f); arcToRelative(4.5f, 4.5f, 0f, false, true, -9f, 0f); close()
+            moveTo(7.5f, 6f); horizontalLineTo(4.5f); curveTo(4.5f, 9f, 6f, 10.5f, 8f, 10.5f)
+            moveTo(16.5f, 6f); horizontalLineTo(19.5f); curveTo(19.5f, 9f, 18f, 10.5f, 16f, 10.5f)
+            moveTo(12f, 13.5f); verticalLineTo(17f)
+            moveTo(8.5f, 20f); horizontalLineTo(15.5f); lineTo(14.5f, 17f); horizontalLineTo(9.5f); close()
+        }
+    }
+
     /** An envelope: the e-mail field. */
     val Mail: ImageVector by lazy {
         icon("Mail") {

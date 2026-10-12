@@ -118,6 +118,19 @@ do $$ begin
     assert (select count(*) from public.setlists) = 1;
 end $$;
 
+-- Members record their own practice days only.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    insert into public.practice_days (day) values ('2026-10-12');
+    insert into public.practice_days (day) values ('2026-10-12') on conflict do nothing;
+    assert (select count(*) from public.practice_days) = 1, 'one row per day';
+    begin
+        insert into public.practice_days (member_id, day) values ('00000000-0000-0000-0000-00000000000c', '2026-10-12');
+        assert false, 'members cannot record practice for someone else';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+
 -- The super admin invites and changes roles.
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 do $$ begin

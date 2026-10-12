@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.datetime.LocalDate
 
 class InMemoryExerciseRepository(private val exercises: List<Exercise>) : ExerciseRepository {
     /** memberId -> (exerciseId -> status) */
@@ -22,5 +23,14 @@ class InMemoryExerciseRepository(private val exercises: List<Exercise>) : Exerci
         statuses.update { all ->
             all + (memberId to (all[memberId].orEmpty() + (exerciseId to status)))
         }
+    }
+
+    private val practiceDays = MutableStateFlow<Map<String, Set<LocalDate>>>(emptyMap())
+
+    override fun observePracticeDays(memberId: String): Flow<Set<LocalDate>> =
+        practiceDays.map { it[memberId].orEmpty() }
+
+    override suspend fun recordPractice(memberId: String, day: LocalDate) {
+        practiceDays.update { all -> all + (memberId to (all[memberId].orEmpty() + day)) }
     }
 }

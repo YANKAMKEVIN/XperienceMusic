@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.data.repository
 import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.mapper.toExerciseStatus
 import com.xperiencemusic.shared.data.remote.dto.ExerciseProgressDto
+import com.xperiencemusic.shared.data.remote.dto.PracticeDayDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
 import com.xperiencemusic.shared.data.remote.postgrestCall
 import com.xperiencemusic.shared.domain.model.Exercise
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.builtins.ListSerializer
 
 /** Exercises are app content; only each member's statuses are stored in Supabase. */
@@ -59,9 +61,40 @@ class SupabaseExerciseRepository(
         statuses.update { all -> all + (memberId to rows.associate { it.exerciseId to it.status.toExerciseStatus() }) }
     }
 
+    /** memberId -> days practised; loaded like the statuses, cached for offline use. */
+    private val practiceDays = MutableStateFlow<Map<String, Set<LocalDate>>>(emptyMap())
+
+    override fun observePracticeDays(memberId: String): Flow<Set<LocalDate>> =
+        practiceDays.onStart {
+            if (memberId !in practiceDays.value) {
+                snapshots.load(daysSnapshotOf(memberId), ListSerializer(PracticeDayDto.serializer()))
+                    ?.let { rows -> practiceDays.update { it + (memberId to rows.map { row -> row.day }.toSet()) } }
+                ignoringFailures { reloadDays(memberId) }
+            }
+        }
+            // Nothing saved yet means no practice, not "unknown": the streak starts at 0.
+            .map { it[memberId].orEmpty() }
+
+    override suspend fun recordPractice(memberId: String, day: LocalDate) {
+        practiceDays.update { all -> all + (memberId to (all[memberId].orEmpty() + day)) }
+        postgrestCall {
+            client.from(PRACTICE_DAYS).upsert(PracticeDayDto(memberId, day)) { ignoreDuplicates = true }
+        }
+    }
+
+    private suspend fun reloadDays(memberId: String) {
+        val rows = postgrestCall {
+            client.from(PRACTICE_DAYS).select { filter { eq("member_id", memberId) } }.decodeList<PracticeDayDto>()
+        }
+        practiceDays.update { it + (memberId to rows.map { row -> row.day }.toSet()) }
+        snapshots.save(daysSnapshotOf(memberId), ListSerializer(PracticeDayDto.serializer()), rows)
+    }
+
     private companion object {
         const val PROGRESS = "exercise_progress"
+        const val PRACTICE_DAYS = "practice_days"
 
         fun snapshotOf(memberId: String) = "progress-$memberId"
+        fun daysSnapshotOf(memberId: String) = "practice-$memberId"
     }
 }
