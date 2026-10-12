@@ -58,6 +58,9 @@ class IosAudioPlayer : AudioPlayer {
     private var nowPlaying: NowPlaying? = null
     private var lastPublishedKey = -1L
 
+    private var isSeeking = false
+    private var playWhenSeeked = false
+
     init {
         registerRemoteCommands()
     }
@@ -89,17 +92,29 @@ class IosAudioPlayer : AudioPlayer {
     }
 
     override fun resume() {
-        player?.play()
-        player?.let(::sample)
+        val current = player ?: return
+        // Seeks are asynchronous: playing before the seek lands, at the end of the item, would
+        // stop again at once (replaying a finished recording did nothing).
+        if (isSeeking) playWhenSeeked = true else current.play()
+        sample(current)
     }
 
     override fun seekTo(positionMs: Long) {
         val current = player ?: return
-        current.seekToTime(CMTimeMakeWithSeconds(positionMs / MILLIS_PER_SECOND, TIMESCALE))
+        isSeeking = true
+        current.seekToTime(CMTimeMakeWithSeconds(positionMs / MILLIS_PER_SECOND, TIMESCALE)) { _ ->
+            isSeeking = false
+            if (playWhenSeeked && player === current) {
+                playWhenSeeked = false
+                current.play()
+            }
+        }
         _state.value = _state.value.copy(positionMs = positionMs, hasEnded = false)
     }
 
     override fun stop() {
+        isSeeking = false
+        playWhenSeeked = false
         ticker?.cancel()
         ticker = null
         player?.pause()
