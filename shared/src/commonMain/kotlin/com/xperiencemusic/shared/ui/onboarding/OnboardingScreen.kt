@@ -25,7 +25,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +51,6 @@ import com.xperiencemusic.shared.presentation.onboarding.OnboardingUiState
 import com.xperiencemusic.shared.presentation.onboarding.OnboardingViewModel
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.onboarding_back
-import com.xperiencemusic.shared.resources.onboarding_compare
 import com.xperiencemusic.shared.resources.onboarding_continue
 import com.xperiencemusic.shared.resources.onboarding_level_beginner
 import com.xperiencemusic.shared.resources.onboarding_level_confirmed
@@ -189,30 +187,14 @@ private fun NameStep(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Uni
     Text(stringResource(Res.string.onboarding_title), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
     Text(stringResource(Res.string.onboarding_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Question(stringResource(Res.string.onboarding_name_question), stringResource(Res.string.onboarding_name_hint))
-    // Temporary: the three field styles side by side, to pick one on a real phone.
-    Text(
-        stringResource(Res.string.onboarding_compare),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.secondary,
-    )
-    StyleTag("A")
-    NameFieldCard(state.name, onName, label, onDone = next)
-    StyleTag("B")
-    NameFieldLine(state.name, onName, label, onDone = next)
-    StyleTag("C")
     NameFieldGreeting(
         state.name,
         onName,
         placeholder = label,
         greeting = stringResource(Res.string.onboarding_name_greeting, state.name.trim()),
         onDone = next,
+        modifier = Modifier.padding(top = Spacing.l),
     )
-}
-
-@Composable
-private fun StyleTag(text: String) {
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(top = Spacing.s))
-    Text("Style $text", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
 }
 
 @Composable

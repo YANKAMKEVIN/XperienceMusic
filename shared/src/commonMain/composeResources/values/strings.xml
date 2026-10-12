@@ -18,7 +18,6 @@
     <string name="onboarding_name_question">Comment t'appelles-tu ?</string>
     <string name="onboarding_name_hint">C'est le prénom que verra le groupe.</string>
     <string name="onboarding_name_greeting">Enchanté, %1$s !</string>
-    <string name="onboarding_compare">Comparaison des styles de champ (on garde celui que tu préfères)</string>
     <string name="onboarding_role_question">Que fais-tu dans la louange ?</string>
     <string name="onboarding_role_singer">Je chante, avec des exercices de voix</string>
     <string name="onboarding_role_piano">Claviers et accompagnement</string>
