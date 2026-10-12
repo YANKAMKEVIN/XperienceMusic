@@ -20,13 +20,21 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         initKoin { androidContext(applicationContext) }
-        // Only a fresh launch: a recreated activity would replay the link it was started with.
-        if (savedInstanceState == null) intent?.dataString?.let(::openDeepLink)
+        // Only a fresh launch: a recreated activity, or one reopened from the recent apps, would
+        // replay the link it was first started with (an old address and code).
+        val fromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        if (savedInstanceState == null && !fromHistory) consumeLink(intent)
         setContent { XperienceMusicApp() }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        consumeLink(intent)
+    }
+
+    /** Hands the link to the app once, then forgets it. */
+    private fun consumeLink(intent: Intent) {
         intent.dataString?.let(::openDeepLink)
+        setIntent(Intent(intent).setData(null))
     }
 }
