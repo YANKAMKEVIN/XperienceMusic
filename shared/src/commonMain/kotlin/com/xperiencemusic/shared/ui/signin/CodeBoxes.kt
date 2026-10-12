@@ -20,9 +20,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -53,7 +55,10 @@ fun CodeBoxes(
     modifier: Modifier = Modifier,
 ) {
     val focus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) { focus.requestFocus() }
+    // Checking the code: the boxes freeze and the keyboard gets out of the way.
+    LaunchedEffect(enabled) { if (!enabled) keyboard?.hide() }
     BasicTextField(
         // The cursor always stays at the end: digits are typed and erased from the right.
         value = TextFieldValue(code, selection = TextRange(code.length)),
@@ -64,6 +69,7 @@ fun CodeBoxes(
         cursorBrush = SolidColor(Color.Transparent),
         modifier = modifier
             .fillMaxWidth()
+            .alpha(if (enabled) 1f else 0.55f)
             .focusRequester(focus)
             .semantics { contentDescription = description },
         decorationBox = {
@@ -72,7 +78,7 @@ fun CodeBoxes(
                     DigitBox(
                         digit = code.getOrNull(index),
                         isCurrent = enabled && index == code.length,
-                        isError = isError,
+                        isError = isError && enabled,
                         modifier = Modifier.weight(1f),
                     )
                 }
