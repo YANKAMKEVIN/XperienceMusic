@@ -10,10 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -76,22 +74,15 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
             when (state.step) {
                 SignInStep.EMAIL -> {
                     Text(stringResource(Res.string.signin_email_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    // Temporary: three field styles side by side, to pick one on a real phone.
-                    val onEmail: (String) -> Unit = { onEvent(SignInEvent.EmailChanged(it)) }
-                    val emailLabel = stringResource(Res.string.signin_email_label)
                     val isEmailError = state.error == SignInError.INVALID_EMAIL
-                    StyleTag("A")
-                    EmailFieldCard(state.email, onEmail, emailLabel, isEmailError, onSend = submit)
-                    StyleTag("B")
-                    EmailFieldLine(state.email, onEmail, emailLabel, isEmailError, onSend = submit)
-                    StyleTag("C")
                     EmailFieldPill(
                         state.email,
-                        onEmail,
-                        placeholder = emailLabel,
+                        onValueChange = { onEvent(SignInEvent.EmailChanged(it)) },
+                        placeholder = stringResource(Res.string.signin_email_label),
                         sendLabel = stringResource(Res.string.signin_send_code),
                         isError = isEmailError,
                         canSend = state.canSubmit,
+                        isSending = state.isSubmitting,
                         onSend = submit,
                     )
                 }
@@ -146,12 +137,6 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
-            if (state.step == SignInStep.EMAIL) Button(onClick = submit, enabled = state.canSubmit, modifier = Modifier.fillMaxWidth()) {
-                if (state.isSubmitting) {
-                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.padding(end = Spacing.s))
-                }
-                Text(stringResource(Res.string.signin_send_code))
-            }
             if (state.step == SignInStep.CODE) {
                 TextButton(onClick = { onEvent(SignInEvent.ChangeEmailClicked) }) {
                     Text(stringResource(Res.string.signin_change_email))
@@ -178,8 +163,3 @@ private fun SignInScreenCodePreview() {
     }
 }
 
-@Composable
-private fun StyleTag(text: String) {
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(top = Spacing.s))
-    Text("Style $text", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-}
