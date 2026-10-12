@@ -1,14 +1,10 @@
 package com.xperiencemusic.shared.navigation
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -29,6 +25,7 @@ import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.tab_week
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.exercise.ExerciseScreen
+import com.xperiencemusic.shared.ui.theme.Spacing
 import com.xperiencemusic.shared.ui.library.LibraryScreen
 import com.xperiencemusic.shared.ui.members.MembersScreen
 import com.xperiencemusic.shared.ui.player.MiniPlayer
@@ -65,9 +62,15 @@ fun MainScaffold(onSignOut: () -> Unit) {
 
     Scaffold(
         bottomBar = {
-            if (!isOnStage) Column {
-                // Above the tabs, and alone at the bottom of pushed screens, so playback stays reachable.
-                MiniPlayer(isAtScreenBottom = !isOnTab)
+            // Floating: the player card (while something plays) stacked over the tab pill, both
+            // clear of the screen edges. Pushed screens keep the player only.
+            if (!isOnStage) Column(
+                verticalArrangement = Arrangement.spacedBy(Spacing.s),
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(start = Spacing.l, end = Spacing.l, top = Spacing.s, bottom = Spacing.m),
+            ) {
+                MiniPlayer()
                 if (isOnTab) TabBar(navController, destination)
             }
         },
@@ -158,11 +161,12 @@ fun MainScaffold(onSignOut: () -> Unit) {
 
 @Composable
 private fun TabBar(navController: NavHostController, destination: NavDestination?) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-        tabs.forEach { tab ->
-            val label = stringResource(tab.label)
-            NavigationBarItem(
-                selected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true,
+    FloatingTabBar(
+        tabs.map { tab ->
+            FloatingTab(
+                label = stringResource(tab.label),
+                icon = tab.icon,
+                isSelected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true,
                 onClick = {
                     navController.navigate(tab.route) {
                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -170,14 +174,7 @@ private fun TabBar(navController: NavHostController, destination: NavDestination
                         restoreState = true
                     }
                 },
-                icon = { Icon(tab.icon, contentDescription = null) },
-                label = { Text(label) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                ),
             )
-        }
-    }
+        },
+    )
 }

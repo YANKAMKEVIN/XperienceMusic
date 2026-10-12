@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.player
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,17 +44,17 @@ import com.xperiencemusic.shared.resources.player_open
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.PlayPauseButton
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * Shown above the tabs while something is loaded, so listening goes on across screens; a tap
- * opens the full player. [isAtScreenBottom]: nothing below it, so it must keep clear of the
- * system navigation bar.
+ * A floating card above the tabs while something is loaded, so listening goes on across screens;
+ * a tap opens the full player.
  */
 @Composable
-fun MiniPlayer(isAtScreenBottom: Boolean, viewModel: MiniPlayerViewModel = koinViewModel()) {
+fun MiniPlayer(viewModel: MiniPlayerViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     if (state.isVisible) {
@@ -61,7 +62,6 @@ fun MiniPlayer(isAtScreenBottom: Boolean, viewModel: MiniPlayerViewModel = koinV
             state = state,
             onEvent = viewModel::onEvent,
             onExpand = { isExpanded = true },
-            isAtScreenBottom = isAtScreenBottom,
         )
         if (isExpanded) PlayerSheet(state, viewModel::onEvent, onDismiss = { isExpanded = false })
     } else {
@@ -74,22 +74,27 @@ fun MiniPlayerContent(
     state: MiniPlayerUiState,
     onEvent: (MiniPlayerEvent) -> Unit,
     onExpand: () -> Unit,
-    isAtScreenBottom: Boolean = false,
 ) {
     val openLabel = stringResource(Res.string.player_open)
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.then(if (isAtScreenBottom) Modifier.navigationBarsPadding() else Modifier)) {
+    val shape = RoundedCornerShape(22.dp)
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = shape,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clickable(onClickLabel = openLabel, role = Role.Button, onClick = onExpand)
-                    .padding(start = Spacing.l, end = Spacing.xs, top = Spacing.s, bottom = Spacing.s),
+                    .padding(start = Spacing.s, end = Spacing.xs, top = Spacing.s, bottom = Spacing.s),
             ) {
                 Box(
-                    Modifier.size(40.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(10.dp)),
+                    Modifier.size(44.dp).background(BrandColors.gradient, RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(XmIcons.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    Icon(XmIcons.Notes, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
                 }
                 Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
                     Text(state.subtitle, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -119,8 +124,8 @@ fun MiniPlayerContent(
             }
             LinearProgressIndicator(
                 progress = { state.progress },
-                trackColor = MaterialTheme.colorScheme.surfaceContainer,
-                modifier = Modifier.fillMaxWidth().height(2.dp),
+                trackColor = Color.Transparent,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp).height(2.dp),
             )
         }
     }

@@ -48,6 +48,7 @@ import com.xperiencemusic.shared.presentation.library.LibraryViewModel
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.action_add_song
 import com.xperiencemusic.shared.resources.library_empty
+import com.xperiencemusic.shared.resources.library_empty_none
 import com.xperiencemusic.shared.resources.library_search
 import com.xperiencemusic.shared.resources.library_title
 import com.xperiencemusic.shared.resources.library_versions
@@ -122,7 +123,7 @@ private fun LibraryList(
         if (!state.isLoading && state.songs.isEmpty()) {
             item {
                 Text(
-                    stringResource(Res.string.library_empty),
+                    stringResource(if (state.query.isBlank()) Res.string.library_empty_none else Res.string.library_empty),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = Spacing.l),
                 )

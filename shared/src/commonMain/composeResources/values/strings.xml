@@ -104,6 +104,7 @@
     <string name="library_title">Chants</string>
     <string name="library_search">Rechercher un chant ou un auteur</string>
     <string name="library_empty">Aucun chant ne correspond à ta recherche.</string>
+    <string name="library_empty_none">Aucun chant pour l'instant. Ajoute le premier avec « + ».</string>
     <string name="library_versions">%1$d/%2$d versions</string>
 
     <!-- Song detail -->
