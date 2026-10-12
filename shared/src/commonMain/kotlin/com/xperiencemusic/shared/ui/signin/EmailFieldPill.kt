@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -58,23 +59,26 @@ fun EmailFieldPill(
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
+        // Locked while the code is being sent: the address it goes to cannot change under it.
+        enabled = !isSending,
         singleLine = true,
         interactionSource = interaction,
         keyboardOptions = emailKeyboard,
         keyboardActions = KeyboardActions(onSend = { onSend() }),
-        textStyle = TextStyle(color = colors.onSurface, fontSize = 17.sp),
+        textStyle = TextStyle(color = if (isSending) colors.onSurfaceVariant else colors.onSurface, fontSize = 17.sp),
         cursorBrush = BrandColors.gradient,
         modifier = modifier.fillMaxWidth(),
         decorationBox = { field ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
+                    .alpha(if (isSending) 0.6f else 1f)
                     .background(colors.surfaceContainerHigh, CircleShape)
                     .border(
                         1.dp,
                         when {
                             isError -> SolidColor(colors.error)
-                            isFocused -> BrandColors.gradient
+                            isFocused && !isSending -> BrandColors.gradient
                             else -> SolidColor(colors.outlineVariant)
                         },
                         CircleShape,
