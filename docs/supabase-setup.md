@@ -90,3 +90,10 @@ docker run -d --name xm-pg -e POSTGRES_PASSWORD=pg postgres:16-alpine
 for f in supabase/tests/supabase_stubs.sql supabase/migrations/*.sql supabase/tests/rls_test.sql; do docker exec -i xm-pg psql -U postgres -v ON_ERROR_STOP=1 -q < "$f"; done
 docker rm -f xm-pg
 ```
+
+## À faire plus tard
+
+- **Remplacer Gmail par Brevo ou Resend pour l'envoi des codes**, avant d'inviter tout le groupe.
+  Avec le SMTP Gmail, chaque code envoyé à un membre apparaît aussi dans les messages envoyés du
+  compte Gmail de l'admin. Un service dédié (gratuit à ce volume) envoie depuis une adresse
+  « Xperience Music » et garde les codes privés.
