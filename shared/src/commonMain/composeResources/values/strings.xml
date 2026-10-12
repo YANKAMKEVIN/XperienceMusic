@@ -82,10 +82,17 @@
 
     <!-- Week -->
     <string name="week_title">Semaine</string>
+    <string name="week_empty_title">Pas encore de setlist</string>
+    <string name="week_empty_text">Dès qu'elle est publiée, les chants de mardi et dimanche apparaissent ici pour tout le groupe.</string>
+    <string name="week_countdown_days">%1$d j</string>
+    <string name="week_countdown_today">Jour J</string>
+    <string name="week_countdown_caption">avant la répétition</string>
+    <string name="week_countdown_caption_today">répétition aujourd'hui</string>
+    <string name="week_countdown_title">Répétition %1$s</string>
+    <string name="week_countdown_text">La setlist n'est pas encore publiée. Elle apparaîtra ici dès que le responsable l'enverra.</string>
     <string name="week_rehearsal">Répétition · %1$s</string>
     <string name="week_service">Prestation · %1$s</string>
     <string name="week_published_by">Publiée par %1$s</string>
-    <string name="week_empty">Aucune setlist publiée pour le moment.</string>
     <string name="week_song_has_reference">Version de référence disponible</string>
     <string name="week_song_new">Nouveau chant · pas encore d'enregistrement</string>
 
@@ -104,7 +111,9 @@
     <string name="library_title">Chants</string>
     <string name="library_search">Rechercher un chant ou un auteur</string>
     <string name="library_empty">Aucun chant ne correspond à ta recherche.</string>
-    <string name="library_empty_none">Aucun chant pour l'instant. Ajoute le premier avec « + ».</string>
+    <string name="library_empty_title">La bibliothèque est vide</string>
+    <string name="library_empty_admin">Ajoute les chants du groupe : paroles, accords et enregistrements de référence.</string>
+    <string name="library_empty_member">Les chants ajoutés par les responsables apparaîtront ici.</string>
     <string name="library_versions">%1$d/%2$d versions</string>
 
     <!-- Song detail -->

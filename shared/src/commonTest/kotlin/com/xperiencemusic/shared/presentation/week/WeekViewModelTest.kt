@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
 import com.xperiencemusic.shared.domain.usecase.RefreshContentUseCase
@@ -58,6 +59,7 @@ class WeekViewModelTest {
             ObserveSyncStatusUseCase(songs, setlists),
             RefreshContentUseCase(songs, setlists),
             PlaybackController(FakeAudioPlayer(), { it }, CoroutineScope(UnconfinedTestDispatcher())),
+            GetTodayUseCase { LocalDate(2026, 10, 10) },
         )
         viewModel.state.test {
             val before = expectMostRecentItem().offline!!
@@ -66,6 +68,7 @@ class WeekViewModelTest {
             assertFalse(viewModel.state.value.canPublish)
             assertEquals(WeekTiming.CURRENT, viewModel.state.value.setlist?.timing)
             assertFalse(viewModel.state.value.isOffline)
+            assertEquals(3, viewModel.state.value.nextRehearsal?.daysLeft, "Saturday 10 Oct. to Tuesday 13 Oct.")
 
             viewModel.onEvent(WeekEvent.DownloadClicked)
             val after = expectMostRecentItem().offline!!

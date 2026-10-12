@@ -56,7 +56,14 @@ import com.xperiencemusic.shared.resources.action_edit_setlist
 import com.xperiencemusic.shared.resources.action_publish_setlist
 import com.xperiencemusic.shared.resources.setlist_rehearsal_label
 import com.xperiencemusic.shared.resources.setlist_service_label
-import com.xperiencemusic.shared.resources.week_empty
+import com.xperiencemusic.shared.resources.week_countdown_caption
+import com.xperiencemusic.shared.resources.week_countdown_caption_today
+import com.xperiencemusic.shared.resources.week_countdown_days
+import com.xperiencemusic.shared.resources.week_countdown_text
+import com.xperiencemusic.shared.resources.week_countdown_title
+import com.xperiencemusic.shared.resources.week_countdown_today
+import com.xperiencemusic.shared.resources.week_empty_text
+import com.xperiencemusic.shared.resources.week_empty_title
 import com.xperiencemusic.shared.resources.week_past_hint
 import com.xperiencemusic.shared.resources.week_pause_reference
 import com.xperiencemusic.shared.resources.week_play_reference
@@ -69,6 +76,9 @@ import com.xperiencemusic.shared.ui.brand.BrandWaves
 import com.xperiencemusic.shared.ui.brand.KeyPill
 import com.xperiencemusic.shared.ui.brand.XmMonogram
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.CountdownEmptyState
+import com.xperiencemusic.shared.ui.components.EmptyState
+import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -126,7 +136,7 @@ private fun WeekList(
         if (state.weeks.size > 1) item { WeekTabs(state.weeks, onSelect = { onEvent(WeekEvent.WeekSelected(it)) }) }
         if (state.isOffline) item { OfflineBanner() }
         if (setlist == null) {
-            item { Text(stringResource(Res.string.week_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            item { EmptyWeek(state, onPublish = { onEditWeek(null) }) }
         } else {
             item { DatesRow(setlist) }
             if (setlist.timing == WeekTiming.PAST) {
@@ -160,9 +170,35 @@ private fun WeekList(
                 state.offline?.let { item { OfflineCard(it, onDownload = { onEvent(WeekEvent.DownloadClicked) }) } }
             }
         }
-        if (state.canPublish) {
+        // With no setlist, the empty state carries the publish button.
+        if (state.canPublish && setlist != null) {
             item { AdminActions(state, onEditWeek) }
         }
+    }
+}
+
+/**
+ * Admins are invited to publish; members, who cannot, see how long until the rehearsal instead.
+ */
+@Composable
+private fun EmptyWeek(state: WeekUiState, onPublish: () -> Unit) {
+    val countdown = state.nextRehearsal
+    if (state.canPublish || countdown == null) {
+        EmptyState(
+            icon = XmIcons.Notes,
+            title = stringResource(Res.string.week_empty_title),
+            text = stringResource(Res.string.week_empty_text),
+            actionLabel = if (state.canPublish) stringResource(Res.string.action_publish_setlist) else null,
+            onAction = onPublish,
+        )
+    } else {
+        CountdownEmptyState(
+            value = if (countdown.daysLeft == 0) stringResource(Res.string.week_countdown_today) else stringResource(Res.string.week_countdown_days, countdown.daysLeft),
+            caption = stringResource(if (countdown.daysLeft == 0) Res.string.week_countdown_caption_today else Res.string.week_countdown_caption),
+            fraction = countdown.fraction,
+            title = stringResource(Res.string.week_countdown_title, countdown.dateLabel),
+            text = stringResource(Res.string.week_countdown_text),
+        )
     }
 }
 

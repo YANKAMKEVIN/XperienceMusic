@@ -62,6 +62,7 @@ import com.xperiencemusic.shared.resources.progress_profile
 import com.xperiencemusic.shared.resources.progress_title
 import com.xperiencemusic.shared.resources.session_sign_out
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
@@ -103,15 +104,11 @@ fun ProgressScreenContent(
         item { ProgressHeader(state) }
         if (!state.hasPath) {
             item {
-                AppCard {
-                    Text(stringResource(Res.string.progress_musicians_soon_title), style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        stringResource(Res.string.progress_musicians_soon_text),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = Spacing.s),
-                    )
-                }
+                EmptyState(
+                    icon = XmIcons.Piano,
+                    title = stringResource(Res.string.progress_musicians_soon_title),
+                    text = stringResource(Res.string.progress_musicians_soon_text),
+                )
             }
         } else {
             item { PathCard(state.validatedCount, state.exercises.size) }

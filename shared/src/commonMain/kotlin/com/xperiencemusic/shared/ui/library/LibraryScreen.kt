@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.brand.KeyPill
@@ -48,11 +49,14 @@ import com.xperiencemusic.shared.presentation.library.LibraryViewModel
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.action_add_song
 import com.xperiencemusic.shared.resources.library_empty
-import com.xperiencemusic.shared.resources.library_empty_none
+import com.xperiencemusic.shared.resources.library_empty_admin
+import com.xperiencemusic.shared.resources.library_empty_member
+import com.xperiencemusic.shared.resources.library_empty_title
 import com.xperiencemusic.shared.resources.library_search
 import com.xperiencemusic.shared.resources.library_title
 import com.xperiencemusic.shared.resources.library_versions
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
@@ -122,11 +126,22 @@ private fun LibraryList(
         }
         if (!state.isLoading && state.songs.isEmpty()) {
             item {
-                Text(
-                    stringResource(if (state.query.isBlank()) Res.string.library_empty_none else Res.string.library_empty),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = Spacing.l),
-                )
+                if (state.query.isBlank()) {
+                    EmptyState(
+                        icon = XmIcons.Book,
+                        title = stringResource(Res.string.library_empty_title),
+                        text = stringResource(if (state.canAddSong) Res.string.library_empty_admin else Res.string.library_empty_member),
+                        actionLabel = if (state.canAddSong) stringResource(Res.string.action_add_song) else null,
+                        onAction = onAddSong,
+                    )
+                } else {
+                    Text(
+                        stringResource(Res.string.library_empty),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.l),
+                    )
+                }
             }
         }
         items(state.songs, key = { it.id }) { song ->

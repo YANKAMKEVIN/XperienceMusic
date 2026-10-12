@@ -2,12 +2,14 @@ package com.xperiencemusic.shared.presentation.week
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.xperiencemusic.shared.domain.model.BandWeek
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.model.SetlistSchedule
 import com.xperiencemusic.shared.domain.model.SyncStatus
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
@@ -23,6 +25,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.daysUntil
+import com.xperiencemusic.shared.presentation.common.Formatting
 
 class WeekViewModel(
     private val observeSchedule: ObserveSetlistScheduleUseCase,
@@ -32,6 +36,7 @@ class WeekViewModel(
     observeSyncStatus: ObserveSyncStatusUseCase,
     private val refreshContent: RefreshContentUseCase,
     private val playback: PlaybackController,
+    private val getToday: GetTodayUseCase,
 ) : ViewModel() {
     private val download = MutableStateFlow(DownloadState())
     private val isRefreshing = MutableStateFlow(false)
@@ -55,6 +60,10 @@ class WeekViewModel(
     ) { week, member, offline, download, (syncStatus, refreshing) ->
         week.copy(
             canPublish = member?.role?.can(Permission.PUBLISH_SETLIST) == true,
+            nextRehearsal = getToday().let { today ->
+                val rehearsal = BandWeek.startingFrom(today).rehearsalDate
+                RehearsalCountdownUi(today.daysUntil(rehearsal), Formatting.dayAndDate(rehearsal))
+            },
             isRefreshing = refreshing,
             isOffline = syncStatus == SyncStatus.FAILED,
             offline = offline.takeIf { it.total > 0 }?.let {
