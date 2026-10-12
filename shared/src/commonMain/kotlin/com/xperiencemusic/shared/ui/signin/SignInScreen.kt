@@ -2,6 +2,8 @@ package com.xperiencemusic.shared.ui.signin
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -18,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -34,6 +37,7 @@ import com.xperiencemusic.shared.presentation.signin.SignInUiState
 import com.xperiencemusic.shared.presentation.signin.SignInViewModel
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.signin_change_email
+import com.xperiencemusic.shared.resources.signin_checking
 import com.xperiencemusic.shared.resources.signin_code_label
 import com.xperiencemusic.shared.resources.signin_code_subtitle
 import com.xperiencemusic.shared.resources.signin_demo_hint
@@ -46,7 +50,6 @@ import com.xperiencemusic.shared.resources.signin_error_not_sent
 import com.xperiencemusic.shared.resources.signin_error_too_many
 import com.xperiencemusic.shared.resources.signin_send_code
 import com.xperiencemusic.shared.resources.signin_title
-import com.xperiencemusic.shared.resources.signin_verify
 import com.xperiencemusic.shared.ui.brand.BrandBackground
 import com.xperiencemusic.shared.ui.brand.BrandHeader
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -93,16 +96,28 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                         stringResource(Res.string.signin_code_subtitle, state.email),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    OutlinedTextField(
-                        value = state.code,
-                        onValueChange = { onEvent(SignInEvent.CodeChanged(it)) },
-                        label = { Text(stringResource(Res.string.signin_code_label)) },
-                        singleLine = true,
+                    CodeBoxes(
+                        code = state.code,
+                        length = SignInUiState.CODE_LENGTH,
+                        onCodeChange = { onEvent(SignInEvent.CodeChanged(it)) },
                         isError = state.error == SignInError.INVALID_CODE,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { submit() }),
-                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.isSubmitting,
+                        description = stringResource(Res.string.signin_code_label),
                     )
+                    if (state.isSubmitting) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+                        ) {
+                            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                            Text(
+                                stringResource(Res.string.signin_checking),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = Spacing.m),
+                            )
+                        }
+                    }
                 }
             }
             state.demoCode?.let {
@@ -127,13 +142,11 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
-            Button(onClick = submit, enabled = state.canSubmit, modifier = Modifier.fillMaxWidth()) {
+            if (state.step == SignInStep.EMAIL) Button(onClick = submit, enabled = state.canSubmit, modifier = Modifier.fillMaxWidth()) {
                 if (state.isSubmitting) {
                     CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.padding(end = Spacing.s))
                 }
-                Text(
-                    stringResource(if (state.step == SignInStep.EMAIL) Res.string.signin_send_code else Res.string.signin_verify),
-                )
+                Text(stringResource(Res.string.signin_send_code))
             }
             if (state.step == SignInStep.CODE) {
                 TextButton(onClick = { onEvent(SignInEvent.ChangeEmailClicked) }) {

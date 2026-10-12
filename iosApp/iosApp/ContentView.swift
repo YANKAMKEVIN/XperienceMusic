@@ -19,6 +19,10 @@ struct ContentView: View {
             .ignoresSafeArea()
             .statusBarHidden(systemBarsHidden)
             .modifier(HomeIndicatorHidden(isHidden: systemBarsHidden))
+            // The sign-in e-mail's link: xperiencemusic://connexion?email=…&code=…
+            .onOpenURL { url in
+                DeepLinksKt.openDeepLink(url: url.absoluteString)
+            }
             .onAppear {
                 HideSystemBars_iosKt.observeSystemBarsHidden { hidden in
                     systemBarsHidden = hidden.boolValue

@@ -4,6 +4,17 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.xperiencemusic.signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>xperiencemusic</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Xperience Music</string>
 	<key>CFBundleExecutable</key>

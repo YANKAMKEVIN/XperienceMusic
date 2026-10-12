@@ -6,10 +6,12 @@ import com.xperiencemusic.shared.domain.model.AppEnvironment
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.usecase.RequestSignInCodeUseCase
+import com.xperiencemusic.shared.domain.usecase.SignInLinkInbox
 import com.xperiencemusic.shared.domain.usecase.VerifySignInCodeUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -18,9 +20,29 @@ class SignInViewModel(
     private val requestCode: RequestSignInCodeUseCase,
     private val verifyCode: VerifySignInCodeUseCase,
     environment: AppEnvironment,
+    private val links: SignInLinkInbox,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SignInUiState(demoCode = environment.demoCode))
     val state: StateFlow<SignInUiState> = _state.asStateFlow()
+
+    init {
+        // The e-mail's link: fill in the address and the code, then sign in straight away.
+        viewModelScope.launch {
+            links.link.filterNotNull().collect { link ->
+                links.consume()
+                if (_state.value.isSubmitting) return@collect
+                _state.update {
+                    it.copy(
+                        step = SignInStep.CODE,
+                        email = link.email,
+                        code = link.code.take(SignInUiState.CODE_LENGTH),
+                        error = null,
+                    )
+                }
+                submit()
+            }
+        }
+    }
 
     fun onEvent(event: SignInEvent) {
         when (event) {

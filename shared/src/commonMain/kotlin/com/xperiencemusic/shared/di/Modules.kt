@@ -81,6 +81,7 @@ import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.DeleteSetlistUseCase
+import com.xperiencemusic.shared.signInLinkInbox
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SetReferenceRecordingUseCase
@@ -139,6 +140,7 @@ val domainModule = module {
     factoryOf(::AddRecordingUseCase)
     factoryOf(::DeleteRecordingUseCase)
     factoryOf(::SetReferenceRecordingUseCase)
+    single { signInLinkInbox }
     factoryOf(::ObserveSetlistScheduleUseCase)
     factoryOf(::DeleteSetlistUseCase)
     factoryOf(::PublishSetlistUseCase)

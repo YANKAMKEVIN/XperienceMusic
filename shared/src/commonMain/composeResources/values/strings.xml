@@ -29,6 +29,7 @@
 
     <!-- Sign in -->
     <string name="signin_title">Connexion</string>
+    <string name="signin_checking">Vérification du code…</string>
     <string name="signin_email_subtitle">Entre l'adresse e-mail avec laquelle le groupe t'a invité. Tu recevras un code à 6 chiffres.</string>
     <string name="signin_email_label">Adresse e-mail</string>
     <string name="signin_send_code">Recevoir le code</string>

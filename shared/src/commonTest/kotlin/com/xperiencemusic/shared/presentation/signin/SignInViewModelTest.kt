@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.presentation.signin
 import com.xperiencemusic.shared.domain.model.AppEnvironment
 import com.xperiencemusic.shared.domain.model.SessionState
 import com.xperiencemusic.shared.domain.usecase.RequestSignInCodeUseCase
+import com.xperiencemusic.shared.domain.usecase.SignInLinkInbox
 import com.xperiencemusic.shared.domain.usecase.VerifySignInCodeUseCase
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,7 @@ import kotlin.test.assertNull
 @OptIn(ExperimentalCoroutinesApi::class)
 class SignInViewModelTest {
     private val sessions = FakeSessionRepository()
+    private val links = SignInLinkInbox()
     private lateinit var viewModel: SignInViewModel
 
     @BeforeTest
@@ -29,6 +31,7 @@ class SignInViewModelTest {
             RequestSignInCodeUseCase(sessions),
             VerifySignInCodeUseCase(sessions),
             AppEnvironment(isDemo = true, demoCode = "123456"),
+            links,
         )
     }
 
@@ -46,6 +49,14 @@ class SignInViewModelTest {
         assertEquals("123456", viewModel.state.value.code)
         viewModel.onEvent(SignInEvent.SubmitClicked)
         assertEquals(SessionState.NeedsProfile("grace@band.fr"), sessions.state.value)
+    }
+
+    @Test
+    fun `le lien de l'e-mail remplit le code et connecte directement`() = runTest {
+        links.receive("xperiencemusic://connexion?email=grace%40band.fr&code=123456")
+        assertEquals(SessionState.NeedsProfile("grace@band.fr"), sessions.state.value)
+        assertEquals("123456", viewModel.state.value.code)
+        assertNull(links.link.value, "the link is used once")
     }
 
     @Test
