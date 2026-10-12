@@ -9,13 +9,11 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,8 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -80,15 +76,23 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
             when (state.step) {
                 SignInStep.EMAIL -> {
                     Text(stringResource(Res.string.signin_email_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    OutlinedTextField(
-                        value = state.email,
-                        onValueChange = { onEvent(SignInEvent.EmailChanged(it)) },
-                        label = { Text(stringResource(Res.string.signin_email_label)) },
-                        singleLine = true,
-                        isError = state.error == SignInError.INVALID_EMAIL,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Send),
-                        keyboardActions = KeyboardActions(onSend = { submit() }),
-                        modifier = Modifier.fillMaxWidth(),
+                    // Temporary: three field styles side by side, to pick one on a real phone.
+                    val onEmail: (String) -> Unit = { onEvent(SignInEvent.EmailChanged(it)) }
+                    val emailLabel = stringResource(Res.string.signin_email_label)
+                    val isEmailError = state.error == SignInError.INVALID_EMAIL
+                    StyleTag("A")
+                    EmailFieldCard(state.email, onEmail, emailLabel, isEmailError, onSend = submit)
+                    StyleTag("B")
+                    EmailFieldLine(state.email, onEmail, emailLabel, isEmailError, onSend = submit)
+                    StyleTag("C")
+                    EmailFieldPill(
+                        state.email,
+                        onEmail,
+                        placeholder = emailLabel,
+                        sendLabel = stringResource(Res.string.signin_send_code),
+                        isError = isEmailError,
+                        canSend = state.canSubmit,
+                        onSend = submit,
                     )
                 }
                 SignInStep.CODE -> {
@@ -172,4 +176,10 @@ private fun SignInScreenCodePreview() {
             onEvent = {},
         )
     }
+}
+
+@Composable
+private fun StyleTag(text: String) {
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(top = Spacing.s))
+    Text("Style $text", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
 }

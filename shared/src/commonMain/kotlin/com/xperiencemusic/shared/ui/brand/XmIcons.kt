@@ -94,6 +94,14 @@ object XmIcons {
         }
     }
 
+    /** An envelope: the e-mail field. */
+    val Mail: ImageVector by lazy {
+        icon("Mail") {
+            moveTo(3.5f, 6f); horizontalLineTo(20.5f); verticalLineTo(18f); horizontalLineTo(3.5f); close()
+            moveTo(4f, 6.5f); lineTo(12f, 13f); lineTo(20f, 6.5f)
+        }
+    }
+
     /** A person: the name field. */
     val Person: ImageVector by lazy {
         icon("Person") {
