@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -65,6 +66,7 @@ import com.xperiencemusic.shared.resources.onboarding_role_drums
 import com.xperiencemusic.shared.resources.onboarding_role_piano
 import com.xperiencemusic.shared.resources.onboarding_role_question
 import com.xperiencemusic.shared.resources.onboarding_role_singer
+import com.xperiencemusic.shared.resources.onboarding_sign_out
 import com.xperiencemusic.shared.resources.onboarding_step
 import com.xperiencemusic.shared.resources.onboarding_submit
 import com.xperiencemusic.shared.resources.onboarding_subtitle
@@ -88,13 +90,13 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun OnboardingScreen(viewModel: OnboardingViewModel = koinViewModel()) {
+fun OnboardingScreen(onSignOut: () -> Unit, viewModel: OnboardingViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    OnboardingScreenContent(state = state, onEvent = viewModel::onEvent)
+    OnboardingScreenContent(state = state, onEvent = viewModel::onEvent, onSignOut = onSignOut)
 }
 
 @Composable
-fun OnboardingScreenContent(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit) {
+fun OnboardingScreenContent(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit, onSignOut: () -> Unit = {}) {
     val next = { onEvent(OnboardingEvent.ContinueClicked) }
     BrandBackground {
         Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
@@ -132,7 +134,13 @@ fun OnboardingScreenContent(state: OnboardingUiState, onEvent: (OnboardingEvent)
                 ) { step ->
                     Column(verticalArrangement = Arrangement.spacedBy(Spacing.m), modifier = Modifier.padding(top = Spacing.s, bottom = Spacing.l)) {
                         when (step) {
-                            OnboardingStep.NAME -> NameStep(state, onEvent, next)
+                            OnboardingStep.NAME -> {
+                                NameStep(state, onEvent, next)
+                                // Signed in with the wrong address: start again from the e-mail.
+                                TextButton(onClick = onSignOut, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                                    Text(stringResource(Res.string.onboarding_sign_out))
+                                }
+                            }
                             OnboardingStep.ROLE -> RoleStep(state, onEvent)
                             OnboardingStep.VOICE -> VoiceStep(state, onEvent)
                             OnboardingStep.LEVEL -> LevelStep(state, onEvent)

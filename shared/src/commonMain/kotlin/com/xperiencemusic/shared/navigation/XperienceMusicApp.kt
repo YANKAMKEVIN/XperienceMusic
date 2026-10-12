@@ -57,7 +57,7 @@ private fun AppRoot(viewModel: AppViewModel = koinViewModel()) {
             signOutLabel = stringResource(Res.string.session_sign_out),
             onSignOut = signOut,
         )
-        AppUiState.Onboarding -> OnboardingScreen()
+        AppUiState.Onboarding -> OnboardingScreen(onSignOut = signOut)
         AppUiState.Ready -> MainScaffold(onSignOut = signOut)
     }
 }
