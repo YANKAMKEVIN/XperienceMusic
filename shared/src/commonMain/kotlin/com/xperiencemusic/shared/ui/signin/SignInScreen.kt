@@ -3,11 +3,11 @@ package com.xperiencemusic.shared.ui.signin
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -66,14 +66,17 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                 .safeDrawingPadding()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(Spacing.xl),
+                .padding(top = Spacing.xl, start = Spacing.xl, end = Spacing.xl),
             verticalArrangement = Arrangement.spacedBy(Spacing.l),
         ) {
             BrandHeader()
             Text(stringResource(Res.string.signin_title), style = MaterialTheme.typography.headlineSmall)
             when (state.step) {
                 SignInStep.EMAIL -> {
-                    Text(stringResource(Res.string.signin_email_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(Res.string.signin_email_subtitle),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     val isEmailError = state.error == SignInError.INVALID_EMAIL
                     EmailFieldPill(
                         state.email,
@@ -86,6 +89,7 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                         onSend = submit,
                     )
                 }
+
                 SignInStep.CODE -> {
                     Text(
                         stringResource(Res.string.signin_code_subtitle, state.email),
