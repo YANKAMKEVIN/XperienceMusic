@@ -1,13 +1,13 @@
 package com.xperiencemusic.shared.presentation.library
 
-import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.Song
+import com.xperiencemusic.shared.presentation.common.shortLabel
 
 fun Song.toLibraryItem(): LibrarySongUi = LibrarySongUi(
     id = id,
     title = title,
     artist = artist,
-    keyLabel = key.label(Notation.SOLFEGE),
+    keyLabel = key.shortLabel(),
     recordingCount = recordings.size,
     maxRecordings = Song.MAX_RECORDINGS,
 )

@@ -15,6 +15,7 @@ data class StageUiState(
     val setlistPosition: String? = null,
     val previousSongId: String? = null,
     val nextSongId: String? = null,
+    val nextSongTitle: String? = null,
 ) {
     companion object {
         const val DEFAULT_SCALE = 1.6f

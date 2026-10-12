@@ -7,7 +7,7 @@ import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.WeeklySetlist
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
-import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,14 +36,14 @@ class StageViewModel(
     private val transposeSemitones: Int,
     private val notation: Notation,
     observeSong: ObserveSongUseCase,
-    observeWeeklySetlist: ObserveWeeklySetlistUseCase,
+    observeSchedule: ObserveSetlistScheduleUseCase,
     store: StageSettingsStore,
 ) : ViewModel() {
     private val settings = store.settings
 
     val state: StateFlow<StageUiState> =
-        combine(observeSong(songId), observeWeeklySetlist(), settings) { song, weekly, settings ->
-            deriveStageState(song, weekly, settings, transposeSemitones, notation)
+        combine(observeSong(songId), observeSchedule(), settings) { song, schedule, settings ->
+            deriveStageState(song, song?.let { schedule.weekOf(it.id) }, settings, transposeSemitones, notation)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StageUiState())
 
     fun onEvent(event: StageEvent) {
@@ -73,7 +73,8 @@ fun deriveStageState(
     if (song == null) return StageUiState(isLoading = false)
     val key = song.key.transposedBy(transposeSemitones)
     val keyNotation = if (notation == Notation.NASHVILLE) Notation.SOLFEGE else notation
-    val order = weekly?.songs?.map { it.id }.orEmpty()
+    val songs = weekly?.songs.orEmpty()
+    val order = songs.map { it.id }
     val index = order.indexOf(song.id)
     return StageUiState(
         isLoading = false,
@@ -86,5 +87,6 @@ fun deriveStageState(
         setlistPosition = if (index >= 0) "${index + 1} / ${order.size}" else null,
         previousSongId = if (index > 0) order[index - 1] else null,
         nextSongId = if (index >= 0) order.getOrNull(index + 1) else null,
+        nextSongTitle = if (index >= 0) songs.getOrNull(index + 1)?.title else null,
     )
 }

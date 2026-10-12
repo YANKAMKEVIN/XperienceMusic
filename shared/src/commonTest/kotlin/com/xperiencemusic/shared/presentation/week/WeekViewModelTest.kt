@@ -4,12 +4,14 @@ import app.cash.turbine.test
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
-import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
+import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
 import com.xperiencemusic.shared.domain.usecase.RefreshContentUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
-import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
+import com.xperiencemusic.shared.fakes.FakeAudioPlayer
+import com.xperiencemusic.shared.fakes.schedule
+import kotlinx.coroutines.CoroutineScope
 import com.xperiencemusic.shared.fakes.FakeAudioCache
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
 import com.xperiencemusic.shared.fakes.member
@@ -47,22 +49,22 @@ class WeekViewModelTest {
         val setlists = setlistRepository().apply {
             publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("s1"), null, "x"))
         }
-        val weekly = ObserveWeeklySetlistUseCase(setlists, songs)
+        val schedule = schedule(setlists, songs)
         val viewModel = WeekViewModel(
-            weekly,
+            schedule,
             ObserveCurrentMemberUseCase(FakeSessionRepository(member(Role.MEMBER))),
-            ObserveSetlistOfflineUseCase(weekly, cache),
-            DownloadSetlistUseCase(weekly, cache),
-            GetTodayUseCase { LocalDate(2026, 10, 10) },
+            ObserveSetlistOfflineUseCase(schedule, cache),
+            DownloadSetlistUseCase(schedule, cache),
             ObserveSyncStatusUseCase(songs, setlists),
             RefreshContentUseCase(songs, setlists),
+            PlaybackController(FakeAudioPlayer(), { it }, CoroutineScope(UnconfinedTestDispatcher())),
         )
         viewModel.state.test {
             val before = expectMostRecentItem().offline!!
             assertEquals(0, before.available)
             assertEquals(2, before.total)
             assertFalse(viewModel.state.value.canPublish)
-            assertTrue(viewModel.state.value.isSetlistUpcoming)
+            assertEquals(WeekTiming.CURRENT, viewModel.state.value.setlist?.timing)
             assertFalse(viewModel.state.value.isOffline)
 
             viewModel.onEvent(WeekEvent.DownloadClicked)

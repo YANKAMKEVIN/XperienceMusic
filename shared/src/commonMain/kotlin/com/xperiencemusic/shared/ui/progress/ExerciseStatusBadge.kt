@@ -1,7 +1,7 @@
 package com.xperiencemusic.shared.ui.progress
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,14 +20,14 @@ import org.jetbrains.compose.resources.stringResource
 fun ExerciseStatusBadge(status: ExerciseStatus, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val (label, color) = when (status) {
-        ExerciseStatus.TODO -> Res.string.status_todo to colors.onSurfaceVariant
+        ExerciseStatus.TODO -> Res.string.status_todo to colors.onSurface
         ExerciseStatus.SUBMITTED -> Res.string.status_submitted to colors.secondary
         ExerciseStatus.VALIDATED -> Res.string.status_validated to colors.tertiary
         ExerciseStatus.TO_REWORK -> Res.string.status_to_rework to colors.primary
     }
     Surface(
-        shape = RoundedCornerShape(Spacing.s),
-        color = colors.surfaceContainerHigh,
+        shape = CircleShape,
+        color = color.copy(alpha = 0.16f),
         modifier = modifier,
     ) {
         Text(

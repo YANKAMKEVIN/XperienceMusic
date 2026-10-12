@@ -19,8 +19,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -32,25 +32,22 @@ class SupabaseSetlistRepository(
     private val client: SupabaseClient,
     private val snapshots: SnapshotStore,
 ) : SetlistRepository {
-    /** Wrapped so "loaded, no setlist yet" differs from "not loaded". */
-    private val latest = MutableStateFlow<Loaded?>(null)
+    /** Null until loaded, so "no setlist yet" differs from "not loaded". */
+    private val setlists = MutableStateFlow<List<Setlist>?>(null)
     private var hasRefreshed = false
     private val _syncStatus = MutableStateFlow(SyncStatus.IDLE)
     override val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
     override suspend fun refresh() = _syncStatus.tracking { reload() }
 
-
-    private data class Loaded(val setlist: Setlist?)
-
-    override fun observeLatest(): Flow<Setlist?> =
-        latest.onStart {
-            if (latest.value == null) {
+    override fun observeSetlists(): Flow<List<Setlist>> =
+        setlists.onStart {
+            if (setlists.value == null) {
                 snapshots.load(SNAPSHOT, ListSerializer(SetlistDto.serializer()))
-                    ?.let { cached -> latest.value = Loaded(cached.firstOrNull()?.toDomain()) }
+                    ?.let { cached -> setlists.value = cached.toDomainSorted() }
             }
             if (!hasRefreshed) ignoringFailures { _syncStatus.tracking { reload() } }
-        }.filterNotNull().map { it.setlist }
+        }.filterNotNull()
 
     override suspend fun publish(setlist: Setlist) {
         postgrestCall {
@@ -67,20 +64,31 @@ class SupabaseSetlistRepository(
         reload()
     }
 
+    override suspend fun delete(serviceDate: LocalDate) {
+        postgrestCall {
+            client.postgrest.rpc("delete_setlist", buildJsonObject { put("p_service_date", serviceDate.toString()) })
+        }
+        reload()
+    }
+
     private suspend fun reload() {
         val fetched = postgrestCall {
             client.from(SETLISTS).select(Columns.raw(SetlistDto.COLUMNS)) {
-                order("published_at", Order.DESCENDING)
-                limit(1)
+                // Every week ahead, and about six months of history.
+                order("service_date", Order.DESCENDING)
+                limit(KEPT_WEEKS)
             }.decodeList<SetlistDto>()
         }
-        latest.value = Loaded(fetched.firstOrNull()?.toDomain())
+        setlists.value = fetched.toDomainSorted()
         snapshots.save(SNAPSHOT, ListSerializer(SetlistDto.serializer()), fetched)
         hasRefreshed = true
     }
 
     private companion object {
         const val SETLISTS = "setlists"
-        const val SNAPSHOT = "setlist"
+        const val SNAPSHOT = "setlists"
+        const val KEPT_WEEKS = 40L
     }
+
+    private fun List<SetlistDto>.toDomainSorted() = map { it.toDomain() }.sortedBy { it.serviceDate }
 }

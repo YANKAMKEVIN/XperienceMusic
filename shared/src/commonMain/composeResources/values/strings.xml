@@ -52,13 +52,13 @@
     <string name="session_sign_out">Se déconnecter</string>
 
     <!-- Navigation -->
-    <string name="tab_week">Cette semaine</string>
+    <string name="tab_week">Semaine</string>
     <string name="tab_library">Chants</string>
     <string name="tab_progress">Ma progression</string>
     <string name="action_back">Retour</string>
 
     <!-- Week -->
-    <string name="week_title">Cette semaine</string>
+    <string name="week_title">Semaine</string>
     <string name="week_rehearsal">Répétition · %1$s</string>
     <string name="week_service">Prestation · %1$s</string>
     <string name="week_published_by">Publiée par %1$s</string>
@@ -67,11 +67,11 @@
     <string name="week_song_new">Nouveau chant · pas encore d'enregistrement</string>
 
     <string name="week_offline_title">Écouter hors connexion</string>
-    <string name="week_offline_text">Garde sur le téléphone les %1$d enregistrements de la semaine, pour répéter sans réseau.</string>
+    <string name="week_offline_text">%1$d enregistrements à garder sur le téléphone, pour répéter sans réseau.</string>
     <string name="week_offline_partial">%1$d sur %2$d déjà sur le téléphone</string>
     <string name="week_offline_download">Télécharger</string>
     <string name="week_offline_downloading">Téléchargement… %1$d/%2$d</string>
-    <string name="week_offline_done">Disponible hors connexion · %1$d enregistrements sur le téléphone</string>
+    <string name="week_offline_done">Hors connexion · %1$d enregistrements sur le téléphone</string>
     <string name="week_offline_error">Le téléchargement s'est interrompu. Réessaie avec du réseau, il reprendra où il s'est arrêté.</string>
     <string name="week_offline_retry">Reprendre</string>
 
@@ -155,18 +155,32 @@
     <string name="action_edit_setlist">Modifier la setlist</string>
     <string name="setlist_edit_title">Modifier la setlist</string>
     <string name="setlist_edit_hint">Les modifications remplacent la setlist de la semaine pour tout le groupe.</string>
+    <string name="setlist_replaces_hint">Une setlist existe déjà pour ce dimanche : elle sera remplacée.</string>
+    <string name="setlist_delete">Supprimer cette semaine</string>
+    <string name="setlist_delete_title">Supprimer la setlist du %1$s ?</string>
+    <string name="setlist_delete_text">Elle disparaîtra pour tout le groupe. Les chants restent dans la bibliothèque.</string>
+    <string name="setlist_delete_confirm">Supprimer</string>
+    <string name="setlist_delete_cancel">Annuler</string>
+    <string name="week_prepare_next">Préparer une autre semaine</string>
+    <string name="week_this_week">Cette semaine</string>
+    <string name="week_past">Passée</string>
+    <string name="week_ahead">À venir</string>
+    <string name="week_setlist_count">Setlist · %1$d chants</string>
+    <string name="week_play_reference">Écouter la référence de %1$s</string>
+    <string name="week_pause_reference">Mettre en pause %1$s</string>
+    <string name="week_past_hint">Semaine passée · gardée pour mémoire</string>
 
     <!-- Stage -->
     <string name="stage_open">Mode scène</string>
     <string name="stage_close">Quitter le mode scène</string>
     <string name="stage_text_bigger">Agrandir le texte</string>
     <string name="stage_text_smaller">Réduire le texte</string>
-    <string name="stage_scroll_start">Défilement automatique</string>
-    <string name="stage_scroll_stop">Arrêter le défilement</string>
+    <string name="stage_scroll_start">Défilement auto</string>
+    <string name="stage_scroll_stop">Pause défilement</string>
     <string name="stage_faster">Plus vite</string>
     <string name="stage_slower">Moins vite</string>
-    <string name="stage_previous">Chant précédent</string>
-    <string name="stage_next">Chant suivant</string>
+    <string name="stage_previous">Précédent</string>
+    <string name="stage_next">Suivant</string>
 
     <!-- Recording form -->
     <string name="recording_form_title">Ajouter une version</string>
@@ -196,6 +210,11 @@
     <string name="player_close">Fermer le lecteur</string>
     <string name="player_error">Lecture impossible. Vérifie ta connexion.</string>
     <string name="player_position">Position dans l'enregistrement</string>
+    <string name="player_open">Ouvrir le lecteur</string>
+    <string name="player_collapse">Réduire le lecteur</string>
+    <string name="player_rewind">Reculer de 10 secondes</string>
+    <string name="player_forward">Avancer de 10 secondes</string>
+    <string name="player_background">Continue écran éteint et hors connexion</string>
 
     <!-- Members -->
     <string name="members_title">Membres du groupe</string>
@@ -224,7 +243,13 @@
     <string name="role_super_admin">Admin++</string>
 
     <!-- Progress -->
+    <string name="members_legend_member">consulte tout</string>
+    <string name="members_legend_content">gère chants, versions et setlists</string>
+    <string name="members_legend_super">tout, plus les exercices et les membres</string>
     <string name="progress_title">Ma progression</string>
+    <string name="progress_hello">Bonjour %1$s</string>
+    <string name="progress_exercises_title">Mes exercices</string>
+    <string name="progress_start">Commencer l'exercice</string>
     <string name="progress_profile">%1$s · %2$s</string>
     <string name="progress_done">%1$d/%2$d exercices validés</string>
     <string name="progress_musicians_soon_title">Le parcours musiciens arrive bientôt</string>
@@ -240,7 +265,7 @@
     <string name="exercise_too_low">Un peu bas, monte légèrement</string>
     <string name="exercise_too_high">Un peu haut, descends légèrement</string>
     <string name="exercise_in_tune">Juste ! Tiens la note</string>
-    <string name="exercise_hold">Tenue : %1$s / %2$d s</string>
+    <string name="exercise_hold">%1$s / %2$d s</string>
     <string name="exercise_success_title">Exercice validé !</string>
     <string name="exercise_success_text">Bravo, tu as tenu la note. Passe au suivant quand tu veux.</string>
     <string name="exercise_retry">Recommencer</string>
@@ -250,6 +275,8 @@
     <string name="exercise_error_mic">Le micro n'est pas disponible (un appel en cours ?). Réessaie dans un instant.</string>
     <string name="exercise_error_save">Exercice réussi, mais la validation n'a pas pu être enregistrée. Réessaie avec du réseau.</string>
     <string name="exercise_tuner">Justesse</string>
+    <string name="exercise_target_label">Note cible</string>
+    <string name="exercise_mic_on">Micro actif</string>
     <string name="status_todo">À faire</string>
     <string name="status_submitted">Envoyé</string>
     <string name="status_validated">Validé</string>

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +50,12 @@ import com.xperiencemusic.shared.resources.setlist_change_date
 import com.xperiencemusic.shared.resources.setlist_date_conflict
 import com.xperiencemusic.shared.resources.setlist_dates_title
 import com.xperiencemusic.shared.resources.setlist_edit_hint
+import com.xperiencemusic.shared.resources.setlist_delete
+import com.xperiencemusic.shared.resources.setlist_delete_cancel
+import com.xperiencemusic.shared.resources.setlist_delete_confirm
+import com.xperiencemusic.shared.resources.setlist_delete_text
+import com.xperiencemusic.shared.resources.setlist_delete_title
+import com.xperiencemusic.shared.resources.setlist_replaces_hint
 import com.xperiencemusic.shared.resources.setlist_edit_title
 import com.xperiencemusic.shared.resources.setlist_editor_title
 import com.xperiencemusic.shared.resources.setlist_error_invalid
@@ -70,15 +77,17 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun SetlistEditorScreen(
     onBack: () -> Unit,
     onPublished: () -> Unit,
-    viewModel: SetlistEditorViewModel = koinViewModel(),
+    serviceDate: LocalDate? = null,
+    viewModel: SetlistEditorViewModel = koinViewModel(key = "setlist-$serviceDate") { parametersOf(serviceDate) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.isPublished) { if (state.isPublished) onPublished() }
+    LaunchedEffect(state.isPublished, state.isDeleted) { if (state.isPublished || state.isDeleted) onPublished() }
     SetlistEditorScreenContent(state = state, onEvent = viewModel::onEvent, onBack = onBack)
 }
 
@@ -91,6 +100,7 @@ fun SetlistEditorScreenContent(
     onBack: () -> Unit,
 ) {
     var editedDate by remember { mutableStateOf<EditedDate?>(null) }
+    var isConfirmingDelete by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -142,6 +152,13 @@ fun SetlistEditorScreenContent(
                     DateRow(stringResource(Res.string.setlist_service_label), state.serviceLabel) {
                         editedDate = EditedDate.SERVICE
                     }
+                    if (state.replacesExisting) {
+                        Text(
+                            stringResource(Res.string.setlist_replaces_hint),
+                            color = MaterialTheme.colorScheme.secondary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                     if (state.hasDateConflict) {
                         Text(
                             stringResource(Res.string.setlist_date_conflict),
@@ -189,7 +206,35 @@ fun SetlistEditorScreenContent(
             items(state.available, key = { "available-${it.id}" }) { song ->
                 AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) })
             }
+            if (state.isEditing) {
+                item {
+                    TextButton(
+                        onClick = { isConfirmingDelete = true },
+                        enabled = !state.isDeleting,
+                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.xl),
+                    ) {
+                        Text(stringResource(Res.string.setlist_delete), color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
         }
+    }
+
+    if (isConfirmingDelete) {
+        AlertDialog(
+            onDismissRequest = { isConfirmingDelete = false },
+            title = { Text(stringResource(Res.string.setlist_delete_title, state.serviceLabel)) },
+            text = { Text(stringResource(Res.string.setlist_delete_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    isConfirmingDelete = false
+                    onEvent(SetlistEditorEvent.DeleteConfirmed)
+                }) { Text(stringResource(Res.string.setlist_delete_confirm), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { isConfirmingDelete = false }) { Text(stringResource(Res.string.setlist_delete_cancel)) }
+            },
+        )
     }
 
     editedDate?.let { which ->

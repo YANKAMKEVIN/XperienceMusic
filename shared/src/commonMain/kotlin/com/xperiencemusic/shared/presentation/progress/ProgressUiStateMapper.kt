@@ -26,10 +26,13 @@ fun deriveProgressState(member: Member?, path: List<ExerciseProgress>): Progress
         name = profile.displayName,
         instrument = profile.instrument,
         level = profile.level,
+        voicePart = profile.voicePart.takeIf { isSinger },
         hasPath = isSinger,
         exercises = exercises,
         validatedCount = exercises.count { it.status == ExerciseStatus.VALIDATED },
         canManageMembers = member.role.can(Permission.MANAGE_MEMBERS),
+        nextExerciseId = (exercises.firstOrNull { it.status == ExerciseStatus.TO_REWORK }
+            ?: exercises.firstOrNull { it.status == ExerciseStatus.TODO })?.id,
     )
 }
 

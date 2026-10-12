@@ -2,13 +2,11 @@ package com.xperiencemusic.shared.navigation
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +27,7 @@ import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.tab_library
 import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.tab_week
+import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.exercise.ExerciseScreen
 import com.xperiencemusic.shared.ui.library.LibraryScreen
 import com.xperiencemusic.shared.ui.members.MembersScreen
@@ -43,14 +42,15 @@ import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import kotlinx.datetime.LocalDate
 import kotlin.reflect.KClass
 
 private data class Tab(val route: Any, val routeClass: KClass<*>, val label: StringResource, val icon: ImageVector)
 
 private val tabs = listOf(
-    Tab(WeekRoute, WeekRoute::class, Res.string.tab_week, Icons.Filled.DateRange),
-    Tab(LibraryRoute, LibraryRoute::class, Res.string.tab_library, Icons.AutoMirrored.Filled.List),
-    Tab(ProgressRoute, ProgressRoute::class, Res.string.tab_progress, Icons.Filled.CheckCircle),
+    Tab(WeekRoute, WeekRoute::class, Res.string.tab_week, XmIcons.Notes),
+    Tab(LibraryRoute, LibraryRoute::class, Res.string.tab_library, XmIcons.Book),
+    Tab(ProgressRoute, ProgressRoute::class, Res.string.tab_progress, XmIcons.Bars),
 )
 
 /** The signed-in shell: three tabs, with the song detail pushed on top of them. */
@@ -75,10 +75,14 @@ fun MainScaffold(onSignOut: () -> Unit) {
         val openSong: (String) -> Unit = { id -> navController.navigate(SongRoute(id)) }
         NavHost(navController, startDestination = WeekRoute, modifier = Modifier.padding(padding)) {
             composable<WeekRoute> {
-                WeekScreen(onSongClick = openSong, onPublish = { navController.navigate(SetlistEditorRoute) })
+                WeekScreen(
+                    onSongClick = openSong,
+                    onEditWeek = { date -> navController.navigate(SetlistEditorRoute(date?.toString())) },
+                )
             }
-            composable<SetlistEditorRoute> {
+            composable<SetlistEditorRoute> { entry ->
                 SetlistEditorScreen(
+                    serviceDate = entry.toRoute<SetlistEditorRoute>().serviceDate?.let(LocalDate::parse),
                     onBack = { navController.popBackStack() },
                     onPublished = { navController.popBackStack() },
                 )
@@ -154,7 +158,7 @@ fun MainScaffold(onSignOut: () -> Unit) {
 
 @Composable
 private fun TabBar(navController: NavHostController, destination: NavDestination?) {
-    NavigationBar {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         tabs.forEach { tab ->
             val label = stringResource(tab.label)
             NavigationBarItem(
@@ -168,6 +172,11 @@ private fun TabBar(navController: NavHostController, destination: NavDestination
                 },
                 icon = { Icon(tab.icon, contentDescription = null) },
                 label = { Text(label) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                ),
             )
         }
     }

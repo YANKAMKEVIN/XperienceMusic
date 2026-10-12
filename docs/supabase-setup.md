@@ -18,6 +18,14 @@ puis **Run**.
 Cela crée les tables (membres, invitations, chants, versions, setlists, progression), les règles
 par rôle et le stockage privé `audio`.
 
+Puis, de la même façon, exécute **dans l'ordre** les autres fichiers de
+[`supabase/migrations/`](../supabase/migrations/) (un fichier = une requête). Quand l'app évolue,
+seuls les nouveaux fichiers sont à exécuter :
+
+| Fichier | Ce qu'il change |
+| --- | --- |
+| `20261012000000_setlists_per_week.sql` | une setlist par dimanche : on peut publier les semaines suivantes à l'avance, republier un dimanche le remplace, et un admin peut supprimer une semaine |
+
 ## 3. T'inviter comme Admin++
 
 Toujours dans le SQL Editor, avec **ton** adresse e-mail :

@@ -15,8 +15,11 @@ val localProperties = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
 }
 
+// -PxmDemo (or ORG_GRADLE_PROJECT_xmDemo=true) builds the demo app even with keys, for screenshots.
+val isDemoBuild = providers.gradleProperty("xmDemo").isPresent
+
 fun supabaseSetting(property: String, env: String): String =
-    localProperties.getProperty(property) ?: System.getenv(env) ?: ""
+    if (isDemoBuild) "" else localProperties.getProperty(property) ?: System.getenv(env) ?: ""
 
 val generateSupabaseConfig by tasks.registering {
     val url = supabaseSetting("supabase.url", "SUPABASE_URL")

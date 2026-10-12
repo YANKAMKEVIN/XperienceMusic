@@ -16,6 +16,9 @@ import com.xperiencemusic.shared.domain.model.SessionState
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.repository.SessionRepository
+import com.xperiencemusic.shared.domain.repository.SetlistRepository
+import com.xperiencemusic.shared.domain.repository.SongRepository
+import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.LocalDate
@@ -73,7 +76,14 @@ fun song(
 
 fun songRepository(vararg songs: Song) = InMemorySongRepository(songs.toList())
 
-fun setlistRepository() = InMemorySetlistRepository(null)
+fun setlistRepository() = InMemorySetlistRepository()
+
+/** The setlists as the screens see them, on [today]. */
+fun schedule(
+    setlists: SetlistRepository,
+    songs: SongRepository,
+    today: LocalDate = LocalDate(2026, 10, 10),
+) = ObserveSetlistScheduleUseCase(setlists, songs) { today }
 
 fun exerciseRepository(vararg exercises: com.xperiencemusic.shared.domain.model.Exercise) =
     InMemoryExerciseRepository(exercises.toList())

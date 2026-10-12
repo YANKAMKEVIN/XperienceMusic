@@ -1,5 +1,29 @@
 package com.xperiencemusic.shared.ui.song
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.components.PauseIcon
+import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -153,7 +177,7 @@ fun SongDetailScreenContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.title, maxLines = 1) },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.action_back))
@@ -213,14 +237,12 @@ private fun SongDetailBody(
         contentPadding = PaddingValues(start = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
         verticalArrangement = Arrangement.spacedBy(Spacing.l),
     ) {
-        state.artist?.let { artist ->
-            item { Text(artist, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        }
+        item { SongHero(state) }
         item { KeyAndNotation(state, onEvent) }
         item {
-            OutlinedButton(onClick = onOpenStage, modifier = Modifier.fillMaxWidth()) {
+            GradientButton(onClick = onOpenStage, modifier = Modifier.fillMaxWidth()) {
                 Icon(StageIcons.Fullscreen, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
-                Text(stringResource(Res.string.stage_open))
+                Text(stringResource(Res.string.stage_open), style = MaterialTheme.typography.titleMedium)
             }
         }
         item {
@@ -258,44 +280,90 @@ private fun SongDetailBody(
 }
 
 @Composable
+private fun SongHero(state: SongDetailUiState) {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            state.title,
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.semantics { heading() },
+        )
+        Text(
+            listOfNotNull(state.keyLabel, state.artist).joinToString(" · "),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/** The transposer pill (− key +) over the notation switch, as in the brand mockups. */
+@Composable
 private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) -> Unit) {
-    AppCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(Res.string.song_key, state.keyLabel), style = MaterialTheme.typography.titleMedium)
-                state.originalKeyLabel?.let {
-                    Text(
-                        stringResource(Res.string.song_original_key, it),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(
+            shape = RoundedCornerShape(Radius.card),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { onEvent(SongDetailEvent.TransposeDownClicked) }) {
+                    Text("−", style = MaterialTheme.typography.titleLarge)
+                }
+                Text(
+                    state.keyLabel,
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.widthIn(min = 96.dp).semantics {
+                        contentDescription = "Tonalité ${state.keyLabel}"
+                    },
+                )
+                IconButton(onClick = { onEvent(SongDetailEvent.TransposeUpClicked) }) {
+                    Text("+", style = MaterialTheme.typography.titleLarge)
                 }
             }
-            IconButton(onClick = { onEvent(SongDetailEvent.TransposeDownClicked) }) {
-                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = stringResource(Res.string.song_transpose_down))
-            }
-            IconButton(onClick = { onEvent(SongDetailEvent.TransposeUpClicked) }) {
-                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = stringResource(Res.string.song_transpose_up))
-            }
-            IconButton(
-                onClick = { onEvent(SongDetailEvent.TransposeResetClicked) },
-                enabled = state.originalKeyLabel != null,
-            ) {
-                Icon(Icons.Filled.Refresh, contentDescription = stringResource(Res.string.song_transpose_reset))
+        }
+        state.originalKeyLabel?.let {
+            TextButton(onClick = { onEvent(SongDetailEvent.TransposeResetClicked) }) {
+                Text(stringResource(Res.string.song_original_key, it) + " · " + stringResource(Res.string.song_transpose_reset))
             }
         }
-        val notations = listOf(
-            Notation.NASHVILLE to Res.string.notation_nashville,
-            Notation.SOLFEGE to Res.string.notation_solfege,
-            Notation.LETTERS to Res.string.notation_letters,
-        )
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = Spacing.m)) {
-            notations.forEachIndexed { index, (notation, label) ->
-                SegmentedButton(
-                    selected = state.notation == notation,
-                    onClick = { onEvent(SongDetailEvent.NotationSelected(notation)) },
-                    shape = SegmentedButtonDefaults.itemShape(index, notations.size),
-                    label = { Text(stringResource(label), maxLines = 1) },
+        NotationSwitch(state.notation, onSelect = { onEvent(SongDetailEvent.NotationSelected(it)) }, Modifier.padding(top = Spacing.m))
+    }
+}
+
+@Composable
+private fun NotationSwitch(selected: Notation, onSelect: (Notation) -> Unit, modifier: Modifier = Modifier) {
+    val notations = listOf(
+        Notation.NASHVILLE to Res.string.notation_nashville,
+        Notation.SOLFEGE to Res.string.notation_solfege,
+        Notation.LETTERS to Res.string.notation_letters,
+    )
+    val shape = RoundedCornerShape(Radius.card)
+    Row(
+        modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+            .selectableGroup(),
+    ) {
+        notations.forEach { (notation, label) ->
+            val isSelected = notation == selected
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .then(if (isSelected) Modifier.background(BrandColors.horizontalGradient, shape) else Modifier)
+                    .selectable(selected = isSelected, onClick = { onSelect(notation) }, role = Role.Tab),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    stringResource(label),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
                 )
             }
         }
@@ -371,19 +439,33 @@ private fun VoiceTracks(voiceTracks: List<VoiceTrackUi>, onEvent: (SongDetailEve
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
         SectionTitle(stringResource(Res.string.song_voice_tracks_title))
         FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(Spacing.m),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.s),
             verticalArrangement = Arrangement.spacedBy(Spacing.s),
         ) {
             voiceTracks.forEach { track ->
                 val label = track.voicePart.label()
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    PlayPauseButton(
-                        status = track.playback,
-                        itemLabel = label,
-                        onClick = { onEvent(SongDetailEvent.PlayVoiceTrackClicked(track.id, label)) },
-                    )
-                    Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = Spacing.xs))
-                }
+                val isActive = track.playback == PlaybackStatus.PLAYING || track.playback == PlaybackStatus.LOADING
+                FilterChip(
+                    selected = isActive,
+                    onClick = { onEvent(SongDetailEvent.PlayVoiceTrackClicked(track.id, label)) },
+                    label = { Text(label) },
+                    leadingIcon = {
+                        Icon(
+                            if (track.playback == PlaybackStatus.PLAYING) PauseIcon else Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        iconColor = MaterialTheme.colorScheme.primary,
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    modifier = Modifier.semantics {
+                        contentDescription = if (track.playback == PlaybackStatus.PLAYING) "Pause $label" else "Écouter $label"
+                    },
+                )
             }
         }
     }

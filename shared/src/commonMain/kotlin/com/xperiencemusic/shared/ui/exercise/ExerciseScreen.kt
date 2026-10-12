@@ -1,5 +1,23 @@
 package com.xperiencemusic.shared.ui.exercise
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.xperiencemusic.shared.resources.exercise_mic_on
+import com.xperiencemusic.shared.resources.exercise_target_label
+import com.xperiencemusic.shared.ui.brand.BrandWaves
+import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.theme.BrandColors
+import kotlin.math.pow
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -150,13 +168,46 @@ fun ExerciseScreenContent(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Un
 @Composable
 private fun AutomaticCheck(check: AutomaticCheckUi, phase: ExercisePhase, onEvent: (ExerciseEvent) -> Unit) {
     AppCard {
-        Text(
-            stringResource(Res.string.exercise_target, check.targetNoteLabel, check.requiredSeconds),
-            style = MaterialTheme.typography.titleMedium,
-        )
-        OutlinedButton(onClick = { onEvent(ExerciseEvent.PlayReferenceClicked) }, modifier = Modifier.padding(top = Spacing.s)) {
-            Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
-            Text(stringResource(Res.string.exercise_listen_reference))
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                stringResource(Res.string.exercise_target_label),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                check.targetNoteLabel,
+                style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.semantics {
+                    contentDescription = "${check.targetNoteLabel}, ${check.requiredSeconds} s"
+                },
+            )
+            Text(
+                "${frequencyOf(check.targetMidi)} Hz · ${check.requiredSeconds} s",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            if (phase == ExercisePhase.LISTENING) {
+                TunerNeedle(check.needle, description = stringResource(Res.string.exercise_tuner), modifier = Modifier.padding(top = Spacing.l))
+                Row(Modifier.fillMaxWidth().padding(top = Spacing.xs)) {
+                    listOf("−50", "0", "+50").forEachIndexed { index, label ->
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = when (index) {
+                                0 -> TextAlign.Start
+                                1 -> TextAlign.Center
+                                else -> TextAlign.End
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+            TextButton(onClick = { onEvent(ExerciseEvent.PlayReferenceClicked) }, modifier = Modifier.padding(top = Spacing.s)) {
+                Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
+                Text(stringResource(Res.string.exercise_listen_reference))
+            }
         }
     }
 
@@ -177,8 +228,8 @@ private fun AutomaticCheck(check: AutomaticCheckUi, phase: ExercisePhase, onEven
         }
         ExercisePhase.LISTENING -> Live(check, onEvent)
         ExercisePhase.READY -> {
-            Button(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(Res.string.exercise_start))
+            GradientButton(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(Res.string.exercise_start), style = MaterialTheme.typography.titleMedium)
             }
             Text(
                 stringResource(Res.string.exercise_privacy),
@@ -192,13 +243,15 @@ private fun AutomaticCheck(check: AutomaticCheckUi, phase: ExercisePhase, onEven
 @Composable
 private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
+        // The waves say the microphone hears something; the gauge above gives the measure.
+        BrandWaves(Modifier.fillMaxWidth().height(72.dp).alpha(if (check.tuning == Tuning.SILENT) 0.35f else 1f))
         Text(
             check.heardNoteLabel?.let { stringResource(Res.string.exercise_heard, it) } ?: "",
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
         )
-        TunerNeedle(check.needle, description = stringResource(Res.string.exercise_tuner))
         Text(
             stringResource(
                 when (check.tuning) {
@@ -213,17 +266,34 @@ private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
         )
-        LinearProgressIndicator(progress = { check.holdProgress }, modifier = Modifier.fillMaxWidth())
         Text(
             stringResource(Res.string.exercise_hold, formatSeconds(check.holdSeconds), check.requiredSeconds),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.titleLarge,
         )
-        OutlinedButton(onClick = { onEvent(ExerciseEvent.StopClicked) }, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(Res.string.exercise_stop))
+        Box(
+            Modifier.fillMaxWidth().height(10.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            Box(
+                Modifier.fillMaxWidth(check.holdProgress).fillMaxHeight().clip(CircleShape).background(BrandColors.horizontalGradient),
+            )
+        }
+        GradientButton(onClick = { onEvent(ExerciseEvent.StopClicked) }, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(Res.string.exercise_stop), style = MaterialTheme.typography.titleMedium)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Box(Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
+            Text(
+                stringResource(Res.string.exercise_mic_on),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.padding(start = Spacing.s),
+            )
         }
     }
 }
+
+/** Equal temperament, A4 = 440 Hz: "220". */
+private fun frequencyOf(midi: Int): Int = (440.0 * 2.0.pow((midi - 69) / 12.0)).roundToInt()
 
 /** "2,4" — one decimal, French separator. */
 private fun formatSeconds(seconds: Double): String {

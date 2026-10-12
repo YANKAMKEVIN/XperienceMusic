@@ -90,11 +90,32 @@ begin
     assert (select count(*) from public.setlist_songs) = 1;
     assert (select message from public.setlists) is null, 'blank messages are stored as null';
 
+    -- Weeks ahead are kept side by side; publishing a Sunday again replaces it.
+    perform public.publish_setlist('2026-10-20', '2026-10-25', 'Semaine suivante', array[song]);
+    perform public.publish_setlist('2026-10-13', '2026-10-18', 'Corrigée', array[song, song]);
+    assert (select count(*) from public.setlists) = 2, 'one setlist per service date';
+    assert (select message from public.setlists where service_date = '2026-10-18') = 'Corrigée';
+    assert (select count(*) from public.setlist_songs s join public.setlists l on l.id = s.setlist_id
+            where l.service_date = '2026-10-18') = 2, 'republishing replaces the songs';
+    perform public.delete_setlist('2026-10-25');
+    assert (select count(*) from public.setlists) = 1, 'a week can be removed';
+
     begin
         insert into public.invitations (email) values ('new@band.test');
         assert false, 'content admins cannot invite';
     exception when insufficient_privilege then null;
     end;
+end $$;
+
+-- Members cannot remove a week.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    begin
+        perform public.delete_setlist('2026-10-18');
+        assert false, 'members must not delete setlists';
+    exception when insufficient_privilege then null;
+    end;
+    assert (select count(*) from public.setlists) = 1;
 end $$;
 
 -- The super admin invites and changes roles.

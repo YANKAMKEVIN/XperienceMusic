@@ -3,8 +3,8 @@ package com.xperiencemusic.shared.presentation.setlisteditor
 import app.cash.turbine.test
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.Setlist
-import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
-import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.DeleteSetlistUseCase
+import com.xperiencemusic.shared.fakes.schedule
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
@@ -43,18 +43,21 @@ class SetlistEditorViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun editor(today: LocalDate = LocalDate(2026, 10, 10)) = SetlistEditorViewModel(
+    private val session = FakeSessionRepository(member(Role.CONTENT_ADMIN))
+
+    private fun editor(today: LocalDate = LocalDate(2026, 10, 10), serviceDate: LocalDate? = null) = SetlistEditorViewModel(
         SearchSongsUseCase(songs),
-        PublishSetlistUseCase(FakeSessionRepository(member(Role.CONTENT_ADMIN)), setlists),
+        PublishSetlistUseCase(session, setlists),
+        DeleteSetlistUseCase(session, setlists),
         SuggestBandWeekUseCase { today },
-        ObserveWeeklySetlistUseCase(setlists, songs),
-        GetTodayUseCase { today },
+        schedule(setlists, songs, today),
+        serviceDate,
     )
 
     @Test
-    fun `une setlist à venir s'ouvre pour être modifiée`() = runTest {
+    fun `la semaine choisie s'ouvre pour être modifiée`() = runTest {
         setlists.publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("c", "a"), "Intro", "x"))
-        editor().state.test {
+        editor(serviceDate = LocalDate(2026, 10, 18)).state.test {
             val state = expectMostRecentItem()
             assertTrue(state.isEditing)
             assertEquals(listOf("c", "a"), state.selected.map { it.id })
@@ -63,13 +66,48 @@ class SetlistEditorViewModelTest {
     }
 
     @Test
-    fun `une setlist passée laisse repartir de zéro`() = runTest {
-        setlists.publish(Setlist("w", LocalDate(2026, 10, 6), LocalDate(2026, 10, 11), listOf("a"), null, "x"))
-        editor(today = LocalDate(2026, 10, 12)).state.test {
+    fun `une nouvelle setlist prend la première semaine encore libre`() = runTest {
+        setlists.publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("a"), null, "x"))
+        editor().state.test {
             val state = expectMostRecentItem()
             assertFalse(state.isEditing)
+            assertEquals(LocalDate(2026, 10, 25), state.serviceDate)
             assertTrue(state.selected.isEmpty())
         }
+    }
+
+    @Test
+    fun `choisir un dimanche déjà pris prévient du remplacement`() = runTest {
+        setlists.publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("a"), null, "x"))
+        val viewModel = editor()
+        viewModel.state.test {
+            viewModel.onEvent(SetlistEditorEvent.ServiceDatePicked(LocalDate(2026, 10, 18)))
+            assertTrue(expectMostRecentItem().replacesExisting)
+        }
+    }
+
+    @Test
+    fun `déplacer une semaine vers un autre dimanche libère l'ancien`() = runTest {
+        setlists.publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("a"), null, "x"))
+        val viewModel = editor(serviceDate = LocalDate(2026, 10, 18))
+        viewModel.state.test {
+            viewModel.onEvent(SetlistEditorEvent.ServiceDatePicked(LocalDate(2026, 10, 19)))
+            viewModel.onEvent(SetlistEditorEvent.PublishClicked)
+            assertTrue(expectMostRecentItem().isPublished)
+        }
+        assertEquals(listOf(LocalDate(2026, 10, 19)), setlists.observeSetlists().first().map { it.serviceDate })
+    }
+
+    @Test
+    fun `supprimer la semaine la retire pour tout le groupe`() = runTest {
+        setlists.publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("a"), null, "x"))
+        val viewModel = editor(serviceDate = LocalDate(2026, 10, 18))
+        viewModel.state.test {
+            expectMostRecentItem()
+            viewModel.onEvent(SetlistEditorEvent.DeleteConfirmed)
+            assertTrue(expectMostRecentItem().isDeleted)
+        }
+        assertTrue(setlists.observeSetlists().first().isEmpty())
     }
 
     @Test
@@ -112,7 +150,7 @@ class SetlistEditorViewModelTest {
             viewModel.onEvent(SetlistEditorEvent.PublishClicked)
             assertTrue(expectMostRecentItem().isPublished)
         }
-        val published = setlists.observeLatest().first()!!
+        val published = setlists.observeSetlists().first().single()
         assertEquals(listOf("b", "a"), published.songIds)
         assertEquals("Intro douce", published.message)
         assertEquals("Grâce", published.publishedBy)

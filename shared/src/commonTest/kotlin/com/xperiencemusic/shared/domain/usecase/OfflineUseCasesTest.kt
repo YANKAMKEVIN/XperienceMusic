@@ -12,6 +12,7 @@ import com.xperiencemusic.shared.fakes.FakeAudioCache
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
 import com.xperiencemusic.shared.fakes.member
 import com.xperiencemusic.shared.fakes.recording
+import com.xperiencemusic.shared.fakes.schedule
 import com.xperiencemusic.shared.fakes.setlistRepository
 import com.xperiencemusic.shared.fakes.song
 import com.xperiencemusic.shared.fakes.songRepository
@@ -32,11 +33,11 @@ class OfflineUseCasesTest {
     )
     private val cache = FakeAudioCache(setOf("demo://a"))
 
-    private suspend fun weekly(): ObserveWeeklySetlistUseCase {
+    private suspend fun weekly(): ObserveSetlistScheduleUseCase {
         val setlists = setlistRepository().apply {
             publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("s1", "s2"), null, "x"))
         }
-        return ObserveWeeklySetlistUseCase(setlists, songs)
+        return schedule(setlists, songs)
     }
 
     @Test

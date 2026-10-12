@@ -25,8 +25,13 @@ class SignInViewModel(
     fun onEvent(event: SignInEvent) {
         when (event) {
             is SignInEvent.EmailChanged -> _state.update { it.copy(email = event.email, error = null) }
-            is SignInEvent.CodeChanged -> _state.update {
-                it.copy(code = event.code.filter(Char::isDigit).take(SignInUiState.CODE_LENGTH), error = null)
+            is SignInEvent.CodeChanged -> {
+                val wasComplete = _state.value.code.length == SignInUiState.CODE_LENGTH
+                _state.update {
+                    it.copy(code = event.code.filter(Char::isDigit).take(SignInUiState.CODE_LENGTH), error = null)
+                }
+                // The iPhone number pad has no "Done" key: the last digit signs in.
+                if (!wasComplete && _state.value.code.length == SignInUiState.CODE_LENGTH) submit()
             }
             SignInEvent.ChangeEmailClicked -> _state.update { it.copy(step = SignInStep.EMAIL, code = "", error = null) }
             SignInEvent.SubmitClicked -> submit()

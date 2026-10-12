@@ -18,8 +18,9 @@ data class SongRoute(val songId: String)
 @Serializable
 data class SongEditorRoute(val songId: String? = null)
 
+/** [serviceDate] (ISO) edits that week's setlist; null prepares the next week without one. */
 @Serializable
-data object SetlistEditorRoute
+data class SetlistEditorRoute(val serviceDate: String? = null)
 
 @Serializable
 data class RecordingFormRoute(val songId: String)

@@ -79,7 +79,8 @@ import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
-import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
+import com.xperiencemusic.shared.domain.usecase.DeleteSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SetReferenceRecordingUseCase
@@ -120,7 +121,7 @@ val dataModule = module {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
         single<SessionRepository> { InMemorySessionRepository() }
         single<SongRepository> { InMemorySongRepository(SampleSongs.all(get<DateProvider>().today())) }
-        single<SetlistRepository> { InMemorySetlistRepository(SampleSetlist.forWeekOf(get<DateProvider>().today())) }
+        single<SetlistRepository> { InMemorySetlistRepository(SampleSetlist.around(get<DateProvider>().today())) }
         single<ExerciseRepository> { InMemoryExerciseRepository(SingerExercises.all) }
         single { InMemoryAudioStorage() }
         single<AudioStorage> { get<InMemoryAudioStorage>() }
@@ -138,7 +139,8 @@ val domainModule = module {
     factoryOf(::AddRecordingUseCase)
     factoryOf(::DeleteRecordingUseCase)
     factoryOf(::SetReferenceRecordingUseCase)
-    factoryOf(::ObserveWeeklySetlistUseCase)
+    factoryOf(::ObserveSetlistScheduleUseCase)
+    factoryOf(::DeleteSetlistUseCase)
     factoryOf(::PublishSetlistUseCase)
     factoryOf(::ObserveSingerPathUseCase)
     factoryOf(::ObserveSessionUseCase)
@@ -174,7 +176,7 @@ val presentationModule = module {
     viewModelOf(::ProgressViewModel)
     viewModelOf(::SongDetailViewModel)
     viewModelOf(::SignInViewModel)
-    viewModelOf(::SetlistEditorViewModel)
+    viewModel { params -> SetlistEditorViewModel(get(), get(), get(), get(), get(), params.getOrNull()) }
     viewModelOf(::RecordingFormViewModel)
     viewModelOf(::MiniPlayerViewModel)
     viewModelOf(::ExerciseViewModel)

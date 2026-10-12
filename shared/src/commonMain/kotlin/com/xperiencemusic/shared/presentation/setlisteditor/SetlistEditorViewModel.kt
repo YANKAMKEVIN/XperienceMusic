@@ -3,12 +3,13 @@ package com.xperiencemusic.shared.presentation.setlisteditor
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.music.theory.Notation
+import com.xperiencemusic.shared.domain.model.BandWeek
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.model.Song
-import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
-import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.DeleteSetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
@@ -36,35 +37,50 @@ data class SetlistDraft(
     val isPublishing: Boolean = false,
     val error: SetlistEditorError? = null,
     val isPublished: Boolean = false,
-    /** Started from the setlist already published for the coming week. */
-    val isEditing: Boolean = false,
+    /** The service date of the published setlist being edited; null for a new week. */
+    val editedServiceDate: LocalDate? = null,
+    /** Sundays that already have a setlist. */
+    val publishedDates: Set<LocalDate> = emptySet(),
+    val isDeleting: Boolean = false,
+    val isDeleted: Boolean = false,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
+/**
+ * Edits the setlist of [serviceDate] when given, otherwise prepares the first coming week that has
+ * none yet, so several weeks can be sent ahead.
+ */
 class SetlistEditorViewModel(
     private val searchSongs: SearchSongsUseCase,
     private val publishSetlist: PublishSetlistUseCase,
+    private val deleteSetlist: DeleteSetlistUseCase,
     suggestBandWeek: SuggestBandWeekUseCase,
-    observeWeeklySetlist: ObserveWeeklySetlistUseCase,
-    getToday: GetTodayUseCase,
+    observeSchedule: ObserveSetlistScheduleUseCase,
+    serviceDate: LocalDate?,
 ) : ViewModel() {
     private val draft = MutableStateFlow(
         suggestBandWeek().let { SetlistDraft(rehearsalDate = it.rehearsalDate, serviceDate = it.serviceDate) },
     )
 
     init {
-        // A setlist whose service is still ahead is edited rather than started from scratch.
         viewModelScope.launch {
-            val current = observeWeeklySetlist().first()?.setlist ?: return@launch
-            if (current.serviceDate >= getToday()) {
-                draft.update {
-                    it.copy(
-                        rehearsalDate = current.rehearsalDate,
-                        serviceDate = current.serviceDate,
-                        message = current.message.orEmpty(),
-                        selectedIds = current.songIds,
-                        isEditing = true,
+            val published = observeSchedule().first().weeks.map { it.setlist }
+            val dates = published.map { it.serviceDate }.toSet()
+            val edited = published.firstOrNull { it.serviceDate == serviceDate }
+            draft.update { current ->
+                if (edited != null) {
+                    current.copy(
+                        rehearsalDate = edited.rehearsalDate,
+                        serviceDate = edited.serviceDate,
+                        message = edited.message.orEmpty(),
+                        selectedIds = edited.songIds,
+                        editedServiceDate = edited.serviceDate,
+                        publishedDates = dates,
                     )
+                } else {
+                    var week = BandWeek(current.rehearsalDate, current.serviceDate)
+                    while (week.serviceDate in dates) week = week.next()
+                    current.copy(rehearsalDate = week.rehearsalDate, serviceDate = week.serviceDate, publishedDates = dates)
                 }
             }
         }
@@ -91,6 +107,19 @@ class SetlistEditorViewModel(
             is SetlistEditorEvent.RehearsalDatePicked -> draft.update { it.copy(rehearsalDate = event.date, error = null) }
             is SetlistEditorEvent.ServiceDatePicked -> draft.update { it.copy(serviceDate = event.date, error = null) }
             SetlistEditorEvent.PublishClicked -> publish()
+            SetlistEditorEvent.DeleteConfirmed -> delete()
+        }
+    }
+
+    private fun delete() {
+        val date = draft.value.editedServiceDate ?: return
+        if (draft.value.isDeleting) return
+        draft.update { it.copy(isDeleting = true, error = null) }
+        viewModelScope.launch {
+            when (val result = deleteSetlist(date)) {
+                is DomainResult.Success -> draft.update { it.copy(isDeleting = false, isDeleted = true) }
+                is DomainResult.Failure -> draft.update { it.copy(isDeleting = false, error = result.error.toEditorError()) }
+            }
         }
     }
 
@@ -107,8 +136,13 @@ class SetlistEditorViewModel(
                 message = current.message.trim().ifEmpty { null },
                 publishedBy = "",
             )
+            val moved = draft.value.editedServiceDate?.takeIf { it != setlist.serviceDate }
             when (val result = publishSetlist(setlist)) {
-                is DomainResult.Success -> draft.update { it.copy(isPublishing = false, isPublished = true) }
+                is DomainResult.Success -> {
+                    // The week was moved to another Sunday: the old date no longer has it.
+                    moved?.let { deleteSetlist(it) }
+                    draft.update { it.copy(isPublishing = false, isPublished = true) }
+                }
                 is DomainResult.Failure -> draft.update { it.copy(isPublishing = false, error = result.error.toEditorError()) }
             }
         }
@@ -129,7 +163,10 @@ fun deriveSetlistEditorState(draft: SetlistDraft, library: List<Song>, matches: 
         isPublishing = draft.isPublishing,
         error = draft.error,
         isPublished = draft.isPublished,
-        isEditing = draft.isEditing,
+        isEditing = draft.editedServiceDate != null,
+        replacesExisting = draft.serviceDate in draft.publishedDates && draft.serviceDate != draft.editedServiceDate,
+        isDeleting = draft.isDeleting,
+        isDeleted = draft.isDeleted,
     )
 }
 

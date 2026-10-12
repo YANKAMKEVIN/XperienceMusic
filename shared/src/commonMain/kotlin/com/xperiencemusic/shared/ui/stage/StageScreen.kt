@@ -1,5 +1,16 @@
 package com.xperiencemusic.shared.ui.stage
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,6 +65,7 @@ import com.xperiencemusic.shared.resources.stage_text_bigger
 import com.xperiencemusic.shared.resources.stage_text_smaller
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.components.StageIcons
+import com.xperiencemusic.shared.ui.platform.HideSystemBars
 import com.xperiencemusic.shared.ui.platform.KeepScreenOn
 import com.xperiencemusic.shared.ui.song.ChordChartView
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -76,6 +88,7 @@ fun StageScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     KeepScreenOn()
+    HideSystemBars()
     StageScreenContent(state = state, onEvent = viewModel::onEvent, onClose = onClose, onOpenSong = onOpenSong)
 }
 
@@ -94,6 +107,7 @@ fun StageScreenContent(
             } else {
                 StageLyrics(state, Modifier.weight(1f))
             }
+            StageControls(state, onEvent)
             if (state.setlistPosition != null) SetlistNavigation(state, onOpenSong)
         }
     }
@@ -102,37 +116,86 @@ fun StageScreenContent(
 @Composable
 private fun StageToolbar(state: StageUiState, onEvent: (StageEvent) -> Unit, onClose: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = Spacing.s)) {
-        IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.stage_close)) }
+        IconButton(onClick = onClose) {
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.stage_close))
+        }
         Column(Modifier.weight(1f)) {
             Text(state.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(state.keyLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
-        }
-        IconButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }) {
-            Icon(StageIcons.Minus, contentDescription = stringResource(Res.string.stage_text_smaller))
-        }
-        Text("Aa", style = MaterialTheme.typography.titleMedium)
-        IconButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }) {
-            Icon(StageIcons.Plus, contentDescription = stringResource(Res.string.stage_text_bigger))
-        }
-        IconButton(onClick = { onEvent(StageEvent.AutoScrollToggled) }) {
-            if (state.isAutoScrolling) {
-                Icon(PauseIcon, contentDescription = stringResource(Res.string.stage_scroll_stop))
-            } else {
-                Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(Res.string.stage_scroll_start))
+            state.setlistPosition?.let {
+                Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+        }
+        Text(
+            state.keyLabel,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(end = Spacing.m),
+        )
+    }
+}
+
+/** Text size and auto-scroll, big enough to hit on a music stand. */
+@Composable
+private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.l, vertical = Spacing.s),
+    ) {
+        StageButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }, modifier = Modifier.width(64.dp)) {
+            Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
+                contentDescription = "Réduire le texte"
+            })
+        }
+        StageButton(onClick = { onEvent(StageEvent.AutoScrollToggled) }, modifier = Modifier.weight(1f)) {
+            Icon(
+                if (state.isAutoScrolling) PauseIcon else Icons.Filled.PlayArrow,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Column(Modifier.padding(start = Spacing.s)) {
+                Text(
+                    stringResource(if (state.isAutoScrolling) Res.string.stage_scroll_stop else Res.string.stage_scroll_start),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                )
+                if (state.isAutoScrolling) {
+                    Text("${state.scrollSpeed}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        StageButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }, modifier = Modifier.width(64.dp)) {
+            Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
+                contentDescription = "Agrandir le texte"
+            })
         }
     }
     if (state.isAutoScrolling) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.s),
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth(),
         ) {
             TextButton(onClick = { onEvent(StageEvent.SlowerClicked) }) { Text(stringResource(Res.string.stage_slower)) }
-            Text("${state.scrollSpeed}", style = MaterialTheme.typography.labelLarge)
             TextButton(onClick = { onEvent(StageEvent.FasterClicked) }) { Text(stringResource(Res.string.stage_faster)) }
         }
     }
+}
+
+@Composable
+private fun StageButton(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        shape = RoundedCornerShape(Radius.card),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        contentPadding = PaddingValues(horizontal = Spacing.m),
+        modifier = modifier.height(56.dp),
+        content = content,
+    )
 }
 
 @Composable
@@ -156,18 +219,34 @@ private fun StageLyrics(state: StageUiState, modifier: Modifier) {
 
 @Composable
 private fun SetlistNavigation(state: StageUiState, onOpenSong: (String) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(Spacing.s)) {
-        IconButton(onClick = { state.previousSongId?.let(onOpenSong) }, enabled = state.previousSongId != null) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.stage_previous))
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+        modifier = Modifier.fillMaxWidth().padding(start = Spacing.l, end = Spacing.l, bottom = Spacing.s),
+    ) {
+        StageButton(
+            onClick = { state.previousSongId?.let(onOpenSong) },
+            modifier = Modifier.weight(1f).alpha(if (state.previousSongId != null) 1f else 0.4f),
+        ) {
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
+            Text(stringResource(Res.string.stage_previous), style = MaterialTheme.typography.labelLarge, maxLines = 1)
         }
-        Text(
-            state.setlistPosition.orEmpty(),
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-        )
-        IconButton(onClick = { state.nextSongId?.let(onOpenSong) }, enabled = state.nextSongId != null) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(Res.string.stage_next))
+        StageButton(
+            onClick = { state.nextSongId?.let(onOpenSong) },
+            modifier = Modifier.weight(1f).alpha(if (state.nextSongId != null) 1f else 0.4f),
+        ) {
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                Text(stringResource(Res.string.stage_next), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                state.nextSongTitle?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
         }
     }
 }
@@ -189,6 +268,7 @@ private fun StageScreenPreview() {
                 ),
                 setlistPosition = "1 / 3",
                 nextSongId = "2",
+                nextSongTitle = "Holy, Holy, Holy",
             ),
             onEvent = {},
             onClose = {},

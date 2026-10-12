@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.theme.Radius
 import com.xperiencemusic.shared.ui.theme.Spacing
 
@@ -24,9 +26,11 @@ fun AppCard(
     val inner: @Composable () -> Unit = {
         Column(Modifier.padding(Spacing.l), content = content)
     }
+    // A hairline keeps cards apart on the night background, as in the brand mockups.
+    val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     if (onClick != null) {
-        Surface(onClick = onClick, shape = shape, color = color, modifier = modifier.fillMaxWidth(), content = inner)
+        Surface(onClick = onClick, shape = shape, color = color, border = border, modifier = modifier.fillMaxWidth(), content = inner)
     } else {
-        Surface(shape = shape, color = color, modifier = modifier.fillMaxWidth(), content = inner)
+        Surface(shape = shape, color = color, border = border, modifier = modifier.fillMaxWidth(), content = inner)
     }
 }

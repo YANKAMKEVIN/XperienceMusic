@@ -1,5 +1,29 @@
 package com.xperiencemusic.shared.ui.progress
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import com.xperiencemusic.shared.domain.model.VoicePart
+import com.xperiencemusic.shared.resources.progress_exercises_title
+import com.xperiencemusic.shared.resources.progress_hello
+import com.xperiencemusic.shared.resources.progress_start
+import com.xperiencemusic.shared.ui.brand.BrandWaves
+import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.brand.XmIcons
+import com.xperiencemusic.shared.ui.theme.BrandColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -76,15 +100,7 @@ fun ProgressScreenContent(
         contentPadding = PaddingValues(Spacing.l),
         verticalArrangement = Arrangement.spacedBy(Spacing.m),
     ) {
-        item {
-            Text(stringResource(Res.string.progress_title), style = MaterialTheme.typography.headlineMedium)
-            val instrument = state.instrument?.label().orEmpty()
-            val level = state.level?.label().orEmpty()
-            Text(
-                state.name + " · " + stringResource(Res.string.progress_profile, instrument, level),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        item { ProgressHeader(state) }
         if (!state.hasPath) {
             item {
                 AppCard {
@@ -98,15 +114,27 @@ fun ProgressScreenContent(
                 }
             }
         } else {
+            item { PathCard(state.validatedCount, state.exercises.size) }
             item {
-                val total = state.exercises.size
-                Text(stringResource(Res.string.progress_done, state.validatedCount, total))
-                LinearProgressIndicator(
-                    progress = { if (total == 0) 0f else state.validatedCount.toFloat() / total },
-                    modifier = Modifier.fillMaxWidth().padding(top = Spacing.s),
+                Text(
+                    stringResource(Res.string.progress_exercises_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = Spacing.s).semantics { heading() },
                 )
             }
             items(state.exercises, key = { it.id }) { ExerciseRow(it, onClick = { onExerciseClick(it.id) }) }
+            state.nextExerciseId?.let { next ->
+                item {
+                    GradientButton(onClick = { onExerciseClick(next) }, modifier = Modifier.fillMaxWidth().padding(top = Spacing.s)) {
+                        Text(stringResource(Res.string.progress_start), style = MaterialTheme.typography.titleMedium)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.padding(start = Spacing.s).size(20.dp),
+                        )
+                    }
+                }
+            }
         }
         if (state.canManageMembers) {
             item {
@@ -124,30 +152,96 @@ fun ProgressScreenContent(
 }
 
 @Composable
+private fun ProgressHeader(state: ProgressUiState) {
+    Column {
+        Text(
+            stringResource(Res.string.progress_title),
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        Text(
+            stringResource(Res.string.progress_hello, state.name),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Spacing.m)) {
+            val pills = listOfNotNull(
+                state.voicePart?.label() ?: state.instrument?.label(),
+                state.level?.label(),
+            )
+            pills.forEach { label ->
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier
+                        .padding(end = Spacing.s)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                        .padding(horizontal = Spacing.m, vertical = Spacing.xs),
+                )
+            }
+            BrandWaves(Modifier.weight(1f).height(36.dp))
+        }
+    }
+}
+
+/** How far along the singer's path is, with the brand gradient as the bar. */
+@Composable
+private fun PathCard(validated: Int, total: Int) {
+    AppCard {
+        Text(stringResource(Res.string.progress_done, validated, total), style = MaterialTheme.typography.titleMedium)
+        Box(
+            Modifier
+                .padding(top = Spacing.m)
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(if (total == 0) 0f else validated.toFloat() / total)
+                    .fillMaxHeight()
+                    .clip(CircleShape)
+                    .background(BrandColors.horizontalGradient),
+            )
+        }
+    }
+}
+
+@Composable
 private fun ExerciseRow(exercise: ExerciseUi, onClick: () -> Unit) {
     AppCard(onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "${exercise.position}. ${exercise.title}",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f),
+            Box(
+                Modifier.size(44.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    if (exercise.check is ExerciseCheckUi.HoldNote) XmIcons.Notes else XmIcons.Bars,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
+                Text(exercise.title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    when (val check = exercise.check) {
+                        is ExerciseCheckUi.HoldNote -> stringResource(Res.string.progress_check_hold, check.noteLabel, check.seconds)
+                        ExerciseCheckUi.Review -> stringResource(Res.string.progress_check_review)
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = Spacing.xs),
+                )
+                ExerciseStatusBadge(exercise.status)
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            ExerciseStatusBadge(exercise.status)
         }
-        Text(
-            exercise.instructions,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = Spacing.s),
-        )
-        Text(
-            when (val check = exercise.check) {
-                is ExerciseCheckUi.HoldNote -> stringResource(Res.string.progress_check_hold, check.noteLabel, check.seconds)
-                ExerciseCheckUi.Review -> stringResource(Res.string.progress_check_review)
-            },
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.padding(top = Spacing.s),
-        )
     }
 }
 
@@ -175,6 +269,8 @@ private fun ProgressScreenSingerPreview() {
                     ),
                 ),
                 validatedCount = 1,
+                voicePart = VoicePart.ALTO,
+                nextExerciseId = "2",
             ),
             onExerciseClick = {},
             onManageMembers = {},

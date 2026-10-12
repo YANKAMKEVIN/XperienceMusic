@@ -23,7 +23,20 @@ class MiniPlayerViewModel(private val playback: PlaybackController) : ViewModel(
                 if (duration > 0) playback.seekTo((duration * event.fraction.coerceIn(0f, 1f)).toLong())
             }
             MiniPlayerEvent.CloseClicked -> playback.stop()
+            MiniPlayerEvent.RewindClicked -> skip(-SKIP_MS)
+            MiniPlayerEvent.ForwardClicked -> skip(SKIP_MS)
         }
+    }
+
+    private fun skip(offsetMs: Long) {
+        val current = playback.state.value
+        val target = current.positionMs + offsetMs
+        playback.seekTo(if (current.durationMs > 0) target.coerceAtMost(current.durationMs) else target)
+    }
+
+    private companion object {
+        /** Enough to replay a phrase while learning a part. */
+        const val SKIP_MS = 10_000L
     }
 }
 

@@ -17,4 +17,6 @@ sealed interface MiniPlayerEvent {
     data object PlayPauseClicked : MiniPlayerEvent
     data class Seeked(val fraction: Float) : MiniPlayerEvent
     data object CloseClicked : MiniPlayerEvent
+    data object RewindClicked : MiniPlayerEvent
+    data object ForwardClicked : MiniPlayerEvent
 }

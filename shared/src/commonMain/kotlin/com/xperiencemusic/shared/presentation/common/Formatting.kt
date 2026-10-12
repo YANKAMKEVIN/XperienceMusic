@@ -13,6 +13,15 @@ internal object Formatting {
     fun dayAndDate(date: LocalDate): String =
         "${days[date.dayOfWeek.ordinal]} ${date.day} ${months[date.month.ordinal]}"
 
+    /** "dim. 19 oct." */
+    fun shortDayAndDate(date: LocalDate): String =
+        "${days[date.dayOfWeek.ordinal].take(3)}. ${date.day} ${months[date.month.ordinal]}"
+
+    /** "13 – 18 oct.", or "28 oct. – 2 nov." across two months. */
+    fun range(start: LocalDate, end: LocalDate): String =
+        if (start.month == end.month) "${start.day} – ${end.day} ${months[end.month.ordinal]}"
+        else "${start.day} ${months[start.month.ordinal]} – ${end.day} ${months[end.month.ordinal]}"
+
     /** "14 oct. 2026" */
     fun shortDate(date: LocalDate): String = "${date.day} ${months[date.month.ordinal]} ${date.year}"
 

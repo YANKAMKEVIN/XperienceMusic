@@ -17,6 +17,10 @@ data class SetlistEditorUiState(
     val error: SetlistEditorError? = null,
     val isPublished: Boolean = false,
     val isEditing: Boolean = false,
+    /** Another week already has a setlist on the chosen Sunday: publishing replaces it. */
+    val replacesExisting: Boolean = false,
+    val isDeleting: Boolean = false,
+    val isDeleted: Boolean = false,
 ) {
     val canPublish: Boolean get() = !isPublishing && selected.isNotEmpty() && serviceDate >= rehearsalDate
     val hasDateConflict: Boolean get() = serviceDate < rehearsalDate
@@ -36,4 +40,5 @@ sealed interface SetlistEditorEvent {
     data class RehearsalDatePicked(val date: LocalDate) : SetlistEditorEvent
     data class ServiceDatePicked(val date: LocalDate) : SetlistEditorEvent
     data object PublishClicked : SetlistEditorEvent
+    data object DeleteConfirmed : SetlistEditorEvent
 }

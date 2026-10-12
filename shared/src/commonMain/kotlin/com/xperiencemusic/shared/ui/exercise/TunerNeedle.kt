@@ -23,20 +23,28 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun TunerNeedle(position: Float?, description: String, modifier: Modifier = Modifier) {
     val animated by animateFloatAsState(position ?: 0f, label = "needle")
-    val track = MaterialTheme.colorScheme.surfaceContainerHigh
+    val track = MaterialTheme.colorScheme.outline
     val zone = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.35f)
-    val needle = MaterialTheme.colorScheme.primary
+    val needle = MaterialTheme.colorScheme.onSurface
     val center = MaterialTheme.colorScheme.onSurfaceVariant
     Canvas(modifier.fillMaxWidth().height(56.dp).semantics { contentDescription = description }) {
         val radius = CornerRadius(12.dp.toPx())
-        drawRoundRect(track, cornerRadius = radius)
         // The gauge spans ±100 cents; the band is the ±50 cents that count as in tune.
         val bandWidth = size.width * 0.5f
         drawRoundRect(zone, topLeft = Offset((size.width - bandWidth) / 2, 0f), size = Size(bandWidth, size.height), cornerRadius = radius)
-        drawLine(center, Offset(size.width / 2, 8.dp.toPx()), Offset(size.width / 2, size.height - 8.dp.toPx()), strokeWidth = 1.dp.toPx())
+        // Graduations every 12.5 cents, longer every 50.
+        for (tick in 0..TICKS) {
+            val x = size.width * tick / TICKS
+            val isMajor = tick % (TICKS / 4) == 0
+            val inset = if (isMajor) 6.dp.toPx() else 16.dp.toPx()
+            drawLine(track, Offset(x, inset), Offset(x, size.height - inset), strokeWidth = 1.5.dp.toPx())
+        }
+        drawLine(center, Offset(size.width / 2, 4.dp.toPx()), Offset(size.width / 2, size.height - 4.dp.toPx()), strokeWidth = 1.dp.toPx())
         if (position != null) {
             val x = size.width / 2 + animated * (size.width / 2 - 8.dp.toPx())
             drawLine(needle, Offset(x, 4.dp.toPx()), Offset(x, size.height - 4.dp.toPx()), strokeWidth = 6.dp.toPx(), cap = StrokeCap.Round)
         }
     }
 }
+
+private const val TICKS = 16

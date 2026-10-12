@@ -1,5 +1,24 @@
 package com.xperiencemusic.shared.ui.library
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.xperiencemusic.shared.ui.brand.KeyPill
+import com.xperiencemusic.shared.ui.brand.XmIcons
+import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -64,27 +82,30 @@ fun LibraryScreenContent(
         onRefresh = { onEvent(LibraryEvent.RefreshPulled) },
         modifier = Modifier.fillMaxSize(),
     ) {
-        LibraryList(state, onEvent, onSongClick)
-        if (state.canAddSong) {
-            ExtendedFloatingActionButton(
-                onClick = onAddSong,
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(Res.string.action_add_song)) },
-                modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.l),
-            )
-        }
+        LibraryList(state, onEvent, onSongClick, onAddSong)
     }
 }
 
 @Composable
-private fun LibraryList(state: LibraryUiState, onEvent: (LibraryEvent) -> Unit, onSongClick: (String) -> Unit) {
+private fun LibraryList(
+    state: LibraryUiState,
+    onEvent: (LibraryEvent) -> Unit,
+    onSongClick: (String) -> Unit,
+    onAddSong: () -> Unit,
+) {
     LazyColumn(
-        // Bottom room so the last song is not hidden under the add button.
-        contentPadding = PaddingValues(start = Spacing.l, top = Spacing.l, end = Spacing.l, bottom = Spacing.xxl * 3),
+        contentPadding = PaddingValues(start = Spacing.l, top = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
         verticalArrangement = Arrangement.spacedBy(Spacing.m),
     ) {
         item {
-            Text(stringResource(Res.string.library_title), style = MaterialTheme.typography.headlineMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(Res.string.library_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.weight(1f).semantics { heading() },
+                )
+                if (state.canAddSong) AddSongButton(onAddSong)
+            }
         }
         if (state.isOffline) item { OfflineBanner() }
         item {
@@ -94,6 +115,7 @@ private fun LibraryList(state: LibraryUiState, onEvent: (LibraryEvent) -> Unit, 
                 placeholder = { Text(stringResource(Res.string.library_search)) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 singleLine = true,
+                shape = RoundedCornerShape(Radius.card),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -115,16 +137,51 @@ private fun LibraryList(state: LibraryUiState, onEvent: (LibraryEvent) -> Unit, 
 @Composable
 private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit) {
     AppCard(onClick = onClick) {
-        Text(song.title, style = MaterialTheme.typography.titleMedium)
-        song.artist?.let {
-            Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(44.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(XmIcons.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+            }
+            Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
+                Text(song.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Spacing.xs)) {
+                    KeyPill(song.keyLabel)
+                    Text(
+                        listOfNotNull(
+                            stringResource(Res.string.library_versions, song.recordingCount, song.maxRecordings),
+                            song.artist,
+                        ).joinToString(" · "),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = Spacing.s),
+                    )
+                }
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Text(
-            song.keyLabel + " · " + stringResource(Res.string.library_versions, song.recordingCount, song.maxRecordings),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.padding(top = Spacing.xs),
-        )
+    }
+}
+
+/** The gradient "+" of the mockups; admins only. */
+@Composable
+private fun AddSongButton(onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(48.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(BrandColors.gradient)
+            .clickable(onClick = onClick, role = Role.Button),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.action_add_song), tint = Color.White)
     }
 }
 
@@ -136,8 +193,8 @@ private fun LibraryScreenPreview() {
             LibraryUiState(
                 isLoading = false,
                 songs = listOf(
-                    LibrarySongUi("1", "À toi la gloire", "E. Budry", "Ré majeur", 2, 3),
-                    LibrarySongUi("2", "Amazing Grace", "John Newton", "Sol majeur", 1, 3),
+                    LibrarySongUi("1", "À toi la gloire", "E. Budry", "Ré", 2, 3),
+                    LibrarySongUi("2", "Amazing Grace", "John Newton", "Sol", 1, 3),
                 ),
                 canAddSong = true,
             ),

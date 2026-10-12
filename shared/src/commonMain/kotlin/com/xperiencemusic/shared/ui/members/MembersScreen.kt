@@ -1,5 +1,16 @@
 package com.xperiencemusic.shared.ui.members
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.xperiencemusic.shared.resources.members_legend_content
+import com.xperiencemusic.shared.resources.members_legend_member
+import com.xperiencemusic.shared.resources.members_legend_super
+import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.theme.BrandColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -158,6 +169,7 @@ fun MembersScreenContent(state: MembersUiState, onEvent: (MembersEvent) -> Unit,
                 }
                 items(state.pendingInvitations, key = { it.email }) { InvitationRow(it, onEvent) }
             }
+            item { RolesLegend(Modifier.padding(top = Spacing.l)) }
         }
     }
 
@@ -205,8 +217,12 @@ private fun InviteCard(state: MembersUiState, onEvent: (MembersEvent) -> Unit) {
             onSelect = { onEvent(MembersEvent.InviteRoleSelected(it)) },
             modifier = Modifier.padding(top = Spacing.s),
         )
-        Button(onClick = { onEvent(MembersEvent.InviteClicked) }, enabled = state.canInvite, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(Res.string.members_invite_button))
+        GradientButton(
+            onClick = { onEvent(MembersEvent.InviteClicked) },
+            enabled = state.canInvite,
+            modifier = Modifier.fillMaxWidth().padding(top = Spacing.s),
+        ) {
+            Text(stringResource(Res.string.members_invite_button), style = MaterialTheme.typography.titleMedium)
         }
     }
 }
@@ -215,7 +231,8 @@ private fun InviteCard(state: MembersUiState, onEvent: (MembersEvent) -> Unit) {
 private fun MemberRow(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
     AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
+            Initial(member.name, member.role)
+            Column(Modifier.weight(1f).padding(start = Spacing.m)) {
                 Text(
                     if (member.isMe) "${member.name} (${stringResource(Res.string.members_me)})" else member.name,
                     style = MaterialTheme.typography.titleSmall,
@@ -296,5 +313,49 @@ private fun MembersScreenPreview() {
             onEvent = {},
             onBack = {},
         )
+    }
+}
+
+/** Initials instead of photos keep the list calm; the ring tells the role at a glance. */
+@Composable
+private fun Initial(name: String, role: Role) {
+    val ring = roleColor(role)
+    Box(
+        Modifier
+            .size(44.dp)
+            .border(2.dp, ring, CircleShape)
+            .padding(3.dp)
+            .background(ring.copy(alpha = 0.18f), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(name.firstOrNull()?.uppercase() ?: "?", style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun roleColor(role: Role): Color = when (role) {
+    Role.MEMBER -> BrandColors.Purple
+    Role.CONTENT_ADMIN -> BrandColors.Blue
+    Role.SUPER_ADMIN -> BrandColors.Indigo
+}
+
+@Composable
+private fun RolesLegend(modifier: Modifier = Modifier) {
+    AppCard(modifier) {
+        listOf(
+            Role.MEMBER to Res.string.members_legend_member,
+            Role.CONTENT_ADMIN to Res.string.members_legend_content,
+            Role.SUPER_ADMIN to Res.string.members_legend_super,
+        ).forEach { (role, text) ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = Spacing.xs)) {
+                Box(Modifier.size(10.dp).background(roleColor(role), CircleShape))
+                Text(
+                    role.label() + " : " + stringResource(text),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = Spacing.m),
+                )
+            }
+        }
     }
 }

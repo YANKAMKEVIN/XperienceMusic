@@ -5,8 +5,8 @@ import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.model.WeeklySetlist
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
-import com.xperiencemusic.shared.domain.usecase.ObserveWeeklySetlistUseCase
 import com.xperiencemusic.shared.fakes.setlistRepository
+import com.xperiencemusic.shared.fakes.schedule
 import com.xperiencemusic.shared.fakes.song
 import com.xperiencemusic.shared.fakes.songRepository
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +44,7 @@ class StageViewModelTest {
         assertEquals("2 / 3", middle.setlistPosition)
         assertEquals("a", middle.previousSongId)
         assertEquals("c", middle.nextSongId)
+        assertEquals(c.title, middle.nextSongTitle)
         assertNull(deriveStageState(c, weekly, StageSettings(), 0, Notation.SOLFEGE).nextSongId)
     }
 
@@ -65,7 +66,7 @@ class StageViewModelTest {
     fun `taille du texte et vitesse sont bornées et partagées entre les chants`() = runTest {
         val store = StageSettingsStore()
         val songs = songRepository(a, b)
-        val weeklyUseCase = ObserveWeeklySetlistUseCase(setlistRepository(), songs)
+        val weeklyUseCase = schedule(setlistRepository(), songs)
         val first = StageViewModel("a", 0, Notation.NASHVILLE, ObserveSongUseCase(songs), weeklyUseCase, store)
         repeat(20) { first.onEvent(StageEvent.TextBiggerClicked) }
         first.onEvent(StageEvent.AutoScrollToggled)
