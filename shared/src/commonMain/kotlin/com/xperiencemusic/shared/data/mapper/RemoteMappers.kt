@@ -7,6 +7,7 @@ import com.xperiencemusic.shared.data.remote.dto.ProfileDto
 import com.xperiencemusic.shared.data.remote.dto.ProfileUpdateDto
 import com.xperiencemusic.shared.data.remote.dto.RecordingDto
 import com.xperiencemusic.shared.data.remote.dto.SetlistDto
+import com.xperiencemusic.shared.data.remote.dto.VoiceSubmissionDto
 import com.xperiencemusic.shared.data.remote.dto.SongDto
 import com.xperiencemusic.shared.data.remote.dto.SongWriteDto
 import com.xperiencemusic.shared.domain.model.BandMember
@@ -19,6 +20,8 @@ import com.xperiencemusic.shared.domain.model.MemberProfile
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.Setlist
+import com.xperiencemusic.shared.domain.model.VoiceSubmission
+import kotlinx.datetime.LocalDate
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
 import com.xperiencemusic.shared.domain.model.SongLink
@@ -96,6 +99,21 @@ fun SetlistDto.toDomain() = Setlist(
 )
 
 fun String.toExerciseStatus(): ExerciseStatus = enumOrNull<ExerciseStatus>(this) ?: ExerciseStatus.TODO
+
+fun VoiceSubmissionDto.toDomain() = VoiceSubmission(
+    id = id,
+    memberId = memberId,
+    memberName = profiles?.displayName.orEmpty(),
+    voicePart = enumOrNull<VoicePart>(profiles?.voicePart),
+    songId = songId,
+    songTitle = songs?.title.orEmpty(),
+    audioPath = audioPath,
+    durationSeconds = durationSeconds,
+    // "2026-10-13T19:32:00.123+00:00": the day is enough to show.
+    submittedOn = LocalDate.parse(submittedAt.take(10)),
+    status = status.toExerciseStatus(),
+    feedback = feedback,
+)
 
 private inline fun <reified T : Enum<T>> enumOrNull(name: String?): T? =
     name?.let { value -> enumValues<T>().firstOrNull { it.name == value } }

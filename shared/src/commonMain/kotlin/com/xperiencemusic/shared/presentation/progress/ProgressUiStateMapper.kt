@@ -2,6 +2,9 @@ package com.xperiencemusic.shared.presentation.progress
 
 import com.xperiencemusic.music.pitch.Pitch
 import com.xperiencemusic.shared.domain.model.ExerciseCheck
+import com.xperiencemusic.shared.domain.model.ExerciseStatus
+import com.xperiencemusic.shared.domain.model.Song
+import com.xperiencemusic.shared.domain.model.VoiceSubmission
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Member
 import com.xperiencemusic.shared.domain.model.PathStep
@@ -9,6 +12,23 @@ import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.model.SingerPath
 import com.xperiencemusic.shared.domain.model.VoicePart
 import kotlin.math.roundToInt
+
+/** Adds the week's songs and the review queue to an already derived state. */
+fun ProgressUiState.withVoices(
+    weekSongs: List<Song>,
+    mine: List<VoiceSubmission>,
+    allSubmissions: List<VoiceSubmission>,
+): ProgressUiState = copy(
+    weekVoices = if (hasPath) {
+        weekSongs.map { song ->
+            val sent = mine.firstOrNull { it.songId == song.id }
+            WeekVoiceUi(song.id, song.title, sent?.status, sent?.feedback)
+        }
+    } else {
+        emptyList()
+    },
+    toReviewCount = if (canReview) allSubmissions.count { it.status == ExerciseStatus.SUBMITTED } else 0,
+)
 
 fun deriveProgressState(member: Member?, path: SingerPath?): ProgressUiState {
     if (member == null) return ProgressUiState()
@@ -37,6 +57,7 @@ fun deriveProgressState(member: Member?, path: SingerPath?): ProgressUiState {
             }
         }.orEmpty(),
         canManageMembers = member.role.can(Permission.MANAGE_MEMBERS),
+        canReview = member.role.can(Permission.REVIEW_TRAINING),
     )
 }
 

@@ -21,6 +21,8 @@ data class SongDetailUiState(
     val maxRecordings: Int = 0,
     val canManageRecordings: Boolean = false,
     val canEditSong: Boolean = false,
+    /** Singers record their part on the song and send it for review. */
+    val canRecordVoice: Boolean = false,
     val voiceTracks: List<VoiceTrackUi> = emptyList(),
     val links: List<LinkUi> = emptyList(),
     val pendingDeletion: RecordingUi? = null,

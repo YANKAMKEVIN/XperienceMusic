@@ -1,5 +1,15 @@
 package com.xperiencemusic.shared.di
 
+import com.xperiencemusic.shared.domain.usecase.PlayLocalAudioUseCase
+import com.xperiencemusic.shared.presentation.voice.VoiceRecordViewModel
+import com.xperiencemusic.shared.presentation.voice.VoiceReviewViewModel
+import com.xperiencemusic.shared.data.repository.InMemoryVoiceSubmissionRepository
+import com.xperiencemusic.shared.data.repository.SupabaseVoiceSubmissionRepository
+import com.xperiencemusic.shared.data.seed.SampleSubmissions
+import com.xperiencemusic.shared.domain.repository.VoiceSubmissionRepository
+import com.xperiencemusic.shared.domain.usecase.ReviewVoiceUseCase
+import com.xperiencemusic.shared.domain.usecase.SendVoiceUseCase
+import com.xperiencemusic.shared.domain.usecase.VoiceRecorder
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.data.local.DeviceDataStore
 import com.xperiencemusic.shared.data.local.SnapshotStore
@@ -118,6 +128,7 @@ val dataModule = module {
         single<AudioCache> { FileAudioCache(get(), get()) }
         single<MembersRepository> { SupabaseMembersRepository(get()) }
         single<AudioUrlProvider> { OfflineFirstAudioUrlProvider(get(), SupabaseAudioUrlProvider(get())) }
+        single<VoiceSubmissionRepository> { SupabaseVoiceSubmissionRepository(get()) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
         single<SessionRepository> { InMemorySessionRepository() }
@@ -129,6 +140,9 @@ val dataModule = module {
         single<AudioCache> { DemoAudioCache() }
         single<MembersRepository> { InMemoryMembersRepository(get()) }
         single<AudioUrlProvider> { DemoAudioUrlProvider(get(), get()) }
+        single<VoiceSubmissionRepository> {
+            InMemoryVoiceSubmissionRepository(get(), get(), get(), SampleSubmissions.around(get<DateProvider>().today()))
+        }
     }
 }
 
@@ -143,6 +157,10 @@ val domainModule = module {
     single { signInLinkInbox }
     factoryOf(::ObserveSetlistScheduleUseCase)
     factoryOf(::DeleteSetlistUseCase)
+    factoryOf(::SendVoiceUseCase)
+    factoryOf(::ReviewVoiceUseCase)
+    factory { VoiceRecorder(get()) }
+    factoryOf(::PlayLocalAudioUseCase)
     factoryOf(::PublishSetlistUseCase)
     factoryOf(::ObserveSingerPathUseCase)
     factoryOf(::ObserveSessionUseCase)
@@ -176,6 +194,8 @@ val presentationModule = module {
     viewModelOf(::WeekViewModel)
     viewModelOf(::LibraryViewModel)
     viewModelOf(::ProgressViewModel)
+    viewModel { params -> VoiceRecordViewModel(params.get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModelOf(::VoiceReviewViewModel)
     viewModelOf(::SongDetailViewModel)
     viewModelOf(::SignInViewModel)
     viewModel { params -> SetlistEditorViewModel(get(), get(), get(), get(), get(), params.getOrNull()) }

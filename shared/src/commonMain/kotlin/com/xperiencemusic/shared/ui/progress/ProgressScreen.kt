@@ -46,6 +46,12 @@ import com.xperiencemusic.shared.presentation.progress.ProgressViewModel
 import com.xperiencemusic.shared.presentation.progress.StepUi
 import com.xperiencemusic.shared.presentation.progress.TierUi
 import com.xperiencemusic.shared.presentation.progress.WarmUpUi
+import com.xperiencemusic.shared.presentation.progress.WeekVoiceUi
+import com.xperiencemusic.shared.resources.review_open
+import com.xperiencemusic.shared.resources.voice_week_none
+import com.xperiencemusic.shared.resources.voice_week_title
+import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.members_open
 import com.xperiencemusic.shared.resources.progress_hello
@@ -79,6 +85,8 @@ fun ProgressScreen(
     onExerciseClick: (String) -> Unit,
     onManageMembers: () -> Unit,
     onSignOut: () -> Unit,
+    onRecordVoice: (String) -> Unit = {},
+    onReview: () -> Unit = {},
     viewModel: ProgressViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -87,6 +95,8 @@ fun ProgressScreen(
         onExerciseClick = onExerciseClick,
         onManageMembers = onManageMembers,
         onSignOut = onSignOut,
+        onRecordVoice = onRecordVoice,
+        onReview = onReview,
     )
 }
 
@@ -104,6 +114,8 @@ fun ProgressScreenContent(
     onExerciseClick: (String) -> Unit,
     onManageMembers: () -> Unit,
     onSignOut: () -> Unit,
+    onRecordVoice: (String) -> Unit = {},
+    onReview: () -> Unit = {},
 ) {
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -125,6 +137,7 @@ fun ProgressScreenContent(
             }
         } else {
             state.warmUp?.let { warmUp -> item { WarmUpCard(warmUp, onClick = { onExerciseClick(warmUp.id) }) } }
+            if (state.weekVoices.isNotEmpty()) item { WeekVoicesCard(state.weekVoices, onRecordVoice) }
             // Each tier picks up the winding line where the previous one stopped.
             var lane = 0
             state.tiers.forEach { tier ->
@@ -138,6 +151,14 @@ fun ProgressScreenContent(
                         labelOpen = openLabel,
                         onStepClick = onExerciseClick,
                     )
+                }
+            }
+        }
+        if (state.canReview) {
+            item {
+                GradientButton(onClick = onReview, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
+                    Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(20.dp))
+                    Text(stringResource(Res.string.review_open, state.toReviewCount), style = MaterialTheme.typography.titleMedium)
                 }
             }
         }
@@ -231,6 +252,42 @@ private fun WarmUpCard(warmUp: WarmUpUi, onClick: () -> Unit) {
             contentDescription = null,
             tint = if (warmUp.isDoneToday) colors.tertiary else colors.onSurface,
         )
+    }
+}
+
+/** "Ta voix sur les chants de la semaine": one row per song, with what was sent and the answer. */
+@Composable
+private fun WeekVoicesCard(voices: List<WeekVoiceUi>, onRecordVoice: (String) -> Unit) {
+    AppCard {
+        Text(stringResource(Res.string.voice_week_title), style = MaterialTheme.typography.titleMedium)
+        voices.forEach { voice ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = Spacing.s)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(role = Role.Button) { onRecordVoice(voice.songId) }
+                    .padding(vertical = Spacing.s),
+            ) {
+                Icon(XmIcons.Mic, contentDescription = null, tint = BrandColors.Purple, modifier = Modifier.size(20.dp))
+                Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
+                    Text(voice.title, style = MaterialTheme.typography.titleSmall)
+                    voice.feedback?.let {
+                        Text("« $it »", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                if (voice.status != null) {
+                    ExerciseStatusBadge(voice.status)
+                } else {
+                    Text(
+                        stringResource(Res.string.voice_week_none),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
     }
 }
 

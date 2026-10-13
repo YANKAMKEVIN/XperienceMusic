@@ -21,6 +21,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.brand.XmIcons
+import com.xperiencemusic.shared.resources.voice_record_cta
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Radius
@@ -142,6 +144,7 @@ fun SongDetailScreen(
     onEdit: () -> Unit,
     onAddRecording: () -> Unit,
     onOpenStage: (transposeSemitones: Int, notation: Notation) -> Unit,
+    onRecordVoice: () -> Unit = {},
     viewModel: SongDetailViewModel = koinViewModel(key = songId) { parametersOf(songId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -152,6 +155,7 @@ fun SongDetailScreen(
         onEdit = onEdit,
         onAddRecording = onAddRecording,
         onOpenStage = { onOpenStage(state.transposeSemitones, state.notation) },
+        onRecordVoice = onRecordVoice,
     )
 }
 
@@ -164,6 +168,7 @@ fun SongDetailScreenContent(
     onEdit: () -> Unit,
     onAddRecording: () -> Unit,
     onOpenStage: () -> Unit,
+    onRecordVoice: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.message) {
@@ -202,7 +207,7 @@ fun SongDetailScreenContent(
             when {
                 state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 state.isMissing -> Text(stringResource(Res.string.song_not_found), Modifier.align(Alignment.Center))
-                else -> SongDetailBody(state, onEvent, onAddRecording, onOpenStage)
+                else -> SongDetailBody(state, onEvent, onAddRecording, onOpenStage, onRecordVoice)
             }
         }
     }
@@ -232,6 +237,7 @@ private fun SongDetailBody(
     onEvent: (SongDetailEvent) -> Unit,
     onAddRecording: () -> Unit,
     onOpenStage: () -> Unit,
+    onRecordVoice: () -> Unit,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(start = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
@@ -243,6 +249,14 @@ private fun SongDetailBody(
             GradientButton(onClick = onOpenStage, modifier = Modifier.fillMaxWidth()) {
                 Icon(StageIcons.Fullscreen, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
                 Text(stringResource(Res.string.stage_open), style = MaterialTheme.typography.titleMedium)
+            }
+        }
+        if (state.canRecordVoice) {
+            item {
+                OutlinedButton(onClick = onRecordVoice, modifier = Modifier.fillMaxWidth()) {
+                    Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(20.dp))
+                    Text(stringResource(Res.string.voice_record_cta))
+                }
             }
         }
         item {

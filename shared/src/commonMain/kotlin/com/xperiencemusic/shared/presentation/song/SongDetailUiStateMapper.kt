@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.presentation.song
 
 import com.xperiencemusic.music.chart.ChordChart
 import com.xperiencemusic.music.theory.Notation
+import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Member
 import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.model.PlaybackState
@@ -52,6 +53,7 @@ fun deriveSongDetailState(
         maxRecordings = Song.MAX_RECORDINGS,
         canManageRecordings = member?.role?.can(Permission.MANAGE_RECORDINGS) == true,
         canEditSong = member?.role?.can(Permission.EDIT_SONG) == true,
+        canRecordVoice = member?.profile?.instrument == Instrument.SINGER,
         voiceTracks = song.voiceTracks.map { VoiceTrackUi(it.id, it.voicePart, playback.statusOf(it.id)) },
         links = song.links.map { LinkUi(it.label, it.url) },
         pendingDeletion = recordings.firstOrNull { it.id == local.pendingDeletionId },

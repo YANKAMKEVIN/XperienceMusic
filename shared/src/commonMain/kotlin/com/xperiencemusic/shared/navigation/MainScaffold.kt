@@ -37,6 +37,8 @@ import com.xperiencemusic.shared.ui.song.SongDetailScreen
 import com.xperiencemusic.shared.ui.stage.StageScreen
 import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
+import com.xperiencemusic.shared.ui.voice.VoiceRecordScreen
+import com.xperiencemusic.shared.ui.voice.VoiceReviewScreen
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlinx.datetime.LocalDate
@@ -97,10 +99,16 @@ fun MainScaffold(onSignOut: () -> Unit) {
                 ProgressScreen(
                     onExerciseClick = { navController.navigate(ExerciseRoute(it)) },
                     onManageMembers = { navController.navigate(MembersRoute) },
+                    onRecordVoice = { navController.navigate(VoiceRecordRoute(it)) },
+                    onReview = { navController.navigate(VoiceReviewRoute) },
                     onSignOut = onSignOut,
                 )
             }
             composable<MembersRoute> { MembersScreen(onBack = { navController.popBackStack() }) }
+            composable<VoiceRecordRoute> { entry ->
+                VoiceRecordScreen(songId = entry.toRoute<VoiceRecordRoute>().songId, onBack = { navController.popBackStack() })
+            }
+            composable<VoiceReviewRoute> { VoiceReviewScreen(onBack = { navController.popBackStack() }) }
             composable<ExerciseRoute> { entry ->
                 ExerciseScreen(exerciseId = entry.toRoute<ExerciseRoute>().exerciseId, onBack = { navController.popBackStack() })
             }
@@ -114,6 +122,7 @@ fun MainScaffold(onSignOut: () -> Unit) {
                     onOpenStage = { transpose, notation ->
                         navController.navigate(StageRoute(songId, transpose, notation.name))
                     },
+                    onRecordVoice = { navController.navigate(VoiceRecordRoute(songId)) },
                 )
             }
             composable<StageRoute> { entry ->

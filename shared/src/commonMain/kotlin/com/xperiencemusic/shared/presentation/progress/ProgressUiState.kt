@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.presentation.progress
 
+import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Level
 import com.xperiencemusic.shared.domain.model.StepState
@@ -19,6 +20,19 @@ data class ProgressUiState(
     val warmUp: WarmUpUi? = null,
     val tiers: List<TierUi> = emptyList(),
     val canManageMembers: Boolean = false,
+    /** The current week's songs, with what this singer sent on each. */
+    val weekVoices: List<WeekVoiceUi> = emptyList(),
+    val canReview: Boolean = false,
+    /** Submissions waiting for the super admin. */
+    val toReviewCount: Int = 0,
+)
+
+data class WeekVoiceUi(
+    val songId: String,
+    val title: String,
+    /** Null when nothing was sent yet. */
+    val status: ExerciseStatus?,
+    val feedback: String?,
 )
 
 data class WarmUpUi(val id: String, val isDoneToday: Boolean)

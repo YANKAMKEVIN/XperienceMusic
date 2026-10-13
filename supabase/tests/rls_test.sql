@@ -131,6 +131,38 @@ do $$ begin
     end;
 end $$;
 
+-- Voice submissions: singers send and resend, only the super admin judges.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    insert into public.voice_submissions (song_id, audio_path, duration_seconds)
+    values ('10000000-0000-0000-0000-000000000001', 'submissions/00000000-0000-0000-0000-00000000000d/a.wav', 42);
+    begin
+        update public.voice_submissions set status = 'VALIDATED';
+        assert false, 'singers cannot validate themselves';
+    exception when insufficient_privilege or check_violation then null;
+    end;
+    assert (select status from public.voice_submissions) = 'SUBMITTED';
+    insert into storage.objects (bucket_id, name) values ('audio', 'submissions/00000000-0000-0000-0000-00000000000d/a.wav');
+    begin
+        insert into storage.objects (bucket_id, name) values ('audio', 'submissions/00000000-0000-0000-0000-00000000000c/b.wav');
+        assert false, 'singers write only their own folder';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$ begin
+    assert (select count(*) from public.voice_submissions) = 0, 'content admins do not see submissions';
+    assert (select count(*) from storage.objects where name like 'submissions/%') = 0, 'nor hear them';
+end $$;
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+do $$ begin
+    assert (select count(*) from storage.objects where name like 'submissions/%') = 1, 'the reviewer hears them';
+    update public.voice_submissions set status = 'TO_REWORK', feedback = 'Attention au refrain', reviewed_at = now();
+    assert (select status from public.voice_submissions) = 'TO_REWORK';
+end $$;
+
 -- The super admin invites and changes roles.
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 do $$ begin

@@ -23,17 +23,7 @@ object ToneGenerator {
             pcm[2 * i] = (value and 0xFF).toByte()
             pcm[2 * i + 1] = ((value shr 8) and 0xFF).toByte()
         }
-        return header(pcm.size) + pcm
+        return WavEncoder.header(pcm.size, SAMPLE_RATE) + pcm
     }
 
-    private fun header(dataSize: Int): ByteArray {
-        val bytes = ArrayList<Byte>(44)
-        fun text(s: String) = s.forEach { bytes += it.code.toByte() }
-        fun int(v: Int) = repeat(4) { bytes += ((v shr (8 * it)) and 0xFF).toByte() }
-        fun short(v: Int) = repeat(2) { bytes += ((v shr (8 * it)) and 0xFF).toByte() }
-        text("RIFF"); int(36 + dataSize); text("WAVE")
-        text("fmt "); int(16); short(1); short(1); int(SAMPLE_RATE); int(SAMPLE_RATE * 2); short(2); short(16)
-        text("data"); int(dataSize)
-        return bytes.toByteArray()
-    }
 }
