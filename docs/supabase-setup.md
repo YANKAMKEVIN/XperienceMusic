@@ -25,6 +25,8 @@ seuls les nouveaux fichiers sont à exécuter :
 | Fichier | Ce qu'il change |
 | --- | --- |
 | `20261012000000_setlists_per_week.sql` | une setlist par dimanche : on peut publier les semaines suivantes à l'avance, republier un dimanche le remplace, et un admin peut supprimer une semaine |
+| `20261013000000_practice_days.sql` | les jours d'entraînement de chaque chantre, pour la série affichée dans « Ma progression » |
+| `20261014000000_voice_submissions.sql` | les voix envoyées par les chantres sur les chants de la semaine, que l'Admin++ valide ou renvoie « à retravailler » |
 
 ## 3. T'inviter comme Admin++
 

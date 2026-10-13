@@ -36,8 +36,7 @@ Tout est enregistré dans git. Dernier commit : `b7b93d3` (envoi de voix et éco
 
 ## Reste à faire
 
-1. **Moi (Supabase, SQL Editor).** Lancer, dans l'ordre, `supabase/migrations/20261013000000_practice_days.sql`
-   puis `supabase/migrations/20261014000000_voice_submissions.sql`. Tu peux me les copier avec `pbcopy`.
+1. ~~**Moi (Supabase, SQL Editor).** Lancer les migrations `practice_days` et `voice_submissions`.~~ Fait le 13 octobre 2026.
 2. **Toi.** Vérifier en démo les écrans « Ma voix » et « À écouter » sur le simulateur **iPhone 16 Pro**
    (`5450413B-6EA8-4EE1-A74C-EFFE36AAF118`), compilé dans `iosApp/build/dd16`.
    - N'utilise pas l'iPhone 17 Pro : une autre session y lance une app vélo.
