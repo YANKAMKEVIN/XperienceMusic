@@ -285,7 +285,7 @@
     <string name="progress_medals">%1$d paliers</string>
     <string name="progress_open_step">À toi</string>
     <string name="progress_warmup_title">Échauffement du jour</string>
-    <string name="progress_warmup_hint">3 min · garde ta série</string>
+    <string name="progress_warmup_hint">1 min · garde ta série</string>
     <string name="progress_warmup_done">Fait aujourd'hui · ta série continue</string>
     <string name="progress_tier_1">Palier 1 · Souffle et tenue</string>
     <string name="progress_tier_2">Palier 2 · Justesse</string>

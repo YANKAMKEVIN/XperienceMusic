@@ -16,7 +16,7 @@ internal object SingerExercises {
     val all: List<Exercise> = listOf(
         Exercise(
             "warmup", Exercise.WARM_UP_TIER, 1, "Échauffement du jour",
-            "Monte et redescends doucement cinq notes sur « mi », une seconde chacune. Trois minutes pour réveiller la voix et garder ta série.",
+            "Monte et redescends doucement cinq notes sur « mi », une seconde chacune. Une minute pour réveiller la voix et garder ta série.",
             NoteSequence(steps("0,2,4,2,0"), secondsEach = 1.0),
         ),
 
