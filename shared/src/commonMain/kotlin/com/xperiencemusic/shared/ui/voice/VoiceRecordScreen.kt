@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -215,7 +216,7 @@ private fun PreviousCard(previous: PreviousSubmissionUi) {
 private fun GuidePicker(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Text(stringResource(Res.string.voice_guide_title), style = MaterialTheme.typography.titleSmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s), modifier = Modifier.padding(top = Spacing.s)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s), modifier = Modifier.padding(top = Spacing.s)) {
             state.guides.forEach { guide -> GuideChip(guideLabel(guide), state.selectedGuideId == guide.id) { onEvent(VoiceRecordEvent.GuideSelected(guide.id)) } }
             GuideChip(stringResource(Res.string.voice_guide_none), state.selectedGuideId == null) { onEvent(VoiceRecordEvent.GuideSelected(null)) }
         }
