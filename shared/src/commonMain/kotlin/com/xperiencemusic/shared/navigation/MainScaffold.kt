@@ -38,6 +38,10 @@ import com.xperiencemusic.shared.ui.stage.StageScreen
 import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
 import com.xperiencemusic.shared.ui.voice.VoiceRecordScreen
+import com.xperiencemusic.shared.ui.planning.AvailabilityScreen
+import com.xperiencemusic.shared.ui.planning.PlanningScreen
+import com.xperiencemusic.shared.ui.planning.ServiceDetailScreen
+import com.xperiencemusic.shared.resources.tab_planning
 import com.xperiencemusic.shared.ui.voice.VoiceReviewScreen
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -49,10 +53,11 @@ private data class Tab(val route: Any, val routeClass: KClass<*>, val label: Str
 private val tabs = listOf(
     Tab(WeekRoute, WeekRoute::class, Res.string.tab_week, XmIcons.Notes),
     Tab(LibraryRoute, LibraryRoute::class, Res.string.tab_library, XmIcons.Book),
+    Tab(PlanningRoute, PlanningRoute::class, Res.string.tab_planning, XmIcons.Calendar),
     Tab(ProgressRoute, ProgressRoute::class, Res.string.tab_progress, XmIcons.Bars),
 )
 
-/** The signed-in shell: three tabs, with the song detail pushed on top of them. */
+/** The signed-in shell: four tabs, with the song detail pushed on top of them. */
 @Composable
 fun MainScaffold(onSignOut: () -> Unit) {
     val navController = rememberNavController()
@@ -102,6 +107,24 @@ fun MainScaffold(onSignOut: () -> Unit) {
                     onRecordVoice = { navController.navigate(VoiceRecordRoute(it)) },
                     onReview = { navController.navigate(VoiceReviewRoute) },
                     onSignOut = onSignOut,
+                )
+            }
+            composable<PlanningRoute> {
+                PlanningScreen(
+                    onMyAnswers = { month -> navController.navigate(AvailabilityRoute(month.toString())) },
+                    onServiceClick = { date -> navController.navigate(ServiceRoute(date.toString())) },
+                )
+            }
+            composable<AvailabilityRoute> { entry ->
+                AvailabilityScreen(
+                    monthStart = LocalDate.parse(entry.toRoute<AvailabilityRoute>().monthStart),
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<ServiceRoute> { entry ->
+                ServiceDetailScreen(
+                    date = LocalDate.parse(entry.toRoute<ServiceRoute>().date),
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable<MembersRoute> { MembersScreen(onBack = { navController.popBackStack() }) }

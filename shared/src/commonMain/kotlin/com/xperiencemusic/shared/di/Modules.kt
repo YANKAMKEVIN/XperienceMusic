@@ -108,6 +108,10 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
+import kotlinx.datetime.LocalDate
+import com.xperiencemusic.shared.presentation.planning.AvailabilityViewModel
+import com.xperiencemusic.shared.presentation.planning.PlanningViewModel
+import com.xperiencemusic.shared.presentation.planning.ServiceDetailViewModel
 import com.xperiencemusic.shared.data.repository.InMemoryPlanningRepository
 import com.xperiencemusic.shared.data.repository.SupabasePlanningRepository
 import com.xperiencemusic.shared.data.seed.SamplePlanning
@@ -234,6 +238,9 @@ val presentationModule = module {
         StageViewModel(songId, transpose, notation, get(), get(), get())
     }
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
+    viewModelOf(::PlanningViewModel)
+    viewModel { params -> AvailabilityViewModel(params.get<LocalDate>(), get(), get(), get()) }
+    viewModel { params -> ServiceDetailViewModel(params.get<LocalDate>(), get(), get(), get(), get()) }
     viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get(), get(), get()) }
 }
 

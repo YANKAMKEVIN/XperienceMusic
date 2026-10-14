@@ -151,6 +151,20 @@ object XmIcons {
         }
     }
 
+    /** A calendar page: the planning. */
+    val Calendar: ImageVector by lazy {
+        icon("Calendar") {
+            moveTo(6f, 5f); horizontalLineTo(18f)
+            arcToRelative(2f, 2f, 0f, false, true, 2f, 2f); verticalLineTo(18f)
+            arcToRelative(2f, 2f, 0f, false, true, -2f, 2f); horizontalLineTo(6f)
+            arcToRelative(2f, 2f, 0f, false, true, -2f, -2f); verticalLineTo(7f)
+            arcToRelative(2f, 2f, 0f, false, true, 2f, -2f); close()
+            moveTo(4f, 10f); horizontalLineTo(20f)
+            moveTo(8.5f, 3f); verticalLineTo(7f)
+            moveTo(15.5f, 3f); verticalLineTo(7f)
+        }
+    }
+
     private fun icon(name: String, block: PathBuilder.() -> Unit): ImageVector =
         ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).path(
             stroke = SolidColor(Color.Black),

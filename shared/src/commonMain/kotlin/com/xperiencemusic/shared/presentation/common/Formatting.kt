@@ -22,6 +22,20 @@ internal object Formatting {
         if (start.month == end.month) "${start.day} – ${end.day} ${months[end.month.ordinal]}"
         else "${start.day} ${months[start.month.ordinal]} – ${end.day} ${months[end.month.ordinal]}"
 
+    /** "dim." */
+    fun shortWeekday(date: LocalDate): String = "${days[date.dayOfWeek.ordinal].take(3)}."
+
+    /** "25 oct." */
+    fun dayAndMonth(date: LocalDate): String = "${date.day} ${months[date.month.ordinal]}"
+
+    /** "novembre 2026" */
+    fun monthAndYear(date: LocalDate): String = "${fullMonths[date.month.ordinal]} ${date.year}"
+
+    private val fullMonths = listOf(
+        "janvier", "février", "mars", "avril", "mai", "juin",
+        "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+    )
+
     /** "14 oct. 2026" */
     fun shortDate(date: LocalDate): String = "${date.day} ${months[date.month.ordinal]} ${date.year}"
 

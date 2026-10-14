@@ -78,6 +78,49 @@
     <string name="tab_week">Semaine</string>
     <string name="tab_library">Chants</string>
     <string name="tab_progress">Ma progression</string>
+    <string name="tab_planning">Planning</string>
+
+    <!-- Planning -->
+    <string name="planning_title">Planning</string>
+    <string name="planning_previous_month">Mois précédent</string>
+    <string name="planning_next_month">Mois suivant</string>
+    <string name="planning_open_title">Inscriptions ouvertes</string>
+    <string name="planning_open_text">Dis pour chaque vendredi et dimanche si tu sers.</string>
+    <string name="planning_open_text_by">Réponds avant le %1$s pour chaque vendredi et dimanche.</string>
+    <string name="planning_unanswered">%1$d sans réponse</string>
+    <string name="planning_my_answers">Mes dispos</string>
+    <string name="planning_validated">Planning validé</string>
+    <string name="planning_validated_text">Les équipes sont fixées. Un imprévu ? Préviens un responsable.</string>
+    <string name="planning_not_open_title">Pas encore d'inscriptions</string>
+    <string name="planning_not_open_member">Les responsables ouvriront ce mois quand il faudra donner tes disponibilités.</string>
+    <string name="planning_not_open_admin">Ouvre ce mois : chacun dira pour chaque vendredi et dimanche s'il sert.</string>
+    <string name="planning_open_action">Ouvrir les inscriptions</string>
+    <string name="planning_validate_action">Valider le mois</string>
+    <string name="planning_validate_hint">Les membres ne pourront plus changer leurs réponses.</string>
+    <string name="planning_friday">Vendredi</string>
+    <string name="planning_sunday">Dimanche</string>
+    <string name="planning_friday_hint">Sans setlist</string>
+    <string name="planning_you_serve">Tu sers</string>
+    <string name="planning_not_available">Pas dispo</string>
+    <string name="planning_to_answer">À répondre</string>
+    <string name="planning_nobody">Personne pour l'instant</string>
+    <string name="planning_missing">Manque : %1$s</string>
+    <string name="planning_complete">Équipe complète</string>
+    <string name="planning_count">%1$d inscrits</string>
+    <string name="availability_title">Mes dispos · %1$s</string>
+    <string name="availability_role">Tu es inscrit comme %1$s.</string>
+    <string name="availability_answer_by">Date limite : %1$s</string>
+    <string name="availability_serve">Je sers</string>
+    <string name="availability_unavailable">Pas dispo</string>
+    <string name="availability_locked">Le mois est validé : tes réponses ne peuvent plus changer.</string>
+    <string name="availability_saved_hint">Chaque réponse est enregistrée tout de suite.</string>
+    <string name="service_team">L'équipe</string>
+    <string name="service_setlist">Setlist</string>
+    <string name="service_setlist_none">Pas encore de setlist pour ce dimanche.</string>
+    <string name="service_friday_free">Le vendredi, pas de setlist : louange libre.</string>
+    <string name="service_roster">Ajuster l'équipe</string>
+    <string name="service_roster_hint">Coche qui sert ce jour-là, même après la validation.</string>
+    <string name="planning_this_week">Cette semaine tu sers : %1$s</string>
     <string name="action_back">Retour</string>
 
     <!-- Week -->

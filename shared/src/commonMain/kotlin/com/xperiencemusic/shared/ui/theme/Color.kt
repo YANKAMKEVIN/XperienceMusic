@@ -25,6 +25,9 @@ object BrandColors {
     val Indigo = Color(0xFF6D5BFF)
     val Blue = Color(0xFF3D7BFF)
 
+    /** Something missing, gently: a part nobody covers yet. */
+    val Amber = Color(0xFFF2B35B)
+
     val gradient: Brush get() = Brush.linearGradient(listOf(Purple, Indigo, Blue))
     val horizontalGradient: Brush get() = Brush.horizontalGradient(listOf(Purple, Indigo, Blue))
 }

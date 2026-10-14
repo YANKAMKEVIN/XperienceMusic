@@ -12,6 +12,17 @@ data object LibraryRoute
 data object ProgressRoute
 
 @Serializable
+data object PlanningRoute
+
+/** [monthStart] (ISO): the member's answers for that month. */
+@Serializable
+data class AvailabilityRoute(val monthStart: String)
+
+/** [date] (ISO): the team of that Friday or Sunday. */
+@Serializable
+data class ServiceRoute(val date: String)
+
+@Serializable
 data class SongRoute(val songId: String)
 
 /** [songId] null creates a new song. */
