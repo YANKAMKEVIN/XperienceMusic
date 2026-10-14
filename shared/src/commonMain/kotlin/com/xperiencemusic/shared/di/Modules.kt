@@ -108,9 +108,15 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
+import io.ktor.client.HttpClient
+import com.xperiencemusic.shared.data.remote.AccordsAppPageSource
+import com.xperiencemusic.shared.domain.repository.SongPageSource
+import com.xperiencemusic.shared.domain.usecase.ImportSongFromLinkUseCase
 
 /** Supabase when `local.properties` holds the project keys, otherwise an offline demo. */
 val dataModule = module {
+    single { HttpClient() }
+    single<SongPageSource> { AccordsAppPageSource(get()) }
     single<DateProvider> { SystemDateProvider() }
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     // Drives the platform players, which expect the main thread.
@@ -169,6 +175,7 @@ val domainModule = module {
     factoryOf(::SignOutUseCase)
     factoryOf(::RetrySessionUseCase)
     factoryOf(::SaveSongUseCase)
+    factoryOf(::ImportSongFromLinkUseCase)
     factoryOf(::DeleteSongUseCase)
     factoryOf(::RefreshContentUseCase)
     factoryOf(::ObserveSyncStatusUseCase)
@@ -208,7 +215,7 @@ val presentationModule = module {
         StageViewModel(songId, transpose, notation, get(), get(), get())
     }
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
-    viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get(), get()) }
+    viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get(), get(), get()) }
 }
 
 private var isKoinStarted = false

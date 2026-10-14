@@ -2,7 +2,10 @@ package com.xperiencemusic.shared.presentation.songeditor
 
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.shared.domain.model.Role
+import com.xperiencemusic.music.theory.Key
+import com.xperiencemusic.music.theory.Mode
 import com.xperiencemusic.shared.domain.usecase.DeleteSongUseCase
+import com.xperiencemusic.shared.domain.usecase.ImportSongFromLinkUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
@@ -35,8 +38,49 @@ class SongEditorViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel(songId: String?) =
-        SongEditorViewModel(songId, ObserveSongUseCase(songs), SaveSongUseCase(sessions, songs), DeleteSongUseCase(sessions, songs))
+    private var page: String? = null
+
+    private fun viewModel(songId: String?) = SongEditorViewModel(
+        songId,
+        ObserveSongUseCase(songs),
+        SaveSongUseCase(sessions, songs),
+        DeleteSongUseCase(sessions, songs),
+        ImportSongFromLinkUseCase { page },
+    )
+
+    @Test
+    fun `importer un lien remplit le nouveau chant`() = runTest {
+        page = "{t: Chant d'essai}\n{st: Auteur}\n{key: Em}\n{c: © Éditeur}\n{c: Refrain}\n[Em]Gloire"
+        val vm = viewModel(null)
+        vm.onEvent(SongEditorEvent.ImportLinkChanged("accords.app/JEM999"))
+        vm.onEvent(SongEditorEvent.ImportClicked)
+        val state = vm.state.value
+        assertEquals("Chant d'essai", state.title)
+        assertEquals("Auteur", state.artist)
+        assertEquals(Key(4, Mode.MINOR), state.key)
+        assertEquals("# Refrain\n[Em]Gloire\n# Source\n© Éditeur\naccords.app/JEM999", state.chart)
+        assertEquals("", state.importLink)
+        assertTrue(state.unknownChords.isEmpty())
+    }
+
+    @Test
+    fun `un lien vers un autre site est refusé sans rien lire`() = runTest {
+        page = "{t: Ne doit pas être lu}"
+        val vm = viewModel(null)
+        vm.onEvent(SongEditorEvent.ImportLinkChanged("https://exemple.com/JEM414"))
+        vm.onEvent(SongEditorEvent.ImportClicked)
+        assertEquals(SongImportError.NOT_A_SONG_LINK, vm.state.value.importError)
+        assertEquals("", vm.state.value.title)
+    }
+
+    @Test
+    fun `une page sans chant le dit`() = runTest {
+        page = null
+        val vm = viewModel(null)
+        vm.onEvent(SongEditorEvent.ImportLinkChanged("accords.app/JEM0"))
+        vm.onEvent(SongEditorEvent.ImportClicked)
+        assertEquals(SongImportError.NOT_FOUND, vm.state.value.importError)
+    }
 
     @Test
     fun `modifier charge le chant et son aperçu en solfège`() = runTest {

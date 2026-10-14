@@ -9,6 +9,7 @@ import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.SongDraft
 import com.xperiencemusic.shared.domain.usecase.DeleteSongUseCase
+import com.xperiencemusic.shared.domain.usecase.ImportSongFromLinkUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ class SongEditorViewModel(
     observeSong: ObserveSongUseCase,
     private val saveSong: SaveSongUseCase,
     private val deleteSong: DeleteSongUseCase,
+    private val importSong: ImportSongFromLinkUseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SongEditorUiState(isLoading = songId != null, isNew = songId == null))
     val state: StateFlow<SongEditorUiState> = _state.asStateFlow()
@@ -48,10 +50,28 @@ class SongEditorViewModel(
             is SongEditorEvent.TonicSelected -> _state.update { it.withKey(it.key.copy(tonic = event.tonic)) }
             is SongEditorEvent.ModeSelected -> _state.update { it.withKey(it.key.copy(mode = event.mode)) }
             is SongEditorEvent.ChartChanged -> _state.update { it.withChart(event.chart) }
+            is SongEditorEvent.ImportLinkChanged -> _state.update { it.copy(importLink = event.link, importError = null) }
+            SongEditorEvent.ImportClicked -> import()
             SongEditorEvent.SaveClicked -> save()
             SongEditorEvent.DeleteClicked -> _state.update { it.copy(isConfirmingDeletion = true) }
             SongEditorEvent.DeleteDismissed -> _state.update { it.copy(isConfirmingDeletion = false) }
             SongEditorEvent.DeleteConfirmed -> delete()
+        }
+    }
+
+    private fun import() {
+        val current = _state.value
+        if (!current.canImport) return
+        _state.update { it.copy(isImporting = true, importError = null) }
+        viewModelScope.launch {
+            when (val result = importSong(current.importLink)) {
+                is DomainResult.Success -> _state.update {
+                    val song = result.value
+                    it.copy(isImporting = false, importLink = "", title = song.title, artist = song.artist.orEmpty(), key = song.key ?: it.key)
+                        .withChart(song.chart)
+                }
+                is DomainResult.Failure -> _state.update { it.copy(isImporting = false, importError = result.error.toImportError()) }
+            }
         }
     }
 
@@ -91,6 +111,12 @@ private fun SongEditorUiState.withChart(chart: String): SongEditorUiState = copy
     preview = ChordChart.render(chart, key, Notation.SOLFEGE),
     unknownChords = ChordChart.unknownChords(chart, key).distinct(),
 )
+
+private fun DomainError.toImportError() = when (this) {
+    DomainError.INVALID_INPUT -> SongImportError.NOT_A_SONG_LINK
+    DomainError.NOT_FOUND -> SongImportError.NOT_FOUND
+    else -> SongImportError.NETWORK
+}
 
 private fun DomainError.toEditorError() = when (this) {
     DomainError.FORBIDDEN, DomainError.NOT_SIGNED_IN -> SongEditorError.FORBIDDEN

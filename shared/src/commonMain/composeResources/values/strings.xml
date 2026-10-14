@@ -150,6 +150,13 @@
     <string name="editor_edit_title">Modifier le chant</string>
     <string name="editor_save">Enregistrer</string>
     <string name="editor_title_label">Titre</string>
+    <string name="editor_import_title">Importer depuis accords.app</string>
+    <string name="editor_import_help">Colle le lien d'un chant (par exemple accords.app/JEM414) : titre, auteur, tonalité, paroles et accords se remplissent, avec la source en bas du chant. Vérifie puis enregistre.</string>
+    <string name="editor_import_link">Lien du chant</string>
+    <string name="editor_import_button">Importer</string>
+    <string name="editor_import_not_a_link">Ce n'est pas le lien d'un chant sur accords.app.</string>
+    <string name="editor_import_not_found">Aucun chant trouvé à cette adresse.</string>
+    <string name="editor_import_network">Impossible de joindre accords.app. Vérifie ta connexion.</string>
     <string name="editor_artist_label">Auteur / compositeur (facultatif)</string>
     <string name="editor_key_title">Tonalité</string>
     <string name="editor_major">Majeur</string>

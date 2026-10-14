@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.ui.songeditor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +24,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.music.chart.ChordChart
@@ -33,6 +38,7 @@ import com.xperiencemusic.shared.presentation.songeditor.SongEditorError
 import com.xperiencemusic.shared.presentation.songeditor.SongEditorEvent
 import com.xperiencemusic.shared.presentation.songeditor.SongEditorUiState
 import com.xperiencemusic.shared.presentation.songeditor.SongEditorViewModel
+import com.xperiencemusic.shared.presentation.songeditor.SongImportError
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.editor_artist_label
 import com.xperiencemusic.shared.resources.editor_chart_help
@@ -43,6 +49,13 @@ import com.xperiencemusic.shared.resources.editor_delete_text
 import com.xperiencemusic.shared.resources.editor_delete_title
 import com.xperiencemusic.shared.resources.editor_edit_title
 import com.xperiencemusic.shared.resources.editor_error_title
+import com.xperiencemusic.shared.resources.editor_import_button
+import com.xperiencemusic.shared.resources.editor_import_help
+import com.xperiencemusic.shared.resources.editor_import_link
+import com.xperiencemusic.shared.resources.editor_import_network
+import com.xperiencemusic.shared.resources.editor_import_not_a_link
+import com.xperiencemusic.shared.resources.editor_import_not_found
+import com.xperiencemusic.shared.resources.editor_import_title
 import com.xperiencemusic.shared.resources.editor_key_title
 import com.xperiencemusic.shared.resources.editor_new_title
 import com.xperiencemusic.shared.resources.editor_preview_title
@@ -53,6 +66,7 @@ import com.xperiencemusic.shared.resources.error_forbidden
 import com.xperiencemusic.shared.resources.error_generic
 import com.xperiencemusic.shared.resources.song_delete_confirm_cancel
 import com.xperiencemusic.shared.resources.song_delete_confirm_ok
+import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.EditorTopBar
 import com.xperiencemusic.shared.ui.components.KeyPicker
@@ -122,6 +136,7 @@ fun SongEditorScreenContent(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
+            if (state.isNew) ImportFromLink(state, onEvent)
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { onEvent(SongEditorEvent.TitleChanged(it)) },
@@ -201,6 +216,55 @@ fun SongEditorScreenContent(
                 }
             },
         )
+    }
+}
+
+/** Fills the new song from one accords.app page. */
+@Composable
+private fun ImportFromLink(state: SongEditorUiState, onEvent: (SongEditorEvent) -> Unit) {
+    AppCard {
+        SectionTitle(stringResource(Res.string.editor_import_title))
+        Text(
+            stringResource(Res.string.editor_import_help),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = Spacing.xs),
+        )
+        OutlinedTextField(
+            value = state.importLink,
+            onValueChange = { onEvent(SongEditorEvent.ImportLinkChanged(it)) },
+            label = { Text(stringResource(Res.string.editor_import_link)) },
+            singleLine = true,
+            enabled = !state.isImporting,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
+            keyboardActions = KeyboardActions(onGo = { onEvent(SongEditorEvent.ImportClicked) }),
+            modifier = Modifier.fillMaxWidth().padding(top = Spacing.s),
+        )
+        state.importError?.let { error ->
+            Text(
+                stringResource(
+                    when (error) {
+                        SongImportError.NOT_A_SONG_LINK -> Res.string.editor_import_not_a_link
+                        SongImportError.NOT_FOUND -> Res.string.editor_import_not_found
+                        SongImportError.NETWORK -> Res.string.editor_import_network
+                    },
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = Spacing.xs),
+            )
+        }
+        GradientButton(
+            onClick = { onEvent(SongEditorEvent.ImportClicked) },
+            enabled = state.canImport,
+            modifier = Modifier.fillMaxWidth().padding(top = Spacing.s),
+        ) {
+            if (state.isImporting) {
+                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                Text(stringResource(Res.string.editor_import_button), style = MaterialTheme.typography.titleMedium)
+            }
+        }
     }
 }
 
