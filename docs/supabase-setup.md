@@ -36,9 +36,10 @@ Toujours dans le SQL Editor, avec **ton** adresse e-mail :
 insert into public.invitations (email, role) values ('ton.email@exemple.com', 'SUPER_ADMIN');
 ```
 
-Ensuite, c'est depuis cette table que tu invites les autres membres (`MEMBER` par défaut,
-`CONTENT_ADMIN` pour la personne qui gère les chants). Un écran d'administration dans l'app
-viendra plus tard.
+C'est la seule invitation à faire en SQL. Ensuite, tout se passe dans l'app :
+**Ma progression → Gérer les membres** (Admin++ seulement). Tu y invites les autres par leur
+adresse e-mail, tu changes leur rôle (Membre par défaut, Admin contenu pour la personne qui gère
+les chants), tu annules une invitation en attente ou tu retires quelqu'un du groupe.
 
 ## 4. Configurer la connexion par code e-mail
 
