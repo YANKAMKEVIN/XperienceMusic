@@ -39,6 +39,9 @@ import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
 import com.xperiencemusic.shared.ui.voice.VoiceRecordScreen
 import com.xperiencemusic.shared.ui.planning.AvailabilityScreen
+import com.xperiencemusic.shared.presentation.reminders.RemindersViewModel
+import com.xperiencemusic.shared.ui.platform.AskNotificationPermission
+import org.koin.compose.viewmodel.koinViewModel
 import com.xperiencemusic.shared.ui.planning.PlanningScreen
 import com.xperiencemusic.shared.ui.planning.ServiceDetailScreen
 import com.xperiencemusic.shared.resources.tab_planning
@@ -61,6 +64,9 @@ private val tabs = listOf(
 @Composable
 fun MainScaffold(onSignOut: () -> Unit) {
     val navController = rememberNavController()
+    // Keeps the phone's planning reminders in step for as long as someone is signed in.
+    koinViewModel<RemindersViewModel>()
+    AskNotificationPermission()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
     val isOnTab = tabs.any { tab -> destination?.hasRoute(tab.routeClass) == true }

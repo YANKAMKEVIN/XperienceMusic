@@ -108,6 +108,12 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
+import com.xperiencemusic.shared.data.local.FileAnnouncedMonthsStore
+import com.xperiencemusic.shared.domain.repository.AnnouncedMonthsStore
+import com.xperiencemusic.shared.presentation.reminders.RemindersViewModel
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import com.xperiencemusic.shared.presentation.planning.AvailabilityViewModel
 import com.xperiencemusic.shared.presentation.planning.PlanningViewModel
@@ -135,7 +141,8 @@ val dataModule = module {
     // Drives the platform players, which expect the main thread.
     single { PlaybackController(get(), get(), CoroutineScope(SupervisorJob() + Dispatchers.Main)) }
     single { SnapshotStore(get()) }
-    single<LocalDataStore> { DeviceDataStore(get(), get(), get()) }
+    single<LocalDataStore> { DeviceDataStore(get(), get(), get(), get()) }
+    single<AnnouncedMonthsStore> { FileAnnouncedMonthsStore(get()) }
     if (SupabaseConfig.isConfigured) {
         single { AppEnvironment(isDemo = false, demoCode = null) }
         single { createXperienceSupabaseClient() }
@@ -239,6 +246,11 @@ val presentationModule = module {
     }
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
     viewModelOf(::PlanningViewModel)
+    viewModel {
+        RemindersViewModel(get(), get(), get(), get()) {
+            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        }
+    }
     viewModel { params -> AvailabilityViewModel(params.get<LocalDate>(), get(), get(), get()) }
     viewModel { params -> ServiceDetailViewModel(params.get<LocalDate>(), get(), get(), get(), get()) }
     viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get(), get(), get()) }
