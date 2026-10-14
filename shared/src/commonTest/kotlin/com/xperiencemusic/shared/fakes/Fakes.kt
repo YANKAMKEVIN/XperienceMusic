@@ -72,7 +72,8 @@ fun song(
     artist: String? = null,
     recordings: List<Recording> = emptyList(),
     chart: String = "[1]Gloire",
-) = Song(id, title, artist, Key(0), chart, recordings, emptyList(), emptyList())
+    key: Key = Key(0),
+) = Song(id, title, artist, key, chart, recordings, emptyList(), emptyList())
 
 fun songRepository(vararg songs: Song) = InMemorySongRepository(songs.toList())
 

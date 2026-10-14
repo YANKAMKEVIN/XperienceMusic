@@ -49,7 +49,6 @@ Tout est enregistré dans git. Dernier commit : `b7b93d3` (envoi de voix et éco
    - Passer l'envoi des mails de Gmail à **Brevo** (ou Resend) avant d'inviter le groupe.
    - Notifications quand une setlist est publiée (Firebase).
    - Test sur un vrai iPhone.
-   - Filtre par tonalité dans « Chants ».
 
 ## Règles à respecter
 

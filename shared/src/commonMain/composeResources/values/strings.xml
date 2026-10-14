@@ -111,6 +111,7 @@
     <string name="library_title">Chants</string>
     <string name="library_search">Rechercher un chant ou un auteur</string>
     <string name="library_empty">Aucun chant ne correspond à ta recherche.</string>
+    <string name="library_all_keys">Toutes</string>
     <string name="library_empty_title">La bibliothèque est vide</string>
     <string name="library_empty_admin">Ajoute les chants du groupe : paroles, accords et enregistrements de référence.</string>
     <string name="library_empty_member">Les chants ajoutés par les responsables apparaîtront ici.</string>

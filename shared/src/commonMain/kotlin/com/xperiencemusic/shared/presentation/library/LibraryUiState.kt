@@ -2,6 +2,10 @@ package com.xperiencemusic.shared.presentation.library
 
 data class LibraryUiState(
     val query: String = "",
+    /** The keys of the catalogue, as pills ("Ré", "Lam"), when there are at least two. */
+    val keys: List<String> = emptyList(),
+    /** The key the list is narrowed to; null shows every key. */
+    val selectedKey: String? = null,
     val isLoading: Boolean = true,
     val songs: List<LibrarySongUi> = emptyList(),
     val canAddSong: Boolean = false,
@@ -20,5 +24,6 @@ data class LibrarySongUi(
 
 sealed interface LibraryEvent {
     data class QueryChanged(val query: String) : LibraryEvent
+    data class KeySelected(val key: String?) : LibraryEvent
     data object RefreshPulled : LibraryEvent
 }

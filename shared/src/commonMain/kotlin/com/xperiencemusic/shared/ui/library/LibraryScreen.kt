@@ -48,6 +48,7 @@ import com.xperiencemusic.shared.presentation.library.LibraryUiState
 import com.xperiencemusic.shared.presentation.library.LibraryViewModel
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.action_add_song
+import com.xperiencemusic.shared.resources.library_all_keys
 import com.xperiencemusic.shared.resources.library_empty
 import com.xperiencemusic.shared.resources.library_empty_admin
 import com.xperiencemusic.shared.resources.library_empty_member
@@ -56,6 +57,7 @@ import com.xperiencemusic.shared.resources.library_search
 import com.xperiencemusic.shared.resources.library_title
 import com.xperiencemusic.shared.resources.library_versions
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.ChoiceChips
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -124,9 +126,20 @@ private fun LibraryList(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        if (state.keys.isNotEmpty()) {
+            item {
+                val allKeys = stringResource(Res.string.library_all_keys)
+                ChoiceChips(
+                    options = listOf(null) + state.keys,
+                    selected = state.selectedKey,
+                    label = { it ?: allKeys },
+                    onSelect = { onEvent(LibraryEvent.KeySelected(it)) },
+                )
+            }
+        }
         if (!state.isLoading && state.songs.isEmpty()) {
             item {
-                if (state.query.isBlank()) {
+                if (state.query.isBlank() && state.selectedKey == null) {
                     EmptyState(
                         icon = XmIcons.Book,
                         title = stringResource(Res.string.library_empty_title),
@@ -212,6 +225,7 @@ private fun LibraryScreenPreview() {
                     LibrarySongUi("1", "À toi la gloire", "E. Budry", "Ré", 2, 3),
                     LibrarySongUi("2", "Amazing Grace", "John Newton", "Sol", 1, 3),
                 ),
+                keys = listOf("Ré", "Sol", "Lam"),
                 canAddSong = true,
             ),
             onEvent = {},

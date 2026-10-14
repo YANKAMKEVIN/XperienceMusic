@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.domain.usecase
 
+import com.xperiencemusic.music.theory.Key
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Instrument
@@ -130,6 +131,19 @@ class SetlistAndSearchTest {
         assertEquals(listOf("3", "2", "1"), search("").first().map { it.id })
         assertEquals(listOf("1"), search("esprit").first().map { it.id })
         assertEquals(listOf("2"), search("NEWTON").first().map { it.id })
+    }
+
+    @Test
+    fun `la recherche peut se limiter à une tonalité`() = runTest {
+        val songs = songRepository(
+            song("1", "Amazing Grace", key = Key(7)),
+            song("2", "À toi la gloire", key = Key(2)),
+            song("3", "Agnus Dei", key = Key(7)),
+        )
+        val search = SearchSongsUseCase(songs)
+        assertEquals(listOf("3", "1"), search("", Key(7)).first().map { it.id })
+        assertEquals(listOf("1"), search("grace", Key(7)).first().map { it.id })
+        assertTrue(search("grace", Key(2)).first().isEmpty())
     }
 
     @Test
