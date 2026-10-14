@@ -29,6 +29,9 @@ class KeyTest {
         assertTrue(Key(5).usesFlats) // Fa
         assertTrue(Key(2, Mode.MINOR).usesFlats) // Ré mineur, relatif de Fa
         assertFalse(Key(7).usesFlats) // Sol
+        assertTrue(Key(3, Mode.MINOR).usesFlats) // Mib mineur, plutôt que Ré# mineur
+        assertFalse(Key(1, Mode.MINOR).usesFlats) // Do# mineur
+        assertFalse(Key(8, Mode.MINOR).usesFlats) // Sol# mineur
     }
 
     @Test

@@ -14,9 +14,13 @@ data class Key(val tonic: Int, val mode: Mode = Mode.MAJOR) {
         require(tonic in 0 until SEMITONES_PER_OCTAVE) { "tonic must be a pitch class in 0..11, was $tonic" }
     }
 
-    /** Flat keys (F, Bb, Eb, Ab, Db and their relative minors) spell accidentals with flats. */
+    /**
+     * Flat keys (F, Bb, Eb, Ab, Db and their relative minors) spell accidentals with flats, and so
+     * does Eb minor, which charts write far more often than D# minor.
+     */
     val usesFlats: Boolean
         get() {
+            if (mode == Mode.MINOR && tonic == E_FLAT) return true
             val relativeMajor = if (mode == Mode.MAJOR) tonic else (tonic + 3).mod(SEMITONES_PER_OCTAVE)
             return relativeMajor in FLAT_MAJOR_TONICS
         }
@@ -61,6 +65,7 @@ data class Key(val tonic: Int, val mode: Mode = Mode.MAJOR) {
     companion object {
         private val FLAT_MAJOR_TONICS = setOf(1, 3, 5, 8, 10)
         private const val TRITONE = 6
+        private const val E_FLAT = 3
 
         /** Parses "Do", "Sol#", "Bb", "Am", "Ré mineur"… Returns null when the text is not a key. */
         fun parse(text: String): Key? {
