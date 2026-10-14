@@ -58,6 +58,7 @@ import com.xperiencemusic.shared.resources.editor_import_not_found
 import com.xperiencemusic.shared.resources.editor_import_title
 import com.xperiencemusic.shared.resources.editor_key_title
 import com.xperiencemusic.shared.resources.editor_new_title
+import com.xperiencemusic.shared.resources.editor_place_chords
 import com.xperiencemusic.shared.resources.editor_preview_title
 import com.xperiencemusic.shared.resources.editor_save
 import com.xperiencemusic.shared.resources.editor_title_label
@@ -175,6 +176,11 @@ fun SongEditorScreenContent(
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (state.hasChordsAbove) {
+                TextButton(onClick = { onEvent(SongEditorEvent.PlaceChordsClicked) }) {
+                    Text(stringResource(Res.string.editor_place_chords))
+                }
+            }
             if (state.unknownChords.isNotEmpty()) {
                 Text(
                     stringResource(Res.string.editor_unknown_chords, state.unknownChords.joinToString(", ")),

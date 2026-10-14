@@ -64,6 +64,29 @@ class SongEditorViewModelTest {
     }
 
     @Test
+    fun `coller un chant avec les accords au-dessus les place dans les paroles`() = runTest {
+        val vm = viewModel(null)
+        vm.onEvent(SongEditorEvent.ChartChanged("Refrain\nDo          Sol\nTu es saint, Seigneur"))
+        assertEquals("# Refrain\n[Do]Tu es saint,[Sol] Seigneur", vm.state.value.chart)
+        assertFalse(vm.state.value.hasChordsAbove)
+    }
+
+    @Test
+    fun `des accords tapés au-dessus à la main se placent sur demande`() = runTest {
+        val vm = viewModel(null)
+        vm.onEvent(SongEditorEvent.ChartChanged("D"))
+        vm.onEvent(SongEditorEvent.ChartChanged("Do"))
+        vm.onEvent(SongEditorEvent.ChartChanged("Do\n"))
+        vm.onEvent(SongEditorEvent.ChartChanged("Do\nA"))
+        vm.onEvent(SongEditorEvent.ChartChanged("Do\nAm"))
+        vm.onEvent(SongEditorEvent.ChartChanged("Do\nAmen"))
+        assertEquals("Do\nAmen", vm.state.value.chart)
+        assertTrue(vm.state.value.hasChordsAbove)
+        vm.onEvent(SongEditorEvent.PlaceChordsClicked)
+        assertEquals("[Do]Amen", vm.state.value.chart)
+    }
+
+    @Test
     fun `un lien vers un autre site est refusé sans rien lire`() = runTest {
         page = "{t: Ne doit pas être lu}"
         val vm = viewModel(null)

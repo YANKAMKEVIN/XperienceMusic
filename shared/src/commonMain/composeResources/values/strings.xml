@@ -162,7 +162,8 @@
     <string name="editor_major">Majeur</string>
     <string name="editor_minor">Mineur</string>
     <string name="editor_chart_title">Paroles et accords</string>
-    <string name="editor_chart_help">Mets chaque accord entre crochets juste avant la syllabe : [1]Tu es [5]saint. Chiffres (1, 4, 6m, b7), Do-Ré-Mi ou C-D-E, comme tu veux. Une ligne qui commence par # est un titre de section (# Refrain).</string>
+    <string name="editor_chart_help">Colle le chant avec les accords sur la ligne du dessus : ils se placent tout seuls dans les paroles. Tu peux aussi les écrire entre crochets avant la syllabe : [Do]Tu es [Sol]saint. Chiffres (1, 4, 6m, b7), Do-Ré-Mi ou C-D-E, comme tu veux. Une ligne qui commence par # est un titre de section (# Refrain).</string>
+    <string name="editor_place_chords">Placer les accords dans les paroles</string>
     <string name="editor_chart_label">Texte du chant</string>
     <string name="editor_preview_title">Aperçu</string>
     <string name="editor_unknown_chords">Accords non reconnus : %1$s</string>

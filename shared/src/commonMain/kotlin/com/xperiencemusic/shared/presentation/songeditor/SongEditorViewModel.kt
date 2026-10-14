@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.presentation.songeditor
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.music.chart.ChordChart
+import com.xperiencemusic.music.chart.ChordsOverLyrics
 import com.xperiencemusic.music.theory.Key
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.DomainError
@@ -49,7 +50,11 @@ class SongEditorViewModel(
             is SongEditorEvent.ArtistChanged -> _state.update { it.copy(artist = event.artist) }
             is SongEditorEvent.TonicSelected -> _state.update { it.withKey(it.key.copy(tonic = event.tonic)) }
             is SongEditorEvent.ModeSelected -> _state.update { it.withKey(it.key.copy(mode = event.mode)) }
-            is SongEditorEvent.ChartChanged -> _state.update { it.withChart(event.chart) }
+            is SongEditorEvent.ChartChanged -> _state.update {
+                val pasted = event.chart.length - it.chart.length > 1 && event.chart.count { c -> c == '\n' } > it.chart.count { c -> c == '\n' }
+                it.withChart(if (pasted) event.chart.withChordsPlaced(it.key) else event.chart)
+            }
+            SongEditorEvent.PlaceChordsClicked -> _state.update { it.withChart(it.chart.withChordsPlaced(it.key)) }
             is SongEditorEvent.ImportLinkChanged -> _state.update { it.copy(importLink = event.link, importError = null) }
             SongEditorEvent.ImportClicked -> import()
             SongEditorEvent.SaveClicked -> save()
@@ -110,7 +115,12 @@ private fun SongEditorUiState.withChart(chart: String): SongEditorUiState = copy
     chart = chart,
     preview = ChordChart.render(chart, key, Notation.SOLFEGE),
     unknownChords = ChordChart.unknownChords(chart, key).distinct(),
+    hasChordsAbove = ChordsOverLyrics.applies(chart, key),
 )
+
+/** A pasted song usually has its chords above the lyrics: they go into the lyrics straight away. */
+private fun String.withChordsPlaced(key: Key): String =
+    if (ChordsOverLyrics.applies(this, key)) ChordsOverLyrics.toInline(this, key) else this
 
 private fun DomainError.toImportError() = when (this) {
     DomainError.INVALID_INPUT -> SongImportError.NOT_A_SONG_LINK

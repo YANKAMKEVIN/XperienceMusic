@@ -15,6 +15,8 @@ data class SongEditorUiState(
     val preview: List<ChartLine> = emptyList(),
     /** Bracketed tokens that are not chords, likely typos. */
     val unknownChords: List<String> = emptyList(),
+    /** The chart still has chords on their own line above the lyrics. */
+    val hasChordsAbove: Boolean = false,
     /** A link to one accords.app song, to fill a new song from it. */
     val importLink: String = "",
     val isImporting: Boolean = false,
@@ -42,6 +44,7 @@ sealed interface SongEditorEvent {
     data class ChartChanged(val chart: String) : SongEditorEvent
     data class ImportLinkChanged(val link: String) : SongEditorEvent
     data object ImportClicked : SongEditorEvent
+    data object PlaceChordsClicked : SongEditorEvent
     data object SaveClicked : SongEditorEvent
     data object DeleteClicked : SongEditorEvent
     data object DeleteConfirmed : SongEditorEvent
