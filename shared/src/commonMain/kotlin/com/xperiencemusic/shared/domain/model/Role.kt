@@ -5,10 +5,11 @@ enum class Role(val permissions: Set<Permission>) {
     /** Reads everything, practises, submits training recordings. */
     MEMBER(emptySet()),
 
-    /** Manages the shared content: setlists, lyrics, chords, recordings. */
+    /** Manages the shared content: setlists, lyrics, chords, recordings, and who serves when. */
     CONTENT_ADMIN(
         setOf(
             Permission.PUBLISH_SETLIST,
+            Permission.PLAN_SERVICES,
             Permission.EDIT_SONG,
             Permission.MANAGE_RECORDINGS,
         ),
@@ -28,6 +29,7 @@ enum class Role(val permissions: Set<Permission>) {
 
 enum class Permission {
     PUBLISH_SETLIST,
+    PLAN_SERVICES,
     EDIT_SONG,
     MANAGE_RECORDINGS,
     REVIEW_TRAINING,

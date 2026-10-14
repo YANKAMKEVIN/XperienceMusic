@@ -163,6 +163,56 @@ do $$ begin
     assert (select status from public.voice_submissions) = 'TO_REWORK';
 end $$;
 
+-- Planning: members answer for themselves while a month is open; admins open, adjust and validate.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    begin
+        insert into public.service_months (month) values ('2026-11-01');
+        assert false, 'members cannot open a month';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+        insert into public.service_signups (service_date, serves) values ('2026-11-01', true);
+        assert false, 'no answers before the month is open';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+insert into public.service_months (month, answer_by) values ('2026-11-01', '2026-10-25');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    insert into public.service_signups (service_date, serves) values ('2026-11-01', true), ('2026-11-06', false);
+    update public.service_signups set serves = true where service_date = '2026-11-06';
+    begin
+        insert into public.service_signups (service_date, serves) values ('2026-11-03', true);
+        assert false, 'only Fridays and Sundays are services';
+    exception when check_violation then null;
+    end;
+    begin
+        insert into public.service_signups (service_date, member_id, serves)
+        values ('2026-11-08', '00000000-0000-0000-0000-00000000000a', true);
+        assert false, 'members answer only for themselves';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$ begin
+    insert into public.service_signups (service_date, member_id, serves)
+    values ('2026-11-08', '00000000-0000-0000-0000-00000000000a', true);
+    update public.service_months set validated_at = now() where month = '2026-11-01';
+end $$;
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    assert (select count(*) from public.service_signups) = 3, 'everyone sees the planning';
+    update public.service_signups set serves = false where member_id = auth.uid();
+    assert (select count(*) from public.service_signups where member_id = auth.uid() and serves) = 2,
+        'a validated month is frozen for members';
+end $$;
+
 -- The super admin invites and changes roles.
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 do $$ begin

@@ -108,6 +108,15 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
+import com.xperiencemusic.shared.data.repository.InMemoryPlanningRepository
+import com.xperiencemusic.shared.data.repository.SupabasePlanningRepository
+import com.xperiencemusic.shared.data.seed.SamplePlanning
+import com.xperiencemusic.shared.domain.repository.PlanningRepository
+import com.xperiencemusic.shared.domain.usecase.AdjustServiceUseCase
+import com.xperiencemusic.shared.domain.usecase.AnswerServiceUseCase
+import com.xperiencemusic.shared.domain.usecase.ObservePlanningUseCase
+import com.xperiencemusic.shared.domain.usecase.OpenPlanningMonthUseCase
+import com.xperiencemusic.shared.domain.usecase.ValidatePlanningMonthUseCase
 import io.ktor.client.HttpClient
 import com.xperiencemusic.shared.data.remote.AccordsAppPageSource
 import com.xperiencemusic.shared.domain.repository.SongPageSource
@@ -135,9 +144,14 @@ val dataModule = module {
         single<MembersRepository> { SupabaseMembersRepository(get()) }
         single<AudioUrlProvider> { OfflineFirstAudioUrlProvider(get(), SupabaseAudioUrlProvider(get())) }
         single<VoiceSubmissionRepository> { SupabaseVoiceSubmissionRepository(get()) }
+        single<PlanningRepository> { SupabasePlanningRepository(get()) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
         single<SessionRepository> { InMemorySessionRepository() }
+        single<PlanningRepository> {
+            val today = get<DateProvider>().today()
+            InMemoryPlanningRepository(SamplePlanning.months(today), SamplePlanning.signups(today))
+        }
         single<SongRepository> { InMemorySongRepository(SampleSongs.all(get<DateProvider>().today())) }
         single<SetlistRepository> { InMemorySetlistRepository(SampleSetlist.around(get<DateProvider>().today())) }
         single<ExerciseRepository> { InMemoryExerciseRepository(SingerExercises.all) }
@@ -176,6 +190,11 @@ val domainModule = module {
     factoryOf(::RetrySessionUseCase)
     factoryOf(::SaveSongUseCase)
     factoryOf(::ImportSongFromLinkUseCase)
+    factoryOf(::ObservePlanningUseCase)
+    factoryOf(::AnswerServiceUseCase)
+    factoryOf(::AdjustServiceUseCase)
+    factoryOf(::OpenPlanningMonthUseCase)
+    factoryOf(::ValidatePlanningMonthUseCase)
     factoryOf(::DeleteSongUseCase)
     factoryOf(::RefreshContentUseCase)
     factoryOf(::ObserveSyncStatusUseCase)
