@@ -10,7 +10,7 @@ de louange de mon église. Réponds-moi toujours en français. Lis d'abord `READ
 
 ## Où on en est
 
-Tout est enregistré dans git. Dernier commit : `b7b93d3` (envoi de voix et écoute par l'Admin++).
+Tout est enregistré dans git (voir `git log` pour le dernier commit).
 
 - **Direction artistique validée.** Fond nuit #0B0A14, dégradé violet → bleu (#B46CFF → #6D5BFF → #3D7BFF),
   monogramme XM, vagues lumineuses (`ui/brand/`). Les maquettes de Codex sont dans `design/codex/`.
@@ -32,23 +32,43 @@ Tout est enregistré dans git. Dernier commit : `b7b93d3` (envoi de voix et éco
   - **Ta voix sur le chant de la semaine** : le chantre s'enregistre avec sa piste dans les écouteurs et envoie
     l'enregistrement. L'Admin++ l'écoute dans « À écouter » et répond « Valider » ou « À retravailler »
     avec un commentaire.
+- **Chants.**
+  - Filtre par tonalité sous la recherche (« Toutes », puis chaque tonalité du catalogue), caché
+    tant que tous les chants sont dans la même tonalité.
+  - **Importer depuis accords.app** : dans l'éditeur d'un nouveau chant, on colle le lien d'un chant
+    (par exemple `accords.app/JEM414`). L'app lit cette seule page (le ChordPro intégré par Nuxt) et
+    remplit titre, auteur, tonalité, paroles et accords, avec une section « Source » (copyright et
+    lien) en bas. Seuls les liens vers un chant d'accords.app sont acceptés.
+  - **Décision :** on ne récupère pas tout le catalogue d'accords.app. Le site ne donne aucune
+    licence de réutilisation et les chants (JEM, traductions comprises) sont sous droits. Chaque
+    import est un chant choisi par un admin, source gardée. Un import complet seulement si Rephi
+    donne son accord.
+  - **Accords au-dessus des paroles** : un chant collé avec les accords sur la ligne du dessus (Word,
+    PDF, WhatsApp) est converti tout seul ; tapé à la main, un bouton « Placer les accords dans les
+    paroles » apparaît. Les titres « Refrain : », « Couplet 2 »… deviennent des sections.
 - **Vidéo TikTok de présentation** (30 s, avec la musique du groupe) dans `video/`. Rendu : `npm run render`.
 
 ## Reste à faire
 
 1. ~~**Moi (Supabase, SQL Editor).** Lancer les migrations `practice_days` et `voice_submissions`.~~ Fait le 13 octobre 2026.
-2. **Toi.** Vérifier en démo les écrans « Ma voix » et « À écouter » sur le simulateur **iPhone 16 Pro**
-   (`5450413B-6EA8-4EE1-A74C-EFFE36AAF118`), compilé dans `iosApp/build/dd16`.
-   - N'utilise pas l'iPhone 17 Pro : une autre session y lance une app vélo.
+2. ~~**Toi.** Vérifier en démo « Ma voix » et « À écouter ».~~ Fait le 13 octobre 2026.
+   Pour les essais sur simulateur :
+   - **iPhone 16 Pro Max** (`E0520F3C-45E5-4AAC-99F8-14D1A11A9293`), compilé dans `iosApp/build/dd16`.
+     L'iPhone 16 Pro sert à une autre app (MEMOVERSE) et l'iPhone 17 Pro à une app vélo : n'y touche pas.
+   - Connexion démo directe : `xcrun simctl openurl <udid> "xperiencemusic://connexion?email=toi%40demo.local&code=123456"`.
+   - Le clavier AZERTY déforme la frappe (chiffres, @, /) : mets le texte avec `xcrun simctl pbcopy`,
+     tape une lettre pour faire apparaître le menu, puis appui long → Paste.
    - Fais une capture avant chaque série de touches.
    - Le micro plante sur simulateur : teste-le sur mon S24.
-3. **Installation sur mon S24** (Galaxy S24, débogage sans fil ; je l'active quand tu le demandes).
+3. **Installation sur mon S24** — à tester : micro (« Ma voix »), import accords.app, collage d'un chant avec les accords au-dessus (Galaxy S24, débogage sans fil ; je l'active quand tu le demandes).
    Tu as le droit d'installer sur le S24, mais **pas** sur le S21+ (`RFCR40827ZZ`).
    Commande : `~/Library/Android/sdk/platform-tools/adb`.
 4. **Plus tard.**
    - Passer l'envoi des mails de Gmail à **Brevo** (ou Resend) avant d'inviter le groupe.
    - Notifications quand une setlist est publiée (Firebase).
-   - Test sur un vrai iPhone.
+   - Test sur un vrai iPhone (il faut un compte Apple Developer pour TestFlight).
+   - Version Android release signée et numéro de version, pour diffuser l'APK au groupe.
+   - Pages d'aide : une pour les membres, une pour le responsable des chants.
 
 ## Règles à respecter
 
