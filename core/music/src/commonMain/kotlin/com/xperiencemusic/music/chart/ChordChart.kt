@@ -12,7 +12,7 @@ import com.xperiencemusic.music.theory.Notation
  * be rendered in any key and notation later.
  */
 object ChordChart {
-    private val chordToken = Regex("""\[([^\]]*)]""")
+    private val chordToken = Regex("""\[([^\]]*)\]""")
 
     /** Rewrites every chord of [source] as Nashville numbers relative to [key]. Unknown tokens are kept. */
     fun normalize(source: String, key: Key): String = convert(source, key, Notation.NASHVILLE)

@@ -21,7 +21,8 @@ data class ImportedChart(
  * block or a lyric line is that section's title; the other comments are kept as credits.
  */
 object ChordProImport {
-    private val directive = Regex("""^\{\s*([A-Za-z_]+)\s*(?::\s*(.*?))?\s*}$""")
+    // Braces and brackets escaped everywhere: Android's ICU engine rejects a bare "}".
+    private val directive = Regex("""^\{\s*([A-Za-z_]+)\s*(?::\s*(.*?))?\s*\}$""")
     private val commentNames = setOf("c", "comment", "ci", "comment_italic", "cb", "comment_box")
 
     fun parse(source: String): ImportedChart {

@@ -20,7 +20,7 @@ object ChordsOverLyrics {
         "refrain", "couplet", "strophe", "pont", "pré-refrain", "pre-refrain", "intro", "outro",
         "final", "fin", "coda", "interlude", "bridge", "chorus", "verse", "pre-chorus", "tag",
     )
-    private val sectionHeading = Regex("""^\[?\(?\s*([A-Za-zÀ-ÿ-]+)(\s*\d+)?\s*\)?]?\s*:?\s*$""")
+    private val sectionHeading = Regex("""^\[?\(?\s*([A-Za-zÀ-ÿ-]+)(\s*\d+)?\s*\)?\]?\s*:?\s*$""")
     private val barMarks = setOf("|", "||", "/", "-", "%", "(", ")")
 
     /** True when [text] has at least one chord line sitting over a lyric line. */
