@@ -71,10 +71,12 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
      tape une lettre pour faire apparaître le menu, puis appui long → Paste.
    - Fais une capture avant chaque série de touches.
    - Le micro plante sur simulateur : teste-le sur mon S24.
-3. **Moi (Supabase)** : lancer `20261015000000_service_planning.sql` puis `20261016000000_growth_path.sql`.
-4. **Installation sur mon S24** — à tester : micro (« Ma voix »), import accords.app, collage d'un chant avec les accords au-dessus (Galaxy S24, débogage sans fil ; je l'active quand tu le demandes).
-   Tu as le droit d'installer sur le S24, mais **pas** sur le S21+ (`RFCR40827ZZ`).
-   Commande : `~/Library/Android/sdk/platform-tools/adb`.
+3. ~~**Moi (Supabase)** : migrations planning et parcours.~~ Faites le 16 octobre 2026.
+4. **Tests sur téléphone : Galaxy A17** (`adb -s adb-R5GYB2R7W2Y-HaeuqW._adb-tls-connect._tcp`).
+   Ne touche **ni** au S21 (`RFCR40827ZZ`) **ni** au S24 (`RFCX80Y0FVX`), réservés à d'autres projets, et ne
+   désinstalle pas `dev.kevin.kanto2026` sur l'A17. Ne laisse rien tourner en continu : une autre session en a
+   besoin. C'est Kevin qui se connecte. À tester : micro (« Ma voix »), import accords.app, collage avec accords
+   au-dessus, planning et rappels, parcours de croissance.
 5. **Plus tard.**
    - Passer l'envoi des mails de Gmail à **Brevo** (ou Resend) avant d'inviter le groupe.
    - Notifications quand une setlist est publiée (Firebase).
