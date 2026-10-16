@@ -213,6 +213,46 @@ do $$ begin
         'a validated month is frozen for members';
 end $$;
 
+-- Growth path: members ask to move up and tick objectives; only the super admin answers, and a
+-- confirmed request moves the member up.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+update public.profiles set display_name = 'Membre', instrument = 'PIANO', level = 'BEGINNER' where email = 'member@band.test';
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    begin
+        update public.profiles set level = 'PRO' where id = auth.uid();
+        assert false, 'members cannot raise their own level';
+    exception when insufficient_privilege then null;
+    end;
+    insert into public.level_requests (target_level) values ('CONFIRMED');
+    insert into public.objective_checks (objective_id) values ('piano-c1');
+    begin
+        update public.level_requests set status = 'VALIDATED';
+        assert false, 'members cannot confirm themselves';
+    exception when insufficient_privilege or check_violation then null;
+    end;
+    begin
+        update public.objective_checks set status = 'VALIDATED';
+        assert false, 'members cannot validate their objectives';
+    exception when insufficient_privilege or check_violation then null;
+    end;
+end $$;
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$ begin
+    assert (select count(*) from public.level_requests) = 0, 'content admins do not see level requests';
+end $$;
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+do $$ begin
+    update public.objective_checks set status = 'VALIDATED', reviewed_at = now();
+    update public.level_requests set status = 'VALIDATED', reviewed_at = now();
+    assert (select level from public.profiles where email = 'member@band.test') = 'CONFIRMED', 'a confirmed request moves the member up';
+    update public.profiles set level = 'PRO' where email = 'member@band.test';
+    update public.profiles set level = 'CONFIRMED' where email = 'member@band.test';
+end $$;
+
 -- The super admin invites and changes roles.
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 do $$ begin

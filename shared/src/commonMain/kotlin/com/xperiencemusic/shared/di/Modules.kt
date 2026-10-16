@@ -108,6 +108,18 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
+import com.xperiencemusic.shared.data.repository.InMemoryGrowthRepository
+import com.xperiencemusic.shared.data.repository.SupabaseGrowthRepository
+import com.xperiencemusic.shared.data.seed.MusicianObjectives
+import com.xperiencemusic.shared.data.seed.SampleGrowth
+import com.xperiencemusic.shared.domain.repository.GrowthRepository
+import com.xperiencemusic.shared.domain.usecase.ChangeMemberLevelUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveGrowthReviewUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveMyGrowthUseCase
+import com.xperiencemusic.shared.domain.usecase.RequestLevelUseCase
+import com.xperiencemusic.shared.domain.usecase.ReviewLevelRequestUseCase
+import com.xperiencemusic.shared.domain.usecase.ReviewObjectiveUseCase
+import com.xperiencemusic.shared.domain.usecase.TickObjectiveUseCase
 import com.xperiencemusic.shared.data.local.FileAnnouncedMonthsStore
 import com.xperiencemusic.shared.domain.repository.AnnouncedMonthsStore
 import com.xperiencemusic.shared.presentation.reminders.RemindersViewModel
@@ -156,9 +168,14 @@ val dataModule = module {
         single<AudioUrlProvider> { OfflineFirstAudioUrlProvider(get(), SupabaseAudioUrlProvider(get())) }
         single<VoiceSubmissionRepository> { SupabaseVoiceSubmissionRepository(get()) }
         single<PlanningRepository> { SupabasePlanningRepository(get()) }
+        single<GrowthRepository> { SupabaseGrowthRepository(get()) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
         single<SessionRepository> { InMemorySessionRepository() }
+        single<GrowthRepository> {
+            val today = get<DateProvider>().today()
+            InMemoryGrowthRepository(get(), get(), get(), SampleGrowth.requests(today), SampleGrowth.checks(today))
+        }
         single<PlanningRepository> {
             val today = get<DateProvider>().today()
             InMemoryPlanningRepository(SamplePlanning.months(today), SamplePlanning.signups(today))
@@ -202,6 +219,13 @@ val domainModule = module {
     factoryOf(::SaveSongUseCase)
     factoryOf(::ImportSongFromLinkUseCase)
     factoryOf(::ObservePlanningUseCase)
+    factory { ObserveMyGrowthUseCase(get(), get(), get(), MusicianObjectives.all) }
+    factoryOf(::RequestLevelUseCase)
+    factory { TickObjectiveUseCase(get(), get(), MusicianObjectives.all) }
+    factoryOf(::ObserveGrowthReviewUseCase)
+    factoryOf(::ReviewLevelRequestUseCase)
+    factoryOf(::ReviewObjectiveUseCase)
+    factoryOf(::ChangeMemberLevelUseCase)
     factoryOf(::AnswerServiceUseCase)
     factoryOf(::AdjustServiceUseCase)
     factoryOf(::OpenPlanningMonthUseCase)

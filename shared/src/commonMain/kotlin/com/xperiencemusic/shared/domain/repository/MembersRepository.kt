@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.domain.repository
 
 import com.xperiencemusic.shared.domain.model.BandMember
 import com.xperiencemusic.shared.domain.model.Invitation
+import com.xperiencemusic.shared.domain.model.Level
 import com.xperiencemusic.shared.domain.model.Role
 import kotlinx.coroutines.flow.Flow
 
@@ -17,6 +18,8 @@ interface MembersRepository {
     suspend fun cancelInvitation(email: String)
 
     suspend fun changeRole(member: BandMember, role: Role)
+
+    suspend fun changeLevel(member: BandMember, level: Level)
 
     /** Removes access: the account stays, but without a profile it sees nothing. */
     suspend fun remove(member: BandMember)

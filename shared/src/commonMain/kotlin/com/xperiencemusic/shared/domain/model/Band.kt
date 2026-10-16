@@ -9,6 +9,8 @@ data class BandMember(
     val role: Role,
     val instrument: Instrument?,
     val voicePart: VoicePart?,
+    /** Null until onboarding. */
+    val level: Level? = null,
 )
 
 /** An email allowed in, whose owner has not signed in yet. */

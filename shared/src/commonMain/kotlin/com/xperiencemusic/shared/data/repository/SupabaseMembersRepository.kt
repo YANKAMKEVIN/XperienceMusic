@@ -9,6 +9,8 @@ import com.xperiencemusic.shared.data.remote.ignoringFailures
 import com.xperiencemusic.shared.data.remote.postgrestCall
 import com.xperiencemusic.shared.domain.model.BandMember
 import com.xperiencemusic.shared.domain.model.Invitation
+import com.xperiencemusic.shared.domain.model.Level
+import com.xperiencemusic.shared.data.remote.dto.LevelUpdateDto
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.repository.MembersRepository
 import io.github.jan.supabase.SupabaseClient
@@ -44,6 +46,13 @@ class SupabaseMembersRepository(private val client: SupabaseClient) : MembersRep
             client.from(PROFILES).update(RoleUpdateDto(role.name)) { filter { eq("id", member.id) } }
             // Kept in step so a removed-then-reinvited account gets the same role back.
             client.from(INVITATIONS).update(RoleUpdateDto(role.name)) { filter { eq("email", member.email) } }
+        }
+        reload()
+    }
+
+    override suspend fun changeLevel(member: BandMember, level: Level) {
+        postgrestCall {
+            client.from(PROFILES).update(LevelUpdateDto(level.name)) { filter { eq("id", member.id) } }
         }
         reload()
     }

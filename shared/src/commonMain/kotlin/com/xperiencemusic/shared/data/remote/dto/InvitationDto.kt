@@ -7,3 +7,6 @@ data class InvitationDto(val email: String, val role: String)
 
 @Serializable
 data class RoleUpdateDto(val role: String)
+
+@Serializable
+data class LevelUpdateDto(val level: String)

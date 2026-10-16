@@ -2,6 +2,10 @@ package com.xperiencemusic.shared.data.mapper
 
 import com.xperiencemusic.music.theory.Key
 import com.xperiencemusic.music.theory.Mode
+import com.xperiencemusic.shared.domain.model.LevelRequest
+import com.xperiencemusic.shared.domain.model.ObjectiveCheck
+import com.xperiencemusic.shared.data.remote.dto.LevelRequestDto
+import com.xperiencemusic.shared.data.remote.dto.ObjectiveCheckDto
 import com.xperiencemusic.shared.data.remote.dto.InvitationDto
 import com.xperiencemusic.shared.data.remote.dto.ProfileDto
 import com.xperiencemusic.shared.data.remote.dto.ProfileUpdateDto
@@ -48,6 +52,7 @@ fun ProfileDto.toBandMember() = BandMember(
     role = enumOrNull<Role>(role) ?: Role.MEMBER,
     instrument = enumOrNull<Instrument>(instrument),
     voicePart = enumOrNull<VoicePart>(voicePart),
+    level = enumOrNull<Level>(level),
 )
 
 fun InvitationDto.toDomain() = Invitation(email = email, role = enumOrNull<Role>(role) ?: Role.MEMBER)
@@ -113,6 +118,28 @@ fun VoiceSubmissionDto.toDomain() = VoiceSubmission(
     submittedOn = LocalDate.parse(submittedAt.take(10)),
     status = status.toExerciseStatus(),
     feedback = feedback,
+)
+
+fun LevelRequestDto.toDomain() = LevelRequest(
+    id = id,
+    memberId = memberId,
+    memberName = profiles?.displayName.orEmpty(),
+    instrument = enumOrNull<Instrument>(profiles?.instrument),
+    voicePart = enumOrNull<VoicePart>(profiles?.voicePart),
+    targetLevel = enumOrNull<Level>(targetLevel) ?: Level.CONFIRMED,
+    status = status.toExerciseStatus(),
+    feedback = feedback,
+    submittedOn = LocalDate.parse(submittedAt.take(10)),
+)
+
+fun ObjectiveCheckDto.toDomain() = ObjectiveCheck(
+    memberId = memberId,
+    memberName = profiles?.displayName.orEmpty(),
+    instrument = enumOrNull<Instrument>(profiles?.instrument),
+    objectiveId = objectiveId,
+    status = status.toExerciseStatus(),
+    feedback = feedback,
+    submittedOn = LocalDate.parse(submittedAt.take(10)),
 )
 
 private inline fun <reified T : Enum<T>> enumOrNull(name: String?): T? =
