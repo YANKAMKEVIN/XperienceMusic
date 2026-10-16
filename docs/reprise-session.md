@@ -50,10 +50,13 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   ouvre un mois, chacun répond « Je sers / Pas dispo » dans « Mes dispos », l'admin ajuste et valide.
   Rappels locaux (sans Firebase) : mois validé, veille de répétition (dimanches), veille de service,
   relance des réponses manquantes.
-- **Parcours de croissance** Débutant → Confirmé → Pro. Chantres : paliers 1-3 pour Confirmé, 1-5 pour Pro.
-  Musiciens : objectifs par instrument (`data/seed/MusicianObjectives.kt`), cochés puis validés par
-  l'Admin++. Ensuite le membre demande son passage ; l'Admin++ confirme (le serveur change le niveau) ou
-  renvoie avec un commentaire, dans « À valider ». L'Admin++ corrige un niveau dans « Gérer les membres ».
+- **Parcours de croissance** Débutant → Confirmé → Pro, d'après le programme validé par Kevin
+  (`data/seed/GrowthObjectives.kt`) : 7 objectifs par niveau pour piano, basse, batterie et chantres,
+  chacun avec « Ce qu'on apprend » (fiche dépliable) et un critère de validation. Aucun ne cite un jour,
+  un service ou la setlist. Les objectifs chantres liés à un palier au micro se valident en le
+  finissant, les autres sont cochés puis validés par l'Admin++. Tous atteints → le membre demande son
+  passage ; l'Admin++ confirme (le serveur change le niveau) ou renvoie avec un commentaire, dans
+  « À valider ». L'Admin++ corrige un niveau dans « Gérer les membres ».
 - **Vidéo TikTok de présentation** (30 s, avec la musique du groupe) dans `video/`. Rendu : `npm run render`.
 
 ## Reste à faire
@@ -79,7 +82,6 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
    - Version Android release signée et numéro de version, pour diffuser l'APK au groupe.
    - Pages d'aide : une pour les membres, une pour le responsable des chants.
    - Ligne « Cette semaine tu sers… › » en haut de Semaine.
-   - Relire avec le groupe les objectifs des musiciens (ébauche à ajuster).
 
 ## Règles à respecter
 
