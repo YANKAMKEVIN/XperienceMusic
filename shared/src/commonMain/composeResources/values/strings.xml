@@ -371,7 +371,7 @@
     <string name="growth_review_objectives">Objectifs cochés (%1$d)</string>
     <string name="growth_review_confirm">Confirmer</string>
     <string name="growth_review_empty_title">Rien à valider</string>
-    <string name="growth_review_empty_text">Les demandes de passage et les objectifs cochés par les musiciens arriveront ici.</string>
+    <string name="growth_review_empty_text">Les demandes de passage et les objectifs cochés par les membres arriveront ici.</string>
     <string name="progress_title">Ma progression</string>
     <string name="growth_title">Mon niveau</string>
     <string name="growth_towards">%1$s → %2$s</string>
