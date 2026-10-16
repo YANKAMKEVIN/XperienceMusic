@@ -152,13 +152,14 @@ fun ProgressScreenContent(
                 item { LevelCard(card, state.isWorking) { onEvent(ProgressEvent.AskLevelUpClicked) } }
             }
             val next = state.levelCard?.next
-            if (!state.hasPath && next != null && state.objectives.isNotEmpty()) {
+            if (next != null && state.objectives.isNotEmpty()) {
                 item {
                     ObjectivesCard(next, state.objectives, state.isWorking) { id, reached ->
                         onEvent(ProgressEvent.ObjectiveToggled(id, reached))
                     }
                 }
-            } else if (!state.hasPath && next != null) {
+            }
+            if (!state.hasPath && next != null && state.objectives.isEmpty()) {
                 item {
                     EmptyState(
                         icon = XmIcons.Piano,
@@ -166,7 +167,7 @@ fun ProgressScreenContent(
                         text = stringResource(Res.string.progress_musicians_soon_text),
                     )
                 }
-            } else {
+            } else if (state.hasPath) {
                 state.warmUp?.let { warmUp -> item { WarmUpCard(warmUp, onClick = { onExerciseClick(warmUp.id) }) } }
                 if (state.weekVoices.isNotEmpty()) item { WeekVoicesCard(state.weekVoices, onRecordVoice) }
                 // Each tier picks up the winding line where the previous one stopped.

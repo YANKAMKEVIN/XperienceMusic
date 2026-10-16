@@ -27,7 +27,7 @@ data class ProgressUiState(
     val toReviewCount: Int = 0,
     /** The way to the next level; null while loading. */
     val levelCard: LevelCardUi? = null,
-    /** Musicians: the objectives of their next level. */
+    /** The objectives of the next level. */
     val objectives: List<ObjectiveUi> = emptyList(),
     /** Level-up requests and ticked objectives waiting for the super admin. */
     val toValidateCount: Int = 0,
@@ -35,15 +35,12 @@ data class ProgressUiState(
     val hasError: Boolean = false,
 )
 
-enum class GrowthUnit { TIERS, OBJECTIVES }
-
 data class LevelCardUi(
     val current: Level,
     /** Null at the top level. */
     val next: Level?,
     val done: Int,
     val required: Int,
-    val unit: GrowthUnit,
     /** Null until the member asks. */
     val requestStatus: ExerciseStatus?,
     val feedback: String?,
@@ -53,10 +50,15 @@ data class LevelCardUi(
 data class ObjectiveUi(
     val id: String,
     val title: String,
-    val description: String,
+    /** "Ce qu'on apprend": the help sheet, shown on demand. */
+    val learn: String,
+    /** What the super admin checks. */
+    val criterion: String,
     /** Null while not ticked. */
     val status: ExerciseStatus?,
     val feedback: String?,
+    /** Validated by a microphone tier: nothing to tick. */
+    val autoTier: Int? = null,
 )
 
 sealed interface ProgressEvent {

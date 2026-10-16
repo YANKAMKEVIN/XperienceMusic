@@ -111,7 +111,7 @@ import org.koin.dsl.module
 import com.xperiencemusic.shared.presentation.progress.GrowthReviewViewModel
 import com.xperiencemusic.shared.data.repository.InMemoryGrowthRepository
 import com.xperiencemusic.shared.data.repository.SupabaseGrowthRepository
-import com.xperiencemusic.shared.data.seed.MusicianObjectives
+import com.xperiencemusic.shared.data.seed.GrowthObjectives
 import com.xperiencemusic.shared.data.seed.SampleGrowth
 import com.xperiencemusic.shared.domain.repository.GrowthRepository
 import com.xperiencemusic.shared.domain.usecase.ChangeMemberLevelUseCase
@@ -220,9 +220,9 @@ val domainModule = module {
     factoryOf(::SaveSongUseCase)
     factoryOf(::ImportSongFromLinkUseCase)
     factoryOf(::ObservePlanningUseCase)
-    factory { ObserveMyGrowthUseCase(get(), get(), get(), MusicianObjectives.all) }
+    factory { ObserveMyGrowthUseCase(get(), get(), get(), GrowthObjectives.all) }
     factoryOf(::RequestLevelUseCase)
-    factory { TickObjectiveUseCase(get(), get(), MusicianObjectives.all) }
+    factory { TickObjectiveUseCase(get(), get(), GrowthObjectives.all) }
     factoryOf(::ObserveGrowthReviewUseCase)
     factoryOf(::ReviewLevelRequestUseCase)
     factoryOf(::ReviewObjectiveUseCase)
@@ -256,7 +256,7 @@ val presentationModule = module {
     viewModelOf(::WeekViewModel)
     viewModelOf(::LibraryViewModel)
     viewModelOf(::ProgressViewModel)
-    viewModel { GrowthReviewViewModel(get(), MusicianObjectives.all, get(), get()) }
+    viewModel { GrowthReviewViewModel(get(), GrowthObjectives.all, get(), get()) }
     viewModel { params -> VoiceRecordViewModel(params.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModelOf(::VoiceReviewViewModel)
     viewModelOf(::SongDetailViewModel)

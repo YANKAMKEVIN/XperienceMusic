@@ -48,7 +48,8 @@ data class ObjectiveReviewUi(
     val instrument: Instrument?,
     val objectiveId: String,
     val title: String,
-    val description: String,
+    /** What to check before validating. */
+    val criterion: String,
     val target: Level?,
 )
 
@@ -70,7 +71,7 @@ fun deriveGrowthReview(review: GrowthReview, objectives: List<Objective>): Growt
             val objective = byId[check.objectiveId]
             ObjectiveReviewUi(
                 "objective-${check.memberId}-${check.objectiveId}", check.memberId, check.memberName, check.instrument,
-                check.objectiveId, objective?.title ?: check.objectiveId, objective?.description.orEmpty(), objective?.level,
+                check.objectiveId, objective?.title ?: check.objectiveId, objective?.criterion.orEmpty(), objective?.level,
             )
         },
     )

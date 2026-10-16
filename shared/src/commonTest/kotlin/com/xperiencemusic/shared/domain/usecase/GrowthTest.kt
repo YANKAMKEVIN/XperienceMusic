@@ -12,6 +12,7 @@ import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Level
 import com.xperiencemusic.shared.domain.model.Objective
+import com.xperiencemusic.shared.domain.model.ObjectiveCheck
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.SingerPath
 import com.xperiencemusic.shared.domain.model.levelProgress
@@ -30,10 +31,15 @@ import kotlin.test.assertTrue
 class GrowthTest {
     private val today = LocalDate(2026, 10, 16)
     private val objectives = listOf(
-        Objective("piano-c1", Instrument.PIANO, Level.CONFIRMED, 1, "Accords", ""),
-        Objective("piano-c2", Instrument.PIANO, Level.CONFIRMED, 2, "Tempo", ""),
-        Objective("piano-p1", Instrument.PIANO, Level.PRO, 1, "Sans grille", ""),
-        Objective("bass-c1", Instrument.BASS, Level.CONFIRMED, 1, "Fondamentales", ""),
+        Objective("piano-c1", Instrument.PIANO, Level.CONFIRMED, 1, "Fondations", "", ""),
+        Objective("piano-c2", Instrument.PIANO, Level.CONFIRMED, 2, "Accords", "", ""),
+        Objective("piano-p1", Instrument.PIANO, Level.PRO, 1, "Harmonie", "", ""),
+        Objective("bass-c1", Instrument.BASS, Level.CONFIRMED, 1, "Fondations", "", ""),
+        // Singers: two objectives the microphone validates, one the Admin++ does.
+        Objective("singer-c1", Instrument.SINGER, Level.CONFIRMED, 1, "Souffle", "", "", autoTier = 1),
+        Objective("singer-c2", Instrument.SINGER, Level.CONFIRMED, 2, "Justesse", "", "", autoTier = 2),
+        Objective("singer-c4", Instrument.SINGER, Level.CONFIRMED, 4, "Rythme", "", ""),
+        Objective("singer-p1", Instrument.SINGER, Level.PRO, 1, "Technique", "", "", autoTier = 4),
     )
 
     /** One exercise per tier, the first [done] tiers validated. */
@@ -56,15 +62,18 @@ class GrowthTest {
     }
 
     @Test
-    fun `un chantre devient Confirmé avec trois paliers et Pro avec les cinq`() {
-        val beginner = levelProgress(member(level = Level.BEGINNER), path(2), objectives, emptyList(), emptyList())
-        assertEquals(2 to 3, beginner.done to beginner.required)
-        assertFalse(beginner.canAsk)
-        assertTrue(levelProgress(member(level = Level.BEGINNER), path(3), objectives, emptyList(), emptyList()).canAsk)
+    fun `les objectifs d'un chantre se valident au micro ou par l'Admin++`() {
+        val beginner = levelProgress(member(level = Level.BEGINNER), path(1), objectives, emptyList(), emptyList())
+        assertEquals(1 to 3, beginner.done to beginner.required, "tier 1 done: Souffle only")
+        val micDone = levelProgress(member(level = Level.BEGINNER), path(3), objectives, emptyList(), emptyList())
+        assertEquals(2 to 3, micDone.done to micDone.required)
+        assertFalse(micDone.canAsk, "Rythme still needs the Admin++")
+        val rythme = ObjectiveCheck("me", "Grâce", Instrument.SINGER, "singer-c4", ExerciseStatus.VALIDATED, null, today)
+        assertTrue(levelProgress(member(level = Level.BEGINNER), path(3), objectives, listOf(rythme), emptyList()).canAsk)
 
         val confirmed = levelProgress(member(level = Level.CONFIRMED), path(4), objectives, emptyList(), emptyList())
         assertEquals(Level.PRO, confirmed.next)
-        assertEquals(4 to 5, confirmed.done to confirmed.required)
+        assertEquals(1 to 1, confirmed.done to confirmed.required)
 
         val pro = levelProgress(member(level = Level.PRO), path(5), objectives, emptyList(), emptyList())
         assertNull(pro.next)
@@ -79,6 +88,11 @@ class GrowthTest {
         val tick = TickObjectiveUseCase(sessions, growth, objectives)
 
         assertEquals(DomainResult.Failure(DomainError.FORBIDDEN), tick("bass-c1", true), "not their instrument")
+        assertEquals(
+            DomainResult.Failure(DomainError.FORBIDDEN),
+            TickObjectiveUseCase(FakeSessionRepository(member()), growth, objectives)("singer-c1", true),
+            "the microphone validates this one",
+        )
         tick("piano-c1", true)
         tick("piano-c2", true)
         val ticked = levelProgress(pianist, null, objectives, growth.observeChecks().first(), emptyList())
@@ -108,6 +122,8 @@ class GrowthTest {
         assertEquals(DomainResult.Failure(DomainError.INVALID_INPUT), ask())
 
         exercises.setStatus("me", "t3", ExerciseStatus.VALIDATED)
+        growth.tickObjective("me", "singer-c4")
+        growth.reviewObjective("me", "singer-c4", ExerciseStatus.VALIDATED, null)
         assertEquals(DomainResult.Success(Unit), ask())
         val request = growth.observeRequests().first().single()
         assertEquals(Level.CONFIRMED, request.targetLevel)

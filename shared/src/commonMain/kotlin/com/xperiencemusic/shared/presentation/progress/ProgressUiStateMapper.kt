@@ -88,14 +88,26 @@ fun ProgressUiState.withGrowth(growth: MyGrowth?, review: GrowthReview?): Progre
             next = progress.next,
             done = progress.done,
             required = progress.required,
-            unit = if (instrument == Instrument.SINGER) GrowthUnit.TIERS else GrowthUnit.OBJECTIVES,
             requestStatus = progress.request?.status,
             feedback = progress.request?.feedback,
             canAsk = progress.canAsk,
         ),
         objectives = growth.objectives.sortedBy { it.order }.map { objective ->
             val check = growth.checks.firstOrNull { it.objectiveId == objective.id }
-            ObjectiveUi(objective.id, objective.title, objective.description, check?.status, check?.feedback)
+            val byMicrophone = objective.autoTier?.let { tier -> growth.path?.isTierComplete(tier) == true }
+            ObjectiveUi(
+                id = objective.id,
+                title = objective.title,
+                learn = objective.learn,
+                criterion = objective.criterion,
+                status = when (byMicrophone) {
+                    true -> ExerciseStatus.VALIDATED
+                    false -> null
+                    null -> check?.status
+                },
+                feedback = check?.feedback.takeIf { objective.autoTier == null },
+                autoTier = objective.autoTier,
+            )
         },
         toValidateCount = if (canReview && review != null) {
             review.requests.count { it.status == ExerciseStatus.SUBMITTED } + review.checks.count { it.status == ExerciseStatus.SUBMITTED }

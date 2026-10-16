@@ -11,6 +11,7 @@ import com.xperiencemusic.shared.domain.model.LevelRequest
 import com.xperiencemusic.shared.domain.model.Objective
 import com.xperiencemusic.shared.domain.model.ObjectiveCheck
 import com.xperiencemusic.shared.domain.model.Permission
+import com.xperiencemusic.shared.domain.model.SingerPath
 import com.xperiencemusic.shared.domain.model.levelProgress
 import com.xperiencemusic.shared.domain.repository.GrowthRepository
 import com.xperiencemusic.shared.domain.repository.MembersRepository
@@ -22,12 +23,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 
-/** The signed-in member's way to the next level, with their musician objectives. */
+/** The signed-in member's way to the next level, with its objectives. */
 data class MyGrowth(
     val progress: LevelProgress,
-    /** The objectives of the next level, for musicians; empty for singers. */
+    /** The objectives of the next level; empty at the top. */
     val objectives: List<Objective>,
     val checks: List<ObjectiveCheck>,
+    /** Singers' microphone path, which validates the objectives tied to a tier. */
+    val path: SingerPath? = null,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -46,8 +49,9 @@ class ObserveMyGrowthUseCase(
             val progress = levelProgress(member, singerPath, objectives, mine, requests.filter { it.memberId == member.id })
             MyGrowth(
                 progress = progress,
-                objectives = if (isSinger) emptyList() else objectives.filter { it.instrument == member.profile.instrument && it.level == progress.next },
+                objectives = objectives.filter { it.instrument == member.profile.instrument && it.level == progress.next },
                 checks = mine,
+                path = singerPath,
             )
         }
     }
@@ -68,7 +72,10 @@ class RequestLevelUseCase(
     }
 }
 
-/** A musician says they reached an objective, or takes it back while it is not validated. */
+/**
+ * A member says they reached an objective, or takes it back while it is not validated. Objectives
+ * the microphone validates cannot be ticked.
+ */
 class TickObjectiveUseCase(
     private val sessions: SessionRepository,
     private val growth: GrowthRepository,
@@ -77,7 +84,9 @@ class TickObjectiveUseCase(
     suspend operator fun invoke(objectiveId: String, reached: Boolean): DomainResult<Unit> {
         val member = sessions.currentMember() ?: return DomainResult.Failure(DomainError.NOT_SIGNED_IN)
         val objective = objectives.firstOrNull { it.id == objectiveId } ?: return DomainResult.Failure(DomainError.NOT_FOUND)
-        if (objective.instrument != member.profile.instrument) return DomainResult.Failure(DomainError.FORBIDDEN)
+        if (objective.instrument != member.profile.instrument || objective.autoTier != null) {
+            return DomainResult.Failure(DomainError.FORBIDDEN)
+        }
         val current = growth.observeChecks().first().firstOrNull { it.memberId == member.id && it.objectiveId == objectiveId }
         if (current?.status == ExerciseStatus.VALIDATED) return DomainResult.Failure(DomainError.FORBIDDEN)
         return runRemote {

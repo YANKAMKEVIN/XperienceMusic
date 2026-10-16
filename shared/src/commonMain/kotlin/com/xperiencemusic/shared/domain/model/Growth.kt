@@ -5,22 +5,26 @@ import kotlinx.datetime.LocalDate
 /** The level after this one, or null at the top. */
 fun Level.next(): Level? = Level.entries.getOrNull(ordinal + 1)
 
-/** The singers' tiers a level asks for: Confirmé the first three, Pro all five. */
-fun Level.requiredSingerTiers(): IntRange = when (this) {
-    Level.BEGINNER -> IntRange.EMPTY
-    Level.CONFIRMED -> 1..3
-    Level.PRO -> 1..5
-}
-
-/** Something a musician shows the super admin they can do, on the way to [level]. */
+/**
+ * One module of the progression programme, on the way to [level]: what it teaches ([learn], the
+ * help sheet) and what the super admin checks ([criterion]). A singer's objective with an
+ * [autoTier] is validated by finishing that microphone tier instead.
+ */
 data class Objective(
     val id: String,
     val instrument: Instrument,
     val level: Level,
     val order: Int,
     val title: String,
-    val description: String,
+    val learn: String,
+    val criterion: String,
+    val autoTier: Int? = null,
 )
+
+/** True once [memberId] has [objective]: its microphone tier is done, or the super admin validated it. */
+fun Objective.isReached(memberId: String, path: SingerPath?, checks: List<ObjectiveCheck>): Boolean =
+    autoTier?.let { path?.isTierComplete(it) == true }
+        ?: checks.any { it.memberId == memberId && it.objectiveId == id && it.status == ExerciseStatus.VALIDATED }
 
 /** A musician's tick on an objective: SUBMITTED until the super admin validates it or sends it back. */
 data class ObjectiveCheck(
@@ -60,7 +64,7 @@ data class LevelProgress(
     val canAsk: Boolean get() = isReady && (request == null || request.status == ExerciseStatus.TO_REWORK)
 }
 
-/** Where [member] stands, from their singer [path] or their musician objectives. */
+/** Where [member] stands: the objectives of their next level reached, out of all of them. */
 fun levelProgress(
     member: Member,
     path: SingerPath?,
@@ -72,14 +76,6 @@ fun levelProgress(
     val next = current.next()
     val request = next?.let { target -> requests.firstOrNull { it.memberId == member.id && it.targetLevel == target } }
     if (next == null) return LevelProgress(current, null, 0, 0, null)
-    return if (member.profile.instrument == Instrument.SINGER) {
-        val tiers = next.requiredSingerTiers()
-        LevelProgress(current, next, tiers.count { path?.isTierComplete(it) == true }, tiers.count(), request)
-    } else {
-        val needed = objectives.filter { it.instrument == member.profile.instrument && it.level == next }
-        val validated = needed.count { objective ->
-            checks.any { it.memberId == member.id && it.objectiveId == objective.id && it.status == ExerciseStatus.VALIDATED }
-        }
-        LevelProgress(current, next, validated, needed.size, request)
-    }
+    val needed = objectives.filter { it.instrument == member.profile.instrument && it.level == next }
+    return LevelProgress(current, next, needed.count { it.isReached(member.id, path, checks) }, needed.size, request)
 }

@@ -145,7 +145,7 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
                         name = objective.memberName,
                         part = objective.instrument?.label(),
                         title = objective.title,
-                        description = objective.description,
+                        description = objective.criterion,
                         confirmLabel = stringResource(Res.string.review_validate),
                         state = state,
                         onEvent = onEvent,

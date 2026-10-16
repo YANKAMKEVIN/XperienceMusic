@@ -49,7 +49,7 @@ class GrowthReviewViewModelTest {
         )
         val viewModel = GrowthReviewViewModel(
             ObserveGrowthReviewUseCase(growth),
-            listOf(Objective("piano-c1", Instrument.PIANO, Level.CONFIRMED, 1, "Les accords", "")),
+            listOf(Objective("piano-c1", Instrument.PIANO, Level.CONFIRMED, 1, "Les accords", "Triades", "I-IV-V-I")),
             ReviewLevelRequestUseCase(sessions, growth),
             ReviewObjectiveUseCase(sessions, growth),
         )
