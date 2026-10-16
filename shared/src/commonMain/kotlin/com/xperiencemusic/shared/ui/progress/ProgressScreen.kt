@@ -1,5 +1,13 @@
 package com.xperiencemusic.shared.ui.progress
 
+import com.xperiencemusic.shared.presentation.progress.ProgressEvent
+import com.xperiencemusic.shared.resources.growth_validate_open
+import com.xperiencemusic.shared.resources.error_generic
+import org.jetbrains.compose.resources.getString
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,11 +95,14 @@ fun ProgressScreen(
     onSignOut: () -> Unit,
     onRecordVoice: (String) -> Unit = {},
     onReview: () -> Unit = {},
+    onValidate: () -> Unit = {},
     viewModel: ProgressViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     ProgressScreenContent(
         state = state,
+        onEvent = viewModel::onEvent,
+        onValidate = onValidate,
         onExerciseClick = onExerciseClick,
         onManageMembers = onManageMembers,
         onSignOut = onSignOut,
@@ -116,64 +127,94 @@ fun ProgressScreenContent(
     onSignOut: () -> Unit,
     onRecordVoice: (String) -> Unit = {},
     onReview: () -> Unit = {},
+    onEvent: (ProgressEvent) -> Unit = {},
+    onValidate: () -> Unit = {},
 ) {
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(state.hasError) {
+        if (state.hasError) {
+            snackbar.showSnackbar(getString(Res.string.error_generic))
+            onEvent(ProgressEvent.ErrorShown)
+        }
+    }
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
     }
     val openLabel = stringResource(Res.string.progress_open_step)
-    LazyColumn(
-        contentPadding = PaddingValues(Spacing.l),
-        verticalArrangement = Arrangement.spacedBy(Spacing.m),
-    ) {
-        item { ProgressHeader(state) }
-        if (!state.hasPath) {
-            item {
-                EmptyState(
-                    icon = XmIcons.Piano,
-                    title = stringResource(Res.string.progress_musicians_soon_title),
-                    text = stringResource(Res.string.progress_musicians_soon_text),
-                )
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            contentPadding = PaddingValues(Spacing.l),
+            verticalArrangement = Arrangement.spacedBy(Spacing.m),
+        ) {
+            item { ProgressHeader(state) }
+            state.levelCard?.let { card ->
+                item { LevelCard(card, state.isWorking) { onEvent(ProgressEvent.AskLevelUpClicked) } }
             }
-        } else {
-            state.warmUp?.let { warmUp -> item { WarmUpCard(warmUp, onClick = { onExerciseClick(warmUp.id) }) } }
-            if (state.weekVoices.isNotEmpty()) item { WeekVoicesCard(state.weekVoices, onRecordVoice) }
-            // Each tier picks up the winding line where the previous one stopped.
-            var lane = 0
-            state.tiers.forEach { tier ->
-                val firstLane = lane
-                lane += tier.steps.size
-                item(key = "tier-${tier.number}") {
-                    TierPath(
-                        tier = tier,
-                        title = stringResource(tierTitles.getOrElse(tier.number - 1) { tierTitles.last() }),
-                        firstLane = firstLane,
-                        labelOpen = openLabel,
-                        onStepClick = onExerciseClick,
+            val next = state.levelCard?.next
+            if (!state.hasPath && next != null && state.objectives.isNotEmpty()) {
+                item {
+                    ObjectivesCard(next, state.objectives, state.isWorking) { id, reached ->
+                        onEvent(ProgressEvent.ObjectiveToggled(id, reached))
+                    }
+                }
+            } else if (!state.hasPath && next != null) {
+                item {
+                    EmptyState(
+                        icon = XmIcons.Piano,
+                        title = stringResource(Res.string.progress_musicians_soon_title),
+                        text = stringResource(Res.string.progress_musicians_soon_text),
                     )
                 }
+            } else {
+                state.warmUp?.let { warmUp -> item { WarmUpCard(warmUp, onClick = { onExerciseClick(warmUp.id) }) } }
+                if (state.weekVoices.isNotEmpty()) item { WeekVoicesCard(state.weekVoices, onRecordVoice) }
+                // Each tier picks up the winding line where the previous one stopped.
+                var lane = 0
+                state.tiers.forEach { tier ->
+                    val firstLane = lane
+                    lane += tier.steps.size
+                    item(key = "tier-${tier.number}") {
+                        TierPath(
+                            tier = tier,
+                            title = stringResource(tierTitles.getOrElse(tier.number - 1) { tierTitles.last() }),
+                            firstLane = firstLane,
+                            labelOpen = openLabel,
+                            onStepClick = onExerciseClick,
+                        )
+                    }
+                }
             }
-        }
-        if (state.canReview) {
+            if (state.canReview) {
+                item {
+                    GradientButton(onClick = onReview, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
+                        Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(20.dp))
+                        Text(stringResource(Res.string.review_open, state.toReviewCount), style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            }
+            if (state.canReview) {
+                item {
+                    OutlinedButton(onClick = onValidate, modifier = Modifier.fillMaxWidth().padding(top = Spacing.s)) {
+                        Icon(XmIcons.Medal, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(20.dp))
+                        Text(stringResource(Res.string.growth_validate_open, state.toValidateCount))
+                    }
+                }
+            }
+            if (state.canManageMembers) {
+                item {
+                    OutlinedButton(onClick = onManageMembers, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
+                        Text(stringResource(Res.string.members_open))
+                    }
+                }
+            }
             item {
-                GradientButton(onClick = onReview, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
-                    Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(20.dp))
-                    Text(stringResource(Res.string.review_open, state.toReviewCount), style = MaterialTheme.typography.titleMedium)
+                TextButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
+                    Text(stringResource(Res.string.session_sign_out))
                 }
             }
         }
-        if (state.canManageMembers) {
-            item {
-                OutlinedButton(onClick = onManageMembers, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
-                    Text(stringResource(Res.string.members_open))
-                }
-            }
-        }
-        item {
-            TextButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
-                Text(stringResource(Res.string.session_sign_out))
-            }
-        }
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 }
 

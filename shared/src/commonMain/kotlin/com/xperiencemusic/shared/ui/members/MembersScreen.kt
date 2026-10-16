@@ -1,5 +1,8 @@
 package com.xperiencemusic.shared.ui.members
 
+import com.xperiencemusic.shared.resources.members_change_level
+import androidx.compose.foundation.clickable
+import com.xperiencemusic.shared.domain.model.Level
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.size
@@ -246,12 +249,43 @@ private fun MemberRow(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (member.level != null) LevelMenu(member, member.level, onEvent)
             }
             RoleMenu(member, onEvent)
             if (!member.isMe) {
                 IconButton(onClick = { onEvent(MembersEvent.RemoveClicked(member.id)) }) {
                     Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.members_remove, member.name))
                 }
+            }
+        }
+    }
+}
+
+/** The level the member is at; the super admin corrects it here. */
+@Composable
+private fun LevelMenu(member: MemberRowUi, level: Level, onEvent: (MembersEvent) -> Unit) {
+    var isOpen by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { isOpen = true },
+        ) {
+            Text(level.label(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            Icon(
+                Icons.Filled.ArrowDropDown,
+                contentDescription = stringResource(Res.string.members_change_level, member.name),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        DropdownMenu(expanded = isOpen, onDismissRequest = { isOpen = false }) {
+            Level.entries.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.label()) },
+                    onClick = {
+                        isOpen = false
+                        if (option != level) onEvent(MembersEvent.LevelChanged(member.id, option))
+                    },
+                )
             }
         }
     }

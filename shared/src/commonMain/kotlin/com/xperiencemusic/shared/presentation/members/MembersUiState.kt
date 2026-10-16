@@ -1,6 +1,7 @@
 package com.xperiencemusic.shared.presentation.members
 
 import com.xperiencemusic.shared.domain.model.Instrument
+import com.xperiencemusic.shared.domain.model.Level
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.VoicePart
 
@@ -27,6 +28,8 @@ data class MemberRowUi(
     val instrument: Instrument?,
     val voicePart: VoicePart?,
     val isMe: Boolean,
+    /** Null until onboarding. */
+    val level: Level? = null,
 )
 
 data class InvitationRowUi(val email: String, val role: Role)
@@ -38,6 +41,7 @@ sealed interface MembersEvent {
     data class InviteRoleSelected(val role: Role) : MembersEvent
     data object InviteClicked : MembersEvent
     data class RoleChanged(val memberId: String, val role: Role) : MembersEvent
+    data class LevelChanged(val memberId: String, val level: Level) : MembersEvent
     data class RemoveClicked(val memberId: String) : MembersEvent
     data object RemoveConfirmed : MembersEvent
     data object RemoveDismissed : MembersEvent

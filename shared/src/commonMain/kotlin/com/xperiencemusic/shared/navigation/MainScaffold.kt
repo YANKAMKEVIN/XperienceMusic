@@ -46,6 +46,7 @@ import com.xperiencemusic.shared.ui.planning.PlanningScreen
 import com.xperiencemusic.shared.ui.planning.ServiceDetailScreen
 import com.xperiencemusic.shared.resources.tab_planning
 import com.xperiencemusic.shared.ui.voice.VoiceReviewScreen
+import com.xperiencemusic.shared.ui.progress.GrowthReviewScreen
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlinx.datetime.LocalDate
@@ -112,6 +113,7 @@ fun MainScaffold(onSignOut: () -> Unit) {
                     onManageMembers = { navController.navigate(MembersRoute) },
                     onRecordVoice = { navController.navigate(VoiceRecordRoute(it)) },
                     onReview = { navController.navigate(VoiceReviewRoute) },
+                    onValidate = { navController.navigate(GrowthReviewRoute) },
                     onSignOut = onSignOut,
                 )
             }
@@ -137,6 +139,7 @@ fun MainScaffold(onSignOut: () -> Unit) {
             composable<VoiceRecordRoute> { entry ->
                 VoiceRecordScreen(songId = entry.toRoute<VoiceRecordRoute>().songId, onBack = { navController.popBackStack() })
             }
+            composable<GrowthReviewRoute> { GrowthReviewScreen(onBack = { navController.popBackStack() }) }
             composable<VoiceReviewRoute> { VoiceReviewScreen(onBack = { navController.popBackStack() }) }
             composable<ExerciseRoute> { entry ->
                 ExerciseScreen(exerciseId = entry.toRoute<ExerciseRoute>().exerciseId, onBack = { navController.popBackStack() })

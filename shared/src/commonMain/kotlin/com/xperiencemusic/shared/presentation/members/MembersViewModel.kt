@@ -9,6 +9,7 @@ import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Member
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.usecase.CancelInvitationUseCase
+import com.xperiencemusic.shared.domain.usecase.ChangeMemberLevelUseCase
 import com.xperiencemusic.shared.domain.usecase.ChangeMemberRoleUseCase
 import com.xperiencemusic.shared.domain.usecase.InviteMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveBandUseCase
@@ -36,6 +37,7 @@ class MembersViewModel(
     observeCurrentMember: ObserveCurrentMemberUseCase,
     private val inviteMember: InviteMemberUseCase,
     private val changeMemberRole: ChangeMemberRoleUseCase,
+    private val changeMemberLevel: ChangeMemberLevelUseCase,
     private val removeMember: RemoveMemberUseCase,
     private val cancelInvitation: CancelInvitationUseCase,
 ) : ViewModel() {
@@ -52,6 +54,9 @@ class MembersViewModel(
             MembersEvent.InviteClicked -> invite()
             is MembersEvent.RoleChanged -> memberOf(event.memberId)?.let { member ->
                 perform { changeMemberRole(member, event.role) }
+            }
+            is MembersEvent.LevelChanged -> memberOf(event.memberId)?.let { member ->
+                perform { changeMemberLevel(member, event.level) }
             }
             is MembersEvent.RemoveClicked -> form.update { it.copy(pendingRemovalId = event.memberId) }
             MembersEvent.RemoveDismissed -> form.update { it.copy(pendingRemovalId = null) }
@@ -73,7 +78,7 @@ class MembersViewModel(
     }
 
     private fun memberOf(id: String): BandMember? = state.value.members.firstOrNull { it.id == id }?.let {
-        BandMember(it.id, it.email, it.name.takeIf { _ -> it.hasOnboarded }, it.role, it.instrument, it.voicePart)
+        BandMember(it.id, it.email, it.name.takeIf { _ -> it.hasOnboarded }, it.role, it.instrument, it.voicePart, it.level)
     }
 
     private fun perform(onSuccess: (MembersForm) -> MembersForm = { it }, action: suspend () -> DomainResult<*>) {
@@ -102,6 +107,7 @@ fun deriveMembersState(band: Band, me: Member?, form: MembersForm): MembersUiSta
             instrument = it.instrument,
             voicePart = it.voicePart,
             isMe = it.id == me?.id,
+            level = it.level,
         )
     }
     return MembersUiState(

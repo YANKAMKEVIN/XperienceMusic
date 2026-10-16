@@ -108,6 +108,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
+import com.xperiencemusic.shared.presentation.progress.GrowthReviewViewModel
 import com.xperiencemusic.shared.data.repository.InMemoryGrowthRepository
 import com.xperiencemusic.shared.data.repository.SupabaseGrowthRepository
 import com.xperiencemusic.shared.data.seed.MusicianObjectives
@@ -255,6 +256,7 @@ val presentationModule = module {
     viewModelOf(::WeekViewModel)
     viewModelOf(::LibraryViewModel)
     viewModelOf(::ProgressViewModel)
+    viewModel { GrowthReviewViewModel(get(), MusicianObjectives.all, get(), get()) }
     viewModel { params -> VoiceRecordViewModel(params.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModelOf(::VoiceReviewViewModel)
     viewModelOf(::SongDetailViewModel)

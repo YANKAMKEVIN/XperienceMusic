@@ -14,6 +14,10 @@ data object ProgressRoute
 @Serializable
 data object PlanningRoute
 
+/** The super admin's queue of level-up requests and ticked objectives. */
+@Serializable
+data object GrowthReviewRoute
+
 /** [monthStart] (ISO): the member's answers for that month. */
 @Serializable
 data class AvailabilityRoute(val monthStart: String)

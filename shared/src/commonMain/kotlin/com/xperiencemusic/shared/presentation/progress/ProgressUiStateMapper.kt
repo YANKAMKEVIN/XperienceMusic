@@ -2,6 +2,8 @@ package com.xperiencemusic.shared.presentation.progress
 
 import com.xperiencemusic.music.pitch.Pitch
 import com.xperiencemusic.shared.domain.model.ExerciseCheck
+import com.xperiencemusic.shared.domain.usecase.GrowthReview
+import com.xperiencemusic.shared.domain.usecase.MyGrowth
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.VoiceSubmission
@@ -73,5 +75,32 @@ private fun PathStep.toUi(voicePart: VoicePart): StepUi {
         },
         state = state,
         isChallenge = exercise.isChallenge,
+    )
+}
+
+/** Adds the way to the next level, and the super admin's queue, to an already derived state. */
+fun ProgressUiState.withGrowth(growth: MyGrowth?, review: GrowthReview?): ProgressUiState {
+    if (growth == null) return this
+    val progress = growth.progress
+    return copy(
+        levelCard = LevelCardUi(
+            current = progress.current,
+            next = progress.next,
+            done = progress.done,
+            required = progress.required,
+            unit = if (instrument == Instrument.SINGER) GrowthUnit.TIERS else GrowthUnit.OBJECTIVES,
+            requestStatus = progress.request?.status,
+            feedback = progress.request?.feedback,
+            canAsk = progress.canAsk,
+        ),
+        objectives = growth.objectives.sortedBy { it.order }.map { objective ->
+            val check = growth.checks.firstOrNull { it.objectiveId == objective.id }
+            ObjectiveUi(objective.id, objective.title, objective.description, check?.status, check?.feedback)
+        },
+        toValidateCount = if (canReview && review != null) {
+            review.requests.count { it.status == ExerciseStatus.SUBMITTED } + review.checks.count { it.status == ExerciseStatus.SUBMITTED }
+        } else {
+            0
+        },
     )
 }

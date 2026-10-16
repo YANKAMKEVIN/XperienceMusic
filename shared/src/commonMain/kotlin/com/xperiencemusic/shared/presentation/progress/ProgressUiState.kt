@@ -25,7 +25,45 @@ data class ProgressUiState(
     val canReview: Boolean = false,
     /** Submissions waiting for the super admin. */
     val toReviewCount: Int = 0,
+    /** The way to the next level; null while loading. */
+    val levelCard: LevelCardUi? = null,
+    /** Musicians: the objectives of their next level. */
+    val objectives: List<ObjectiveUi> = emptyList(),
+    /** Level-up requests and ticked objectives waiting for the super admin. */
+    val toValidateCount: Int = 0,
+    val isWorking: Boolean = false,
+    val hasError: Boolean = false,
 )
+
+enum class GrowthUnit { TIERS, OBJECTIVES }
+
+data class LevelCardUi(
+    val current: Level,
+    /** Null at the top level. */
+    val next: Level?,
+    val done: Int,
+    val required: Int,
+    val unit: GrowthUnit,
+    /** Null until the member asks. */
+    val requestStatus: ExerciseStatus?,
+    val feedback: String?,
+    val canAsk: Boolean,
+)
+
+data class ObjectiveUi(
+    val id: String,
+    val title: String,
+    val description: String,
+    /** Null while not ticked. */
+    val status: ExerciseStatus?,
+    val feedback: String?,
+)
+
+sealed interface ProgressEvent {
+    data object AskLevelUpClicked : ProgressEvent
+    data class ObjectiveToggled(val objectiveId: String, val reached: Boolean) : ProgressEvent
+    data object ErrorShown : ProgressEvent
+}
 
 data class WeekVoiceUi(
     val songId: String,
