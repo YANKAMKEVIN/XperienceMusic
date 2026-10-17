@@ -96,6 +96,7 @@ fun ProgressScreen(
     onRecordVoice: (String) -> Unit = {},
     onReview: () -> Unit = {},
     onValidate: () -> Unit = {},
+    onOpenLearning: () -> Unit = {},
     viewModel: ProgressViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -103,6 +104,7 @@ fun ProgressScreen(
         state = state,
         onEvent = viewModel::onEvent,
         onValidate = onValidate,
+        onOpenLearning = onOpenLearning,
         onExerciseClick = onExerciseClick,
         onManageMembers = onManageMembers,
         onSignOut = onSignOut,
@@ -129,6 +131,7 @@ fun ProgressScreenContent(
     onReview: () -> Unit = {},
     onEvent: (ProgressEvent) -> Unit = {},
     onValidate: () -> Unit = {},
+    onOpenLearning: () -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.hasError) {
@@ -148,13 +151,26 @@ fun ProgressScreenContent(
             verticalArrangement = Arrangement.spacedBy(Spacing.m),
         ) {
             item { ProgressHeader(state) }
+            state.learning?.let { course ->
+                item {
+                    AppCard {
+                        Text("PARCOURS PIANO", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        Text("Accords de base", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = Spacing.s))
+                        Text("${course.completed.size} / ${com.xperiencemusic.shared.domain.learning.PianoBasics.activities.size} activités terminées · compétence évaluée par le responsable", modifier = Modifier.padding(top = Spacing.s))
+                        Text(com.xperiencemusic.shared.domain.learning.PianoBasics.activities[course.nextIndex].title, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.s))
+                        GradientButton(onClick = onOpenLearning, modifier = Modifier.padding(top = Spacing.m)) {
+                            Text(if (course.isComplete) "Réviser et voir mon évaluation" else if (course.completed.isEmpty()) "Commencer mon apprentissage" else "Continuer mon apprentissage")
+                        }
+                    }
+                }
+            }
             state.levelCard?.let { card ->
                 item { LevelCard(card, state.isWorking) { onEvent(ProgressEvent.AskLevelUpClicked) } }
             }
             val next = state.levelCard?.next
             if (next != null && state.objectives.isNotEmpty()) {
                 item {
-                    ObjectivesCard(next, state.objectives, state.isWorking) { id, reached ->
+                    ObjectivesCard(next, state.objectives, state.isWorking, onLearn = if (state.learning != null) onOpenLearning else null) { id, reached ->
                         onEvent(ProgressEvent.ObjectiveToggled(id, reached))
                     }
                 }

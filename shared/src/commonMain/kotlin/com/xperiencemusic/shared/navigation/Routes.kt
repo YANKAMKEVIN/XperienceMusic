@@ -55,3 +55,7 @@ data class StageRoute(val songId: String, val transposeSemitones: Int, val notat
 
 @Serializable
 data object MembersRoute
+
+/** First guided learning module; objective validation remains with the responsible person. */
+@Serializable
+data object PianoLearningRoute

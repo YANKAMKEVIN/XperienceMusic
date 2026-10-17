@@ -57,3 +57,8 @@ au premier chargement. Une bannière permet de relancer un chargement échoué.
 
 Les exercices automatiques évaluent la hauteur et la tenue des notes ; ils ne constituent pas
 une évaluation complète du chant. Le responsable reste décisionnaire du passage de niveau.
+
+## Apprentissage guidé
+
+Le premier module piano « Accords de base » associe leçons, écoutes et clavier interactif.
+Voir [le fonctionnement et les limites](docs/guided-learning.md).

@@ -119,7 +119,7 @@ private fun Note(text: String, color: androidx.compose.ui.graphics.Color) {
  * sheet. Members tick what they reached; the microphone validates the singers' tier objectives.
  */
 @Composable
-internal fun ObjectivesCard(next: Level, objectives: List<ObjectiveUi>, isWorking: Boolean, onToggle: (String, Boolean) -> Unit) {
+internal fun ObjectivesCard(next: Level, objectives: List<ObjectiveUi>, isWorking: Boolean, onLearn: (() -> Unit)? = null, onToggle: (String, Boolean) -> Unit) {
     var openId by remember { mutableStateOf<String?>(null) }
     AppCard {
         Text(stringResource(Res.string.growth_objectives_title, next.target()), style = MaterialTheme.typography.titleMedium)
@@ -169,7 +169,9 @@ internal fun ObjectivesCard(next: Level, objectives: List<ObjectiveUi>, isWorkin
                         }
                     }
                 }
-                if (objective.autoTier != null) {
+                if (objective.id == "piano-c2" && onLearn != null) {
+                    TextButton(onClick = onLearn) { Text("Apprendre") }
+                } else if (objective.autoTier != null) {
                     Text(
                         stringResource(Res.string.growth_by_microphone, objective.autoTier),
                         style = MaterialTheme.typography.labelSmall,

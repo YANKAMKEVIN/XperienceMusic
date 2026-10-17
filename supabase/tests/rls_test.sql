@@ -294,5 +294,40 @@ begin
     end;
 end $$;
 
+-- Learning attempts are private, append-only practice records and never validate a skill.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    insert into public.learning_attempts(id, activity_id, version, passed, day)
+    values ('30000000-0000-0000-0000-000000000001', 'piano-chords-major', 1, true, current_date);
+    insert into public.learning_attempts(id, activity_id, version, passed, day)
+    values ('30000000-0000-0000-0000-000000000001', 'piano-chords-major', 1, true, current_date)
+    on conflict do nothing;
+    assert (select count(*) from public.learning_attempts) = 1, 'sync retries are idempotent';
+    begin
+        insert into public.learning_attempts(id, member_id, activity_id, version, passed, day)
+        values (gen_random_uuid(), '00000000-0000-0000-0000-00000000000a', 'piano-chords-major', 1, true, current_date);
+        assert false, 'cannot record another member learning';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+        update public.learning_attempts set passed = false;
+        assert false, 'learning history is immutable';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$ begin
+    assert (select count(*) from public.learning_attempts) = 0, 'other members cannot read learning history';
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000e');
+do $$ begin
+    begin
+        insert into public.learning_attempts(id, activity_id, version, passed, day)
+        values (gen_random_uuid(), 'piano-chords-major', 1, true, current_date);
+        assert false, 'uninvited accounts cannot write learning history';
+    exception when insufficient_privilege or foreign_key_violation then null;
+    end;
+end $$;
+
 reset role;
 \echo 'ALL RLS CHECKS PASSED'

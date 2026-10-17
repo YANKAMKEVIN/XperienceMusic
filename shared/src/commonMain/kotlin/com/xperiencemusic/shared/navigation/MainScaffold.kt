@@ -123,8 +123,12 @@ fun MainScaffold(onSignOut: () -> Unit) {
             composable<LibraryRoute> {
                 LibraryScreen(onSongClick = openSong, onAddSong = { navController.navigate(SongEditorRoute()) })
             }
+            composable<PianoLearningRoute> {
+                com.xperiencemusic.shared.ui.learning.LearningScreen(onBack = { navController.popBackStack() })
+            }
             composable<ProgressRoute> {
                 ProgressScreen(
+                    onOpenLearning = { navController.navigate(PianoLearningRoute) },
                     onExerciseClick = { navController.navigate(ExerciseRoute(it)) },
                     onManageMembers = { navController.navigate(MembersRoute) },
                     onRecordVoice = { navController.navigate(VoiceRecordRoute(it)) },

@@ -154,13 +154,18 @@ val dataModule = module {
     // Drives the platform players, which expect the main thread.
     single { PlaybackController(get(), get(), CoroutineScope(SupervisorJob() + Dispatchers.Main)) }
     single { SnapshotStore(get()) }
+    single<com.xperiencemusic.shared.domain.learning.LearningRepository> {
+        com.xperiencemusic.shared.data.learning.FileLearningRepository(
+            get(), if (SupabaseConfig.isConfigured) com.xperiencemusic.shared.data.learning.SupabaseLearningRemote(get()) else null,
+        )
+    }
     single { com.xperiencemusic.shared.data.remote.RemoteLoadMonitor() }
     single<LocalDataStore> {
         DeviceDataStore(get(), get(), get(), get()) {
             get<PlaybackController>().stop()
             listOf(get<SongRepository>(), get<SetlistRepository>(), get<ExerciseRepository>(),
                 get<MembersRepository>(), get<PlanningRepository>(), get<GrowthRepository>(),
-                get<VoiceSubmissionRepository>()).forEach {
+                get<VoiceSubmissionRepository>(), get<com.xperiencemusic.shared.domain.learning.LearningRepository>()).forEach {
                 (it as? com.xperiencemusic.shared.domain.repository.SessionResettable)?.resetSession()
             }
             get<com.xperiencemusic.shared.data.remote.RemoteLoadMonitor>().clear()
@@ -262,6 +267,11 @@ val domainModule = module {
 }
 
 val presentationModule = module {
+    viewModel {
+        com.xperiencemusic.shared.presentation.learning.LearningViewModel(
+            get(), get(), get(), get(), get(), com.xperiencemusic.shared.domain.learning.PlayLearningExample(get(), get(), get()),
+        )
+    }
     viewModelOf(::AppViewModel)
     viewModelOf(::OnboardingViewModel)
     viewModelOf(::WeekViewModel)

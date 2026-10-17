@@ -33,6 +33,7 @@ class ProgressViewModel(
     observeGrowthReview: ObserveGrowthReviewUseCase,
     private val requestLevel: RequestLevelUseCase,
     private val tickObjective: TickObjectiveUseCase,
+    learningRepository: com.xperiencemusic.shared.domain.learning.LearningRepository,
 ) : ViewModel() {
     private val action = MutableStateFlow(ActionState())
 
@@ -59,8 +60,14 @@ class ProgressViewModel(
             }
         }
 
-    val state: StateFlow<ProgressUiState> = combine(base, action) { state, act ->
-        state.copy(isWorking = act.isWorking, hasError = act.hasError)
+    private val learning = observeCurrentMember().flatMapLatest { member ->
+        if (member?.profile?.instrument == com.xperiencemusic.shared.domain.model.Instrument.PIANO) {
+            learningRepository.observe(member.id).map { it as com.xperiencemusic.shared.domain.learning.LearningProgress? }
+        } else flowOf(null)
+    }
+
+    val state: StateFlow<ProgressUiState> = combine(base, action, learning) { state, act, course ->
+        state.copy(isWorking = act.isWorking, hasError = act.hasError, learning = course)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
 
     fun onEvent(event: ProgressEvent) {
