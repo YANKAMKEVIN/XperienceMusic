@@ -67,28 +67,32 @@ class FileLearningRepository(
     override suspend fun sync(memberId: String) {
         val source = remote ?: return
         val started = generation
-        lock.withLock {
-            if (started != generation) return
-            load(memberId)
-            try {
-                val fetched = source.fetch(memberId)
+        try {
+            // Network calls never hold the local write lock: training remains usable offline.
+            val fetched = source.fetch(memberId)
+            lock.withLock {
                 if (started != generation) return
+                load(memberId)
                 val local = stored.value[memberId].orEmpty()
                 val merged = fetched.map { StoredAttempt(it, true) }.associateBy { it.attempt.id }.toMutableMap()
                 local.forEach { if (it.attempt.id !in merged) merged[it.attempt.id] = it }
                 save(memberId, merged.values.toList())
-                stored.value[memberId].orEmpty().filter { !it.synced }.forEach { pending ->
-                    source.send(pending.attempt)
+            }
+            val pending = stored.value[memberId].orEmpty().filter { !it.synced }
+            pending.forEach { item ->
+                if (started != generation) return
+                source.send(item.attempt)
+                lock.withLock {
                     if (started != generation) return
                     save(memberId, stored.value[memberId].orEmpty().map {
-                        if (it.attempt.id == pending.attempt.id) it.copy(synced = true) else it
+                        if (it.attempt.id == item.attempt.id) it.copy(synced = true) else it
                     })
                 }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // The local attempt is durable; its pending marker offers a manual retry.
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // The local attempt is durable; its pending marker offers a manual retry.
         }
     }
 }

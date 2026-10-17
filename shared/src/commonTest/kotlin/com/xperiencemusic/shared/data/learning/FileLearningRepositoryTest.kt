@@ -60,4 +60,20 @@ class FileLearningRepositoryTest {
         assertTrue(files.files.isEmpty())
         assertTrue(repository.observe("me").first().attempts.isEmpty())
     }
+    @Test fun slowNetworkDoesNotBlockRecordingTheNextAttempt() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        val remote = object : LearningRemote {
+            override suspend fun fetch(memberId: String): List<LearningAttempt> { gate.await(); return emptyList() }
+            override suspend fun send(attempt: LearningAttempt) = Unit
+        }
+        val repository = FileLearningRepository(SnapshotStore(FakeFileStore()), remote)
+        val syncing = launch { repository.sync("me") }
+        runCurrent()
+        repository.record(attempt)
+        assertEquals(1, repository.observe("me").first().attempts.size)
+        gate.complete(Unit)
+        syncing.join()
+        assertEquals(0, repository.observe("me").first().pending)
+    }
+
 }
