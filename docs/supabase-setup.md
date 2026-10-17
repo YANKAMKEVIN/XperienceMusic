@@ -28,6 +28,7 @@ seuls les nouveaux fichiers sont à exécuter :
 | `20261013000000_practice_days.sql` | les jours d'entraînement de chaque chantre, pour la série affichée dans « Ma progression » |
 | `20261014000000_voice_submissions.sql` | les voix envoyées par les chantres sur les chants de la semaine, que l'Admin++ valide ou renvoie « à retravailler » |
 | `20261015000000_service_planning.sql` | le planning des vendredis et dimanches : mois ouverts par les admins, réponses de chacun |
+| `20261018000000_recording_integrity_and_private_audio.sql` | protège les prises personnelles contre les écritures des admins contenu et impose une référence unique même lors des écritures directes |
 | `20261016000000_growth_path.sql` | le parcours Débutant → Confirmé → Pro : demandes de passage, objectifs des musiciens, et seul l'Admin++ change un niveau après l'accueil |
 
 ## 3. T'inviter comme Admin++

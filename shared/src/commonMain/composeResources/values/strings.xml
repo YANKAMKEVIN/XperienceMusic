@@ -426,7 +426,7 @@
     <string name="exercise_success_text">Bravo, tu as tenu la note. Passe au suivant quand tu veux.</string>
     <string name="exercise_retry">Recommencer</string>
     <string name="exercise_review_text">Cet exercice est validé par la responsable chant. L'envoi de ton enregistrement arrive avec le serveur ; en attendant, travaille-le et montre-le-lui en répétition.</string>
-    <string name="exercise_privacy">Le micro sert seulement à reconnaître la note, sur ton téléphone. Rien n'est enregistré.</string>
+    <string name="exercise_privacy">Analyse locale de la hauteur et de la tenue des notes, sans enregistrement. Ce test ne mesure pas le timbre, le rythme ni la qualité globale du chant. Le passage de niveau reste validé par le responsable.</string>
     <string name="exercise_error_denied">Autorise l'accès au micro dans les réglages du téléphone pour faire cet exercice.</string>
     <string name="exercise_error_mic">Le micro n'est pas disponible (un appel en cours ?). Réessaie dans un instant.</string>
     <string name="exercise_error_save">Exercice réussi, mais la validation n'a pas pu être enregistrée. Réessaie avec du réseau.</string>
