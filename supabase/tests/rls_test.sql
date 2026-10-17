@@ -8,7 +8,8 @@ insert into auth.users (id, email) values
     ('00000000-0000-0000-0000-00000000000a', 'Admin@band.test'),
     ('00000000-0000-0000-0000-00000000000c', 'content@band.test'),
     ('00000000-0000-0000-0000-00000000000d', 'member@band.test'),
-    ('00000000-0000-0000-0000-00000000000e', 'stranger@else.test');
+    ('00000000-0000-0000-0000-00000000000e', 'stranger@else.test'),
+    ('00000000-0000-0000-0000-00000000000f', 'uninvited@else.test');
 update public.profiles set display_name = 'Admin', instrument = 'SINGER', level = 'PRO';
 insert into public.songs (id, title, key_tonic) values ('10000000-0000-0000-0000-000000000001', 'À toi la gloire', 2);
 
@@ -319,7 +320,7 @@ select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
 do $$ begin
     assert (select count(*) from public.learning_attempts) = 0, 'other members cannot read learning history';
 end $$;
-select pg_temp.act_as('00000000-0000-0000-0000-00000000000e');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000f');
 do $$ begin
     begin
         insert into public.learning_attempts(id, activity_id, version, passed, day)

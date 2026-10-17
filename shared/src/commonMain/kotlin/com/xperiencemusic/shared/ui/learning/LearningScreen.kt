@@ -144,10 +144,11 @@ private fun ReviewCard(state: LearningUiState, onEvent: (LearningEvent) -> Unit)
         Text("Prépare I–IV–V–I en Do, Sol, Ré, Fa, La et Mi, avec renversements. Ton responsable pourra écouter et évaluer ton jeu en répétition.", modifier = Modifier.padding(top = Spacing.s))
         state.reviewStatus?.let { ExerciseStatusBadge(it, Modifier.padding(top = Spacing.s)) }
         state.feedback?.let { Text("Retour du responsable : $it", modifier = Modifier.padding(top = Spacing.s)) }
+        if (!state.reviewLoaded) Text("Connecte-toi au réseau pour retrouver ton évaluation et envoyer une demande.", modifier = Modifier.padding(top = Spacing.s))
         when (state.reviewStatus) {
             ExerciseStatus.VALIDATED -> Text("Compétence acquise. Continue à la pratiquer.", modifier = Modifier.padding(top = Spacing.s))
             ExerciseStatus.SUBMITTED -> Text("Demande envoyée. Organise un temps d’évaluation avec ton responsable.", modifier = Modifier.padding(top = Spacing.s))
-            else -> GradientButton(onClick = { onEvent(LearningEvent.RequestReview) }, enabled = !state.saving, modifier = Modifier.padding(top = Spacing.m)) {
+            else -> GradientButton(onClick = { onEvent(LearningEvent.RequestReview) }, enabled = !state.saving && state.reviewLoaded, modifier = Modifier.padding(top = Spacing.m)) {
                 Text(if (state.reviewStatus == ExerciseStatus.TO_REWORK) "Demander une nouvelle évaluation" else "Demander une évaluation")
             }
         }

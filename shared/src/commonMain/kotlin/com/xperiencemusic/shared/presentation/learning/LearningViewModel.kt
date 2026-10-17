@@ -27,6 +27,7 @@ data class LearningUiState(
     val result: Boolean? = null,
     val saving: Boolean = false,
     val error: String? = null,
+    val reviewLoaded: Boolean = false,
     val reviewStatus: ExerciseStatus? = null,
     val feedback: String? = null,
     val reviewDue: Boolean = false,
@@ -76,15 +77,16 @@ class LearningViewModel(
         if (m == null) flowOf(LearningProgress()) else repository.observe(m.id)
     }
     private val review = member.flatMapLatest { m ->
-        if (m == null) flowOf(emptyList()) else growth.observeChecks().onStart { emit(emptyList()) }
+        if (m == null) flowOf<List<ObjectiveCheck>?>(null)
+        else growth.observeChecks().map { it as List<ObjectiveCheck>? }.onStart { emit(null) }
     }
     val state = combine(member, learning, review, form) { m, progress, checks, f ->
-        val check = checks.firstOrNull { it.memberId == m?.id && it.objectiveId == PianoBasics.OBJECTIVE_ID }
+        val check = checks?.firstOrNull { it.memberId == m?.id && it.objectiveId == PianoBasics.OBJECTIVE_ID }
         LearningUiState(
             loading = m == null, allowed = m?.profile?.instrument == Instrument.PIANO,
             memberId = m?.id, index = f.index ?: progress.nextIndex, progress = progress,
             notes = f.notes, answer = f.answer, listened = f.listened, result = f.result,
-            saving = f.saving, error = f.error, reviewStatus = check?.status, feedback = check?.feedback,
+            saving = f.saving, error = f.error, reviewLoaded = checks != null, reviewStatus = check?.status, feedback = check?.feedback,
             reviewDue = progress.reviewDue(dates.today()),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LearningUiState())
@@ -139,7 +141,7 @@ class LearningViewModel(
 
     private fun requestReview() {
         val current = state.value
-        if (!current.allowed || !current.progress.isComplete || current.reviewStatus == ExerciseStatus.SUBMITTED || current.reviewStatus == ExerciseStatus.VALIDATED) return
+        if (!current.allowed || !current.reviewLoaded || !current.progress.isComplete || current.reviewStatus == ExerciseStatus.SUBMITTED || current.reviewStatus == ExerciseStatus.VALIDATED) return
         form.update { it.copy(saving = true, error = null) }
         viewModelScope.launch {
             val result = tickObjective(PianoBasics.OBJECTIVE_ID, true)
