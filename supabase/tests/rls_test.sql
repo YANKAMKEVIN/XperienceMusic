@@ -263,5 +263,36 @@ do $$ begin
     assert (select count(*) from public.exercise_progress) = 1, 'reviewers see every member''s progress';
 end $$;
 
+-- Direct table writes must preserve exactly one reference, even outside the RPCs.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$
+begin
+    begin
+        update public.recordings set is_reference = false where is_reference;
+        set constraints check_recording_reference immediate;
+        assert false, 'direct writes cannot leave a song without a reference';
+    exception when check_violation then null;
+    end;
+    begin
+        update public.recordings set song_id = gen_random_uuid();
+        assert false, 'recordings cannot be moved to bypass the limit';
+    exception when check_violation then null;
+    end;
+    begin
+        insert into storage.objects (bucket_id, name)
+        values ('audio', 'submissions/00000000-0000-0000-0000-00000000000d/injected.wav');
+        assert false, 'content admins cannot inject personal submissions';
+    exception when insufficient_privilege then null;
+    end;
+    insert into storage.objects (bucket_id, name) values ('audio', 'repertoire-test.wav');
+    begin
+        update storage.objects
+        set name = 'submissions/00000000-0000-0000-0000-00000000000d/renamed.wav'
+        where name = 'repertoire-test.wav';
+        assert false, 'content admins cannot rename repertoire files into private submissions';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+
 reset role;
 \echo 'ALL RLS CHECKS PASSED'

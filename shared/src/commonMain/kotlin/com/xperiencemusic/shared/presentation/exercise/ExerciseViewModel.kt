@@ -104,13 +104,13 @@ class ExerciseViewModel(
     private fun onSucceeded() {
         listening?.cancel()
         playback.stop()
-        _state.update {
-            it.copy(phase = ExercisePhase.SUCCEEDED, status = if (it.isWarmUp) it.status else ExerciseStatus.VALIDATED)
-        }
         val done = exercise ?: return
         viewModelScope.launch {
             if (completeExercise(done) is DomainResult.Failure) {
-                _state.update { it.copy(error = ExerciseError.SAVE_FAILED) }
+                _state.update { it.copy(phase = ExercisePhase.READY, error = ExerciseError.SAVE_FAILED) }
+            } else {
+                _state.update { it.copy(phase = ExercisePhase.SUCCEEDED,
+                    status = if (it.isWarmUp) it.status else ExerciseStatus.VALIDATED) }
             }
         }
     }

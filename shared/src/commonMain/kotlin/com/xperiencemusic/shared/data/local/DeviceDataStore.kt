@@ -10,9 +10,12 @@ class DeviceDataStore(
     private val audioCache: AudioCache,
     private val files: FileStore,
     private val reminders: ReminderScheduler,
+    private val resetSession: () -> Unit = {},
 ) : LocalDataStore {
     override suspend fun clearAll() {
+        resetSession()
         snapshots.clear()
+        files.delete("voice")
         audioCache.clear()
         files.delete(DEMO_UPLOADS)
         files.delete(FileAnnouncedMonthsStore.DIRECTORY)

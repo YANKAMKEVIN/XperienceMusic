@@ -20,10 +20,10 @@ class CompleteExerciseUseCase(
     suspend operator fun invoke(exercise: Exercise): DomainResult<Unit> {
         val member = sessions.currentMember() ?: return DomainResult.Failure(DomainError.NOT_SIGNED_IN)
         return runRemote {
+            exercises.recordPractice(member.id, dates.today())
             if (exercise.tier != Exercise.WARM_UP_TIER) {
                 exercises.setStatus(member.id, exercise.id, ExerciseStatus.VALIDATED)
             }
-            exercises.recordPractice(member.id, dates.today())
         }
     }
 }
