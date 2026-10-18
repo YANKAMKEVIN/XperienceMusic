@@ -151,7 +151,14 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         if(s.complete && s.reviewStatus!=ExerciseStatus.VALIDATED) {
             OutlinedButton(onClick=onRecord,modifier=Modifier.padding(top=Spacing.m)){Text("Enregistrer mon jeu pour le responsable")}
             TextButton(onClick={event(LearningEvent.RequestReview)},enabled=s.reviewLoaded && !s.saving && s.reviewStatus!=ExerciseStatus.SUBMITTED){Text("Demander une évaluation en répétition")}
-            if(!s.re…116 tokens truncated… module")}
+            if(!s.reviewLoaded)Text("Une connexion est nécessaire pour envoyer la demande.",style=MaterialTheme.typography.bodySmall)
+        }
+    }
+    JourneyGoal(s,event)
+    if(s.preferences.startingPoint==null) StartingPoint(s,event)
+    else AppCard {
+        Text("Mon point de départ conseillé : ${LearningCatalog.module(s.preferences.startingPoint).title}")
+        TextButton(onClick={onModule(s.preferences.startingPoint)}) {Text("Explorer ce module")}
         TextButton(onClick={event(LearningEvent.Preferences(s.preferences.copy(startingPoint=null)))}) {Text("Refaire le petit bilan")}
     }
     AppCard {
