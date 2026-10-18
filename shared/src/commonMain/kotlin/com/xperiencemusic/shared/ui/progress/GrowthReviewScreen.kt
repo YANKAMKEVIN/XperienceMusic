@@ -191,6 +191,7 @@ private fun ReviewCard(
             } else {
                 null
             },
+            placeholder = { Text("Une réussite observée, un point précis à travailler et le prochain essai attendu.") },
             minLines = 2,
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),

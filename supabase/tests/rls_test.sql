@@ -335,6 +335,14 @@ select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
 do $$ begin
     insert into public.objective_recordings(objective_id,audio_path,duration_seconds)
     values('piano-c3','submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav',12);
+    assert (select count(*) from public.objective_recording_history)=1, 'submitted take is archived';
+    update public.objective_recordings set audio_path='submissions/00000000-0000-0000-0000-00000000000d/objectives/test2.wav' where objective_id='piano-c3';
+    assert (select count(*) from public.objective_recording_history)=2, 'replacement keeps earlier take';
+    begin
+        delete from public.objective_recording_history;
+        assert false, 'history is immutable for members';
+    exception when insufficient_privilege then null;
+    end;
     insert into public.objective_checks(objective_id,status) values('piano-c3','SUBMITTED');
     insert into storage.objects(bucket_id,name) values('audio','submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav');
     begin
@@ -347,6 +355,7 @@ end $$;
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
 do $$ begin
     assert (select count(*) from public.objective_recordings)=0, 'content admins do not read personal evaluations';
+    assert (select count(*) from public.objective_recording_history)=0, 'content admins do not read take history';
     begin
         insert into public.objective_recordings(member_id,objective_id,audio_path,duration_seconds)
         values('00000000-0000-0000-0000-00000000000d','piano-c5','submissions/00000000-0000-0000-0000-00000000000d/objectives/injected.wav',12);

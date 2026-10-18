@@ -7,7 +7,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
 class ObjectiveRecordingsStoreTest {
-    @Test fun replacingAnAttemptCleansOldFileAndKeepsMembersSeparate()=runTest {
+    @Test fun newAttemptsPreserveHistoryAndKeepMembersSeparate()=runTest {
         val files=mutableMapOf<String,ByteArray>()
         val storage=object:AudioStorage {
             override suspend fun upload(path:String,mimeType:String,bytes:ByteArray){files[path]=bytes}
@@ -17,8 +17,8 @@ class ObjectiveRecordingsStoreTest {
         repo.send("me","piano-c2",byteArrayOf(1),4)
         val first=repo.observe("me").first().single().audioPath
         repo.send("me","piano-c2",byteArrayOf(2),5)
-        assertEquals(1,files.size);assertFalse(first in files)
-        assertEquals(5,repo.observe("me").first().single().seconds)
+        assertEquals(2,files.size);assertTrue(first in files)
+        assertEquals(5,repo.observe("me").first().last().seconds)
         assertTrue(repo.observe("other").first().isEmpty())
         repo.resetSession()
         assertTrue(repo.observe("me").first().isEmpty())

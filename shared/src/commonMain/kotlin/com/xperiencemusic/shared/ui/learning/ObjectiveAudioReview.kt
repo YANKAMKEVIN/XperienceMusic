@@ -15,10 +15,10 @@ import org.koin.compose.koinInject
     val flow=remember(memberId,recordings){recordings.observe(memberId)}
     val rows by flow.collectAsStateWithLifecycle(emptyList())
     val playback by player.state.collectAsStateWithLifecycle()
-    rows.firstOrNull{it.objectiveId==objectiveId}?.let {r->
-        val id="objective-${r.memberId}-${r.objectiveId}"
+    rows.filter{it.objectiveId==objectiveId}.sortedByDescending { it.submittedAt }.forEachIndexed { index,r->
+        val id="objective-${r.audioPath}"
         OutlinedButton(onClick={player.playOrToggle(PlaybackTrack(id,"Prise d’évaluation","${r.seconds} secondes",r.audioPath))}) {
-            Text(if(playback.track?.id==id && playback.isPlaying)"Mettre en pause" else "Écouter le jeu · ${r.seconds} s")
+            Text(if(playback.track?.id==id && playback.isPlaying)"Mettre en pause" else "Prise ${rows.count { it.objectiveId==objectiveId }-index} · ${r.submittedAt.take(10).ifEmpty { "sur ce téléphone" }} · ${r.seconds} s")
         }
     }
 }

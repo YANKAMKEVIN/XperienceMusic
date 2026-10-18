@@ -19,13 +19,13 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @Serializable
-data class LearningPreferences(val touchSound:Boolean=true,val rewardSound:Boolean=false,val haptics:Boolean=true,val reduceMotion:Boolean=false,val largeText:Boolean=false)
+data class LearningPreferences(val touchSound:Boolean=true,val rewardSound:Boolean=false,val haptics:Boolean=true,val reduceMotion:Boolean=false,val largeText:Boolean=false,val weeklyTarget:Int=2,val startingPoint:String?=null)
 @Serializable
 private data class Resume(val index:Int=0,val encounter:Int=0,val notes:Set<Int> = emptySet(),val answer:String?=null,val hints:Int=0)
 enum class LearningMode { HOME, ACTIVITY, SUMMARY }
 
 data class LearningUiState(
-    val loading:Boolean=true,val allowed:Boolean=false,val memberId:String?=null,
+    val today:kotlinx.datetime.LocalDate=kotlinx.datetime.LocalDate(2026,1,1),val loading:Boolean=true,val allowed:Boolean=false,val memberId:String?=null,
     val module:LearningModule=LearningCatalog.module(LearningCatalog.DEFAULT),val index:Int=0,
     val encounter:Int=0,val progress:LearningProgress=LearningProgress(),val notes:Set<Int> = emptySet(),val answer:String?=null,
     val listened:Boolean=false,val result:Boolean?=null,val saving:Boolean=false,val error:String?=null,
@@ -57,6 +57,7 @@ sealed interface LearningEvent {
     data class Key(val midi:Int):LearningEvent
     data class Answer(val value:String):LearningEvent
     data class Preferences(val value:LearningPreferences):LearningEvent
+    data object ChallengeExample:LearningEvent
     data object Begin:LearningEvent
     data object Resume:LearningEvent
     data object Home:LearningEvent
@@ -91,7 +92,7 @@ class LearningViewModel(
     }
     val state=combine(member,learning,review,form) { m,p,checks,f ->
         val c=checks?.firstOrNull { it.memberId==m?.id && it.objectiveId==module.objectiveId }
-        LearningUiState(loading=m==null,allowed=m?.profile?.instrument==Instrument.PIANO,memberId=m?.id,module=module,
+        LearningUiState(today=dates.today(),loading=m==null,allowed=m?.profile?.instrument==Instrument.PIANO,memberId=m?.id,module=module,
             index=f.index?:p.nextIn(module),encounter=f.encounter,progress=p,notes=f.notes,answer=f.answer,listened=f.listened,
             result=f.result,saving=f.saving,error=f.error,reviewLoaded=checks!=null,reviewStatus=c?.status,feedback=c?.feedback,
             reviewDue=p.dueIn(module,dates.today()).isNotEmpty(),mode=f.mode,hints=f.hints,showSteps=f.steps,showSettings=f.settings,
@@ -118,8 +119,9 @@ class LearningViewModel(
         if(state.value.saving)return
         when(event) {
             is LearningEvent.Open -> open(event.index)
+            LearningEvent.ChallengeExample -> audio.broken(module.challenge().example)
             LearningEvent.Begin -> {
-                val plan=state.value.progress.dailyPlan(module,dates.today())
+                val plan=state.value.progress.dailyPlan(module,dates.today()).let { if(state.value.progress.returning(dates.today()))it.take(1) else it }
                 form.update { it.copy(plan=plan,done=emptyList(),difficult=emptySet()) }; open(plan.first())
             }
             LearningEvent.Resume -> {

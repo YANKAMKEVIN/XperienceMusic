@@ -79,7 +79,8 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                                     Text("À reprendre tranquillement",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=Spacing.m))
                                     state.sessionDifficult.forEach { id ->Text(LearningCatalog.findActivity(id)?.title.orEmpty()) }
                                 }
-                                Text("Tu peux t’arrêter ici. La prochaine séance reprendra tes acquis et tes difficultés.",Modifier.padding(top=Spacing.m))
+                                Text(if(state.sessionDifficult.isEmpty()) "Tu as travaillé sans difficulté signalée. La prochaine séance t’aidera à entretenir ces repères." else "Les prochaines révisions tiendront compte de tes difficultés. Tu peux aussi les reprendre depuis les étapes.",Modifier.padding(top=Spacing.m))
+                                Text("Prochaine étape : ${state.module.activities[state.progress.nextIn(state.module)].title}",Modifier.padding(top=Spacing.s))
                             }
                             GradientButton(onClick={onEvent(LearningEvent.Home)}){Text("Terminer ma séance")}
                             OutlinedButton(onClick={onEvent(LearningEvent.Open(state.progress.nextIn(state.module)))}){Text("Continuer librement")}
@@ -119,10 +120,13 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     AppCard {
         Text("TA SÉANCE DU JOUR",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
         Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
-        Text("Environ 5 minutes · découverte, pratique et révision",Modifier.padding(top=Spacing.s))
+        val plan=s.progress.dailyPlan(s.module,s.today).let { if(s.progress.returning(s.today))it.take(1) else it }
+        Text("Environ ${plan.size*2} minutes · ${plan.size} activité(s)",Modifier.padding(top=Spacing.s))
+        Text("Objectif : ${s.module.activities[plan.first()].title}",Modifier.padding(top=Spacing.s))
+        if(s.progress.returning(s.today)) Text("Heureux de te retrouver. Reprends doucement avec une courte révision : tes progrès sont conservés.",Modifier.padding(top=Spacing.s))
         Text("${s.completed.size} / ${s.module.activities.size} activités terminées",Modifier.padding(top=Spacing.m))
         LinearProgressIndicator(progress={s.completed.size.toFloat()/s.module.activities.size},modifier=Modifier.fillMaxWidth().padding(top=Spacing.s))
-        GradientButton(onClick={event(LearningEvent.Begin)},modifier=Modifier.padding(top=Spacing.m)){Text(if(s.reviewDue)"Ma séance et mes révisions" else "Commencer ma séance")}
+        GradientButton(onClick={event(LearningEvent.Begin)},modifier=Modifier.padding(top=Spacing.m)){Text(if(s.completed.isNotEmpty())"Continuer ma séance" else "Commencer ma séance")}
         TextButton(onClick={event(LearningEvent.Resume)}){Text("Reprendre · ${s.module.activities[s.progress.nextIn(s.module)].title}")}
         TextButton(onClick={event(LearningEvent.Steps)}){Text("Explorer les étapes")}
     }
@@ -131,22 +135,42 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         TextButton(onClick={event(LearningEvent.Sync)}){Text("Synchroniser")}
     }
     AppCard {
-        Text(when {s.reviewStatus==ExerciseStatus.VALIDATED -> if(s.reviewDue)"Acquis · à entretenir" else "Compétence acquise";s.complete ->"Prêt pour une évaluation";s.progress.attempts.any { attempt -> attempt.passed && s.module.activities.any { it.id==attempt.activityId && it.kind!=LearningKind.LESSON } }->"En pratique";s.completed.isNotEmpty()->"Découvert";else ->"À découvrir"},style=MaterialTheme.typography.titleMedium)
+        val mastery=s.progress.mastery(s.module,s.reviewStatus,s.today)
+        var explain by remember { mutableStateOf(false) }
+        Text(mastery.label,style=MaterialTheme.typography.titleMedium)
+        TextButton(onClick={explain=!explain}) { Text("Comprendre ce statut") }
+        if(explain) Text(mastery.explanation,style=MaterialTheme.typography.bodySmall)
         Text("Les exercices à l’écran et le jeu sur l’instrument sont évalués séparément.",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
         s.reviewStatus?.let {ExerciseStatusBadge(it,Modifier.padding(top=Spacing.s))}
-        s.feedback?.let {Text("Retour du responsable : $it",Modifier.padding(top=Spacing.s))}
+        s.feedback?.let {
+            Text("Mon prochain travail",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=Spacing.s))
+            Text(it,Modifier.padding(top=Spacing.s))
+            if(s.reviewStatus==ExerciseStatus.TO_REWORK) Text("Reprends cette consigne, puis envoie une nouvelle prise au responsable.",style=MaterialTheme.typography.bodySmall)
+        }
         if(s.complete) s.memberId?.let { audioReview(it, s.module.objectiveId) }
         if(s.complete && s.reviewStatus!=ExerciseStatus.VALIDATED) {
             OutlinedButton(onClick=onRecord,modifier=Modifier.padding(top=Spacing.m)){Text("Enregistrer mon jeu pour le responsable")}
             TextButton(onClick={event(LearningEvent.RequestReview)},enabled=s.reviewLoaded && !s.saving && s.reviewStatus!=ExerciseStatus.SUBMITTED){Text("Demander une évaluation en répétition")}
-            if(!s.reviewLoaded)Text("Une connexion est nécessaire pour envoyer la demande.",style=MaterialTheme.typography.bodySmall)
-        }
+            if(!s.re…116 tokens truncated… module")}
+        TextButton(onClick={event(LearningEvent.Preferences(s.preferences.copy(startingPoint=null)))}) {Text("Refaire le petit bilan")}
+    }
+    AppCard {
+        val challenge=s.module.challenge()
+        Text("DÉFI MUSICAL",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
+        Text(challenge.title,style=MaterialTheme.typography.titleLarge)
+        challenge.steps.forEachIndexed { i,step -> Text("${i+1}. $step",Modifier.padding(top=Spacing.s)) }
+        Text("À écouter : ${challenge.criteria}",Modifier.padding(top=Spacing.s))
+        TextButton(onClick={event(LearningEvent.ChallengeExample)}) { Text("Écouter les notes de la grille") }
+        Text("Démonstration note par note : le rythme d’accompagnement reste à travailler sur ton instrument.",style=MaterialTheme.typography.bodySmall)
+        if(s.complete && s.reviewStatus!=ExerciseStatus.VALIDATED) OutlinedButton(onClick=onRecord) { Text("Enregistrer mon défi") }
+        else if(!s.complete) Text("Prépare ce défi avec les activités du module ; l’envoi au responsable s’ouvrira ensuite.",style=MaterialTheme.typography.bodySmall)
     }
     Text("Mon parcours piano",style=MaterialTheme.typography.titleLarge)
     LearningCatalog.modules.forEach { m ->
         AppCard(onClick={onModule(m.id)}) {
             Text(m.title,style=MaterialTheme.typography.titleMedium)
-            Text("${s.progress.completedIn(m).size} / ${m.activities.size} activités · ${if(s.progress.complete(m))"à entretenir" else "à explorer"}",style=MaterialTheme.typography.bodySmall)
+            Text("${s.progress.completedIn(m).size} / ${m.activities.size} activités",style=MaterialTheme.typography.bodySmall)
+            Text(if(m.id==s.module.id)s.progress.mastery(m,s.reviewStatus,s.today).label else "Ouvrir pour voir la compétence et son évaluation",style=MaterialTheme.typography.bodySmall)
         }
     }
     if(s.progress.attempts.isNotEmpty()) AppCard {
@@ -249,4 +273,35 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
 }
 @Preview @Composable private fun LearningPreview()=AppTheme {
     LearningScreenContent(LearningUiState(loading=false,allowed=true,index=1,mode=LearningMode.ACTIVITY),{},{})
+}
+
+@Composable private fun JourneyGoal(s:LearningUiState,event:(LearningEvent)->Unit) {
+    AppCard {
+        Text("Mon rythme",style=MaterialTheme.typography.titleMedium)
+        Text("${s.progress.weeklyDays(s.today)} jour(s) de pratique ces 7 derniers jours · objectif ${s.preferences.weeklyTarget}")
+        Text("Une journée compte dès qu’un exercice est enregistré. Plusieurs séances le même jour comptent une fois.",style=MaterialTheme.typography.bodySmall)
+        Row(horizontalArrangement=Arrangement.spacedBy(Spacing.s)) {
+            listOf(1,2,3).forEach { target -> FilterChip(selected=s.preferences.weeklyTarget==target,onClick={event(LearningEvent.Preferences(s.preferences.copy(weeklyTarget=target)))},label={Text("$target j / sem.")}) }
+        }
+        Text("Un repère personnel, à ajuster librement. Tu peux reprendre à tout moment.",style=MaterialTheme.typography.bodySmall)
+    }
+}
+@Composable private fun StartingPoint(s:LearningUiState,event:(LearningEvent)->Unit) {
+    var stage by remember { mutableStateOf(0) }
+    var score by remember { mutableStateOf(0) }
+    AppCard {
+        Text("Trouver mon point de départ",style=MaterialTheme.typography.titleMedium)
+        Text("Trois repères facultatifs. Aucune compétence n’est validée ni aucune étape sautée.",style=MaterialTheme.typography.bodySmall)
+        val questions=listOf("Quelles notes composent Do majeur ?","Combien de croches durent une noire ?","C–F–G un ton plus haut devient…")
+        val answers=listOf(listOf("Do–Mi–Sol","Do–Mi♭–Sol"),listOf("4","2"),listOf("D–G–A","D–F–A"))
+        if(stage<3) {
+            Text(questions[stage],Modifier.padding(top=Spacing.s))
+            answers[stage].forEachIndexed { index,answer -> OutlinedButton(onClick={if(index==listOf(0,1,0)[stage])score++;stage++}) {Text(answer)} }
+        } else {
+            val recommendation=when {score==0->"piano-chords";score<3->"piano-rhythm";else->"piano-chart"}
+            Text("$score / 3 repères retrouvés. Suggestion : ${LearningCatalog.module(recommendation).title}. Tu peux explorer chaque module à ton rythme.")
+            TextButton(onClick={event(LearningEvent.Preferences(s.preferences.copy(startingPoint=recommendation)))}) {Text("Conserver ce conseil")}
+        }
+        TextButton(onClick={event(LearningEvent.Preferences(s.preferences.copy(startingPoint=LearningCatalog.DEFAULT)))}) {Text("Je préfère commencer de zéro")}
+    }
 }

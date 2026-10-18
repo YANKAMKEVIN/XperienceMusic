@@ -7,7 +7,7 @@ Les identifiants des dix activités historiques sont conservés ; les réussites
 
 ## Expérience
 
-L’accueil propose une séance d’environ cinq minutes : une courte suite de découvertes et de
+L’accueil indique le temps estimé (deux minutes par activité) et le premier objectif de la séance : une courte suite de découvertes et de
 pratique, avec une révision échue si disponible. Une seule activité est affichée à la fois.
 Le plan reste accessible via « Voir les étapes ». Un bilan distingue les activités travaillées
 et celles à reprendre, avec les choix terminer ou continuer librement.
@@ -70,9 +70,36 @@ Appliquer les migrations dans l’ordre :
 1. `20261018000000_recording_integrity_and_private_audio.sql`
 2. `20261018010000_learning_attempts.sql`
 3. `20261018020000_learning_feedback_and_recordings.sql`
+4. `20261018030000_objective_recording_history.sql`
 
 Les tests couvrent les réponses musicales, les variantes, les révisions, la reprise sans pénalité,
 la synchronisation, la confidentialité et le gel des prises validées.
 Vérifications à faire sur Android et iPhone : clavier et défilement, sons, autorisation du micro,
 prise et écoute par le responsable, mode hors connexion, grand texte, lecteur d’écran et réduction
 système des animations. Les builds seuls ne valident pas cette expérience sur un appareil réel.
+
+## Maîtrise, objectifs et défis
+
+Les statuts distinguent découverte, pratique, consolidation et validation par le responsable.
+Un bouton explique la raison du statut. La fin des exercices, même sans erreur, ne remplace
+jamais la validation sur l’instrument. Les autres modules invitent à ouvrir leur propre statut
+plutôt que d’inventer une validation à partir de leurs exercices.
+
+Un bilan facultatif de trois questions propose un point de départ sans débloquer ni valider
+une étape. Le conseil et l’objectif de un à trois jours de pratique par semaine restent locaux,
+par membre, dans les préférences existantes. Le compteur porte sur les sept derniers jours,
+un jour distinct avec un essai enregistré comptant une fois ; il ne mesure pas une durée de jeu.
+Après sept jours sans essai, la séance est limitée à une activité pour une reprise douce.
+
+Chaque module propose un défi concret, une grille ou des consignes, trois étapes et des critères
+d’écoute. La démonstration sonore énonce les notes successivement : ce n’est pas une piste
+d’accompagnement rythmée. L’envoi reste lié à l’objectif et à sa validation humaine.
+Le retour du responsable est présenté comme le prochain travail ; son champ de commentaire
+invite à nommer une réussite, un point précis et l’essai attendu.
+
+L’historique conserve chaque prise **envoyée**, datée, avec écoute séparée. Les prises précédentes
+non conservées par les versions antérieures ne peuvent pas être récupérées. La migration récupère
+la prise actuelle existante. La table courante garde la dernière preuve d’évaluation ; la table
+historique est alimentée par un trigger et ne permet aux membres ni modification ni suppression.
+Les règles privées propriétaire/Admin++ s’appliquent aux deux. Les anciens fichiers restent
+protégés contre la suppression par leur propriétaire ; la modération Admin++ reste possible.
