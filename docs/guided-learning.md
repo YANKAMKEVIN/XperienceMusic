@@ -104,36 +104,76 @@ historique est alimentée par un trigger et ne permet aux membres ni modificatio
 Les règles privées propriétaire/Admin++ s’appliquent aux deux. Les anciens fichiers restent
 protégés contre la suppression par leur propriétaire ; la modération Admin++ reste possible.
 
-## Correction locale de la gamme au micro
+## Atelier piano : correction au micro
 
-Depuis « Gammes et repères », « Essayer la correction automatique » ouvre un exercice séparé :
-une seule montée de Do4 à Do5 en Do majeur, une main, sans pédale, environ une note par seconde.
-Le profil piano peut l’essayer avant la fin du module. L’exemple sonore est joué avant la prise,
-jamais pendant celle-ci. Arrêter lance l’analyse locale ; une prise s’arrête automatiquement à 30 secondes.
+Depuis « Gammes et repères », « Essayer la correction automatique » ouvre un atelier local.
+Il propose Do, Sol et Fa majeur sur une octave, en montée ou en descente, avec une main, sans
+pédale ni accompagnement. Le tempo (40, 60 ou 80 BPM) règle l’exemple sonore et les repères
+visuels. Ce guide ne mesure pas une synchronisation exacte au métronome. Le profil piano peut
+l’essayer avant la fin du module. Aucun envoi serveur ni validation de compétence n’est déclenché.
+Aucune migration supplémentaire n’est nécessaire.
 
-YIN estime une fondamentale monophonique, après réduction de fréquence avec moyennage. Le moteur
+### Avant la prise
+
+Le bouton « Préparer le micro » demande l’autorisation, arrête toute lecture, puis ouvre un test
+de signal. Le membre joue une note pour vérifier le niveau. Le bouton de départ s’active après
+au moins 150 ms cumulées de son non saturé ; cela confirme un signal, pas son origine ni la
+qualité d’un piano. Un signal saturé bloque le départ. Le test expire après 20 secondes et
+n’est pas conservé. Le compte à rebours de trois secondes est visuel et annulable ; ses données
+micro sont elles aussi exclues de l’enregistrement. Aucun son de l’app n’est joué pendant la prise.
+
+L’enregistrement commence au signal « À toi ». Les notes attendues servent de repères visuels
+au tempo choisi. La prise s’arrête à la demande ou après 30 secondes au maximum, même si le
+micro ne fournit plus de trames. Le micro est libéré avant le bilan et la réécoute. Le téléphone
+reste éveillé pendant le test micro, le compte à rebours et la prise.
+
+### Comprendre puis retravailler
+
+Le bilan affiche les notes dans leur ordre d’exécution, avec un libellé pour chaque résultat :
+repérée, à vérifier, octave, non repérée ou ajout détecté. Toucher une note sélectionne son détail
+et réécoute un extrait de la prise contenant le passage, limité à six secondes. Une note non
+repérée utilise le contexte des notes voisines ; les temps et découpages sont approximatifs.
+Le membre peut entendre séparément la note attendue ou arrêter l’écoute.
+
+« Travailler autour de cette note » ouvre un exercice de trois notes dans la même gamme, le
+même sens et au même tempo, avec le contexte disponible aux extrémités. Ce fragment a sa propre
+séquence attendue et son propre bilan ; il n’est pas comparé à une gamme entière. Un bouton
+permet de revenir à la gamme complète. Les notes supplémentaires utilisent la position attendue
+voisine pour proposer un fragment.
+
+Deux essais exploitables du même exercice et au même tempo peuvent être comparés : notes
+attendues retrouvées, notes de nouveau repérées et notes à vérifier encore. Le dernier bilan
+exploitable sert de référence ; une prise ambiguë n’affiche pas de comparaison et ne remplace
+pas cette référence. Changer de gamme, de sens, de tempo ou de fragment efface le bilan de
+référence et l’audio. Ce retour compare des détections, pas une maîtrise musicale définitive.
+
+### Analyse et limites
+
+YIN estime une fondamentale monophonique après réduction de fréquence avec moyennage. Le moteur
 écarte les fenêtres faibles, peu périodiques, trop éloignées d’une note tempérée ou hors du registre
-Do3–Do7. Une note doit rester repérée au moins 180 ms. Un alignement par distance d’édition compare
-les notes retenues à la gamme et distingue note différente, octave différente, note non repérée
-et note supplémentaire. Les temps affichés sont approximatifs. L’espacement des débuts de notes
-n’est commenté que si les huit notes sont retrouvées dans l’ordre, sans ajout. Ce n’est ni une
-mesure de synchronisation au métronome ni une évaluation du doigté, de la posture ou du toucher.
+Do3–Do7. Une note doit rester repérée au moins 180 ms. L’alignement par distance d’édition utilise
+la séquence de l’exercice choisi. Il distingue note différente, octave différente, note non
+repérée et ajout. L’espacement n’est commenté que lorsque toutes les notes attendues sont
+retrouvées dans l’ordre, sans ajout. Le doigté, la posture et le toucher ne sont pas évalués.
 
 Une prise trop courte, trop faible, saturée ou peu exploitable ne reçoit aucun verdict sur les
-notes. La détection reste expérimentale : accords, pédale, bruits périodiques et harmoniques
-peuvent encore produire des erreurs même si le signal paraît exploitable. Les tests synthétiques
-incluent plusieurs fréquences d’échantillonnage et un son avec harmoniques et décroissance ; ils
-ne remplacent pas un essai sur de vrais pianos acoustiques et numériques.
+notes. Accords, pédale, bruits périodiques et harmoniques peuvent encore tromper la détection.
+Les tests utilisent des signaux synthétiques à plusieurs fréquences d’échantillonnage, dont un
+son avec harmoniques et décroissance ; ils ne remplacent pas un essai sur de vrais pianos.
 
-L’analyse tourne hors du thread UI et peut être annulée. Le micro est libéré avant le bilan ou
-la réécoute. L’écran reste éveillé pendant la prise. Une sortie, un changement de compte ou un
-passage en arrière-plan annule la capture/l’analyse, efface le bilan et supprime le fichier de
-préécoute privé. Un nouvel essai efface aussi la prise précédente. La prise reste en mémoire
-jusqu’à une éventuelle réécoute locale ; aucun envoi Supabase, aucune note de maîtrise et aucune
-validation de compétence ne sont déclenchés. Aucune migration supplémentaire n’est nécessaire.
+### Données et interruptions
 
-Vérification manuelle : autoriser/refuser le micro ; jouer la gamme correcte, remplacer Fa par
-Fa♯, jouer une note à une autre octave, omettre une note ; essayer silence et bruit ; écouter
-la prise ; sortir pendant l’enregistrement et pendant l’analyse ; revenir après mise en veille ;
-tester piano acoustique/numérique sur Android et iPhone. Ne pas utiliser une enceinte diffusant
-l’exemple pendant la prise : le micro pourrait simplement reconnaître cette source.
+L’analyse et l’encodage des extraits tournent hors du thread UI. Le téléphone conserve au maximum
+une prise locale et un bilan de comparaison sans audio précédent. Le test micro et le compte à
+rebours ne sont jamais ajoutés à la prise. Les fichiers de préécoute (prise entière et extrait)
+sont privés et écrasés ou supprimés au nouvel essai/changement d’exercice. Sortie, changement de
+compte et arrière-plan annulent test, compte à rebours, capture, analyse et découpage en cours,
+effacent les deux bilans, libèrent le micro et suppriment les préécoutes. Revenir ne redémarre
+jamais automatiquement l’enregistrement.
+
+Vérification manuelle Android/iPhone : refus/autorisation micro ; test faible/saturé ; annulation
+et interruption du compte à rebours ; gamme correcte puis Fa♯ au lieu de Fa en Do ; octave
+incorrecte ou note omise ; toucher les notes du bilan et comparer l’extrait avec la prise ;
+travailler un fragment puis refaire la gamme ; changer tempo/gamme/sens ; comparer deux essais ;
+sortir pendant l’analyse ou l’encodage de l’extrait. Tester sur pianos acoustiques et numériques.
+Ne pas diffuser l’exemple sur une enceinte pendant la prise : le micro peut reconnaître cette source.

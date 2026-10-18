@@ -18,6 +18,7 @@ data class PianoScaleReport(
     val steps: List<PianoScaleStep> = emptyList(),
     /** Approximate onset spacing, only assessed for a complete, correctly ordered scale. */
     val irregularSpacing: Boolean? = null,
+    val expectedNotes: List<Int> = PianoScaleExercise.notes,
 ) {
     val matched get() = steps.count { it.correction == PianoNoteCorrection.MATCH }
 }
@@ -28,12 +29,14 @@ data class PianoScaleReport(
  * produce no verdict. Times are approximate analysis-window positions, not MIDI onsets.
  */
 class PianoScaleAnalyzer {
-    fun analyze(samples: FloatArray, sampleRate: Int, checkActive: () -> Unit = {}): PianoScaleReport {
+    fun analyze(samples: FloatArray, sampleRate: Int, expected: List<Int> = PianoScaleExercise.notes, checkActive: () -> Unit = {}): PianoScaleReport {
+        require(expected.size in 3..8 && expected.all { it in 48..96 })
+        fun inconclusive(quality: PianoScaleQuality) = PianoScaleReport(quality, expectedNotes = expected)
         if (sampleRate !in 8_000..192_000 || samples.size.toDouble() / sampleRate < 2.0)
-            return PianoScaleReport(PianoScaleQuality.TOO_SHORT)
-        if (samples.any { !it.isFinite() }) return PianoScaleReport(PianoScaleQuality.UNCERTAIN)
+            return inconclusive(PianoScaleQuality.TOO_SHORT)
+        if (samples.any { !it.isFinite() }) return inconclusive(PianoScaleQuality.UNCERTAIN)
         if (samples.count { abs(it) >= 0.98f }.toDouble() / samples.size > 0.02)
-            return PianoScaleReport(PianoScaleQuality.CLIPPED)
+            return inconclusive(PianoScaleQuality.CLIPPED)
         // Box-filter before integer decimation; preserves the true rate for 44.1 and 48 kHz.
         val factor = (sampleRate / 12_000).coerceAtLeast(1)
         val rate = sampleRate / factor
@@ -83,15 +86,15 @@ class PianoScaleAnalyzer {
             offset += hop
         }
         finish()
-        if (activeFrames * stepSeconds < 0.5) return PianoScaleReport(PianoScaleQuality.TOO_QUIET)
+        if (activeFrames * stepSeconds < 0.5) return inconclusive(PianoScaleQuality.TOO_QUIET)
         if (reliableFrames.toDouble() / activeFrames < 0.60 || heard.size < 3 || heard.size > 20)
-            return PianoScaleReport(PianoScaleQuality.UNCERTAIN)
-        val steps = alignPianoScale(PianoScaleExercise.notes, heard)
-        val exact = steps.size == PianoScaleExercise.notes.size && steps.all { it.correction == PianoNoteCorrection.MATCH }
+            return inconclusive(PianoScaleQuality.UNCERTAIN)
+        val steps = alignPianoScale(expected, heard)
+        val exact = steps.size == expected.size && steps.all { it.correction == PianoNoteCorrection.MATCH }
         val intervals = heard.zipWithNext { a, b -> b.startSeconds - a.startSeconds }
         val mean = intervals.average()
         val spacing = if (exact && mean > 0) sqrt(intervals.sumOf { (it - mean) * (it - mean) } / intervals.size) / mean > 0.25 else null
-        return PianoScaleReport(PianoScaleQuality.USABLE, heard, steps, spacing)
+        return PianoScaleReport(PianoScaleQuality.USABLE, heard, steps, spacing, expected)
     }
 }
 

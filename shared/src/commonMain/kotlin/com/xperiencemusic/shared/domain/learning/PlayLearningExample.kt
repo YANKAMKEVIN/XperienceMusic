@@ -15,6 +15,7 @@ class PlayLearningExample(private val files:FileStore,private val player:AudioPl
     operator fun invoke(notes:List<Int>)=play(notes,false,1.4)
     fun key(midi:Int)=play(listOf(midi),false,0.35)
     fun broken(notes:List<Int>)=play(notes,true,0.5)
+    fun sequence(notes:List<Int>,bpm:Int) { require(bpm in 40..120); play(notes,true,60.0/bpm) }
     fun reward()=play(listOf(72,76,79),true,0.13)
     fun metronome(bpm:Int) {
         val rate=24_000; val beat=60.0/bpm
