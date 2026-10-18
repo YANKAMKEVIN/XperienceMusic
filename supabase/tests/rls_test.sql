@@ -336,6 +336,7 @@ do $$ begin
     insert into public.objective_recordings(objective_id,audio_path,duration_seconds)
     values('piano-c3','submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav',12);
     insert into public.objective_checks(objective_id,status) values('piano-c3','SUBMITTED');
+    insert into storage.objects(bucket_id,name) values('audio','submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav');
     begin
         insert into public.objective_recordings(objective_id,audio_path,duration_seconds)
         values('piano-c4','submissions/00000000-0000-0000-0000-00000000000c/objectives/other.wav',12);
@@ -365,6 +366,8 @@ do $$ begin
         assert false, 'validated evidence cannot be replaced';
     exception when insufficient_privilege then null;
     end;
+    delete from storage.objects where name='submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav';
+    assert exists(select 1 from storage.objects where name='submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav'), 'validated files cannot be deleted by their owner';
 end $$;
 
 reset role;

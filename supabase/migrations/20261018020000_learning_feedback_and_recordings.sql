@@ -34,3 +34,17 @@ $$;
 create trigger guard_objective_recording before insert or update on public.objective_recordings for each row execute function public.guard_objective_recording();
 revoke all on public.objective_recordings from anon;
 grant select,insert,update on public.objective_recordings to authenticated;
+
+-- Owners cannot delete and re-upload a file whose objective is already validated.
+-- Old unreferenced takes remain deletable when a new, unvalidated take replaces them.
+drop policy "singers delete their voice" on storage.objects;
+create policy "singers delete their voice" on storage.objects for delete to authenticated
+using (
+    bucket_id='audio' and name like 'submissions/' || auth.uid()::text || '/%'
+    and not exists (
+        select 1 from public.objective_recordings recording
+        join public.objective_checks assessment
+          on assessment.member_id=recording.member_id and assessment.objective_id=recording.objective_id
+        where recording.audio_path=storage.objects.name and assessment.status='VALIDATED'
+    )
+);
