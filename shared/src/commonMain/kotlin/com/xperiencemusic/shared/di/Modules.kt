@@ -270,6 +270,11 @@ val domainModule = module {
 }
 
 val presentationModule = module {
+    viewModel {
+        com.xperiencemusic.shared.presentation.learning.PianoScaleViewModel(get(), get(),
+            com.xperiencemusic.shared.domain.learning.PlayLearningExample(get(), get(), get()),
+            PlayLocalAudioUseCase(get(), get(), get()), get())
+    }
     viewModel { params ->
         com.xperiencemusic.shared.presentation.learning.LearningViewModel(
             get(), get(), get(), get(), get(), com.xperiencemusic.shared.domain.learning.PlayLearningExample(get(), get(), get()), get(), params.getOrNull<String>() ?: "piano-chords",

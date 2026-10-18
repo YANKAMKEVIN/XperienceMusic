@@ -38,15 +38,15 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun LearningScreen(onBack:()->Unit,moduleId:String=LearningCatalog.DEFAULT,onModule:(String)->Unit={},onRecord:()->Unit={},
+fun LearningScreen(onBack:()->Unit,moduleId:String=LearningCatalog.DEFAULT,onModule:(String)->Unit={},onRecord:()->Unit={},onScaleCoach:()->Unit={},
     viewModel:LearningViewModel=koinViewModel(key="learning-$moduleId") { parametersOf(moduleId) }) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LearningScreenContent(state,viewModel::onEvent,onBack,onModule,onRecord, audioReview={ member, objective -> ObjectiveAudioReview(member, objective) })
+    LearningScreenContent(state,viewModel::onEvent,onBack,onModule,onRecord, audioReview={ member, objective -> ObjectiveAudioReview(member, objective) }, onScaleCoach=onScaleCoach)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,onBack:()->Unit,onModule:(String)->Unit={},onRecord:()->Unit={},audioReview:@Composable (String,String)->Unit={_,_->}) {
+fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,onBack:()->Unit,onModule:(String)->Unit={},onRecord:()->Unit={},audioReview:@Composable (String,String)->Unit={_,_->},onScaleCoach:()->Unit={}) {
     val density=LocalDensity.current
     val haptic=LocalHapticFeedback.current
     LaunchedEffect(state.successSerial) {
@@ -61,7 +61,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
             else key(state.mode,state.index,state.module.id) {
                 Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
                     when(state.mode) {
-                        LearningMode.HOME -> HomeContent(state,onEvent,onModule,onRecord,audioReview)
+                        LearningMode.HOME -> HomeContent(state,onEvent,onModule,onRecord,audioReview,onScaleCoach)
                         LearningMode.ACTIVITY -> {
                             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
                                 Text("Étape ${state.index+1} / ${state.module.activities.size}",style=MaterialTheme.typography.labelLarge)
@@ -116,7 +116,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(value,onChange)}
 }
 
-@Composable private fun HomeContent(s:LearningUiState,event:(LearningEvent)->Unit,onModule:(String)->Unit,onRecord:()->Unit,audioReview:@Composable (String,String)->Unit) {
+@Composable private fun HomeContent(s:LearningUiState,event:(LearningEvent)->Unit,onModule:(String)->Unit,onRecord:()->Unit,audioReview:@Composable (String,String)->Unit,onScaleCoach:()->Unit) {
     AppCard {
         Text("TA SÉANCE DU JOUR",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
         Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
@@ -153,6 +153,13 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
             TextButton(onClick={event(LearningEvent.RequestReview)},enabled=s.reviewLoaded && !s.saving && s.reviewStatus!=ExerciseStatus.SUBMITTED){Text("Demander une évaluation en répétition")}
             if(!s.reviewLoaded)Text("Une connexion est nécessaire pour envoyer la demande.",style=MaterialTheme.typography.bodySmall)
         }
+    }
+    if(s.module.id=="piano-scales") AppCard {
+        Text("UNE CORRECTION AU MICRO",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
+        Text("Ta gamme, note par note",style=MaterialTheme.typography.titleLarge)
+        Text("Joue une montée de Do majeur à une main. L’app compare les notes après la prise et propose un passage à reprendre.")
+        OutlinedButton(onClick=onScaleCoach) {Text("Essayer la correction automatique")}
+        Text("Essai local et expérimental · sans pédale · validation finale par le responsable.",style=MaterialTheme.typography.bodySmall)
     }
     JourneyGoal(s,event)
     if(s.preferences.startingPoint==null) StartingPoint(s,event)

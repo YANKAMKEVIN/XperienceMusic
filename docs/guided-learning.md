@@ -103,3 +103,37 @@ la prise actuelle existante. La table courante garde la dernière preuve d’év
 historique est alimentée par un trigger et ne permet aux membres ni modification ni suppression.
 Les règles privées propriétaire/Admin++ s’appliquent aux deux. Les anciens fichiers restent
 protégés contre la suppression par leur propriétaire ; la modération Admin++ reste possible.
+
+## Correction locale de la gamme au micro
+
+Depuis « Gammes et repères », « Essayer la correction automatique » ouvre un exercice séparé :
+une seule montée de Do4 à Do5 en Do majeur, une main, sans pédale, environ une note par seconde.
+Le profil piano peut l’essayer avant la fin du module. L’exemple sonore est joué avant la prise,
+jamais pendant celle-ci. Arrêter lance l’analyse locale ; une prise s’arrête automatiquement à 30 secondes.
+
+YIN estime une fondamentale monophonique, après réduction de fréquence avec moyennage. Le moteur
+écarte les fenêtres faibles, peu périodiques, trop éloignées d’une note tempérée ou hors du registre
+Do3–Do7. Une note doit rester repérée au moins 180 ms. Un alignement par distance d’édition compare
+les notes retenues à la gamme et distingue note différente, octave différente, note non repérée
+et note supplémentaire. Les temps affichés sont approximatifs. L’espacement des débuts de notes
+n’est commenté que si les huit notes sont retrouvées dans l’ordre, sans ajout. Ce n’est ni une
+mesure de synchronisation au métronome ni une évaluation du doigté, de la posture ou du toucher.
+
+Une prise trop courte, trop faible, saturée ou peu exploitable ne reçoit aucun verdict sur les
+notes. La détection reste expérimentale : accords, pédale, bruits périodiques et harmoniques
+peuvent encore produire des erreurs même si le signal paraît exploitable. Les tests synthétiques
+incluent plusieurs fréquences d’échantillonnage et un son avec harmoniques et décroissance ; ils
+ne remplacent pas un essai sur de vrais pianos acoustiques et numériques.
+
+L’analyse tourne hors du thread UI et peut être annulée. Le micro est libéré avant le bilan ou
+la réécoute. L’écran reste éveillé pendant la prise. Une sortie, un changement de compte ou un
+passage en arrière-plan annule la capture/l’analyse, efface le bilan et supprime le fichier de
+préécoute privé. Un nouvel essai efface aussi la prise précédente. La prise reste en mémoire
+jusqu’à une éventuelle réécoute locale ; aucun envoi Supabase, aucune note de maîtrise et aucune
+validation de compétence ne sont déclenchés. Aucune migration supplémentaire n’est nécessaire.
+
+Vérification manuelle : autoriser/refuser le micro ; jouer la gamme correcte, remplacer Fa par
+Fa♯, jouer une note à une autre octave, omettre une note ; essayer silence et bruit ; écouter
+la prise ; sortir pendant l’enregistrement et pendant l’analyse ; revenir après mise en veille ;
+tester piano acoustique/numérique sur Android et iPhone. Ne pas utiliser une enceinte diffusant
+l’exemple pendant la prise : le micro pourrait simplement reconnaître cette source.

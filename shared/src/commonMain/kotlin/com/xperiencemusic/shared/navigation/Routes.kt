@@ -62,3 +62,6 @@ data class PianoLearningRoute(val moduleId: String = "piano-chords")
 
 @Serializable
 data class LearningAssessmentRoute(val moduleId: String)
+
+@Serializable
+data object PianoScaleCoachRoute

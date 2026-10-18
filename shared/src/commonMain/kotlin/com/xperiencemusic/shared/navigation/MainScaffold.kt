@@ -123,6 +123,9 @@ fun MainScaffold(onSignOut: () -> Unit) {
             composable<LibraryRoute> {
                 LibraryScreen(onSongClick = openSong, onAddSong = { navController.navigate(SongEditorRoute()) })
             }
+            composable<PianoScaleCoachRoute> {
+                com.xperiencemusic.shared.ui.learning.PianoScaleScreen(onBack = { navController.popBackStack() })
+            }
             composable<LearningAssessmentRoute> { entry ->
                 com.xperiencemusic.shared.ui.learning.AssessmentScreen(entry.toRoute<LearningAssessmentRoute>().moduleId, onBack = { navController.popBackStack() })
             }
@@ -132,6 +135,7 @@ fun MainScaffold(onSignOut: () -> Unit) {
                     onBack = { navController.popBackStack() }, moduleId = moduleId,
                     onModule = { id -> navController.navigate(PianoLearningRoute(id)) { popUpTo<PianoLearningRoute> { inclusive = true } } },
                     onRecord = { navController.navigate(LearningAssessmentRoute(moduleId)) },
+                    onScaleCoach = { navController.navigate(PianoScaleCoachRoute) },
                 )
             }
             composable<ProgressRoute> {
