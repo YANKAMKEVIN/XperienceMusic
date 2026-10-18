@@ -126,10 +126,10 @@ class LearningViewModel(
                 val id=state.value.memberId?:return
                 val saved=snapshots?.load("learning-resume-$id-${module.id}",Resume.serializer())
                 if(saved!=null && saved.index in module.activities.indices && saved.index<=state.value.progress.nextIn(module)) {
-                    form.update { it.copy(index=saved.index,encounter=saved.encounter,notes=saved.notes,answer=saved.answer,hints=saved.hints,mode=LearningMode.ACTIVITY,result=null,feedback=null) }
+                    form.update { it.copy(index=saved.index,encounter=saved.encounter,notes=saved.notes,answer=saved.answer,hints=saved.hints,mode=LearningMode.ACTIVITY,result=null,feedback=null,taps=emptyList()) }
                 } else open(state.value.progress.nextIn(module))
             }
-            LearningEvent.Home -> { audio.stop(); persist(); form.update { it.copy(mode=LearningMode.HOME) } }
+            LearningEvent.Home -> { audio.stop(); persist(); form.update { it.copy(mode=LearningMode.HOME,taps=emptyList()) } }
             LearningEvent.Steps -> form.update { it.copy(steps=!it.steps) }
             LearningEvent.Settings -> form.update { it.copy(settings=!it.settings) }
             is LearningEvent.Preferences -> {
