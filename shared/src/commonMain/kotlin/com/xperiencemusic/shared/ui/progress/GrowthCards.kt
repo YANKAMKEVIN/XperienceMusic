@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -119,7 +120,7 @@ private fun Note(text: String, color: androidx.compose.ui.graphics.Color) {
  * sheet. Members tick what they reached; the microphone validates the singers' tier objectives.
  */
 @Composable
-internal fun ObjectivesCard(next: Level, objectives: List<ObjectiveUi>, isWorking: Boolean, onToggle: (String, Boolean) -> Unit) {
+internal fun ObjectivesCard(next: Level, objectives: List<ObjectiveUi>, isWorking: Boolean, onLearn: ((String) -> Unit)? = null, onToggle: (String, Boolean) -> Unit) {
     var openId by remember { mutableStateOf<String?>(null) }
     AppCard {
         Text(stringResource(Res.string.growth_objectives_title, next.target()), style = MaterialTheme.typography.titleMedium)
@@ -169,7 +170,10 @@ internal fun ObjectivesCard(next: Level, objectives: List<ObjectiveUi>, isWorkin
                         }
                     }
                 }
-                if (objective.autoTier != null) {
+                val module = com.xperiencemusic.shared.domain.learning.LearningCatalog.modules.firstOrNull { it.objectiveId == objective.id }
+                if (module != null && onLearn != null) {
+                    TextButton(onClick = { onLearn(module.id) }) { Text("Apprendre") }
+                } else if (objective.autoTier != null) {
                     Text(
                         stringResource(Res.string.growth_by_microphone, objective.autoTier),
                         style = MaterialTheme.typography.labelSmall,

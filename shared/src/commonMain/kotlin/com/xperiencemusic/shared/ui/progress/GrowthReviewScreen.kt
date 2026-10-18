@@ -75,12 +75,12 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun GrowthReviewScreen(onBack: () -> Unit, viewModel: GrowthReviewViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    GrowthReviewScreenContent(state, viewModel::onEvent, onBack)
+    GrowthReviewScreenContent(state, viewModel::onEvent, onBack, objectiveAudio = { member, objective -> com.xperiencemusic.shared.ui.learning.ObjectiveAudioReview(member, objective) })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReviewEvent) -> Unit, onBack: () -> Unit) {
+fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReviewEvent) -> Unit, onBack: () -> Unit, objectiveAudio: @Composable (String, String) -> Unit = { _, _ -> }) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.hasError) {
         if (state.hasError) {
@@ -150,6 +150,7 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
                         state = state,
                         onEvent = onEvent,
                     )
+                    objectiveAudio(objective.memberId, objective.objectiveId)
                 }
             }
         }
@@ -190,6 +191,7 @@ private fun ReviewCard(
             } else {
                 null
             },
+            placeholder = { Text("Une réussite observée, un point précis à travailler et le prochain essai attendu.") },
             minLines = 2,
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),

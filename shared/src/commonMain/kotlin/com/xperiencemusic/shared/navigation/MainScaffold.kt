@@ -123,8 +123,24 @@ fun MainScaffold(onSignOut: () -> Unit) {
             composable<LibraryRoute> {
                 LibraryScreen(onSongClick = openSong, onAddSong = { navController.navigate(SongEditorRoute()) })
             }
+            composable<PianoScaleCoachRoute> {
+                com.xperiencemusic.shared.ui.learning.PianoScaleScreen(onBack = { navController.popBackStack() })
+            }
+            composable<LearningAssessmentRoute> { entry ->
+                com.xperiencemusic.shared.ui.learning.AssessmentScreen(entry.toRoute<LearningAssessmentRoute>().moduleId, onBack = { navController.popBackStack() })
+            }
+            composable<PianoLearningRoute> { entry ->
+                val moduleId = entry.toRoute<PianoLearningRoute>().moduleId
+                com.xperiencemusic.shared.ui.learning.LearningScreen(
+                    onBack = { navController.popBackStack() }, moduleId = moduleId,
+                    onModule = { id -> navController.navigate(PianoLearningRoute(id)) { popUpTo<PianoLearningRoute> { inclusive = true } } },
+                    onRecord = { navController.navigate(LearningAssessmentRoute(moduleId)) },
+                    onScaleCoach = { navController.navigate(PianoScaleCoachRoute) },
+                )
+            }
             composable<ProgressRoute> {
                 ProgressScreen(
+                    onOpenLearning = { moduleId -> navController.navigate(PianoLearningRoute(moduleId)) },
                     onExerciseClick = { navController.navigate(ExerciseRoute(it)) },
                     onManageMembers = { navController.navigate(MembersRoute) },
                     onRecordVoice = { navController.navigate(VoiceRecordRoute(it)) },

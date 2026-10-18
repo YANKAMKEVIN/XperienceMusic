@@ -57,3 +57,8 @@ au premier chargement. Une bannière permet de relancer un chargement échoué.
 
 Les exercices automatiques évaluent la hauteur et la tenue des notes ; ils ne constituent pas
 une évaluation complète du chant. Le responsable reste décisionnaire du passage de niveau.
+
+## Apprentissage guidé
+
+Cinq modules piano associent séances courtes, leçons, écoutes, clavier sonore, rythme et prises audio privées pour le responsable.
+Voir [le fonctionnement et les limites](docs/guided-learning.md).

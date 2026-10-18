@@ -8,7 +8,8 @@ insert into auth.users (id, email) values
     ('00000000-0000-0000-0000-00000000000a', 'Admin@band.test'),
     ('00000000-0000-0000-0000-00000000000c', 'content@band.test'),
     ('00000000-0000-0000-0000-00000000000d', 'member@band.test'),
-    ('00000000-0000-0000-0000-00000000000e', 'stranger@else.test');
+    ('00000000-0000-0000-0000-00000000000e', 'stranger@else.test'),
+    ('00000000-0000-0000-0000-00000000000f', 'uninvited@else.test');
 update public.profiles set display_name = 'Admin', instrument = 'SINGER', level = 'PRO';
 insert into public.songs (id, title, key_tonic) values ('10000000-0000-0000-0000-000000000001', 'À toi la gloire', 2);
 
@@ -292,6 +293,90 @@ begin
         assert false, 'content admins cannot rename repertoire files into private submissions';
     exception when insufficient_privilege then null;
     end;
+end $$;
+
+-- Learning attempts are private, append-only practice records and never validate a skill.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    insert into public.learning_attempts(id, activity_id, version, passed, day)
+    values ('30000000-0000-0000-0000-000000000001', 'piano-chords-major', 1, true, current_date);
+    insert into public.learning_attempts(id, activity_id, version, passed, day)
+    values ('30000000-0000-0000-0000-000000000001', 'piano-chords-major', 1, true, current_date)
+    on conflict do nothing;
+    assert (select count(*) from public.learning_attempts) = 1, 'sync retries are idempotent';
+    begin
+        insert into public.learning_attempts(id, member_id, activity_id, version, passed, day)
+        values (gen_random_uuid(), '00000000-0000-0000-0000-00000000000a', 'piano-chords-major', 1, true, current_date);
+        assert false, 'cannot record another member learning';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+        update public.learning_attempts set passed = false;
+        assert false, 'learning history is immutable';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$ begin
+    assert (select count(*) from public.learning_attempts) = 0, 'other members cannot read learning history';
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000f');
+do $$ begin
+    begin
+        insert into public.learning_attempts(id, activity_id, version, passed, day)
+        values (gen_random_uuid(), 'piano-chords-major', 1, true, current_date);
+        assert false, 'uninvited accounts cannot write learning history';
+    exception when insufficient_privilege or foreign_key_violation then null;
+    end;
+end $$;
+
+-- Objective recordings share the privacy boundary of personal voice submissions.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    insert into public.objective_recordings(objective_id,audio_path,duration_seconds)
+    values('piano-c3','submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav',12);
+    assert (select count(*) from public.objective_recording_history)=1, 'submitted take is archived';
+    update public.objective_recordings set audio_path='submissions/00000000-0000-0000-0000-00000000000d/objectives/test2.wav' where objective_id='piano-c3';
+    assert (select count(*) from public.objective_recording_history)=2, 'replacement keeps earlier take';
+    begin
+        delete from public.objective_recording_history;
+        assert false, 'history is immutable for members';
+    exception when insufficient_privilege then null;
+    end;
+    insert into public.objective_checks(objective_id,status) values('piano-c3','SUBMITTED');
+    insert into storage.objects(bucket_id,name) values('audio','submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav');
+    begin
+        insert into public.objective_recordings(objective_id,audio_path,duration_seconds)
+        values('piano-c4','submissions/00000000-0000-0000-0000-00000000000c/objectives/other.wav',12);
+        assert false, 'recording must belong to its member folder';
+    exception when check_violation then null;
+    end;
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$ begin
+    assert (select count(*) from public.objective_recordings)=0, 'content admins do not read personal evaluations';
+    assert (select count(*) from public.objective_recording_history)=0, 'content admins do not read take history';
+    begin
+        insert into public.objective_recordings(member_id,objective_id,audio_path,duration_seconds)
+        values('00000000-0000-0000-0000-00000000000d','piano-c5','submissions/00000000-0000-0000-0000-00000000000d/objectives/injected.wav',12);
+        assert false, 'cannot inject another member evaluation';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+do $$ begin
+    assert (select count(*) from public.objective_recordings)=1, 'reviewer can listen';
+    update public.objective_checks set status='VALIDATED' where objective_id='piano-c3';
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    begin
+        update public.objective_recordings set audio_path='submissions/00000000-0000-0000-0000-00000000000d/objectives/replaced.wav';
+        assert false, 'validated evidence cannot be replaced';
+    exception when insufficient_privilege then null;
+    end;
+    delete from storage.objects where name='submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav';
+    assert exists(select 1 from storage.objects where name='submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav'), 'validated files cannot be deleted by their owner';
 end $$;
 
 reset role;
