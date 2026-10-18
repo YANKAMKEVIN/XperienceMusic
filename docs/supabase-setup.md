@@ -31,6 +31,7 @@ seuls les nouveaux fichiers sont à exécuter :
 | `20261016000000_growth_path.sql` | le parcours Débutant → Confirmé → Pro : demandes de passage, objectifs des musiciens, et seul l'Admin++ change un niveau après l'accueil |
 | `20261018000000_recording_integrity_and_private_audio.sql` | protège les prises personnelles contre les écritures des admins contenu et impose une référence unique même lors des écritures directes |
 | `20261018010000_learning_attempts.sql` | essais privés et immuables du parcours guidé piano |
+| `20261018020000_learning_feedback_and_recordings.sql` | variantes, indices et prises audio privées rattachées aux compétences |
 
 ## 3. T'inviter comme Admin++
 

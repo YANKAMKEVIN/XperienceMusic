@@ -6,6 +6,7 @@ import com.xperiencemusic.shared.domain.repository.SessionResettable
 import com.xperiencemusic.shared.data.remote.RemoteLoadMonitor
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -43,7 +44,9 @@ class ObjectiveRecordingsStore(private val storage:AudioStorage,private val clie
             if(started!=generation) throw CancellationException("Session ended")
             client?.from("objective_recordings")?.upsert(RecordingDto(memberId,objectiveId,path,seconds)) { onConflict="member_id,objective_id" }
         } catch(e:Exception) {
-            runCatching { storage.delete(path) }; throw e
+            // A lost response may follow a committed row. Only delete on a definite server refusal.
+            if (e is PostgrestRestException) runCatching { storage.delete(path) }
+            throw e
         }
         if(started!=generation) throw CancellationException("Session ended")
         val value=ObjectiveRecording(memberId,objectiveId,path,seconds)

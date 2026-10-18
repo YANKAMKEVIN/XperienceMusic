@@ -60,5 +60,5 @@ une évaluation complète du chant. Le responsable reste décisionnaire du passa
 
 ## Apprentissage guidé
 
-Le premier module piano « Accords de base » associe leçons, écoutes et clavier interactif.
+Cinq modules piano associent séances courtes, leçons, écoutes, clavier sonore, rythme et prises audio privées pour le responsable.
 Voir [le fonctionnement et les limites](docs/guided-learning.md).

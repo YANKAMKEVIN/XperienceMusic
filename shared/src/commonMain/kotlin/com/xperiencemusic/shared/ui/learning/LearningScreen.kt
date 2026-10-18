@@ -41,12 +41,12 @@ import org.koin.core.parameter.parametersOf
 fun LearningScreen(onBack:()->Unit,moduleId:String=LearningCatalog.DEFAULT,onModule:(String)->Unit={},onRecord:()->Unit={},
     viewModel:LearningViewModel=koinViewModel(key="learning-$moduleId") { parametersOf(moduleId) }) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LearningScreenContent(state,viewModel::onEvent,onBack,onModule,onRecord)
+    LearningScreenContent(state,viewModel::onEvent,onBack,onModule,onRecord, audioReview={ member, objective -> ObjectiveAudioReview(member, objective) })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,onBack:()->Unit,onModule:(String)->Unit={},onRecord:()->Unit={}) {
+fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,onBack:()->Unit,onModule:(String)->Unit={},onRecord:()->Unit={},audioReview:@Composable (String,String)->Unit={_,_->}) {
     val density=LocalDensity.current
     val haptic=LocalHapticFeedback.current
     LaunchedEffect(state.successSerial) {
@@ -61,7 +61,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
             else key(state.mode,state.index,state.module.id) {
                 Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
                     when(state.mode) {
-                        LearningMode.HOME -> HomeContent(state,onEvent,onModule,onRecord)
+                        LearningMode.HOME -> HomeContent(state,onEvent,onModule,onRecord,audioReview)
                         LearningMode.ACTIVITY -> {
                             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
                                 Text("Étape ${state.index+1} / ${state.module.activities.size}",style=MaterialTheme.typography.labelLarge)
@@ -115,7 +115,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(value,onChange)}
 }
 
-@Composable private fun HomeContent(s:LearningUiState,event:(LearningEvent)->Unit,onModule:(String)->Unit,onRecord:()->Unit) {
+@Composable private fun HomeContent(s:LearningUiState,event:(LearningEvent)->Unit,onModule:(String)->Unit,onRecord:()->Unit,audioReview:@Composable (String,String)->Unit) {
     AppCard {
         Text("TA SÉANCE DU JOUR",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
         Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
@@ -131,11 +131,11 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         TextButton(onClick={event(LearningEvent.Sync)}){Text("Synchroniser")}
     }
     AppCard {
-        Text(when {s.reviewStatus==ExerciseStatus.VALIDATED -> if(s.reviewDue)"Acquis · à entretenir" else "Compétence acquise";s.complete ->"Prêt pour une évaluation";s.completed.isNotEmpty()->"En pratique";else ->"À découvrir"},style=MaterialTheme.typography.titleMedium)
+        Text(when {s.reviewStatus==ExerciseStatus.VALIDATED -> if(s.reviewDue)"Acquis · à entretenir" else "Compétence acquise";s.complete ->"Prêt pour une évaluation";s.progress.attempts.any { attempt -> attempt.passed && s.module.activities.any { it.id==attempt.activityId && it.kind!=LearningKind.LESSON } }->"En pratique";s.completed.isNotEmpty()->"Découvert";else ->"À découvrir"},style=MaterialTheme.typography.titleMedium)
         Text("Les exercices à l’écran et le jeu sur l’instrument sont évalués séparément.",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
         s.reviewStatus?.let {ExerciseStatusBadge(it,Modifier.padding(top=Spacing.s))}
         s.feedback?.let {Text("Retour du responsable : $it",Modifier.padding(top=Spacing.s))}
-        if(s.complete) s.memberId?.let { ObjectiveAudioReview(it, s.module.objectiveId) }
+        if(s.complete) s.memberId?.let { audioReview(it, s.module.objectiveId) }
         if(s.complete && s.reviewStatus!=ExerciseStatus.VALIDATED) {
             OutlinedButton(onClick=onRecord,modifier=Modifier.padding(top=Spacing.m)){Text("Enregistrer mon jeu pour le responsable")}
             TextButton(onClick={event(LearningEvent.RequestReview)},enabled=s.reviewLoaded && !s.saving && s.reviewStatus!=ExerciseStatus.SUBMITTED){Text("Demander une évaluation en répétition")}
@@ -215,19 +215,19 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     val haptic=LocalHapticFeedback.current
     LaunchedEffect(s.activity.id,s.encounter) {
         val first=s.activity.expectedNotes.minOrNull()?:60
-        scroll.scrollTo(with(density){(48.dp*whites.count{it<first}.coerceAtLeast(0)).roundToPx()})
+        scroll.scrollTo(with(density){(72.dp*whites.count{it<first}.coerceAtLeast(0)).roundToPx()})
     }
     Text("Fais glisser le clavier pour explorer les deux octaves.",style=MaterialTheme.typography.bodySmall)
     Box(Modifier.fillMaxWidth().horizontalScroll(scroll)) {
-        Box(Modifier.width(48.dp*whites.size).height(184.dp)) {
+        Box(Modifier.width(72.dp*whites.size).height(184.dp)) {
             Row {
-                whites.forEach { midi -> PianoKey(midi,s,Modifier.width(48.dp).height(180.dp),false){
+                whites.forEach { midi -> PianoKey(midi,s,Modifier.width(72.dp).height(180.dp),false){
                     if(s.preferences.haptics)haptic.performHapticFeedback(HapticFeedbackType.LongPress);onKey(midi)
                 } }
             }
             blacks.forEach { midi ->
                 val boundary=whites.count{it<midi}
-                PianoKey(midi,s,Modifier.offset(x=48.dp*boundary-16.dp).width(32.dp).height(108.dp),true){
+                PianoKey(midi,s,Modifier.offset(x=72.dp*boundary-24.dp).width(48.dp).height(108.dp),true){
                     if(s.preferences.haptics)haptic.performHapticFeedback(HapticFeedbackType.LongPress);onKey(midi)
                 }
             }
@@ -238,7 +238,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     val selected=midi in s.notes
     val wrong=s.result==false && selected && midi !in s.activity.expectedNotes
     val missing=s.hints>=2 && midi in s.activity.expectedNotes && !selected
-    val color=when {wrong->MaterialTheme.colorScheme.error;selected->MaterialTheme.colorScheme.primary;missing->MaterialTheme.colorScheme.tertiary;black->Color(0xFF161320);else->Color(0xFFF4F3FA)}
+    val color=when {wrong->MaterialTheme.colorScheme.error;s.result==true && selected->Color(0xFF6FD3A0);selected->MaterialTheme.colorScheme.primary;missing->MaterialTheme.colorScheme.tertiary;black->Color(0xFF161320);else->Color(0xFFF4F3FA)}
     val label=noteLabel(midi)
     val keyColor by animateColorAsState(color, tween(if(s.preferences.reduceMotion)0 else 140), label="key-color")
     Box(modifier.background(keyColor,RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp)).border(1.dp,Color(0xFF555164),RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp))

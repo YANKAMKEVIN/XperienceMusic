@@ -77,6 +77,7 @@ fun noteLabel(midi:Int)=listOf("Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol
 /** The initial encounter stays unchanged; later encounters rotate tonic and quality deterministically. */
 fun variedActivity(base:LearningActivity, encounter:Int):LearningActivity {
     if(encounter==0) return base
+    if(base.kind==LearningKind.CHOICE) return base.copy(choices=if(encounter%2==0)base.choices else base.choices.reversed())
     if(base.kind==LearningKind.EAR) {
         val root=listOf(60,65,62,67,64,69)[encounter%6]
         val minor=(encounter+base.id.length)%2==0
