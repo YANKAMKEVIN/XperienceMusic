@@ -102,9 +102,9 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, onBack: () -> Unit, onStar
                     PianoNoteCorrection.EXTRA -> "$heard supplémentaire détectée : vérifie la transition."
                 }, modifier = Modifier.padding(top = Spacing.s))
             }
-            if (report.irregularSpacing != null) Text(if (report.irregularSpacing)
+            report.irregularSpacing?.let { irregular -> Text(if (irregular)
                 "L’espacement des notes varie. Rejoue lentement en comptant régulièrement."
-                else "L’espacement des notes est régulier sur cette prise.", Modifier.padding(top = Spacing.m))
+                else "L’espacement des notes est régulier sur cette prise.", Modifier.padding(top = Spacing.m)) }
             val first = report.steps.firstOrNull { it.correction != PianoNoteCorrection.MATCH }
             Text(if (first == null) "Prochain essai : retrouve cette montée avec la même régularité, sans tension."
                 else "Prochain essai : isole la transition autour de ${first.expected?.let(::noteLabel) ?: first.heard?.let { noteLabel(it.midi) }} avant de refaire la montée.",
