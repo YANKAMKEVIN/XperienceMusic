@@ -82,8 +82,8 @@ système des animations. Les builds seuls ne valident pas cette expérience sur 
 
 Les statuts distinguent découverte, pratique, consolidation et validation par le responsable.
 Un bouton explique la raison du statut. La fin des exercices, même sans erreur, ne remplace
-jamais la validation sur l’instrument. Les autres modules invitent à ouvrir leur propre statut
-plutôt que d’inventer une validation à partir de leurs exercices.
+jamais la validation sur l’instrument. La liste des modules affiche aussi le statut de chaque compétence à partir des décisions du responsable,
+sans déduire une validation des seules réussites aux exercices.
 
 Un bilan facultatif de trois questions propose un point de départ sans débloquer ni valider
 une étape. Le conseil et l’objectif de un à trois jours de pratique par semaine restent locaux,

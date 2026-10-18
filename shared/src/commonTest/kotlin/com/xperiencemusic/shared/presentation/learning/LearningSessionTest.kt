@@ -30,7 +30,7 @@ class LearningSessionTest {
         val first=create()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)){first.state.collect()}
         first.onEvent(LearningEvent.Check);first.onEvent(LearningEvent.Next)
-        first.onEvent(LearningEvent.Preferences(LearningPreferences(touchSound=false,rewardSound=false,haptics=false)))
+        first.onEvent(LearningEvent.Preferences(LearningPreferences(touchSound=false,rewardSound=false,haptics=false,weeklyTarget=3,startingPoint="piano-chart")))
         first.onEvent(LearningEvent.Key(60));first.onEvent(LearningEvent.Hint)
         first.onEvent(LearningEvent.Home)
         val next=create()
@@ -40,6 +40,8 @@ class LearningSessionTest {
         assertEquals(setOf(60),next.state.value.notes)
         assertEquals(1,next.state.value.hints)
         assertFalse(next.state.value.preferences.touchSound)
+        assertEquals(3,next.state.value.preferences.weeklyTarget)
+        assertEquals("piano-chart",next.state.value.preferences.startingPoint)
         assertEquals(1,repo.observe("me").first().attempts.size)
         next.onEvent(LearningEvent.Key(64));next.onEvent(LearningEvent.Key(67));next.onEvent(LearningEvent.Check)
         assertEquals(true,next.state.value.result)

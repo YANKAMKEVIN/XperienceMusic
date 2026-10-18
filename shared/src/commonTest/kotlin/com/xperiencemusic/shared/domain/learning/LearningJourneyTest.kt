@@ -15,6 +15,12 @@ class LearningJourneyTest {
         assertEquals(Mastery.CONSOLIDATING,LearningProgress().mastery(module,ExerciseStatus.TO_REWORK,today))
         assertEquals(Mastery.DISCOVER,LearningProgress().mastery(module,null,today))
     }
+    @Test fun assistanceAndErrorsStayVisibleBeforeCompletingModule() {
+        val failed=attempt("error",18).copy(passed=false)
+        assertEquals(Mastery.CONSOLIDATING,LearningProgress(listOf(failed)).mastery(module,null,today))
+        assertEquals(Mastery.CONSOLIDATING,LearningProgress(listOf(failed.copy(passed=true,hints=1))).mastery(module,null,today))
+        assertEquals(Mastery.PRACTISING,LearningProgress(listOf(failed,failed.copy(id="retry",passed=true))).mastery(module,null,today))
+    }
     @Test fun weeklyGoalCountsDistinctDaysAndIgnoresFutureAndOldDates() {
         val p=LearningProgress(listOf(attempt("1",12),attempt("2",12),attempt("3",18),attempt("4",11),attempt("5",19)))
         assertEquals(2,p.weeklyDays(today))

@@ -29,7 +29,7 @@ data class LearningUiState(
     val module:LearningModule=LearningCatalog.module(LearningCatalog.DEFAULT),val index:Int=0,
     val encounter:Int=0,val progress:LearningProgress=LearningProgress(),val notes:Set<Int> = emptySet(),val answer:String?=null,
     val listened:Boolean=false,val result:Boolean?=null,val saving:Boolean=false,val error:String?=null,
-    val reviewLoaded:Boolean=false,val reviewStatus:ExerciseStatus?=null,val feedback:String?=null,val reviewDue:Boolean=false,
+    val moduleReviews:Map<String,ExerciseStatus> = emptyMap(),val reviewLoaded:Boolean=false,val reviewStatus:ExerciseStatus?=null,val feedback:String?=null,val reviewDue:Boolean=false,
     val mode:LearningMode=LearningMode.HOME,val hints:Int=0,val showSteps:Boolean=false,val showSettings:Boolean=false,
     val preferences:LearningPreferences=LearningPreferences(),val feedbackText:String?=null,val taps:List<Double> = emptyList(),
     val sessionDone:List<String> = emptyList(),val sessionDifficult:Set<String> = emptySet(),val successSerial:Int=0,
@@ -94,7 +94,7 @@ class LearningViewModel(
         val c=checks?.firstOrNull { it.memberId==m?.id && it.objectiveId==module.objectiveId }
         LearningUiState(today=dates.today(),loading=m==null,allowed=m?.profile?.instrument==Instrument.PIANO,memberId=m?.id,module=module,
             index=f.index?:p.nextIn(module),encounter=f.encounter,progress=p,notes=f.notes,answer=f.answer,listened=f.listened,
-            result=f.result,saving=f.saving,error=f.error,reviewLoaded=checks!=null,reviewStatus=c?.status,feedback=c?.feedback,
+            result=f.result,saving=f.saving,error=f.error,moduleReviews=checks.orEmpty().filter { it.memberId==m?.id }.associate { it.objectiveId to it.status },reviewLoaded=checks!=null,reviewStatus=c?.status,feedback=c?.feedback,
             reviewDue=p.dueIn(module,dates.today()).isNotEmpty(),mode=f.mode,hints=f.hints,showSteps=f.steps,showSettings=f.settings,
             preferences=f.preferences,feedbackText=f.feedback,taps=f.taps,sessionDone=f.done,sessionDifficult=f.difficult,successSerial=f.successSerial)
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),LearningUiState(module=module))

@@ -177,7 +177,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         AppCard(onClick={onModule(m.id)}) {
             Text(m.title,style=MaterialTheme.typography.titleMedium)
             Text("${s.progress.completedIn(m).size} / ${m.activities.size} activités",style=MaterialTheme.typography.bodySmall)
-            Text(if(m.id==s.module.id)s.progress.mastery(m,s.reviewStatus,s.today).label else "Ouvrir pour voir la compétence et son évaluation",style=MaterialTheme.typography.bodySmall)
+            Text(s.progress.mastery(m,s.moduleReviews[m.objectiveId],s.today).label,style=MaterialTheme.typography.bodySmall)
         }
     }
     if(s.progress.attempts.isNotEmpty()) AppCard {
