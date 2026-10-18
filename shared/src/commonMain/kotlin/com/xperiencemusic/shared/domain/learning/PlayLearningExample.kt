@@ -10,24 +10,35 @@ import kotlin.math.PI
 import kotlin.math.min
 import kotlin.math.sin
 
-/** Neutral synthesized examples, identical on both platforms; not sampled piano recordings. */
-class PlayLearningExample(
-    private val files: FileStore,
-    private val player: AudioPlayer,
-    private val playback: PlaybackController,
-) {
-    operator fun invoke(notes: List<Int>) {
-        if (notes.isEmpty()) return
-        playback.stop()
-        val rate = 24_000
-        val samples = FloatArray(rate * 2) { i ->
-            val envelope = min(1.0, min(i, rate * 2 - i - 1) / (rate * 0.03))
-            (notes.sumOf { midi -> sin(2 * PI * Pitch.midiToFrequency(midi.toDouble()) * i / rate) }
-                / notes.size * 0.35 * envelope).toFloat()
+/** Locally synthesized examples; short key sounds never play a reward over the exercise. */
+class PlayLearningExample(private val files:FileStore,private val player:AudioPlayer,private val playback:PlaybackController) {
+    operator fun invoke(notes:List<Int>)=play(notes,false,1.4)
+    fun key(midi:Int)=play(listOf(midi),false,0.35)
+    fun broken(notes:List<Int>)=play(notes,true,0.5)
+    fun reward()=play(listOf(72,76,79),true,0.13)
+    fun metronome(bpm:Int) {
+        val rate=24_000; val beat=60.0/bpm
+        val samples=FloatArray((rate*beat*8).toInt()) { i ->
+            val t=(i.toDouble()/rate)%beat
+            if(t<0.035) (sin(2*PI*1100*t)*0.2*(1-t/0.035)).toFloat() else 0f
         }
-        val path = "tones/learning-${notes.joinToString("-")}.wav"
-        val url = files.fileUrl(path) ?: files.write(path, WavEncoder.encode(samples, rate))
-        player.play(url, NowPlaying("Exemple musical", "Accords de base"))
+        output("click-$bpm",WavEncoder.encode(samples,rate))
     }
-    fun stop() = playback.stop()
+    private fun play(notes:List<Int>,broken:Boolean,seconds:Double) {
+        if(notes.isEmpty())return
+        val rate=24_000;val duration=if(broken)seconds*notes.size else seconds
+        val samples=FloatArray((rate*duration).toInt()) { i ->
+            val t=i.toDouble()/rate
+            val active=if(broken)listOf(notes[(t/seconds).toInt().coerceAtMost(notes.lastIndex)]) else notes
+            val local=if(broken)t%seconds else t
+            val envelope=min(1.0,min(local,seconds-local)/0.015).coerceAtLeast(0.0)
+            (active.sumOf { midi -> sin(2*PI*Pitch.midiToFrequency(midi.toDouble())*local) }/active.size*0.32*envelope).toFloat()
+        }
+        output("learning-${notes.joinToString("-")}-$broken-$seconds",WavEncoder.encode(samples,rate))
+    }
+    private fun output(id:String,bytes:ByteArray) {
+        playback.stop()
+        player.play(files.write("tones/$id.wav",bytes),NowPlaying("Exemple musical","XperienceMusic"))
+    }
+    fun stop()=playback.stop()
 }

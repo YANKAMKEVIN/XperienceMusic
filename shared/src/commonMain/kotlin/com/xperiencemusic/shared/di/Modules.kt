@@ -160,12 +160,15 @@ val dataModule = module {
         )
     }
     single { com.xperiencemusic.shared.data.remote.RemoteLoadMonitor() }
+    single<com.xperiencemusic.shared.domain.learning.ObjectiveRecordings> {
+        com.xperiencemusic.shared.data.learning.ObjectiveRecordingsStore(get(), if (SupabaseConfig.isConfigured) get() else null, get())
+    }
     single<LocalDataStore> {
         DeviceDataStore(get(), get(), get(), get()) {
             get<PlaybackController>().stop()
             listOf(get<SongRepository>(), get<SetlistRepository>(), get<ExerciseRepository>(),
                 get<MembersRepository>(), get<PlanningRepository>(), get<GrowthRepository>(),
-                get<VoiceSubmissionRepository>(), get<com.xperiencemusic.shared.domain.learning.LearningRepository>()).forEach {
+                get<VoiceSubmissionRepository>(), get<com.xperiencemusic.shared.domain.learning.LearningRepository>(), get<com.xperiencemusic.shared.domain.learning.ObjectiveRecordings>()).forEach {
                 (it as? com.xperiencemusic.shared.domain.repository.SessionResettable)?.resetSession()
             }
             get<com.xperiencemusic.shared.data.remote.RemoteLoadMonitor>().clear()
@@ -267,10 +270,13 @@ val domainModule = module {
 }
 
 val presentationModule = module {
-    viewModel {
+    viewModel { params ->
         com.xperiencemusic.shared.presentation.learning.LearningViewModel(
-            get(), get(), get(), get(), get(), com.xperiencemusic.shared.domain.learning.PlayLearningExample(get(), get(), get()),
+            get(), get(), get(), get(), get(), com.xperiencemusic.shared.domain.learning.PlayLearningExample(get(), get(), get()), get(), params.getOrNull<String>() ?: "piano-chords",
         )
+    }
+    viewModel { params ->
+        com.xperiencemusic.shared.presentation.learning.AssessmentViewModel(params.get(), get(), get(), get(), VoiceRecorder(get()), PlayLocalAudioUseCase(get(), get(), get()), get())
     }
     viewModelOf(::AppViewModel)
     viewModelOf(::OnboardingViewModel)

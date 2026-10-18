@@ -16,8 +16,10 @@ private data class AttemptDto(
     val version: Int,
     val passed: Boolean,
     val day: LocalDate,
+    val variant: String = "original",
+    val hints: Int = 0,
 ) {
-    fun domain() = LearningAttempt(id, memberId, activityId, version, passed, day)
+    fun domain() = LearningAttempt(id, memberId, activityId, version, passed, day, variant, hints)
 }
 
 class SupabaseLearningRemote(private val client: SupabaseClient) : LearningRemote {
@@ -26,7 +28,7 @@ class SupabaseLearningRemote(private val client: SupabaseClient) : LearningRemot
 
     override suspend fun send(attempt: LearningAttempt) {
         client.from("learning_attempts").upsert(
-            AttemptDto(attempt.id, attempt.memberId, attempt.activityId, attempt.version, attempt.passed, attempt.day),
+            AttemptDto(attempt.id, attempt.memberId, attempt.activityId, attempt.version, attempt.passed, attempt.day, attempt.variant, attempt.hints),
         ) { ignoreDuplicates = true }
     }
 }

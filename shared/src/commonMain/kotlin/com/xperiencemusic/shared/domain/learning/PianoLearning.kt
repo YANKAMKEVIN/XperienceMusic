@@ -6,7 +6,7 @@ import kotlinx.datetime.plus
 import kotlinx.serialization.Serializable
 
 /** Versioned activities train skills; only a responsible person validates the objective. */
-enum class LearningKind { LESSON, EAR, KEYBOARD, PRACTICE }
+enum class LearningKind { LESSON, EAR, KEYBOARD, PRACTICE, CHOICE, RHYTHM }
 
 data class LearningActivity(
     val id: String,
@@ -17,6 +17,8 @@ data class LearningActivity(
     val example: List<Int> = emptyList(),
     val expectedNotes: Set<Int> = emptySet(),
     val answer: String? = null,
+    val choices: List<String> = emptyList(),
+    val bpm: Int = 72,
 )
 
 @Serializable
@@ -27,6 +29,8 @@ data class LearningAttempt(
     val version: Int,
     val passed: Boolean,
     val day: LocalDate,
+    val variant: String = "original",
+    val hints: Int = 0,
 )
 
 data class LearningProgress(val attempts: List<LearningAttempt> = emptyList(), val pending: Int = 0) {
@@ -81,7 +85,8 @@ object PianoBasics {
 
     fun check(activity: LearningActivity, notes: Set<Int>, answer: String?): Boolean = when (activity.kind) {
         LearningKind.KEYBOARD -> notes == activity.expectedNotes
-        LearningKind.EAR -> answer == activity.answer
+        LearningKind.EAR, LearningKind.CHOICE -> answer == activity.answer
+        LearningKind.RHYTHM -> false // Timing is evaluated from the tap intervals, never a checkbox.
         LearningKind.LESSON, LearningKind.PRACTICE -> true
     }
 }

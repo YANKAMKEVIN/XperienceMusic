@@ -1,8 +1,11 @@
 package com.xperiencemusic.shared.ui.learning
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -15,10 +18,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.*
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,162 +35,218 @@ import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
-fun LearningScreen(onBack: () -> Unit, viewModel: LearningViewModel = koinViewModel()) {
+fun LearningScreen(onBack:()->Unit,moduleId:String=LearningCatalog.DEFAULT,onModule:(String)->Unit={},onRecord:()->Unit={},
+    viewModel:LearningViewModel=koinViewModel(key="learning-$moduleId") { parametersOf(moduleId) }) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LearningScreenContent(state, viewModel::onEvent, onBack)
+    LearningScreenContent(state,viewModel::onEvent,onBack,onModule,onRecord)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LearningScreenContent(state: LearningUiState, onEvent: (LearningEvent) -> Unit, onBack: () -> Unit) {
-    Scaffold(topBar = {
-        TopAppBar(title = { Text("Accords de base") }, navigationIcon = {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") }
-        }, windowInsets = WindowInsets(0))
-    }, contentWindowInsets = WindowInsets(0)) { padding ->
-        when {
-            state.loading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            !state.allowed -> Text("Ce premier module est proposé au parcours piano.", Modifier.padding(padding).padding(Spacing.l))
-            else -> key(state.index) {
-                Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.l),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
-                    AppCard {
-                        Text("PIANO · PARCOURS GUIDÉ", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                        Text("Construire, entendre, jouer", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = Spacing.s))
-                        Text("${state.progress.completed.size} / ${PianoBasics.activities.size} activités terminées", modifier = Modifier.padding(top = Spacing.m))
-                        LinearProgressIndicator(progress = { state.progress.completed.size.toFloat() / PianoBasics.activities.size }, modifier = Modifier.fillMaxWidth().padding(top = Spacing.s))
-                        Text("La compétence est évaluée séparément par ton responsable.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = Spacing.s))
-                    }
-                    if (state.progress.pending > 0) AppCard {
-                        Text("${state.progress.pending} essai(s) sauvegardé(s) sur ce téléphone, en attente de synchronisation.")
-                        TextButton(onClick = { onEvent(LearningEvent.Sync) }) { Text("Synchroniser") }
-                    }
-                    if (state.reviewDue) AppCard {
-                        Text("À revoir aujourd’hui", style = MaterialTheme.typography.titleMedium)
-                        Text("Retrouve Fa majeur de mémoire pour entretenir tes acquis.")
-                        TextButton(onClick = { onEvent(LearningEvent.Open(PianoBasics.activities.lastIndex)) }) { Text("Reprendre le défi") }
-                    }
-                    ActivityCard(state, onEvent)
-                    if (state.progress.isComplete) ReviewCard(state, onEvent)
-                    Text("Les étapes du module", style = MaterialTheme.typography.titleLarge)
-                    PianoBasics.activities.forEachIndexed { index, activity ->
-                        val done = activity.id in state.progress.completed
-                        val unlocked = state.progress.isComplete || index <= state.progress.nextIndex
-                        AppCard(onClick = if (unlocked) ({ onEvent(LearningEvent.Open(index)) }) else null) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
-                                Text(if (done) "✓" else "${index + 1}", color = if (unlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                                Column(Modifier.weight(1f)) {
-                                    Text(activity.title, style = MaterialTheme.typography.titleSmall)
-                                    Text(when { done -> "Terminée · à revoir librement"; !unlocked -> "À découvrir après l’étape précédente"; index == state.index -> "En cours"; else -> "À découvrir" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
+fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,onBack:()->Unit,onModule:(String)->Unit={},onRecord:()->Unit={}) {
+    val density=LocalDensity.current
+    val haptic=LocalHapticFeedback.current
+    LaunchedEffect(state.successSerial) {
+        if(state.successSerial>0 && state.preferences.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+    CompositionLocalProvider(LocalDensity provides Density(density.density,density.fontScale*if(state.preferences.largeText)1.2f else 1f)) {
+        Scaffold(topBar={ TopAppBar(title={Text(state.module.title,style=MaterialTheme.typography.titleLarge)},navigationIcon={
+            IconButton(onClick={ if(state.mode==LearningMode.HOME)onBack() else onEvent(LearningEvent.Home) }) { Icon(Icons.AutoMirrored.Filled.ArrowBack,"Retour") }
+        },actions={TextButton(onClick={onEvent(LearningEvent.Settings)}) {Text("Confort")}},windowInsets=WindowInsets(0)) },contentWindowInsets=WindowInsets(0)) { padding ->
+            if(state.loading) Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.Center){CircularProgressIndicator()}
+            else if(!state.allowed)Text("Ces modules sont proposés au parcours piano.",Modifier.padding(padding).padding(Spacing.l))
+            else key(state.mode,state.index,state.module.id) {
+                Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
+                    when(state.mode) {
+                        LearningMode.HOME -> HomeContent(state,onEvent,onModule,onRecord)
+                        LearningMode.ACTIVITY -> {
+                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                                Text("Étape ${state.index+1} / ${state.module.activities.size}",style=MaterialTheme.typography.labelLarge)
+                                TextButton(onClick={onEvent(LearningEvent.Steps)}){Text("Voir les étapes")}
                             }
+                            ActivityCard(state,onEvent)
+                            TextButton(onClick={onEvent(LearningEvent.Home)}){Text("Faire une pause · progression conservée")}
+                        }
+                        LearningMode.SUMMARY -> {
+                            AppCard {
+                                Text("Une séance de plus !",style=MaterialTheme.typography.headlineMedium)
+                                Text("${state.sessionDone.size} activité(s) travaillée(s)",Modifier.padding(top=Spacing.m))
+                                state.sessionDone.forEach { id -> Text("✓ ${LearningCatalog.findActivity(id)?.title.orEmpty()}",Modifier.padding(top=Spacing.s)) }
+                                if(state.sessionDifficult.isNotEmpty()) {
+                                    Text("À reprendre tranquillement",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=Spacing.m))
+                                    state.sessionDifficult.forEach { id ->Text(LearningCatalog.findActivity(id)?.title.orEmpty()) }
+                                }
+                                Text("Tu peux t’arrêter ici. La prochaine séance reprendra tes acquis et tes difficultés.",Modifier.padding(top=Spacing.m))
+                            }
+                            GradientButton(onClick={onEvent(LearningEvent.Home)}){Text("Terminer ma séance")}
+                            OutlinedButton(onClick={onEvent(LearningEvent.Open(state.progress.nextIn(state.module)))}){Text("Continuer librement")}
                         }
                     }
-                    if (state.progress.attempts.isNotEmpty()) AppCard {
-                        Text("Mes derniers essais", style = MaterialTheme.typography.titleMedium)
-                        state.progress.attempts.takeLast(5).reversed().forEach { attempt ->
-                            val title = PianoBasics.activities.firstOrNull { it.id == attempt.activityId }?.title ?: "Activité"
-                            Text("${attempt.day} · $title · ${if (attempt.passed) "terminé" else "à retravailler"}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Spacing.s))
-                        }
-                    }
-                    Text("Exemples sonores synthétisés. Les exercices à l’écran ne mesurent pas ton jeu sur l’instrument.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    state.error?.let {Text(it,color=MaterialTheme.colorScheme.error)}
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ActivityCard(state: LearningUiState, onEvent: (LearningEvent) -> Unit) {
-    val activity = state.activity
-    AppCard {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
-            Text("ACTIVITÉ ${state.index + 1} · ${when (activity.kind) { LearningKind.LESSON -> "COMPRENDRE"; LearningKind.EAR -> "ÉCOUTER"; LearningKind.KEYBOARD -> "CONSTRUIRE"; LearningKind.PRACTICE -> "PRATIQUER" }}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            Text(activity.title, style = MaterialTheme.typography.headlineSmall)
-            Text(activity.instruction, style = MaterialTheme.typography.bodyLarge)
-            if (activity.kind == LearningKind.LESSON || activity.kind == LearningKind.PRACTICE) Text(activity.explanation)
-            if (activity.example.isNotEmpty()) OutlinedButton(onClick = { onEvent(LearningEvent.Listen) }, enabled = !state.saving) { Text("Écouter l’exemple") }
-            if (activity.kind == LearningKind.EAR) {
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                    listOf("Majeur", "Mineur").forEach { choice ->
-                        FilterChip(selected = state.answer == choice, onClick = { onEvent(LearningEvent.Answer(choice)) }, label = { Text(choice) }, enabled = !state.saving)
+        if(state.showSteps) AlertDialog(onDismissRequest={onEvent(LearningEvent.Steps)},title={Text("Les étapes")},text={
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                state.module.activities.forEachIndexed { i,a ->
+                    val unlocked=state.complete || i<=state.progress.nextIn(state.module)
+                    TextButton(onClick={onEvent(LearningEvent.Open(i))},enabled=unlocked) {
+                        Text("${if(a.id in state.completed)"✓" else "${i+1}."} ${a.title}${if(!unlocked)" · à découvrir ensuite" else ""}")
                     }
                 }
-                if (!state.listened) Text("Écoute l’exemple avant de répondre.", style = MaterialTheme.typography.bodySmall)
             }
-            if (activity.kind == LearningKind.KEYBOARD) {
-                PianoKeyboard(state.notes, !state.saving) { onEvent(LearningEvent.Key(it)) }
-                Text("Notes choisies : ${state.notes.sorted().joinToString(" · ") { noteName(it) }.ifEmpty { "aucune" }}", style = MaterialTheme.typography.bodySmall)
-                OutlinedButton(onClick = { onEvent(LearningEvent.ListenSelection) }, enabled = state.notes.isNotEmpty()) { Text("Écouter ma sélection") }
+        },confirmButton={TextButton(onClick={onEvent(LearningEvent.Steps)}){Text("Fermer")}})
+        if(state.showSettings) AlertDialog(onDismissRequest={onEvent(LearningEvent.Settings)},title={Text("Ton confort")},text={
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Setting("Son des touches",state.preferences.touchSound){onEvent(LearningEvent.Preferences(state.preferences.copy(touchSound=it)))}
+                Setting("Son de réussite",state.preferences.rewardSound){onEvent(LearningEvent.Preferences(state.preferences.copy(rewardSound=it)))}
+                Setting("Vibrations légères",state.preferences.haptics){onEvent(LearningEvent.Preferences(state.preferences.copy(haptics=it)))}
+                Setting("Réduire les animations",state.preferences.reduceMotion){onEvent(LearningEvent.Preferences(state.preferences.copy(reduceMotion=it)))}
+                Setting("Texte plus grand",state.preferences.largeText){onEvent(LearningEvent.Preferences(state.preferences.copy(largeText=it)))}
+                Text("Le texte conserve aussi les réglages de taille du téléphone. Les animations suivent les réglages système.",style=MaterialTheme.typography.bodySmall)
             }
-            state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            state.result?.let { passed ->
-                Text(if (passed) "Bien joué !" else "Pas encore. Essaie à nouveau.", style = MaterialTheme.typography.titleMedium, color = if (passed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
-                if (activity.kind == LearningKind.KEYBOARD || activity.kind == LearningKind.EAR) Text(activity.explanation)
-            }
-            if (state.result == true && state.index < PianoBasics.activities.lastIndex) {
-                GradientButton(onClick = { onEvent(LearningEvent.Next) }) { Text("Continuer") }
-            } else {
-                GradientButton(onClick = { onEvent(LearningEvent.Check) }, enabled = state.canCheck) {
-                    Text(when { state.saving -> "Sauvegarde…"; state.result == true -> "Refaire le défi"; activity.kind == LearningKind.LESSON -> "J’ai compris"; activity.kind == LearningKind.PRACTICE -> "J’ai effectué cet entraînement"; else -> "Vérifier ma réponse" })
-                }
-            }
-        }
+        },confirmButton={TextButton(onClick={onEvent(LearningEvent.Settings)}){Text("C’est réglé")}})
     }
 }
+@Composable private fun Setting(label:String,value:Boolean,onChange:(Boolean)->Unit) {
+    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(value,onChange)}
+}
 
-@Composable
-private fun ReviewCard(state: LearningUiState, onEvent: (LearningEvent) -> Unit) {
+@Composable private fun HomeContent(s:LearningUiState,event:(LearningEvent)->Unit,onModule:(String)->Unit,onRecord:()->Unit) {
     AppCard {
-        Text("Passer de l’écran à l’instrument", style = MaterialTheme.typography.titleLarge)
-        Text("Prépare I–IV–V–I en Do, Sol, Ré, Fa, La et Mi, avec renversements. Ton responsable pourra écouter et évaluer ton jeu en répétition.", modifier = Modifier.padding(top = Spacing.s))
-        state.reviewStatus?.let { ExerciseStatusBadge(it, Modifier.padding(top = Spacing.s)) }
-        state.feedback?.let { Text("Retour du responsable : $it", modifier = Modifier.padding(top = Spacing.s)) }
-        if (!state.reviewLoaded) Text("Connecte-toi au réseau pour retrouver ton évaluation et envoyer une demande.", modifier = Modifier.padding(top = Spacing.s))
-        when (state.reviewStatus) {
-            ExerciseStatus.VALIDATED -> Text("Compétence acquise. Continue à la pratiquer.", modifier = Modifier.padding(top = Spacing.s))
-            ExerciseStatus.SUBMITTED -> Text("Demande envoyée. Organise un temps d’évaluation avec ton responsable.", modifier = Modifier.padding(top = Spacing.s))
-            else -> GradientButton(onClick = { onEvent(LearningEvent.RequestReview) }, enabled = !state.saving && state.reviewLoaded, modifier = Modifier.padding(top = Spacing.m)) {
-                Text(if (state.reviewStatus == ExerciseStatus.TO_REWORK) "Demander une nouvelle évaluation" else "Demander une évaluation")
-            }
+        Text("TA SÉANCE DU JOUR",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
+        Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
+        Text("Environ 5 minutes · découverte, pratique et révision",Modifier.padding(top=Spacing.s))
+        Text("${s.completed.size} / ${s.module.activities.size} activités terminées",Modifier.padding(top=Spacing.m))
+        LinearProgressIndicator(progress={s.completed.size.toFloat()/s.module.activities.size},modifier=Modifier.fillMaxWidth().padding(top=Spacing.s))
+        GradientButton(onClick={event(LearningEvent.Begin)},modifier=Modifier.padding(top=Spacing.m)){Text(if(s.reviewDue)"Ma séance et mes révisions" else "Commencer ma séance")}
+        TextButton(onClick={event(LearningEvent.Resume)}){Text("Reprendre · ${s.module.activities[s.progress.nextIn(s.module)].title}")}
+        TextButton(onClick={event(LearningEvent.Steps)}){Text("Explorer les étapes")}
+    }
+    if(s.progress.pending>0) AppCard {
+        Text("${s.progress.pending} essai(s) conservé(s) sur ce téléphone, en attente d’envoi.")
+        TextButton(onClick={event(LearningEvent.Sync)}){Text("Synchroniser")}
+    }
+    AppCard {
+        Text(when {s.reviewStatus==ExerciseStatus.VALIDATED -> if(s.reviewDue)"Acquis · à entretenir" else "Compétence acquise";s.complete ->"Prêt pour une évaluation";s.completed.isNotEmpty()->"En pratique";else ->"À découvrir"},style=MaterialTheme.typography.titleMedium)
+        Text("Les exercices à l’écran et le jeu sur l’instrument sont évalués séparément.",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
+        s.reviewStatus?.let {ExerciseStatusBadge(it,Modifier.padding(top=Spacing.s))}
+        s.feedback?.let {Text("Retour du responsable : $it",Modifier.padding(top=Spacing.s))}
+        if(s.complete) s.memberId?.let { ObjectiveAudioReview(it, s.module.objectiveId) }
+        if(s.complete && s.reviewStatus!=ExerciseStatus.VALIDATED) {
+            OutlinedButton(onClick=onRecord,modifier=Modifier.padding(top=Spacing.m)){Text("Enregistrer mon jeu pour le responsable")}
+            TextButton(onClick={event(LearningEvent.RequestReview)},enabled=s.reviewLoaded && !s.saving && s.reviewStatus!=ExerciseStatus.SUBMITTED){Text("Demander une évaluation en répétition")}
+            if(!s.reviewLoaded)Text("Une connexion est nécessaire pour envoyer la demande.",style=MaterialTheme.typography.bodySmall)
+        }
+    }
+    Text("Mon parcours piano",style=MaterialTheme.typography.titleLarge)
+    LearningCatalog.modules.forEach { m ->
+        AppCard(onClick={onModule(m.id)}) {
+            Text(m.title,style=MaterialTheme.typography.titleMedium)
+            Text("${s.progress.completedIn(m).size} / ${m.activities.size} activités · ${if(s.progress.complete(m))"à entretenir" else "à explorer"}",style=MaterialTheme.typography.bodySmall)
+        }
+    }
+    if(s.progress.attempts.isNotEmpty()) AppCard {
+        Text("Mes derniers essais",style=MaterialTheme.typography.titleMedium)
+        s.progress.attempts.filter { a->s.module.activities.any {it.id==a.activityId} }.takeLast(5).reversed().forEach {
+            Text("${it.day} · ${LearningCatalog.findActivity(it.activityId)?.title.orEmpty()} · ${if(it.passed)"réussi${if(it.hints>0)" avec aide" else ""}" else "à reprendre"}",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
         }
     }
 }
 
-private fun noteName(midi: Int): String = listOf("Do", "Do♯", "Ré", "Mi♭", "Mi", "Fa", "Fa♯", "Sol", "La♭", "La", "Si♭", "Si")[midi % 12] + (midi / 12 - 1)
+@Composable private fun ActivityCard(s:LearningUiState,event:(LearningEvent)->Unit) {
+    val a=s.activity
+    AppCard {
+        Column((if(s.preferences.reduceMotion)Modifier else Modifier.animateContentSize()),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
+            Text(when(a.kind){LearningKind.LESSON->"COMPRENDRE";LearningKind.EAR->"ÉCOUTER";LearningKind.KEYBOARD->"CONSTRUIRE";LearningKind.PRACTICE->"SUR TON INSTRUMENT";LearningKind.CHOICE->"FAIRE LE LIEN";LearningKind.RHYTHM->"SENTIR LE TEMPO"},style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
+            Text(a.title,style=MaterialTheme.typography.headlineSmall,modifier=Modifier.semantics{heading()})
+            Text(a.instruction,style=MaterialTheme.typography.bodyLarge)
+            if(a.kind in listOf(LearningKind.LESSON,LearningKind.PRACTICE))Text(a.explanation)
+            if(a.example.isNotEmpty()) {
+                OutlinedButton(onClick={event(LearningEvent.Listen)},enabled=!s.saving){Text("Écouter l’accord")}
+                TextButton(onClick={event(LearningEvent.ListenBroken)},enabled=!s.saving){Text("Écouter note par note")}
+            }
+            if(a.kind in listOf(LearningKind.EAR,LearningKind.CHOICE)) {
+                Column {
+                    val choices=if(a.kind==LearningKind.EAR)listOf("Majeur","Mineur") else a.choices
+                    choices.forEach { c -> FilterChip(selected=s.answer==c,onClick={event(LearningEvent.Answer(c))},label={Text(c)},enabled=!s.saving) }
+                }
+                if(a.kind==LearningKind.EAR && !s.listened)Text("Écoute avant de choisir.",style=MaterialTheme.typography.bodySmall)
+            }
+            if(a.kind==LearningKind.KEYBOARD) {
+                PianoKeyboard(s){event(LearningEvent.Key(it))}
+                Text("Ta sélection : ${s.notes.sorted().joinToString(" · "){noteLabel(it)}.ifEmpty{"aucune"}}",style=MaterialTheme.typography.bodySmall)
+                OutlinedButton(onClick={event(LearningEvent.ListenSelection)},enabled=s.notes.isNotEmpty()){Text("Écouter ma sélection")}
+                if(s.result==false) {
+                    val correct=s.notes.intersect(a.expectedNotes)
+                    Text("À conserver : ${correct.sorted().joinToString(" · "){noteLabel(it)}.ifEmpty{"cherche d’abord la fondamentale"}}",style=MaterialTheme.typography.bodySmall)
+                }
+            }
+            if(a.kind==LearningKind.RHYTHM) {
+                OutlinedButton(onClick={event(LearningEvent.Metronome)}){Text("Écouter 8 clics · ${a.bpm} BPM")}
+                Button(onClick={event(LearningEvent.Tap)},modifier=Modifier.fillMaxWidth().heightIn(min=100.dp)){Text("Frapper la pulsation · ${s.taps.size}/8")}
+                TextButton(onClick={event(LearningEvent.ResetTaps)}){Text("Recommencer les appuis")}
+            }
+            if(a.kind !in listOf(LearningKind.LESSON,LearningKind.PRACTICE) && s.result!=true) {
+                TextButton(onClick={event(LearningEvent.Hint)},enabled=s.hints<3){Text(if(s.hints==0)"Un indice" else if(s.hints<3)"Un peu plus d’aide" else "Les aides sont affichées")}
+                if(s.hints>0) Text(when(s.hints) {
+                    1->when(a.kind){LearningKind.KEYBOARD->"Cherche la fondamentale, puis compte les demi-tons. Majeur : 4 puis 3 ; mineur : 3 puis 4.";LearningKind.EAR->"Réécoute note par note et concentre-toi sur la distance entre les deux premières notes.";LearningKind.RHYTHM->"Relâche la main et garde un mouvement régulier. Le premier appui fixe le départ.";else->"Reprends la règle dans la leçon précédente."}
+                    2->if(a.kind==LearningKind.KEYBOARD)"Les notes manquantes sont maintenant repérées sur le clavier. Tu gardes ta sélection." else a.explanation
+                    else->a.explanation
+                },style=MaterialTheme.typography.bodyMedium)
+                if(s.hints>=3 && a.expectedNotes.isNotEmpty())OutlinedButton(onClick={event(LearningEvent.ListenBroken)}){Text("Écouter la démonstration")}
+            }
+            s.feedbackText?.let {Text(it,color=if(s.result==true)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})}
+            if(s.result==true) GradientButton(onClick={event(LearningEvent.Next)}){Text("Continuer")}
+            else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";else->"Vérifier"})}
+            if(a.kind==LearningKind.PRACTICE)Text("Cette étape est déclarative. Seul le responsable peut valider la compétence sur ton instrument.",style=MaterialTheme.typography.bodySmall)
+        }
+    }
+}
 
-@Composable
-private fun PianoKeyboard(selected: Set<Int>, enabled: Boolean, onKey: (Int) -> Unit) {
-    val whites = listOf(60, 62, 64, 65, 67, 69, 71, 72)
-    val blacks = listOf(61 to 1, 63 to 2, 66 to 4, 68 to 5, 70 to 6)
-    val accent = MaterialTheme.colorScheme.primary
-    BoxWithConstraints(Modifier.fillMaxWidth().height(180.dp)) {
-        val width = maxWidth / whites.size
-        Row(Modifier.fillMaxWidth()) {
-            whites.forEach { midi ->
-                Box(Modifier.weight(1f).height(178.dp).background(if (midi in selected) accent else Color(0xFFF4F3FA), RoundedCornerShape(bottomStart = 6.dp, bottomEnd = 6.dp))
-                    .border(1.dp, Color(0xFF555164), RoundedCornerShape(bottomStart = 6.dp, bottomEnd = 6.dp))
-                    .toggleable(value = midi in selected, enabled = enabled, role = Role.Checkbox, onValueChange = { onKey(midi) })
-                    .semantics { contentDescription = noteName(midi) }, contentAlignment = Alignment.BottomCenter) {
-                    Text(noteName(midi), color = Color(0xFF161320), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(bottom = 10.dp))
+@Composable private fun PianoKeyboard(s:LearningUiState,onKey:(Int)->Unit) {
+    val whites=(60..84).filter {it%12 in listOf(0,2,4,5,7,9,11)}
+    val blacks=(61..83).filter {it%12 in listOf(1,3,6,8,10)}
+    val scroll=rememberScrollState()
+    val density=LocalDensity.current
+    val haptic=LocalHapticFeedback.current
+    LaunchedEffect(s.activity.id,s.encounter) {
+        val first=s.activity.expectedNotes.minOrNull()?:60
+        scroll.scrollTo(with(density){(48.dp*whites.count{it<first}.coerceAtLeast(0)).roundToPx()})
+    }
+    Text("Fais glisser le clavier pour explorer les deux octaves.",style=MaterialTheme.typography.bodySmall)
+    Box(Modifier.fillMaxWidth().horizontalScroll(scroll)) {
+        Box(Modifier.width(48.dp*whites.size).height(184.dp)) {
+            Row {
+                whites.forEach { midi -> PianoKey(midi,s,Modifier.width(48.dp).height(180.dp),false){
+                    if(s.preferences.haptics)haptic.performHapticFeedback(HapticFeedbackType.LongPress);onKey(midi)
+                } }
+            }
+            blacks.forEach { midi ->
+                val boundary=whites.count{it<midi}
+                PianoKey(midi,s,Modifier.offset(x=48.dp*boundary-16.dp).width(32.dp).height(108.dp),true){
+                    if(s.preferences.haptics)haptic.performHapticFeedback(HapticFeedbackType.LongPress);onKey(midi)
                 }
             }
         }
-        blacks.forEach { (midi, boundary) ->
-            Box(Modifier.offset(x = width * boundary - width * 0.32f).width(width * 0.64f).height(106.dp)
-                .background(if (midi in selected) accent else Color(0xFF161320), RoundedCornerShape(bottomStart = 5.dp, bottomEnd = 5.dp))
-                .toggleable(value = midi in selected, enabled = enabled, role = Role.Checkbox, onValueChange = { onKey(midi) })
-                .semantics { contentDescription = noteName(midi) }, contentAlignment = Alignment.BottomCenter) {
-                Text(noteName(midi).dropLast(1), color = Color.White, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(bottom = 8.dp))
-            }
-        }
     }
 }
-
-@Preview
-@Composable
-private fun LearningPreview() = AppTheme {
-    LearningScreenContent(LearningUiState(loading = false, allowed = true, index = 1), {}, {})
+@Composable private fun PianoKey(midi:Int,s:LearningUiState,modifier:Modifier,black:Boolean,onClick:()->Unit) {
+    val selected=midi in s.notes
+    val wrong=s.result==false && selected && midi !in s.activity.expectedNotes
+    val missing=s.hints>=2 && midi in s.activity.expectedNotes && !selected
+    val color=when {wrong->MaterialTheme.colorScheme.error;selected->MaterialTheme.colorScheme.primary;missing->MaterialTheme.colorScheme.tertiary;black->Color(0xFF161320);else->Color(0xFFF4F3FA)}
+    val label=noteLabel(midi)
+    val keyColor by animateColorAsState(color, tween(if(s.preferences.reduceMotion)0 else 140), label="key-color")
+    Box(modifier.background(keyColor,RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp)).border(1.dp,Color(0xFF555164),RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp))
+        .toggleable(selected,enabled=!s.saving,role=Role.Checkbox,onValueChange={onClick()})
+        .semantics {contentDescription=label;stateDescription=when{wrong->"sélectionnée, à corriger";selected->"sélectionnée";missing->"indice : note à ajouter";else->"non sélectionnée"}},contentAlignment=Alignment.BottomCenter) {
+        Text(label,color=if(black && !selected && !missing)Color.White else Color(0xFF161320),style=MaterialTheme.typography.labelSmall,modifier=Modifier.padding(bottom=10.dp))
+    }
+}
+@Preview @Composable private fun LearningPreview()=AppTheme {
+    LearningScreenContent(LearningUiState(loading=false,allowed=true,index=1,mode=LearningMode.ACTIVITY),{},{})
 }

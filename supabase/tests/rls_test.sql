@@ -330,5 +330,42 @@ do $$ begin
     end;
 end $$;
 
+-- Objective recordings share the privacy boundary of personal voice submissions.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    insert into public.objective_recordings(objective_id,audio_path,duration_seconds)
+    values('piano-c3','submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav',12);
+    insert into public.objective_checks(objective_id,status) values('piano-c3','SUBMITTED');
+    begin
+        insert into public.objective_recordings(objective_id,audio_path,duration_seconds)
+        values('piano-c4','submissions/00000000-0000-0000-0000-00000000000c/objectives/other.wav',12);
+        assert false, 'recording must belong to its member folder';
+    exception when check_violation then null;
+    end;
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$ begin
+    assert (select count(*) from public.objective_recordings)=0, 'content admins do not read personal evaluations';
+    begin
+        insert into public.objective_recordings(member_id,objective_id,audio_path,duration_seconds)
+        values('00000000-0000-0000-0000-00000000000d','piano-c5','submissions/00000000-0000-0000-0000-00000000000d/objectives/injected.wav',12);
+        assert false, 'cannot inject another member evaluation';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+do $$ begin
+    assert (select count(*) from public.objective_recordings)=1, 'reviewer can listen';
+    update public.objective_checks set status='VALIDATED' where objective_id='piano-c3';
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    begin
+        update public.objective_recordings set audio_path='submissions/00000000-0000-0000-0000-00000000000d/objectives/replaced.wav';
+        assert false, 'validated evidence cannot be replaced';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+
 reset role;
 \echo 'ALL RLS CHECKS PASSED'

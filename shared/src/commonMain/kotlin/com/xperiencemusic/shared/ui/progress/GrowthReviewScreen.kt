@@ -150,6 +150,7 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
                         state = state,
                         onEvent = onEvent,
                     )
+                    com.xperiencemusic.shared.ui.learning.ObjectiveAudioReview(objective.memberId, objective.objectiveId)
                 }
             }
         }

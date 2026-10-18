@@ -58,4 +58,7 @@ data object MembersRoute
 
 /** First guided learning module; objective validation remains with the responsible person. */
 @Serializable
-data object PianoLearningRoute
+data class PianoLearningRoute(val moduleId: String = "piano-chords")
+
+@Serializable
+data class LearningAssessmentRoute(val moduleId: String)
