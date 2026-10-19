@@ -71,6 +71,7 @@ Appliquer les migrations dans l’ordre :
 2. `20261018010000_learning_attempts.sql`
 3. `20261018020000_learning_feedback_and_recordings.sql`
 4. `20261018030000_objective_recording_history.sql`
+5. `20261019000000_objective_recordings_any_objective.sql`
 
 Les tests couvrent les réponses musicales, les variantes, les révisions, la reprise sans pénalité,
 la synchronisation, la confidentialité et le gel des prises validées.

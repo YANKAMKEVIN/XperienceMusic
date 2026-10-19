@@ -338,6 +338,20 @@ do $$ begin
     assert (select count(*) from public.objective_recording_history)=1, 'submitted take is archived';
     update public.objective_recordings set audio_path='submissions/00000000-0000-0000-0000-00000000000d/objectives/test2.wav' where objective_id='piano-c3';
     assert (select count(*) from public.objective_recording_history)=2, 'replacement keeps earlier take';
+    update public.objective_recordings set duration_seconds=13 where objective_id='piano-c3';
+    assert (select count(*) from public.objective_recording_history)=2, 'resending the same file is not a new take';
+    begin
+        insert into public.objective_recordings(objective_id,audio_path,duration_seconds)
+        values('bass-p7','submissions/00000000-0000-0000-0000-00000000000d/objectives/bass.wav',20);
+        raise exception 'undo' using errcode = 'P0001';
+    exception when raise_exception then null; -- accepted, then rolled back
+    end;
+    begin
+        insert into public.objective_recordings(objective_id,audio_path,duration_seconds)
+        values('piano-c8','submissions/00000000-0000-0000-0000-00000000000d/objectives/bad.wav',20);
+        assert false, 'only programme objectives take recordings';
+    exception when check_violation then null;
+    end;
     begin
         delete from public.objective_recording_history;
         assert false, 'history is immutable for members';
