@@ -55,7 +55,10 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     CompositionLocalProvider(LocalDensity provides Density(density.density,density.fontScale*if(state.preferences.largeText)1.2f else 1f)) {
         Scaffold(topBar={ TopAppBar(title={Text(state.module.title,style=MaterialTheme.typography.titleLarge)},navigationIcon={
             IconButton(onClick={ if(state.mode==LearningMode.HOME)onBack() else onEvent(LearningEvent.Home) }) { Icon(Icons.AutoMirrored.Filled.ArrowBack,"Retour") }
-        },actions={TextButton(onClick={onEvent(LearningEvent.Settings)}) {Text("Confort")}},windowInsets=WindowInsets(0)) },contentWindowInsets=WindowInsets(0)) { padding ->
+        },actions={TextButton(onClick={onEvent(LearningEvent.Settings)}) {Text("Confort")}},windowInsets=WindowInsets(0)) },
+            // The main action stays on screen however long the hints and corrections above it grow.
+            bottomBar={ if(!state.loading && state.allowed && state.mode==LearningMode.ACTIVITY) ActivityAction(state,onEvent) },
+            contentWindowInsets=WindowInsets(0)) { padding ->
             if(state.loading) Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.Center){CircularProgressIndicator()}
             else if(!state.allowed)Text("Ces modules sont proposés au parcours piano.",Modifier.padding(padding).padding(Spacing.l))
             else key(state.mode,state.index,state.module.id) {
@@ -195,6 +198,14 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     }
 }
 
+@Composable private fun ActivityAction(s:LearningUiState,event:(LearningEvent)->Unit) {
+    val a=s.activity
+    Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).navigationBarsPadding().padding(horizontal=Spacing.l,vertical=Spacing.s)) {
+        if(s.result==true) GradientButton(onClick={event(LearningEvent.Next)},modifier=Modifier.fillMaxWidth()){Text("Continuer")}
+        else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck,modifier=Modifier.fillMaxWidth()){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";else->"Vérifier"})}
+    }
+}
+
 @Composable private fun ActivityCard(s:LearningUiState,event:(LearningEvent)->Unit) {
     val a=s.activity
     AppCard {
@@ -238,8 +249,6 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                 if(s.hints>=3 && a.expectedNotes.isNotEmpty())OutlinedButton(onClick={event(LearningEvent.ListenBroken)}){Text("Écouter la démonstration")}
             }
             s.feedbackText?.let {Text(it,color=if(s.result==true)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})}
-            if(s.result==true) GradientButton(onClick={event(LearningEvent.Next)}){Text("Continuer")}
-            else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";else->"Vérifier"})}
             if(a.kind==LearningKind.PRACTICE)Text("Cette étape est déclarative. Seul le responsable peut valider la compétence sur ton instrument.",style=MaterialTheme.typography.bodySmall)
         }
     }
