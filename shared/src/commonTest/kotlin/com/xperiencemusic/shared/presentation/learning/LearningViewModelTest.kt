@@ -49,4 +49,22 @@ class LearningViewModelTest {
         assertTrue(growth.observeChecks().first().isEmpty())
         assertEquals(2, repository.observe("me").first().attempts.size)
     }
+
+    @Test fun recapNamesTheActivityAsPlayed() = runTest {
+        val sessions = FakeSessionRepository(member(instrument = Instrument.PIANO))
+        val dates = DateProvider { LocalDate(2026, 10, 18) }
+        val growth = InMemoryGrowthRepository(sessions, InMemoryMembersRepository(sessions), dates)
+        val files = FakeFileStore()
+        val repository = FileLearningRepository(SnapshotStore(files))
+        val player = FakeAudioPlayer()
+        val vm = LearningViewModel(ObserveCurrentMemberUseCase(sessions), repository, growth,
+            TickObjectiveUseCase(sessions, growth, GrowthObjectives.all), dates,
+            PlayLearningExample(files, player, PlaybackController(player, { it }, backgroundScope)))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.state.collect() }
+        vm.onEvent(LearningEvent.Open(0))
+        val played = vm.state.value.activity
+        vm.onEvent(LearningEvent.Check)
+        assertEquals(true, vm.state.value.result)
+        assertEquals(played.title, vm.state.value.sessionTitles[played.id])
+    }
 }

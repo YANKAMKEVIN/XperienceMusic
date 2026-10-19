@@ -74,10 +74,10 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                             AppCard {
                                 Text("Une séance de plus !",style=MaterialTheme.typography.headlineMedium)
                                 Text("${state.sessionDone.size} activité(s) travaillée(s)",Modifier.padding(top=Spacing.m))
-                                state.sessionDone.forEach { id -> Text("✓ ${LearningCatalog.findActivity(id)?.title.orEmpty()}",Modifier.padding(top=Spacing.s)) }
+                                state.sessionDone.forEach { id -> Text("✓ ${state.sessionTitles[id] ?: LearningCatalog.findActivity(id)?.title.orEmpty()}",Modifier.padding(top=Spacing.s)) }
                                 if(state.sessionDifficult.isNotEmpty()) {
                                     Text("À reprendre tranquillement",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=Spacing.m))
-                                    state.sessionDifficult.forEach { id ->Text(LearningCatalog.findActivity(id)?.title.orEmpty()) }
+                                    state.sessionDifficult.forEach { id ->Text(state.sessionTitles[id] ?: LearningCatalog.findActivity(id)?.title.orEmpty()) }
                                 }
                                 Text(if(state.sessionDifficult.isEmpty()) "Tu as travaillé sans difficulté signalée. La prochaine séance t’aidera à entretenir ces repères." else "Les prochaines révisions tiendront compte de tes difficultés. Tu peux aussi les reprendre depuis les étapes.",Modifier.padding(top=Spacing.m))
                                 Text("Prochaine étape : ${state.module.activities[state.progress.nextIn(state.module)].title}",Modifier.padding(top=Spacing.s))

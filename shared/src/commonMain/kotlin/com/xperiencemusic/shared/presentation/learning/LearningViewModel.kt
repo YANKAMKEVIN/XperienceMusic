@@ -32,7 +32,9 @@ data class LearningUiState(
     val moduleReviews:Map<String,ExerciseStatus> = emptyMap(),val reviewLoaded:Boolean=false,val reviewStatus:ExerciseStatus?=null,val feedback:String?=null,val reviewDue:Boolean=false,
     val mode:LearningMode=LearningMode.HOME,val hints:Int=0,val showSteps:Boolean=false,val showSettings:Boolean=false,
     val preferences:LearningPreferences=LearningPreferences(),val feedbackText:String?=null,val taps:List<Double> = emptyList(),
-    val sessionDone:List<String> = emptyList(),val sessionDifficult:Set<String> = emptySet(),val successSerial:Int=0,
+    val sessionDone:List<String> = emptyList(),val sessionDifficult:Set<String> = emptySet(),
+    /** The title each worked activity had this session: a variant ("À toi · Si♭ majeur") differs from its base. */
+    val sessionTitles:Map<String,String> = emptyMap(),val successSerial:Int=0,
 ) {
     val activity get()=variedActivity(module.activities[index],encounter)
     val completed get()=progress.completedIn(module)
@@ -50,7 +52,7 @@ private data class LearningForm(
     val result:Boolean?=null,val saving:Boolean=false,val error:String?=null,val hints:Int=0,
     val mode:LearningMode=LearningMode.HOME,val steps:Boolean=false,val settings:Boolean=false,
     val preferences:LearningPreferences=LearningPreferences(),val feedback:String?=null,val taps:List<Double> = emptyList(),
-    val plan:List<Int> = emptyList(),val done:List<String> = emptyList(),val difficult:Set<String> = emptySet(),val successSerial:Int=0,
+    val plan:List<Int> = emptyList(),val done:List<String> = emptyList(),val difficult:Set<String> = emptySet(),val titles:Map<String,String> = emptyMap(),val successSerial:Int=0,
 )
 sealed interface LearningEvent {
     data class Open(val index:Int):LearningEvent
@@ -96,7 +98,7 @@ class LearningViewModel(
             index=f.index?:p.nextIn(module),encounter=f.encounter,progress=p,notes=f.notes,answer=f.answer,listened=f.listened,
             result=f.result,saving=f.saving,error=f.error,moduleReviews=checks.orEmpty().filter { it.memberId==m?.id }.associate { it.objectiveId to it.status },reviewLoaded=checks!=null,reviewStatus=c?.status,feedback=c?.feedback,
             reviewDue=p.dueIn(module,dates.today()).isNotEmpty(),mode=f.mode,hints=f.hints,showSteps=f.steps,showSettings=f.settings,
-            preferences=f.preferences,feedbackText=f.feedback,taps=f.taps,sessionDone=f.done,sessionDifficult=f.difficult,successSerial=f.successSerial)
+            preferences=f.preferences,feedbackText=f.feedback,taps=f.taps,sessionDone=f.done,sessionDifficult=f.difficult,sessionTitles=f.titles,successSerial=f.successSerial)
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),LearningUiState(module=module))
 
     init {
@@ -122,7 +124,7 @@ class LearningViewModel(
             LearningEvent.ChallengeExample -> audio.broken(module.challenge().example)
             LearningEvent.Begin -> {
                 val plan=state.value.progress.dailyPlan(module,dates.today()).let { if(state.value.progress.returning(dates.today()))it.take(1) else it }
-                form.update { it.copy(plan=plan,done=emptyList(),difficult=emptySet()) }; open(plan.first())
+                form.update { it.copy(plan=plan,done=emptyList(),difficult=emptySet(),titles=emptyMap()) }; open(plan.first())
             }
             LearningEvent.Resume -> {
                 val id=state.value.memberId?:return
@@ -187,7 +189,7 @@ class LearningViewModel(
                 repository.record(LearningAttempt(Uuid.random().toString(),id,s.activity.id,PianoBasics.VERSION,passed,dates.today(),"${s.activity.id}:${s.encounter}",s.hints))
                 val feedback=if(passed)"${s.activity.title} : activité réussie${if(s.hints>0)" avec aide" else ""}." else if(timing!=null)"Écart moyen : ${(timing*100).toInt()} %. Vise des intervalles plus réguliers, puis recommence." else correction(s.activity,s.notes,s.answer)
                 form.update { it.copy(saving=false,result=passed,feedback=feedback,done=if(passed)(it.done+s.activity.id).distinct() else it.done,
-                    difficult=if(!passed || s.hints>0)it.difficult+s.activity.id else it.difficult,successSerial=it.successSerial+if(passed)1 else 0) }
+                    difficult=if(!passed || s.hints>0)it.difficult+s.activity.id else it.difficult,titles=it.titles+(s.activity.id to s.activity.title),successSerial=it.successSerial+if(passed)1 else 0) }
                 if(passed && s.preferences.rewardSound)audio.reward()
                 persist()
                 repository.sync(id)

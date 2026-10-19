@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.ui.progress
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -149,8 +150,8 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
                         confirmLabel = stringResource(Res.string.review_validate),
                         state = state,
                         onEvent = onEvent,
+                        takes = { objectiveAudio(objective.memberId, objective.objectiveId) },
                     )
-                    objectiveAudio(objective.memberId, objective.objectiveId)
                 }
             }
         }
@@ -173,6 +174,8 @@ private fun ReviewCard(
     confirmLabel: String,
     state: GrowthReviewUiState,
     onEvent: (GrowthReviewEvent) -> Unit,
+    /** The member's recorded takes, heard before deciding. */
+    takes: @Composable () -> Unit = {},
 ) {
     val isSaving = state.savingKey == key
     AppCard {
@@ -181,6 +184,7 @@ private fun ReviewCard(
         description?.takeIf { it.isNotEmpty() }?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.padding(top = Spacing.s)) { takes() }
         OutlinedTextField(
             value = state.comments[key].orEmpty(),
             onValueChange = { onEvent(GrowthReviewEvent.CommentChanged(key, it)) },
