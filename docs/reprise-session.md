@@ -60,6 +60,10 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
 - **Parcours chantre guidé** (19 octobre 2026) : 9 modules, un par objectif chantre sans palier au micro
   (c4 à c7, p3 à p7), avec leçons, questions, écoute et exercices chantés au micro. Rien n'y valide un
   objectif : c'est toujours l'Admin++ (voir `docs/guided-learning.md`).
+- **« Ma progression » refaite** (direction B, 19 octobre 2026) : anneau du niveau suivant (un segment par
+  objectif), carte « Aujourd'hui » avec une seule action (voix à reprendre, palier au micro, parcours guidé,
+  chant de la semaine, échauffement : voir `presentation/progress/ProgressFocus.kt`), puis onglets Objectifs /
+  Parcours / Ma voix. Fiche d'objectif en bas d'écran ; outils admin dans le menu ⋮ et une bande « À traiter ».
 - **Vidéo TikTok de présentation** (30 s, avec la musique du groupe) dans `video/`. Rendu : `npm run render`.
 
 ## Reste à faire

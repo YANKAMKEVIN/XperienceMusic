@@ -1,94 +1,143 @@
 package com.xperiencemusic.shared.ui.progress
 
-import com.xperiencemusic.shared.presentation.progress.ProgressEvent
-import com.xperiencemusic.shared.resources.growth_validate_open
-import com.xperiencemusic.shared.resources.error_generic
-import org.jetbrains.compose.resources.getString
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarHost
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
-import com.xperiencemusic.shared.domain.learning.LearningCatalog
-import com.xperiencemusic.shared.domain.learning.complete
-import com.xperiencemusic.shared.domain.learning.completedIn
-import com.xperiencemusic.shared.domain.learning.nextIn
 import com.xperiencemusic.shared.domain.model.Level
 import com.xperiencemusic.shared.domain.model.StepState
 import com.xperiencemusic.shared.domain.model.VoicePart
+import com.xperiencemusic.shared.presentation.progress.FocusUi
+import com.xperiencemusic.shared.presentation.progress.LevelCardUi
+import com.xperiencemusic.shared.presentation.progress.ObjectiveUi
+import com.xperiencemusic.shared.presentation.progress.ProgressEvent
 import com.xperiencemusic.shared.presentation.progress.ProgressUiState
 import com.xperiencemusic.shared.presentation.progress.ProgressViewModel
 import com.xperiencemusic.shared.presentation.progress.StepUi
 import com.xperiencemusic.shared.presentation.progress.TierUi
 import com.xperiencemusic.shared.presentation.progress.WarmUpUi
 import com.xperiencemusic.shared.presentation.progress.WeekVoiceUi
-import com.xperiencemusic.shared.resources.review_open
-import com.xperiencemusic.shared.resources.voice_week_none
-import com.xperiencemusic.shared.resources.voice_week_title
-import com.xperiencemusic.shared.ui.brand.GradientButton
-import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.presentation.progress.focus
+import com.xperiencemusic.shared.presentation.progress.learningModules
 import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.error_generic
+import com.xperiencemusic.shared.resources.growth_ask
+import com.xperiencemusic.shared.resources.growth_ask_again
+import com.xperiencemusic.shared.resources.growth_objectives
+import com.xperiencemusic.shared.resources.growth_rework
+import com.xperiencemusic.shared.resources.growth_top
+import com.xperiencemusic.shared.resources.growth_validate_open
+import com.xperiencemusic.shared.resources.growth_waiting
 import com.xperiencemusic.shared.resources.members_open
+import com.xperiencemusic.shared.resources.progress_focus_continue
+import com.xperiencemusic.shared.resources.progress_focus_done_eyebrow
+import com.xperiencemusic.shared.resources.progress_focus_done_text
+import com.xperiencemusic.shared.resources.progress_focus_done_title
+import com.xperiencemusic.shared.resources.progress_focus_learning_eyebrow
+import com.xperiencemusic.shared.resources.progress_focus_learning_text
+import com.xperiencemusic.shared.resources.progress_focus_rework_cta
+import com.xperiencemusic.shared.resources.progress_focus_rework_eyebrow
+import com.xperiencemusic.shared.resources.progress_focus_rework_text
+import com.xperiencemusic.shared.resources.progress_focus_start
+import com.xperiencemusic.shared.resources.progress_focus_step_eyebrow
+import com.xperiencemusic.shared.resources.progress_focus_voice_cta
+import com.xperiencemusic.shared.resources.progress_focus_voice_eyebrow
+import com.xperiencemusic.shared.resources.progress_focus_voice_text
+import com.xperiencemusic.shared.resources.progress_focus_warmup_eyebrow
+import com.xperiencemusic.shared.resources.progress_focus_warmup_text
 import com.xperiencemusic.shared.resources.progress_hello
-import com.xperiencemusic.shared.resources.progress_medals
+import com.xperiencemusic.shared.resources.progress_menu
+import com.xperiencemusic.shared.resources.progress_modules_title
 import com.xperiencemusic.shared.resources.progress_musicians_soon_text
 import com.xperiencemusic.shared.resources.progress_musicians_soon_title
 import com.xperiencemusic.shared.resources.progress_open_step
+import com.xperiencemusic.shared.resources.progress_ring_top
+import com.xperiencemusic.shared.resources.progress_ring_towards
 import com.xperiencemusic.shared.resources.progress_streak
+import com.xperiencemusic.shared.resources.progress_tab_objectives
+import com.xperiencemusic.shared.resources.progress_tab_path
+import com.xperiencemusic.shared.resources.progress_tab_voice
 import com.xperiencemusic.shared.resources.progress_tier_1
 import com.xperiencemusic.shared.resources.progress_tier_2
 import com.xperiencemusic.shared.resources.progress_tier_3
 import com.xperiencemusic.shared.resources.progress_tier_4
 import com.xperiencemusic.shared.resources.progress_tier_5
-import com.xperiencemusic.shared.resources.progress_title
+import com.xperiencemusic.shared.resources.progress_voice_empty
 import com.xperiencemusic.shared.resources.progress_warmup_done
 import com.xperiencemusic.shared.resources.progress_warmup_hint
 import com.xperiencemusic.shared.resources.progress_warmup_title
+import com.xperiencemusic.shared.resources.review_open
 import com.xperiencemusic.shared.resources.session_sign_out
+import com.xperiencemusic.shared.resources.voice_week_none
+import com.xperiencemusic.shared.resources.voice_week_title
+import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.brand.XmIcons
+import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Palette
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -125,6 +174,13 @@ private val tierTitles: List<StringResource> = listOf(
     Res.string.progress_tier_5,
 )
 
+/** The sections under the focus card; only those with something to show appear. */
+private enum class Section { OBJECTIVES, PATH, VOICE }
+
+/**
+ * One thing at a time: who you are and your streak, the ring of the next level, today's single
+ * action, then the details behind three tabs. Admin tools live in the menu and a small strip.
+ */
 @Composable
 fun ProgressScreenContent(
     state: ProgressUiState,
@@ -148,139 +204,300 @@ fun ProgressScreenContent(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
     }
-    val openLabel = stringResource(Res.string.progress_open_step)
+    val modules = remember(state.learning, state.instrument) { state.learningModules() }
+    val sections = buildList {
+        if (state.objectives.isNotEmpty()) add(Section.OBJECTIVES)
+        if (state.hasPath || modules.isNotEmpty()) add(Section.PATH)
+        if (state.hasPath) add(Section.VOICE)
+    }
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    val section = sections.getOrNull(tab) ?: sections.firstOrNull()
+    var sheetId by rememberSaveable { mutableStateOf<String?>(null) }
+
     Box(Modifier.fillMaxSize()) {
-        LazyColumn(
-            contentPadding = PaddingValues(Spacing.l),
-            verticalArrangement = Arrangement.spacedBy(Spacing.m),
-        ) {
-            item { ProgressHeader(state) }
-            state.learning?.let { course ->
-                // The first module of the member's part not yet done, so the card follows the path.
-                val modules = LearningCatalog.modulesFor(state.instrument)
-                val module = modules.firstOrNull { !course.complete(it) } ?: modules.firstOrNull() ?: return@let
-                val done = course.completedIn(module)
-                item {
-                    AppCard {
-                        Text(if (module.instrument == Instrument.SINGER) "PARCOURS CHANTRE" else "PARCOURS PIANO", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                        Text(module.title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = Spacing.s))
-                        Text("${done.size} / ${module.activities.size} activités terminées · compétence évaluée par le responsable", modifier = Modifier.padding(top = Spacing.s))
-                        Text(module.activities[course.nextIn(module)].title, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.s))
-                        GradientButton(onClick = { onOpenLearning(module.id) }, modifier = Modifier.padding(top = Spacing.m)) {
-                            Text(if (course.complete(module)) "Réviser et voir mon évaluation" else if (done.isEmpty()) "Commencer mon apprentissage" else "Continuer mon apprentissage")
-                        }
-                    }
-                }
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .size(520.dp)
+                .padding(bottom = 160.dp)
+                .background(Brush.radialGradient(listOf(BrandColors.Indigo.copy(alpha = 0.22f), Palette.Night.copy(alpha = 0f)))),
+        )
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = Spacing.l)) {
+            Header(state, onReview, onValidate, onManageMembers, onSignOut, Modifier.padding(horizontal = Spacing.l).enter(0))
+            if (state.canReview && (state.toReviewCount > 0 || state.toValidateCount > 0)) {
+                AdminStrip(state, onReview, onValidate, Modifier.padding(start = Spacing.l, end = Spacing.l, top = Spacing.m).enter(1))
             }
             state.levelCard?.let { card ->
-                item { LevelCard(card, state.isWorking) { onEvent(ProgressEvent.AskLevelUpClicked) } }
+                LevelHero(card, state.objectives, state.isWorking, Modifier.fillMaxWidth().padding(top = Spacing.s).enter(1)) {
+                    onEvent(ProgressEvent.AskLevelUpClicked)
+                }
             }
-            val next = state.levelCard?.next
-            if (next != null && state.objectives.isNotEmpty()) {
-                item {
-                    ObjectivesCard(next, state.objectives, state.isWorking, onLearn = if (state.learning != null) onOpenLearning else null) { id, reached ->
-                        onEvent(ProgressEvent.ObjectiveToggled(id, reached))
+            TodayCard(state.focus(), onExerciseClick, onOpenLearning, onRecordVoice, Modifier.padding(horizontal = Spacing.l, vertical = Spacing.m).enter(2))
+            if (sections.size > 1 && section != null) {
+                SectionTabs(
+                    labels = sections.map { stringResource(it.label()) },
+                    selected = sections.indexOf(section),
+                    onSelect = { tab = it },
+                    modifier = Modifier.padding(horizontal = Spacing.l).padding(bottom = Spacing.m).enter(3),
+                )
+            }
+            if (section != null) {
+                AnimatedContent(
+                    targetState = section,
+                    transitionSpec = {
+                        val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                        (slideInHorizontally { it / 5 * direction } + fadeIn())
+                            .togetherWith(slideOutHorizontally { -it / 5 * direction } + fadeOut())
+                            .using(SizeTransform(clip = false))
+                    },
+                    label = "section",
+                ) { shown ->
+                    when (shown) {
+                        Section.OBJECTIVES -> ObjectiveCarousel(state.objectives, modules) { sheetId = it.id }
+                        Section.PATH -> PathSection(state, modules, onExerciseClick, onOpenLearning)
+                        Section.VOICE -> VoiceSection(state.weekVoices, onRecordVoice)
                     }
                 }
+            } else if (state.levelCard?.next != null) {
+                EmptyState(
+                    icon = XmIcons.Piano,
+                    title = stringResource(Res.string.progress_musicians_soon_title),
+                    text = stringResource(Res.string.progress_musicians_soon_text),
+                    modifier = Modifier.padding(horizontal = Spacing.l),
+                )
             }
-            if (!state.hasPath && next != null && state.objectives.isEmpty()) {
-                item {
-                    EmptyState(
-                        icon = XmIcons.Piano,
-                        title = stringResource(Res.string.progress_musicians_soon_title),
-                        text = stringResource(Res.string.progress_musicians_soon_text),
-                    )
-                }
-            } else if (state.hasPath) {
-                state.warmUp?.let { warmUp -> item { WarmUpCard(warmUp, onClick = { onExerciseClick(warmUp.id) }) } }
-                if (state.weekVoices.isNotEmpty()) item { WeekVoicesCard(state.weekVoices, onRecordVoice) }
-                // Each tier picks up the winding line where the previous one stopped.
-                var lane = 0
-                state.tiers.forEach { tier ->
-                    val firstLane = lane
-                    lane += tier.steps.size
-                    item(key = "tier-${tier.number}") {
-                        TierPath(
-                            tier = tier,
-                            title = stringResource(tierTitles.getOrElse(tier.number - 1) { tierTitles.last() }),
-                            firstLane = firstLane,
-                            labelOpen = openLabel,
-                            onStepClick = onExerciseClick,
-                        )
-                    }
-                }
-            }
-            if (state.canReview) {
-                item {
-                    GradientButton(onClick = onReview, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
-                        Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(20.dp))
-                        Text(stringResource(Res.string.review_open, state.toReviewCount), style = MaterialTheme.typography.titleMedium)
-                    }
-                }
-            }
-            if (state.canReview) {
-                item {
-                    OutlinedButton(onClick = onValidate, modifier = Modifier.fillMaxWidth().padding(top = Spacing.s)) {
-                        Icon(XmIcons.Medal, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(20.dp))
-                        Text(stringResource(Res.string.growth_validate_open, state.toValidateCount))
-                    }
-                }
-            }
-            if (state.canManageMembers) {
-                item {
-                    OutlinedButton(onClick = onManageMembers, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
-                        Text(stringResource(Res.string.members_open))
-                    }
-                }
-            }
-            item {
-                TextButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth().padding(top = Spacing.l)) {
-                    Text(stringResource(Res.string.session_sign_out))
-                }
-            }
+            Spacer(Modifier.height(Spacing.xl))
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
+
+    val open = state.objectives.indexOfFirst { it.id == sheetId }
+    if (open >= 0) {
+        val objective = state.objectives[open]
+        ObjectiveSheet(
+            objective = objective,
+            number = open + 1,
+            moduleId = modules.firstOrNull { it.objectiveId == objective.id }?.id,
+            isWorking = state.isWorking,
+            onDismiss = { sheetId = null },
+            onLearn = { sheetId = null; onOpenLearning(it) },
+            onToggle = { id, reached -> onEvent(ProgressEvent.ObjectiveToggled(id, reached)) },
+        )
+    }
+}
+
+private fun Section.label(): StringResource = when (this) {
+    Section.OBJECTIVES -> Res.string.progress_tab_objectives
+    Section.PATH -> Res.string.progress_tab_path
+    Section.VOICE -> Res.string.progress_tab_voice
 }
 
 @Composable
-private fun ProgressHeader(state: ProgressUiState) {
-    Column {
-        Text(
-            stringResource(Res.string.progress_title),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        Text(
-            listOfNotNull(
+private fun Header(
+    state: ProgressUiState,
+    onReview: () -> Unit,
+    onValidate: () -> Unit,
+    onManageMembers: () -> Unit,
+    onSignOut: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menu by remember { mutableStateOf(false) }
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(
                 stringResource(Res.string.progress_hello, state.name),
-                state.voicePart?.label() ?: state.instrument?.label(),
-                state.level?.label(),
-            ).joinToString(" · "),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                listOfNotNull(state.voicePart?.label() ?: state.instrument?.label(), state.level?.label()).joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Palette.Mist,
+            )
+        }
         if (state.hasPath) {
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s), modifier = Modifier.padding(top = Spacing.m)) {
-                StatChip(XmIcons.Flame, stringResource(Res.string.progress_streak, state.streakDays), highlighted = state.streakDays > 0)
-                StatChip(XmIcons.Medal, stringResource(Res.string.progress_medals, state.completedTiers), highlighted = state.completedTiers > 0)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(Palette.NightRaised)
+                    .border(1.dp, Palette.Outline, CircleShape)
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+            ) {
+                Icon(XmIcons.Flame, contentDescription = null, tint = if (state.streakDays > 0) BrandColors.Amber else Palette.Mist, modifier = Modifier.size(16.dp))
+                Text(stringResource(Res.string.progress_streak, state.streakDays), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+            }
+        }
+        Box {
+            IconButton(onClick = { menu = true }) {
+                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(Res.string.progress_menu))
+            }
+            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                if (state.canReview) {
+                    DropdownMenuItem(text = { Text(stringResource(Res.string.review_open, state.toReviewCount)) }, onClick = { menu = false; onReview() })
+                    DropdownMenuItem(text = { Text(stringResource(Res.string.growth_validate_open, state.toValidateCount)) }, onClick = { menu = false; onValidate() })
+                }
+                if (state.canManageMembers) {
+                    DropdownMenuItem(text = { Text(stringResource(Res.string.members_open)) }, onClick = { menu = false; onManageMembers() })
+                }
+                DropdownMenuItem(text = { Text(stringResource(Res.string.session_sign_out)) }, onClick = { menu = false; onSignOut() })
             }
         }
     }
 }
 
+/** For the Admin++: what waits for them, only when something does. */
 @Composable
-private fun StatChip(icon: ImageVector, text: String, highlighted: Boolean) {
-    val colors = MaterialTheme.colorScheme
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+private fun AdminStrip(state: ProgressUiState, onReview: () -> Unit, onValidate: () -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+        if (state.toReviewCount > 0) AdminPill(stringResource(Res.string.review_open, state.toReviewCount), onReview)
+        if (state.toValidateCount > 0) AdminPill(stringResource(Res.string.growth_validate_open, state.toValidateCount), onValidate)
+    }
+}
+
+@Composable
+private fun AdminPill(text: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .heightIn(min = 44.dp)
             .clip(CircleShape)
-            .border(1.dp, if (highlighted) colors.primary else colors.outlineVariant, CircleShape)
-            .padding(horizontal = Spacing.m, vertical = 6.dp),
+            .border(1.dp, BrandColors.gradient, CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = if (highlighted) BrandColors.Purple else colors.onSurfaceVariant, modifier = Modifier.size(18.dp))
-        Text(text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+        Text(text, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/** The ring of the next level, the count inside, and the request to move up underneath. */
+@Composable
+private fun LevelHero(card: LevelCardUi, objectives: List<ObjectiveUi>, isWorking: Boolean, modifier: Modifier = Modifier, onAsk: () -> Unit) {
+    val next = card.next
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        if (next == null) {
+            LevelRing(List(objectives.size.coerceAtLeast(1)) { RingSegment.VALIDATED }, stringResource(Res.string.growth_top)) {
+                Text(stringResource(Res.string.progress_ring_top), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+            }
+            Text(stringResource(Res.string.growth_top), style = MaterialTheme.typography.bodyMedium, color = Palette.Success)
+            return@Column
+        }
+        val segments = objectives.map { it.segment() }.ifEmpty { List(card.required) { if (it < card.done) RingSegment.VALIDATED else RingSegment.TODO } }
+        LevelRing(segments, stringResource(Res.string.growth_objectives, card.done, card.required, next.target())) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    CountUp(card.done, MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.ExtraBold))
+                    Text("/${card.required}", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Palette.Mist, modifier = Modifier.padding(bottom = 8.dp))
+                }
+                Text(stringResource(Res.string.progress_ring_towards, next.target()), style = MaterialTheme.typography.labelLarge, color = Palette.Mist)
+            }
+        }
+        when {
+            card.requestStatus == ExerciseStatus.SUBMITTED ->
+                Text(stringResource(Res.string.growth_waiting), style = MaterialTheme.typography.bodyMedium, color = Palette.Blue, modifier = Modifier.padding(horizontal = Spacing.l))
+            card.requestStatus == ExerciseStatus.TO_REWORK && card.feedback != null ->
+                Text(stringResource(Res.string.growth_rework, card.feedback), style = MaterialTheme.typography.bodyMedium, color = BrandColors.Amber, modifier = Modifier.padding(horizontal = Spacing.l))
+        }
+        if (card.canAsk) {
+            GradientButton(onClick = onAsk, enabled = !isWorking, modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.l, vertical = Spacing.s)) {
+                Text(
+                    stringResource(if (card.requestStatus == ExerciseStatus.TO_REWORK) Res.string.growth_ask_again else Res.string.growth_ask, next.target()),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
+        }
+    }
+}
+
+/** Today's single action, worded for what [focus] is. */
+@Composable
+private fun TodayCard(
+    focus: FocusUi,
+    onExerciseClick: (String) -> Unit,
+    onOpenLearning: (String) -> Unit,
+    onRecordVoice: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    @Composable
+    fun cta(label: String, onClick: () -> Unit): @Composable () -> Unit = {
+        GradientButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+            Text(label, style = MaterialTheme.typography.titleMedium)
+        }
+    }
+    when (focus) {
+        is FocusUi.ReworkVoice -> FocusCard(
+            stringResource(Res.string.progress_focus_rework_eyebrow), focus.title,
+            focus.feedback?.let { "« $it »" } ?: stringResource(Res.string.progress_focus_rework_text), modifier,
+            cta(stringResource(Res.string.progress_focus_rework_cta)) { onRecordVoice(focus.songId) },
+        )
+        is FocusUi.Step -> FocusCard(
+            stringResource(Res.string.progress_focus_step_eyebrow), focus.title,
+            listOf(stringResource(tierTitles.getOrElse(focus.tier - 1) { tierTitles.last() }), focus.detail).filter { it.isNotBlank() }.joinToString(" · "),
+            modifier,
+            cta(stringResource(Res.string.progress_focus_continue)) { onExerciseClick(focus.stepId) },
+        )
+        is FocusUi.Learning -> FocusCard(
+            stringResource(Res.string.progress_focus_learning_eyebrow), focus.moduleTitle,
+            stringResource(Res.string.progress_focus_learning_text, focus.activityTitle, focus.done, focus.total), modifier,
+            cta(stringResource(if (focus.done == 0) Res.string.progress_focus_start else Res.string.progress_focus_continue)) { onOpenLearning(focus.moduleId) },
+        )
+        is FocusUi.SendVoice -> FocusCard(
+            stringResource(Res.string.progress_focus_voice_eyebrow), focus.title,
+            stringResource(Res.string.progress_focus_voice_text), modifier,
+            cta(stringResource(Res.string.progress_focus_voice_cta)) { onRecordVoice(focus.songId) },
+        )
+        is FocusUi.WarmUp -> FocusCard(
+            stringResource(Res.string.progress_focus_warmup_eyebrow), stringResource(Res.string.progress_warmup_title),
+            stringResource(Res.string.progress_focus_warmup_text), modifier,
+            cta(stringResource(Res.string.progress_focus_continue)) { onExerciseClick(focus.id) },
+        )
+        FocusUi.UpToDate -> FocusCard(
+            stringResource(Res.string.progress_focus_done_eyebrow), stringResource(Res.string.progress_focus_done_title),
+            stringResource(Res.string.progress_focus_done_text), modifier,
+        )
+    }
+}
+
+/** The warm-up, the guided modules, then the singers' microphone path. */
+@Composable
+private fun PathSection(
+    state: ProgressUiState,
+    modules: List<com.xperiencemusic.shared.presentation.progress.ModuleProgressUi>,
+    onExerciseClick: (String) -> Unit,
+    onOpenLearning: (String) -> Unit,
+) {
+    val openLabel = stringResource(Res.string.progress_open_step)
+    Column(Modifier.padding(horizontal = Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
+        state.warmUp?.let { WarmUpCard(it, onClick = { onExerciseClick(it.id) }) }
+        if (modules.isNotEmpty()) {
+            Text(stringResource(Res.string.progress_modules_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            ModulesList(modules, onOpenLearning)
+        }
+        // Each tier picks up the winding line where the previous one stopped.
+        var lane = 0
+        state.tiers.forEach { tier ->
+            val firstLane = lane
+            lane += tier.steps.size
+            TierPath(
+                tier = tier,
+                title = stringResource(tierTitles.getOrElse(tier.number - 1) { tierTitles.last() }),
+                firstLane = firstLane,
+                labelOpen = openLabel,
+                onStepClick = onExerciseClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun VoiceSection(voices: List<WeekVoiceUi>, onRecordVoice: (String) -> Unit) {
+    Column(Modifier.padding(horizontal = Spacing.l)) {
+        if (voices.isEmpty()) {
+            Text(stringResource(Res.string.progress_voice_empty), style = MaterialTheme.typography.bodyMedium, color = Palette.Mist)
+        } else {
+            WeekVoicesCard(voices, onRecordVoice)
+        }
     }
 }
 
@@ -368,12 +585,16 @@ private fun ProgressScreenSingerPreview() {
                 isLoading = false,
                 name = "Sarah",
                 instrument = Instrument.SINGER,
-                level = Level.CONFIRMED,
+                level = Level.BEGINNER,
                 voicePart = VoicePart.ALTO,
                 hasPath = true,
                 streakDays = 5,
                 completedTiers = 0,
                 warmUp = WarmUpUi("warmup", isDoneToday = false),
+                levelCard = LevelCardUi(Level.BEGINNER, Level.CONFIRMED, done = 2, required = 7, requestStatus = null, feedback = null, canAsk = false),
+                objectives = listOf("Souffle et posture", "Justesse", "Intervalles", "Rythme", "Micro", "Tenir sa voix", "Présence").mapIndexed { i, title ->
+                    ObjectiveUi("singer-c${i + 1}", title, "Ce qu'on apprend", "Le critère", if (i < 2) ExerciseStatus.VALIDATED else null, null)
+                },
                 tiers = listOf(
                     TierUi(
                         1,
