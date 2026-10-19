@@ -200,7 +200,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
 
 @Composable private fun ActivityAction(s:LearningUiState,event:(LearningEvent)->Unit) {
     val a=s.activity
-    Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).navigationBarsPadding().padding(horizontal=Spacing.l,vertical=Spacing.s)) {
+    Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(start=Spacing.l,end=Spacing.l,top=Spacing.s)) {
         if(s.result==true) GradientButton(onClick={event(LearningEvent.Next)},modifier=Modifier.fillMaxWidth()){Text("Continuer")}
         else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck,modifier=Modifier.fillMaxWidth()){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";else->"Vérifier"})}
     }
