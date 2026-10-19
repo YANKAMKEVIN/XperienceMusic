@@ -46,6 +46,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.domain.model.Instrument
+import com.xperiencemusic.shared.domain.learning.LearningCatalog
+import com.xperiencemusic.shared.domain.learning.complete
+import com.xperiencemusic.shared.domain.learning.completedIn
+import com.xperiencemusic.shared.domain.learning.nextIn
 import com.xperiencemusic.shared.domain.model.Level
 import com.xperiencemusic.shared.domain.model.StepState
 import com.xperiencemusic.shared.domain.model.VoicePart
@@ -152,14 +156,18 @@ fun ProgressScreenContent(
         ) {
             item { ProgressHeader(state) }
             state.learning?.let { course ->
+                // The first module of the member's part not yet done, so the card follows the path.
+                val modules = LearningCatalog.modulesFor(state.instrument)
+                val module = modules.firstOrNull { !course.complete(it) } ?: modules.firstOrNull() ?: return@let
+                val done = course.completedIn(module)
                 item {
                     AppCard {
-                        Text("PARCOURS PIANO", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                        Text("Accords de base", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = Spacing.s))
-                        Text("${course.completed.size} / ${com.xperiencemusic.shared.domain.learning.PianoBasics.activities.size} activités terminées · compétence évaluée par le responsable", modifier = Modifier.padding(top = Spacing.s))
-                        Text(com.xperiencemusic.shared.domain.learning.PianoBasics.activities[course.nextIndex].title, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.s))
-                        GradientButton(onClick = { onOpenLearning("piano-chords") }, modifier = Modifier.padding(top = Spacing.m)) {
-                            Text(if (course.isComplete) "Réviser et voir mon évaluation" else if (course.completed.isEmpty()) "Commencer mon apprentissage" else "Continuer mon apprentissage")
+                        Text(if (module.instrument == Instrument.SINGER) "PARCOURS CHANTRE" else "PARCOURS PIANO", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        Text(module.title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = Spacing.s))
+                        Text("${done.size} / ${module.activities.size} activités terminées · compétence évaluée par le responsable", modifier = Modifier.padding(top = Spacing.s))
+                        Text(module.activities[course.nextIn(module)].title, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.s))
+                        GradientButton(onClick = { onOpenLearning(module.id) }, modifier = Modifier.padding(top = Spacing.m)) {
+                            Text(if (course.complete(module)) "Réviser et voir mon évaluation" else if (done.isEmpty()) "Commencer mon apprentissage" else "Continuer mon apprentissage")
                         }
                     }
                 }

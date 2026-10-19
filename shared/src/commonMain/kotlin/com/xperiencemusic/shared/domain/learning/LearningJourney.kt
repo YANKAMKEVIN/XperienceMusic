@@ -21,7 +21,7 @@ fun LearningProgress.weeklyDays(today:LocalDate):Int = attempts.map { it.day }.d
 fun LearningProgress.returning(today:LocalDate):Boolean = attempts.maxOfOrNull { it.day }?.daysUntil(today)?.let { it>=7 }==true
 
 data class MusicalChallenge(val title:String,val steps:List<String>,val criteria:String,val example:List<Int>)
-fun LearningModule.challenge():MusicalChallenge = when(id) {
+fun LearningModule.challenge():MusicalChallenge = if (instrument == com.xperiencemusic.shared.domain.model.Instrument.SINGER) SingerLearning.challenge(this) else when(id) {
     "piano-scales" -> MusicalChallenge("Des repères fluides",listOf("Écoute les notes de Do majeur.","Joue une octave lentement, mains séparées, puis ensemble si tu es à l’aise.","Enregistre une prise sans forcer le tempo."),"Écoute la régularité et vérifie le doigté avec le responsable.",listOf(60,62,64,65,67,69,71,72))
     "piano-rhythm" -> MusicalChallenge("Accompagner sans accélérer",listOf("Écoute le clic à 72 BPM.","Joue C | Am | F | G, quatre temps par accord, pendant trois tours.","Garde la pulsation pendant les changements et enregistre ta prise."),"Une pulsation stable et des changements sans arrêt.",listOf(60,64,67,69,72,76,65,69,72,67,71,74))
     "piano-transpose" -> MusicalChallenge("Suivre un changement de tonalité",listOf("Joue C | F | G | C.","Rejoue un ton plus haut : D | G | A | D.","Enregistre les deux versions et explique le déplacement des degrés."),"Les relations I–IV–V sont conservées dans les deux tonalités.",listOf(60,65,67,60,62,67,69,62))

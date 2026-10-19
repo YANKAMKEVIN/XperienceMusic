@@ -6,7 +6,18 @@ import kotlinx.datetime.plus
 import kotlinx.serialization.Serializable
 
 /** Versioned activities train skills; only a responsible person validates the objective. */
-enum class LearningKind { LESSON, EAR, KEYBOARD, PRACTICE, CHOICE, RHYTHM }
+enum class LearningKind { LESSON, EAR, KEYBOARD, PRACTICE, CHOICE, RHYTHM, SING }
+
+/**
+ * What a SING activity asks: the notes to sing, in semitones from the singer's comfort note (so each
+ * voice gets its own), each held [secondsEach]. [accompanimentSemitones] plays another voice's note
+ * meanwhile, to hold one's part against it.
+ */
+data class SingTarget(
+    val semitones: List<Int>,
+    val secondsEach: Double,
+    val accompanimentSemitones: Int? = null,
+)
 
 data class LearningActivity(
     val id: String,
@@ -19,6 +30,7 @@ data class LearningActivity(
     val answer: String? = null,
     val choices: List<String> = emptyList(),
     val bpm: Int = 72,
+    val sing: SingTarget? = null,
 )
 
 @Serializable
@@ -87,6 +99,7 @@ object PianoBasics {
         LearningKind.KEYBOARD -> notes == activity.expectedNotes
         LearningKind.EAR, LearningKind.CHOICE -> answer == activity.answer
         LearningKind.RHYTHM -> false // Timing is evaluated from the tap intervals, never a checkbox.
+        LearningKind.SING -> false // Only the microphone, through the view model, passes a sung activity.
         LearningKind.LESSON, LearningKind.PRACTICE -> true
     }
 }

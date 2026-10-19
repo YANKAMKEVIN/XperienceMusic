@@ -57,6 +57,9 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   finissant, les autres sont cochés puis validés par l'Admin++. Tous atteints → le membre demande son
   passage ; l'Admin++ confirme (le serveur change le niveau) ou renvoie avec un commentaire, dans
   « À valider ». L'Admin++ corrige un niveau dans « Gérer les membres ».
+- **Parcours chantre guidé** (19 octobre 2026) : 9 modules, un par objectif chantre sans palier au micro
+  (c4 à c7, p3 à p7), avec leçons, questions, écoute et exercices chantés au micro. Rien n'y valide un
+  objectif : c'est toujours l'Admin++ (voir `docs/guided-learning.md`).
 - **Vidéo TikTok de présentation** (30 s, avec la musique du groupe) dans `video/`. Rendu : `npm run render`.
 
 ## Reste à faire

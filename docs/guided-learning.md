@@ -178,3 +178,23 @@ incorrecte ou note omise ; toucher les notes du bilan et comparer l’extrait av
 travailler un fragment puis refaire la gamme ; changer tempo/gamme/sens ; comparer deux essais ;
 sortir pendant l’analyse ou l’encodage de l’extrait. Tester sur pianos acoustiques et numériques.
 Ne pas diffuser l’exemple sur une enceinte pendant la prise : le micro peut reconnaître cette source.
+
+## Parcours chantre
+
+Le même parcours existe pour les chantres, avec neuf modules : un par objectif du programme qu’aucun
+palier au micro ne valide. Pour Débutant → Confirmé : rythme (`singer-c4`), micro (`singer-c5`),
+tenir sa voix (`singer-c6`) et présence (`singer-c7`). Pour Confirmé → Pro : oreille (`singer-p3`),
+ornements (`singer-p4`), improvisation (`singer-p5`), diriger les voix (`singer-p6`) et conduire la
+louange (`singer-p7`). Le contenu est dans `domain/learning/SingerLearning.kt`. Un chantre ne voit que
+ces modules, et un pianiste ne voit que les siens.
+
+Les activités « Chanter » écoutent le micro, avec la même détection de hauteur que les paliers.
+Les notes partent de la note de confort de la voix du chantre (alto par défaut). On ne peut les
+réussir qu’en chantant juste et assez longtemps ; « Vérifier » reste bloqué tant que ce n’est pas fait.
+Dans « Tenir sa voix », une autre voix joue pendant la prise, et l’écran conseille des écouteurs.
+Les leçons, les questions et les écoutes (intervalle, direction, majeur ou mineur) fonctionnent
+comme pour le piano.
+
+Comme pour le piano, aucune activité ne valide un objectif. Le chantre envoie une prise chantée, ou
+demande une évaluation en répétition, et l’Admin++ décide. La carte « Parcours chantre » de « Ma
+progression » ouvre le premier module qu’il n’a pas fini.

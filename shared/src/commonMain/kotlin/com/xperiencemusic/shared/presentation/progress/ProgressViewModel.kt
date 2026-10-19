@@ -63,7 +63,7 @@ class ProgressViewModel(
         }
 
     private val learning = observeCurrentMember().flatMapLatest { member ->
-        if (member?.profile?.instrument == com.xperiencemusic.shared.domain.model.Instrument.PIANO) {
+        if (member != null && com.xperiencemusic.shared.domain.learning.LearningCatalog.modulesFor(member.profile.instrument).isNotEmpty()) {
             // Fetches the history kept on the server too: a fresh phone would otherwise show 0 done.
             learningRepository.observe(member.id)
                 .onStart { viewModelScope.launch { learningRepository.sync(member.id) } }

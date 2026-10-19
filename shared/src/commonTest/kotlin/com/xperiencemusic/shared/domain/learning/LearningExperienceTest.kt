@@ -34,10 +34,10 @@ class LearningExperienceTest {
         assertTrue(rhythmError(listOf(0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7),60)!!>0.18)
     }
     @Test fun modulesHaveDistinctActivitiesAndObjectiveLinks() {
-        assertEquals(5,LearningCatalog.modules.size)
+        assertEquals(5,LearningCatalog.modulesFor(com.xperiencemusic.shared.domain.model.Instrument.PIANO).size)
         val activities=LearningCatalog.modules.flatMap{it.activities}
         assertEquals(activities.size,activities.map{it.id}.distinct().size)
-        assertEquals(5,LearningCatalog.modules.map{it.objectiveId}.distinct().size)
+        assertEquals(LearningCatalog.modules.size,LearningCatalog.modules.map{it.objectiveId}.distinct().size)
         val plan=LearningProgress().dailyPlan(LearningCatalog.modules.first(),LocalDate(2026,10,18))
         assertEquals(listOf(0,1,2),plan)
     }

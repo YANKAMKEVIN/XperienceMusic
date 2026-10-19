@@ -28,9 +28,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.domain.learning.*
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
+import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.presentation.learning.*
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
@@ -60,7 +62,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
             bottomBar={ if(!state.loading && state.allowed && state.mode==LearningMode.ACTIVITY) ActivityAction(state,onEvent) },
             contentWindowInsets=WindowInsets(0)) { padding ->
             if(state.loading) Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.Center){CircularProgressIndicator()}
-            else if(!state.allowed)Text("Ces modules sont proposés au parcours piano.",Modifier.padding(padding).padding(Spacing.l))
+            else if(!state.allowed)Text(if(state.module.instrument==Instrument.SINGER)"Ces modules sont proposés au parcours chantre." else "Ces modules sont proposés au parcours piano.",Modifier.padding(padding).padding(Spacing.l))
             else key(state.mode,state.index,state.module.id) {
                 Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
                     when(state.mode) {
@@ -143,7 +145,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         Text(mastery.label,style=MaterialTheme.typography.titleMedium)
         TextButton(onClick={explain=!explain}) { Text("Comprendre ce statut") }
         if(explain) Text(mastery.explanation,style=MaterialTheme.typography.bodySmall)
-        Text("Les exercices à l’écran et le jeu sur l’instrument sont évalués séparément.",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
+        Text(if(s.module.instrument==Instrument.SINGER)"Les exercices à l’écran et ta voix en situation sont évalués séparément." else "Les exercices à l’écran et le jeu sur l’instrument sont évalués séparément.",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
         s.reviewStatus?.let {ExerciseStatusBadge(it,Modifier.padding(top=Spacing.s))}
         s.feedback?.let {
             Text("Mon prochain travail",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=Spacing.s))
@@ -152,7 +154,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         }
         if(s.complete) s.memberId?.let { audioReview(it, s.module.objectiveId) }
         if(s.complete && s.reviewStatus!=ExerciseStatus.VALIDATED) {
-            OutlinedButton(onClick=onRecord,modifier=Modifier.padding(top=Spacing.m)){Text("Enregistrer mon jeu pour le responsable")}
+            OutlinedButton(onClick=onRecord,modifier=Modifier.padding(top=Spacing.m)){Text(if(s.module.instrument==Instrument.SINGER)"Enregistrer ma voix pour le responsable" else "Enregistrer mon jeu pour le responsable")}
             TextButton(onClick={event(LearningEvent.RequestReview)},enabled=s.reviewLoaded && !s.saving && s.reviewStatus!=ExerciseStatus.SUBMITTED){Text("Demander une évaluation en répétition")}
             if(!s.reviewLoaded)Text("Une connexion est nécessaire pour envoyer la demande.",style=MaterialTheme.typography.bodySmall)
         }
@@ -165,7 +167,9 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         Text("Essai local et expérimental · sans pédale · validation finale par le responsable.",style=MaterialTheme.typography.bodySmall)
     }
     JourneyGoal(s,event)
-    if(s.preferences.startingPoint==null) StartingPoint(s,event)
+    // The starting-point quiz only knows the piano modules.
+    if(s.module.instrument!=Instrument.PIANO) Unit
+    else if(s.preferences.startingPoint==null) StartingPoint(s,event)
     else AppCard {
         Text("Mon point de départ conseillé : ${LearningCatalog.module(s.preferences.startingPoint).title}")
         TextButton(onClick={onModule(s.preferences.startingPoint)}) {Text("Explorer ce module")}
@@ -177,13 +181,15 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         Text(challenge.title,style=MaterialTheme.typography.titleLarge)
         challenge.steps.forEachIndexed { i,step -> Text("${i+1}. $step",Modifier.padding(top=Spacing.s)) }
         Text("À écouter : ${challenge.criteria}",Modifier.padding(top=Spacing.s))
-        TextButton(onClick={event(LearningEvent.ChallengeExample)}) { Text("Écouter les notes de la grille") }
-        Text("Démonstration note par note : le rythme d’accompagnement reste à travailler sur ton instrument.",style=MaterialTheme.typography.bodySmall)
+        if(s.module.instrument==Instrument.PIANO) {
+            TextButton(onClick={event(LearningEvent.ChallengeExample)}) { Text("Écouter les notes de la grille") }
+            Text("Démonstration note par note : le rythme d’accompagnement reste à travailler sur ton instrument.",style=MaterialTheme.typography.bodySmall)
+        }
         if(s.complete && s.reviewStatus!=ExerciseStatus.VALIDATED) OutlinedButton(onClick=onRecord) { Text("Enregistrer mon défi") }
         else if(!s.complete) Text("Prépare ce défi avec les activités du module ; l’envoi au responsable s’ouvrira ensuite.",style=MaterialTheme.typography.bodySmall)
     }
-    Text("Mon parcours piano",style=MaterialTheme.typography.titleLarge)
-    LearningCatalog.modules.forEach { m ->
+    Text(if(s.module.instrument==Instrument.SINGER)"Mon parcours chantre" else "Mon parcours piano",style=MaterialTheme.typography.titleLarge)
+    LearningCatalog.modulesFor(s.module.instrument).forEach { m ->
         AppCard(onClick={onModule(m.id)}) {
             Text(m.title,style=MaterialTheme.typography.titleMedium)
             Text("${s.progress.completedIn(m).size} / ${m.activities.size} activités",style=MaterialTheme.typography.bodySmall)
@@ -202,7 +208,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     val a=s.activity
     Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(start=Spacing.l,end=Spacing.l,top=Spacing.s)) {
         if(s.result==true) GradientButton(onClick={event(LearningEvent.Next)},modifier=Modifier.fillMaxWidth()){Text("Continuer")}
-        else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck,modifier=Modifier.fillMaxWidth()){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";else->"Vérifier"})}
+        else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck,modifier=Modifier.fillMaxWidth()){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";a.kind==LearningKind.SING && !s.sung->"Chante d’abord l’exercice";else->"Vérifier"})}
     }
 }
 
@@ -210,17 +216,17 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     val a=s.activity
     AppCard {
         Column((if(s.preferences.reduceMotion)Modifier else Modifier.animateContentSize()),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
-            Text(when(a.kind){LearningKind.LESSON->"COMPRENDRE";LearningKind.EAR->"ÉCOUTER";LearningKind.KEYBOARD->"CONSTRUIRE";LearningKind.PRACTICE->"SUR TON INSTRUMENT";LearningKind.CHOICE->"FAIRE LE LIEN";LearningKind.RHYTHM->"SENTIR LE TEMPO"},style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
+            Text(when(a.kind){LearningKind.LESSON->"COMPRENDRE";LearningKind.EAR->"ÉCOUTER";LearningKind.KEYBOARD->"CONSTRUIRE";LearningKind.PRACTICE->if(s.module.instrument==Instrument.SINGER)"AVEC TA VOIX" else "SUR TON INSTRUMENT";LearningKind.CHOICE->"FAIRE LE LIEN";LearningKind.RHYTHM->"SENTIR LE TEMPO";LearningKind.SING->"CHANTER"},style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
             Text(a.title,style=MaterialTheme.typography.headlineSmall,modifier=Modifier.semantics{heading()})
             Text(a.instruction,style=MaterialTheme.typography.bodyLarge)
             if(a.kind in listOf(LearningKind.LESSON,LearningKind.PRACTICE))Text(a.explanation)
             if(a.example.isNotEmpty()) {
-                OutlinedButton(onClick={event(LearningEvent.Listen)},enabled=!s.saving){Text("Écouter l’accord")}
+                OutlinedButton(onClick={event(LearningEvent.Listen)},enabled=!s.saving){Text(if(a.example.size>1 && a.choices.isNotEmpty())"Écouter les notes" else "Écouter l’accord")}
                 TextButton(onClick={event(LearningEvent.ListenBroken)},enabled=!s.saving){Text("Écouter note par note")}
             }
             if(a.kind in listOf(LearningKind.EAR,LearningKind.CHOICE)) {
                 Column {
-                    val choices=if(a.kind==LearningKind.EAR)listOf("Majeur","Mineur") else a.choices
+                    val choices=if(a.kind==LearningKind.EAR && a.choices.isEmpty())listOf("Majeur","Mineur") else a.choices
                     choices.forEach { c -> FilterChip(selected=s.answer==c,onClick={event(LearningEvent.Answer(c))},label={Text(c)},enabled=!s.saving) }
                 }
                 if(a.kind==LearningKind.EAR && !s.listened)Text("Écoute avant de choisir.",style=MaterialTheme.typography.bodySmall)
@@ -234,6 +240,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                     Text("À conserver : ${correct.sorted().joinToString(" · "){noteLabel(it)}.ifEmpty{"cherche d’abord la fondamentale"}}",style=MaterialTheme.typography.bodySmall)
                 }
             }
+            if(a.kind==LearningKind.SING) SingPanel(s,event)
             if(a.kind==LearningKind.RHYTHM) {
                 OutlinedButton(onClick={event(LearningEvent.Metronome)}){Text("Écouter 8 clics · ${a.bpm} BPM")}
                 Button(onClick={event(LearningEvent.Tap)},modifier=Modifier.fillMaxWidth().heightIn(min=100.dp)){Text("Frapper la pulsation · ${s.taps.size}/8")}
@@ -242,17 +249,36 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
             if(a.kind !in listOf(LearningKind.LESSON,LearningKind.PRACTICE) && s.result!=true) {
                 TextButton(onClick={event(LearningEvent.Hint)},enabled=s.hints<3){Text(if(s.hints==0)"Un indice" else if(s.hints<3)"Un peu plus d’aide" else "Les aides sont affichées")}
                 if(s.hints>0) Text(when(s.hints) {
-                    1->when(a.kind){LearningKind.KEYBOARD->"Cherche la fondamentale, puis compte les demi-tons. Majeur : 4 puis 3 ; mineur : 3 puis 4.";LearningKind.EAR->"Réécoute note par note et concentre-toi sur la distance entre les deux premières notes.";LearningKind.RHYTHM->"Relâche la main et garde un mouvement régulier. Le premier appui fixe le départ.";else->"Reprends la règle dans la leçon précédente."}
+                    1->when(a.kind){LearningKind.KEYBOARD->"Cherche la fondamentale, puis compte les demi-tons. Majeur : 4 puis 3 ; mineur : 3 puis 4.";LearningKind.EAR->"Réécoute note par note et concentre-toi sur la distance entre les deux premières notes.";LearningKind.RHYTHM->"Relâche la main et garde un mouvement régulier. Le premier appui fixe le départ.";LearningKind.SING->"Écoute d’abord tes notes, respire, puis chante sans pousser : la note doit être stable avant de compter.";else->"Reprends la règle dans la leçon précédente."}
                     2->if(a.kind==LearningKind.KEYBOARD)"Les notes manquantes sont maintenant repérées sur le clavier. Tu gardes ta sélection." else a.explanation
                     else->a.explanation
                 },style=MaterialTheme.typography.bodyMedium)
                 if(s.hints>=3 && a.expectedNotes.isNotEmpty())OutlinedButton(onClick={event(LearningEvent.ListenBroken)}){Text("Écouter la démonstration")}
             }
             s.feedbackText?.let {Text(it,color=if(s.result==true)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})}
-            if(a.kind==LearningKind.PRACTICE)Text("Cette étape est déclarative. Seul le responsable peut valider la compétence sur ton instrument.",style=MaterialTheme.typography.bodySmall)
+            if(a.kind==LearningKind.PRACTICE)Text(if(s.module.instrument==Instrument.SINGER)"Cette étape est déclarative. Seul le responsable peut valider la compétence en situation." else "Cette étape est déclarative. Seul le responsable peut valider la compétence sur ton instrument.",style=MaterialTheme.typography.bodySmall)
         }
     }
 }
+
+/** Sung activity: the notes to sing from the singer's comfort note, the microphone, and the live pitch. */
+@Composable private fun SingPanel(s:LearningUiState,event:(LearningEvent)->Unit) {
+    val target=s.activity.sing?:return
+    val permission=rememberMicrophonePermission()
+    val notes=s.singTargets
+    Text("À chanter : ${notes.joinToString(" · "){noteLabel(it)}} · ${formatSeconds(target.secondsEach)} chacune",style=MaterialTheme.typography.titleMedium)
+    OutlinedButton(onClick={event(LearningEvent.ListenBroken)},enabled=!s.singing && !s.saving){Text(if(notes.size>1)"Écouter mes notes" else "Écouter ma note")}
+    if(target.accompanimentSemitones!=null) Text("Mets des écouteurs : l’autre voix joue pendant que tu chantes, et le micro ne doit entendre que toi.",style=MaterialTheme.typography.bodySmall)
+    if(s.singing) {
+        OutlinedButton(onClick={event(LearningEvent.StopSinging)},modifier=Modifier.fillMaxWidth()){Text("Arrêter l’écoute")}
+        Text("J’entends : ${s.heardMidi?.let{noteLabel(it)}?:"…"}",style=MaterialTheme.typography.bodyLarge,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})
+        if(notes.size>1) Text("Note ${(s.singStep+1).coerceAtMost(notes.size)} / ${notes.size}",style=MaterialTheme.typography.bodySmall)
+        LinearProgressIndicator(progress={(s.singStep+(s.holdSeconds/target.secondsEach).coerceIn(0.0,1.0)).toFloat()/notes.size},modifier=Modifier.fillMaxWidth())
+    } else if(s.sung) Text("Bien tenu ! Tu peux vérifier l’activité.",color=MaterialTheme.colorScheme.primary)
+    else Button(onClick={permission.request { if(it)event(LearningEvent.StartSinging) else event(LearningEvent.MicrophoneDenied) }},enabled=!s.saving && s.result!=true,modifier=Modifier.fillMaxWidth().heightIn(min=64.dp)){Text("Chanter maintenant")}
+    s.micError?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+}
+private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble())"${seconds.toInt()} s" else "${seconds.toString().replace('.',',')} s"
 
 @Composable private fun PianoKeyboard(s:LearningUiState,onKey:(Int)->Unit) {
     val whites=(60..84).filter {it%12 in listOf(0,2,4,5,7,9,11)}

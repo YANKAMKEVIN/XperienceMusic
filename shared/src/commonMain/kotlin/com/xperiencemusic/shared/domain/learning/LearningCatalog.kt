@@ -4,8 +4,15 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import kotlin.math.abs
+import com.xperiencemusic.shared.domain.model.Instrument
 
-data class LearningModule(val id: String, val title: String, val objectiveId: String, val activities: List<LearningActivity>)
+data class LearningModule(
+    val id: String,
+    val title: String,
+    val objectiveId: String,
+    val activities: List<LearningActivity>,
+    val instrument: Instrument = Instrument.PIANO,
+)
 
 object LearningCatalog {
     const val DEFAULT = "piano-chords"
@@ -40,8 +47,11 @@ object LearningCatalog {
             LearningActivity("transpose-grid", "Déplacer une grille", LearningKind.CHOICE, "C–F–G transposé un ton plus haut donne…", "Chaque accord monte d’un ton : D–G–A.", answer="D–G–A", choices=listOf("D–G–A","D–F–A","C–G–A")),
             LearningActivity("transpose-practice", "Changer de tonalité sur demande", LearningKind.PRACTICE, "Choisis un chant connu. Joue-le dans sa tonalité puis un ton plus haut et un ton plus bas.", "Utilise les degrés pour conserver les relations entre accords. Le responsable évaluera la transposition sur l’instrument, à la demande."),
         )),
-    )
+    ) + SingerLearning.modules
     fun module(id: String) = modules.firstOrNull { it.id == id } ?: modules.first()
+    fun modulesFor(instrument: Instrument?) = modules.filter { it.instrument == instrument }
+    /** The module a member starts from: the first one of their part, if it has any. */
+    fun defaultFor(instrument: Instrument?) = modulesFor(instrument).firstOrNull()
     fun findActivity(id: String) = modules.flatMap { it.activities }.firstOrNull { it.id == id }
     private fun lesson(id:String,title:String,instruction:String,explanation:String) = LearningActivity(id,title,LearningKind.LESSON,instruction,explanation)
     private fun keys(id:String,title:String,instruction:String,notes:Set<Int>,explanation:String) = LearningActivity(id,title,LearningKind.KEYBOARD,instruction,explanation,expectedNotes=notes)
@@ -78,7 +88,7 @@ fun noteLabel(midi:Int)=listOf("Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol
 fun variedActivity(base:LearningActivity, encounter:Int):LearningActivity {
     if(encounter==0) return base
     if(base.kind==LearningKind.CHOICE) return base.copy(choices=if(encounter%2==0)base.choices else base.choices.reversed())
-    if(base.kind==LearningKind.EAR) {
+    if(base.kind==LearningKind.EAR && base.choices.isEmpty()) {
         val root=listOf(60,65,62,67,64,69)[encounter%6]
         val minor=(encounter+base.id.length)%2==0
         return base.copy(example=listOf(root,root+if(minor)3 else 4,root+7), answer=if(minor)"Mineur" else "Majeur",
@@ -110,7 +120,8 @@ fun correction(activity:LearningActivity,notes:Set<Int>,answer:String?):String =
             else -> "${correct.size} note(s) correcte(s). Il manque ${missing.size} note(s) ; conserve ta sélection et cherche les suivantes."
         }
     }
-    LearningKind.EAR -> "Tu as choisi ${answer.orEmpty()}. Réécoute la tierce ; utilise un indice avant de réessayer."
+    LearningKind.EAR -> if(activity.choices.isEmpty()) "Tu as choisi ${answer.orEmpty()}. Réécoute la tierce ; utilise un indice avant de réessayer."
+        else "Tu as choisi ${answer.orEmpty()}. Réécoute note par note, puis réessaie."
     else -> "Reprends la consigne ; un indice peut t’aider."
 }
 fun rhythmError(taps:List<Double>,bpm:Int):Double? {

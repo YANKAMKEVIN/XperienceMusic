@@ -277,7 +277,7 @@ val presentationModule = module {
     }
     viewModel { params ->
         com.xperiencemusic.shared.presentation.learning.LearningViewModel(
-            get(), get(), get(), get(), get(), com.xperiencemusic.shared.domain.learning.PlayLearningExample(get(), get(), get()), get(), params.getOrNull<String>() ?: "piano-chords",
+            get(), get(), get(), get(), get(), com.xperiencemusic.shared.domain.learning.PlayLearningExample(get(), get(), get()), get(), params.getOrNull<String>() ?: "piano-chords", get(), get(),
         )
     }
     viewModel { params ->

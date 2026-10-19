@@ -24,12 +24,12 @@ import org.koin.core.parameter.parametersOf
     val sending by vm.sending.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
     val permission=rememberMicrophonePermission()
-    Scaffold(topBar={TopAppBar(title={Text("Mon jeu sur l’instrument")},navigationIcon={IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Retour")}},windowInsets=WindowInsets(0))},contentWindowInsets=WindowInsets(0)) {padding->
+    Scaffold(topBar={TopAppBar(title={Text(if(vm.module.instrument==com.xperiencemusic.shared.domain.model.Instrument.SINGER)"Ma prise chantée" else "Mon jeu sur l’instrument")},navigationIcon={IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Retour")}},windowInsets=WindowInsets(0))},contentWindowInsets=WindowInsets(0)) {padding->
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
             AppCard {
                 Text(vm.module.title,style=MaterialTheme.typography.headlineSmall)
                 Text(vm.module.activities.last().explanation,Modifier.padding(top=Spacing.m))
-                Text("Choisis un endroit calme. Pose le téléphone près de l’instrument, joue puis arrête. La prise est partagée seulement avec toi et le responsable habilité. Durée : 3 secondes à 5 minutes.",Modifier.padding(top=Spacing.m))
+                Text("Choisis un endroit calme. "+(if(vm.module.instrument==com.xperiencemusic.shared.domain.model.Instrument.SINGER)"Tiens le téléphone à un bras de distance, chante puis arrête." else "Pose le téléphone près de l’instrument, joue puis arrête.")+" La prise est partagée seulement avec toi et le responsable habilité. Durée : 3 secondes à 5 minutes.",Modifier.padding(top=Spacing.m))
             }
             if(level.isRecording) {
                 Text("Enregistrement · ${level.seconds.toInt()} s",style=MaterialTheme.typography.headlineSmall)

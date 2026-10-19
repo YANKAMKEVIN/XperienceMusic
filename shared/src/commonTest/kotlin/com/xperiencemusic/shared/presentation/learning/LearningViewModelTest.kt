@@ -67,4 +67,53 @@ class LearningViewModelTest {
         assertEquals(true, vm.state.value.result)
         assertEquals(played.title, vm.state.value.sessionTitles[played.id])
     }
+
+    private fun TestScope.singerViewModel(script: List<Int?>, instrument: Instrument = Instrument.SINGER): Pair<LearningViewModel, FileLearningRepository> {
+        val sessions = FakeSessionRepository(member(instrument = instrument))
+        val dates = DateProvider { LocalDate(2026, 10, 19) }
+        val growth = InMemoryGrowthRepository(sessions, InMemoryMembersRepository(sessions), dates)
+        val files = FakeFileStore()
+        val repository = FileLearningRepository(SnapshotStore(files))
+        val player = FakeAudioPlayer()
+        val playback = PlaybackController(player, { it }, backgroundScope)
+        val vm = LearningViewModel(ObserveCurrentMemberUseCase(sessions), repository, growth,
+            TickObjectiveUseCase(sessions, growth, GrowthObjectives.all), dates,
+            PlayLearningExample(files, player, playback), null, "singer-hold",
+            TrackSingingUseCase(FakeMicrophone(script)), PlayReferenceNoteUseCase(files, player, playback))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.state.collect() }
+        return vm to repository
+    }
+
+    @Test fun sungActivityPassesOnlyOnceTheMicrophoneHeardTheHold() = runTest {
+        // Alto comfort note: Ré4, held long enough for the five-second exercise.
+        val (vm, repository) = singerViewModel(List(FakeMicrophone.framesFor(5.5)) { 62 })
+        assertTrue(vm.state.value.allowed)
+        vm.onEvent(LearningEvent.Open(0))
+        vm.onEvent(LearningEvent.Check)
+        vm.onEvent(LearningEvent.Next)
+        assertEquals(LearningKind.SING, vm.state.value.activity.kind)
+        assertEquals(listOf(62), vm.state.value.singTargets)
+        assertFalse(vm.state.value.canCheck)
+        vm.onEvent(LearningEvent.StartSinging)
+        assertTrue(vm.state.value.sung)
+        assertFalse(vm.state.value.singing)
+        vm.onEvent(LearningEvent.Check)
+        assertEquals(true, vm.state.value.result)
+        assertTrue(repository.observe("me").first().attempts.last().passed)
+    }
+
+    @Test fun offPitchSingingNeverPasses() = runTest {
+        val (vm, _) = singerViewModel(List(FakeMicrophone.framesFor(6.0)) { 67 })
+        vm.onEvent(LearningEvent.Open(0))
+        vm.onEvent(LearningEvent.Check)
+        vm.onEvent(LearningEvent.Next)
+        vm.onEvent(LearningEvent.StartSinging)
+        assertFalse(vm.state.value.sung)
+        assertFalse(vm.state.value.canCheck)
+    }
+
+    @Test fun singerModulesAreClosedToOtherParts() = runTest {
+        val (vm, _) = singerViewModel(emptyList(), Instrument.PIANO)
+        assertFalse(vm.state.value.allowed)
+    }
 }

@@ -37,7 +37,7 @@ class AssessmentViewModel(moduleId:String,private val sessions:SessionRepository
         viewModelScope.launch {
             try {
                 val member=sessions.currentMember()?:error("signed out")
-                check(member.profile.instrument==Instrument.PIANO)
+                check(member.profile.instrument==module.instrument)
                 check(learning.observe(member.id).first().complete(module))
                 recordings.send(member.id,module.objectiveId,v.wav,v.durationSeconds)
                 voice=null;recordedSeconds.value=0
