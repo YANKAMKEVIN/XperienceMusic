@@ -1,108 +1,235 @@
 package com.xperiencemusic.shared.ui.progress
 
-import com.xperiencemusic.shared.resources.growth_learn_title
-import com.xperiencemusic.shared.resources.growth_learn_show
-import com.xperiencemusic.shared.resources.growth_learn_hide
-import com.xperiencemusic.shared.resources.growth_criterion
-import com.xperiencemusic.shared.resources.growth_by_microphone
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.draw.clip
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Level
-import com.xperiencemusic.shared.presentation.progress.LevelCardUi
+import com.xperiencemusic.shared.presentation.progress.ModuleProgressUi
 import com.xperiencemusic.shared.presentation.progress.ObjectiveUi
 import com.xperiencemusic.shared.resources.Res
-import com.xperiencemusic.shared.resources.growth_ask
-import com.xperiencemusic.shared.resources.growth_ask_again
+import com.xperiencemusic.shared.resources.growth_by_microphone
 import com.xperiencemusic.shared.resources.growth_level_to_confirmed
 import com.xperiencemusic.shared.resources.growth_level_to_pro
-import com.xperiencemusic.shared.resources.growth_objectives
-import com.xperiencemusic.shared.resources.growth_objectives_hint
-import com.xperiencemusic.shared.resources.growth_objectives_title
-import com.xperiencemusic.shared.resources.growth_reached
-import com.xperiencemusic.shared.resources.growth_rework
-import com.xperiencemusic.shared.resources.growth_title
-import com.xperiencemusic.shared.resources.growth_top
-import com.xperiencemusic.shared.resources.growth_towards
-import com.xperiencemusic.shared.resources.growth_waiting
+import com.xperiencemusic.shared.resources.growth_learn_title
+import com.xperiencemusic.shared.resources.progress_module_count
+import com.xperiencemusic.shared.resources.progress_objective_module
+import com.xperiencemusic.shared.resources.progress_objective_number
+import com.xperiencemusic.shared.resources.progress_objective_todo
+import com.xperiencemusic.shared.resources.progress_sheet_criterion
+import com.xperiencemusic.shared.resources.progress_sheet_learn
+import com.xperiencemusic.shared.resources.progress_sheet_reached
+import com.xperiencemusic.shared.resources.progress_sheet_reached_hint
+import com.xperiencemusic.shared.resources.status_submitted
+import com.xperiencemusic.shared.resources.status_to_rework
+import com.xperiencemusic.shared.resources.status_validated
 import com.xperiencemusic.shared.ui.brand.GradientButton
-import com.xperiencemusic.shared.ui.components.AppCard
-import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Palette
 import com.xperiencemusic.shared.ui.theme.Spacing
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
-/** "Confirmé", "Pro": the level as it ends "passer …" and "passage …" sentences. */
+/** "Confirmé", "Pro": the level as it ends "passer …" and "vers …" sentences. */
 @Composable
-private fun Level.target(): String = stringResource(
+internal fun Level.target(): String = stringResource(
     if (this == Level.PRO) Res.string.growth_level_to_pro else Res.string.growth_level_to_confirmed,
 )
 
-/** The member's level, how far they are towards the next one, and the request to move up. */
+internal fun ObjectiveUi.segment(): RingSegment = when (status) {
+    ExerciseStatus.VALIDATED -> RingSegment.VALIDATED
+    ExerciseStatus.SUBMITTED -> RingSegment.WAITING
+    ExerciseStatus.TO_REWORK -> RingSegment.REWORK
+    else -> RingSegment.TODO
+}
+
 @Composable
-internal fun LevelCard(card: LevelCardUi, isWorking: Boolean, onAsk: () -> Unit) {
-    AppCard {
-        Text(stringResource(Res.string.growth_title), style = MaterialTheme.typography.titleMedium)
-        val next = card.next
-        if (next == null) {
-            Text(
-                stringResource(Res.string.growth_top),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.tertiary,
-                modifier = Modifier.padding(top = Spacing.xs),
-            )
-            return@AppCard
+private fun ObjectiveUi.statusLabel(): Pair<String, Color> = when (status) {
+    ExerciseStatus.VALIDATED -> stringResource(Res.string.status_validated) to Palette.Success
+    ExerciseStatus.SUBMITTED -> stringResource(Res.string.status_submitted) to Palette.Blue
+    ExerciseStatus.TO_REWORK -> stringResource(Res.string.status_to_rework) to BrandColors.Amber
+    else -> stringResource(Res.string.progress_objective_todo) to Palette.Mist
+}
+
+/**
+ * The objectives of the next level as cards to swipe, the ones still open first. A tap opens the
+ * objective's sheet.
+ */
+@Composable
+internal fun ObjectiveCarousel(objectives: List<ObjectiveUi>, modules: List<ModuleProgressUi>, onOpen: (ObjectiveUi) -> Unit) {
+    val numbered = objectives.mapIndexed { i, o -> i + 1 to o }
+        .sortedBy { (_, o) -> if (o.status == ExerciseStatus.VALIDATED) 1 else 0 }
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = Spacing.l),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        itemsIndexed(numbered, key = { _, (_, o) -> o.id }) { order, (number, objective) ->
+            val (label, color) = objective.statusLabel()
+            val module = modules.firstOrNull { it.objectiveId == objective.id }
+            val shape = RoundedCornerShape(22.dp)
+            Column(
+                Modifier
+                    .enter(order)
+                    .width(156.dp)
+                    .height(172.dp)
+                    .clip(shape)
+                    .background(Palette.NightRaised)
+                    .border(1.dp, if (objective.status == null) Palette.Outline else color.copy(alpha = 0.45f), shape)
+                    .clickable(role = Role.Button) { onOpen(objective) }
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                StatusChip(label, color)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(stringResource(Res.string.progress_objective_number, number), style = MaterialTheme.typography.labelMedium, color = Palette.Mist)
+                    Text(objective.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, maxLines = 2)
+                    if (module != null && module.done > 0 && objective.status != ExerciseStatus.VALIDATED) {
+                        Text(stringResource(Res.string.progress_objective_module, module.done, module.total), style = MaterialTheme.typography.labelSmall, color = Palette.Blue)
+                    }
+                }
+            }
         }
-        Text(
-            stringResource(Res.string.growth_towards, card.current.label(), next.label()),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = Spacing.xs),
-        )
-        if (card.required > 0) {
-            LinearProgressIndicator(
-                progress = { card.done.toFloat() / card.required },
-                modifier = Modifier.fillMaxWidth().padding(top = Spacing.s),
-            )
-            Text(
-                stringResource(Res.string.growth_objectives, card.done, card.required, next.target()),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = Spacing.xs),
-            )
+    }
+}
+
+@Composable
+private fun StatusChip(label: String, color: Color) {
+    Text(
+        label.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.ExtraBold,
+        color = color,
+        modifier = Modifier.clip(CircleShape).background(color.copy(alpha = 0.16f)).padding(horizontal = 9.dp, vertical = 4.dp),
+    )
+}
+
+/**
+ * Everything about one objective: what it teaches, what the super admin checks, the answer if it
+ * came back, and the way forward: the guided module, the tick, or the microphone tier.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun ObjectiveSheet(
+    objective: ObjectiveUi,
+    number: Int,
+    moduleId: String?,
+    isWorking: Boolean,
+    onDismiss: () -> Unit,
+    onLearn: (String) -> Unit,
+    onToggle: (String, Boolean) -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Palette.NightRaised) {
+        Column(
+            Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            val (label, color) = objective.statusLabel()
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                StatusChip(label, color)
+                Text(stringResource(Res.string.progress_objective_number, number), style = MaterialTheme.typography.labelMedium, color = Palette.Mist)
+            }
+            Text(objective.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(Res.string.growth_learn_title).uppercase(), style = MaterialTheme.typography.labelMedium, color = Palette.Violet)
+                Text(objective.learn, style = MaterialTheme.typography.bodyLarge)
+            }
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Palette.NightHigh).padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(stringResource(Res.string.progress_sheet_criterion).uppercase(), style = MaterialTheme.typography.labelMedium, color = Palette.Mist)
+                Text(objective.criterion, style = MaterialTheme.typography.bodyLarge)
+            }
+            if (objective.status == ExerciseStatus.TO_REWORK && objective.feedback != null) {
+                Text("« ${objective.feedback} »", style = MaterialTheme.typography.bodyMedium, color = BrandColors.Amber)
+            }
+            if (moduleId != null && objective.status != ExerciseStatus.VALIDATED) {
+                GradientButton(onClick = { onLearn(moduleId) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(Res.string.progress_sheet_learn), style = MaterialTheme.typography.titleMedium)
+                }
+            }
+            when {
+                objective.autoTier != null -> Text(
+                    stringResource(Res.string.growth_by_microphone, objective.autoTier),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Palette.Mist,
+                )
+                objective.status != ExerciseStatus.VALIDATED -> Column {
+                    val ticked = objective.status == ExerciseStatus.SUBMITTED
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable(enabled = !isWorking, role = Role.Checkbox) { onToggle(objective.id, !ticked) },
+                    ) {
+                        Checkbox(checked = ticked, onCheckedChange = null, enabled = !isWorking)
+                        Text(stringResource(Res.string.progress_sheet_reached), style = MaterialTheme.typography.titleSmall)
+                    }
+                    Text(stringResource(Res.string.progress_sheet_reached_hint), style = MaterialTheme.typography.bodySmall, color = Palette.Mist)
+                }
+            }
         }
-        when {
-            card.requestStatus == ExerciseStatus.SUBMITTED -> Note(stringResource(Res.string.growth_waiting), MaterialTheme.colorScheme.primary)
-            card.requestStatus == ExerciseStatus.TO_REWORK && card.feedback != null ->
-                Note(stringResource(Res.string.growth_rework, card.feedback), MaterialTheme.colorScheme.error)
-        }
-        if (card.canAsk) {
-            GradientButton(onClick = onAsk, enabled = !isWorking, modifier = Modifier.fillMaxWidth().padding(top = Spacing.m)) {
+    }
+}
+
+/** The guided modules of the member's part, each with its progress bar. */
+@Composable
+internal fun ModulesList(modules: List<ModuleProgressUi>, onOpen: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        modules.forEachIndexed { i, module ->
+            val shape = RoundedCornerShape(20.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .enter(i)
+                    .fillMaxWidth()
+                    .clip(shape)
+                    .background(Palette.NightRaised)
+                    .border(1.dp, Palette.Outline, shape)
+                    .clickable(role = Role.Button) { onOpen(module.id) }
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(module.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    ProgressBar(if (module.total == 0) 0f else module.done.toFloat() / module.total)
+                }
                 Text(
-                    stringResource(
-                        if (card.requestStatus == ExerciseStatus.TO_REWORK) Res.string.growth_ask_again else Res.string.growth_ask,
-                        next.target(),
-                    ),
-                    style = MaterialTheme.typography.titleMedium,
+                    stringResource(Res.string.progress_module_count, module.done, module.total),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Palette.Mist,
+                    modifier = Modifier.padding(start = 14.dp),
                 )
             }
         }
@@ -110,83 +237,16 @@ internal fun LevelCard(card: LevelCardUi, isWorking: Boolean, onAsk: () -> Unit)
 }
 
 @Composable
-private fun Note(text: String, color: androidx.compose.ui.graphics.Color) {
-    Text(text, style = MaterialTheme.typography.bodySmall, color = color, modifier = Modifier.padding(top = Spacing.s))
-}
-
-/**
- * The objectives of the next level. Each shows what the super admin checks; a tap opens the help
- * sheet. Members tick what they reached; the microphone validates the singers' tier objectives.
- */
-@Composable
-internal fun ObjectivesCard(next: Level, objectives: List<ObjectiveUi>, isWorking: Boolean, onToggle: (String, Boolean) -> Unit) {
-    var openId by remember { mutableStateOf<String?>(null) }
-    AppCard {
-        Text(stringResource(Res.string.growth_objectives_title, next.target()), style = MaterialTheme.typography.titleMedium)
-        Text(
-            stringResource(Res.string.growth_objectives_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = Spacing.xs),
+private fun ProgressBar(fraction: Float) {
+    // Fills from empty the first time, then follows the progress.
+    val shown = remember { Animatable(0f) }
+    LaunchedEffect(fraction) {
+        delay(300)
+        shown.animateTo(fraction, tween(800, easing = FastOutSlowInEasing))
+    }
+    Box(Modifier.fillMaxWidth().height(6.dp).clip(CircleShape).background(Palette.NightHigh)) {
+        Box(
+            Modifier.fillMaxWidth(shown.value).height(6.dp).clip(CircleShape).background(BrandColors.horizontalGradient),
         )
-        objectives.forEachIndexed { index, objective ->
-            val isOpen = openId == objective.id
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier
-                    .padding(top = Spacing.m)
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable(role = Role.Button) { openId = if (isOpen) null else objective.id },
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("${index + 1}. ${objective.title}", style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        stringResource(Res.string.growth_criterion, objective.criterion),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    if (objective.status == ExerciseStatus.TO_REWORK && objective.feedback != null) {
-                        Text("« ${objective.feedback} »", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
-                        if (objective.status != null) ExerciseStatusBadge(objective.status, Modifier.padding(end = Spacing.s))
-                        Text(
-                            stringResource(if (isOpen) Res.string.growth_learn_hide else Res.string.growth_learn_show),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    AnimatedVisibility(isOpen) {
-                        Column(
-                            Modifier
-                                .padding(top = Spacing.s)
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp))
-                                .padding(Spacing.m),
-                        ) {
-                            Text(stringResource(Res.string.growth_learn_title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                            Text(objective.learn, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.xs))
-                        }
-                    }
-                }
-                if (objective.autoTier != null) {
-                    Text(
-                        stringResource(Res.string.growth_by_microphone, objective.autoTier),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = Spacing.s, top = 4.dp).width(72.dp),
-                    )
-                } else {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Checkbox(
-                            checked = objective.status == ExerciseStatus.SUBMITTED || objective.status == ExerciseStatus.VALIDATED,
-                            onCheckedChange = { onToggle(objective.id, it) },
-                            enabled = !isWorking && objective.status != ExerciseStatus.VALIDATED,
-                        )
-                        Text(stringResource(Res.string.growth_reached), style = MaterialTheme.typography.labelSmall)
-                    }
-                }
-            }
-        }
     }
 }
