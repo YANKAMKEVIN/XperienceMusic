@@ -72,11 +72,17 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     effacés à chaque changement d'écran racine, Koin démarré dans `XperienceMusicApplication`, retour système
     dans l'accueil, confirmations (déconnexion, abandon des modifications, « Valider le mois » déplacé en haut du
     mois pour les admins), fiche d'objectif, retours d'exercice et « Arrêter » toujours visibles. Choix validés
-    par Kevin le 30 octobre. Reste à vérifier sur le S24.
+    par Kevin le 30 octobre. Vérifié sur le S24 et l'A17 le 30 octobre : 9/9 OK, sans régression
+    (`docs/qa/2026-10-30-verif-lot1.md`).
   - **Lot 2 (QA-10 à QA-15) corrigé** sur `fix/qa-s24-lot2`, partie de `fix/qa-s24-lot1` : « Je le ferai plus
     tard » sur les activités chantées, bouton « Ouvrir les réglages » après un refus du micro, grille coupée
     entre les mots, mode scène paysage avec commandes en colonne, noms et états pour TalkBack, semaine du
-    dimanche le plus proche (`BandWeek`). Choix à valider par Kevin, puis à vérifier sur le S24.
+    dimanche le plus proche (`BandWeek`). Choix validés par Kevin le 30 octobre (y compris : du mercredi au
+    dimanche, « Cette semaine » montre la répétition du mardi déjà passée). Reste à vérifier sur téléphone.
+  - **Lot 3 (QA-16 à QA-40)** : à faire. Ajouter les deux défauts vus pendant la vérification du lot 1 :
+    le Planning affiche « 9 sans réponse » dans la carte mais « 22 réponses manquantes » dans la confirmation,
+    et le compteur de l'accueil passe de « sur 4 » à « sur 3 » selon le rôle. Pas encore faits du lot 2 :
+    jauge « Je ne t'entends pas », écran d'explication avant la première demande du micro, onglets en paysage.
   - Hors QA, repéré : dans `LearningScreen`, le geste retour quitte l'écran au lieu de revenir à l'accueil du module.
 
 ## Reste à faire
