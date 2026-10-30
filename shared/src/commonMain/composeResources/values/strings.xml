@@ -350,6 +350,11 @@
     <!-- Members -->
     <string name="members_title">Membres du groupe</string>
     <string name="members_open">Gérer les membres</string>
+    <string name="profile_open">Mon profil</string>
+    <string name="profile_title">Mon profil</string>
+    <string name="profile_level_note">C'est le responsable qui fait évoluer ton niveau, quand tu as atteint les objectifs.</string>
+    <string name="profile_role_change_note">Changer de rôle change aussi ton parcours et tes objectifs.</string>
+    <string name="profile_save">Enregistrer</string>
     <string name="members_invite_title">Inviter quelqu'un</string>
     <string name="members_invite_help">La personne se connecte ensuite avec cette adresse : sans invitation, l'app ne lui montre rien.</string>
     <string name="members_invite_email">Adresse e-mail</string>

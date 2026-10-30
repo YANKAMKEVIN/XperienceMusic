@@ -216,25 +216,42 @@ private fun NameStep(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Uni
 @Composable
 private fun RoleStep(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit) {
     Question(stringResource(Res.string.onboarding_role_question))
+    RoleChoices(state.instrument) { onEvent(OnboardingEvent.InstrumentSelected(it)) }
+}
+
+@Composable
+private fun VoiceStep(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit) {
+    Question(stringResource(Res.string.onboarding_voice_question), stringResource(Res.string.onboarding_voice_help))
+    VoiceChoices(
+        selected = state.voicePart,
+        isUnknown = state.isVoiceUnknown,
+        onSelect = { onEvent(OnboardingEvent.VoicePartSelected(it)) },
+        onUnknown = { onEvent(OnboardingEvent.VoiceUnknownSelected) },
+    )
+}
+
+/** The four roles as cards; shared by the welcome questions and "Mon profil". */
+@Composable
+internal fun RoleChoices(selected: Instrument?, onSelect: (Instrument) -> Unit) {
     listOf(
         Triple(Instrument.SINGER, XmIcons.Mic, Res.string.onboarding_role_singer),
         Triple(Instrument.PIANO, XmIcons.Piano, Res.string.onboarding_role_piano),
         Triple(Instrument.BASS, XmIcons.Bass, Res.string.onboarding_role_bass),
         Triple(Instrument.DRUMS, XmIcons.Drums, Res.string.onboarding_role_drums),
     ).forEach { (instrument, icon, description) ->
-        val isSelected = state.instrument == instrument
+        val isSelected = selected == instrument
         ChoiceCard(
             title = instrument.label(),
             description = stringResource(description),
             isSelected = isSelected,
-            onClick = { onEvent(OnboardingEvent.InstrumentSelected(instrument)) },
+            onClick = { onSelect(instrument) },
         ) { IconTile(icon, isSelected) }
     }
 }
 
+/** The four voices from high to low, with "Je ne sais pas encore"; shared with "Mon profil". */
 @Composable
-private fun VoiceStep(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit) {
-    Question(stringResource(Res.string.onboarding_voice_question), stringResource(Res.string.onboarding_voice_help))
+internal fun VoiceChoices(selected: VoicePart?, isUnknown: Boolean, onSelect: (VoicePart) -> Unit, onUnknown: () -> Unit) {
     val voices = listOf(
         VoicePart.SOPRANO to Res.string.onboarding_voice_soprano,
         VoicePart.ALTO to Res.string.onboarding_voice_alto,
@@ -246,13 +263,13 @@ private fun VoiceStep(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Un
             VoiceColumn(
                 label = voice.label(),
                 heightFraction = 1f - index * 0.2f,
-                isSelected = state.voicePart == voice,
-                onClick = { onEvent(OnboardingEvent.VoicePartSelected(voice)) },
+                isSelected = selected == voice,
+                onClick = { onSelect(voice) },
                 modifier = Modifier.weight(1f),
             )
         }
     }
-    val described = voices.firstOrNull { it.first == state.voicePart }
+    val described = voices.firstOrNull { it.first == selected }
     Text(
         described?.let { stringResource(it.second) } ?: "",
         style = MaterialTheme.typography.titleMedium.copy(brush = BrandColors.horizontalGradient),
@@ -260,11 +277,11 @@ private fun VoiceStep(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Un
     )
     // Many singers have never been told their part: they can go on and choose it later.
     OutlinedButton(
-        onClick = { onEvent(OnboardingEvent.VoiceUnknownSelected) },
-        border = BorderStroke(if (state.isVoiceUnknown) 2.dp else 1.dp, if (state.isVoiceUnknown) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).choiceState(state.isVoiceUnknown),
+        onClick = onUnknown,
+        border = BorderStroke(if (isUnknown) 2.dp else 1.dp, if (isUnknown) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).choiceState(isUnknown),
     ) { Text(stringResource(Res.string.onboarding_voice_unknown)) }
-    if (state.isVoiceUnknown) {
+    if (isUnknown) {
         Text(stringResource(Res.string.onboarding_voice_unknown_text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

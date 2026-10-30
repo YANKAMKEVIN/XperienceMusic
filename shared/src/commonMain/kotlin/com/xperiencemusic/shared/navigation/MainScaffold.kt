@@ -56,6 +56,7 @@ import com.xperiencemusic.shared.ui.planning.PlanningScreen
 import com.xperiencemusic.shared.ui.planning.ServiceDetailScreen
 import com.xperiencemusic.shared.ui.platform.AskNotificationPermission
 import com.xperiencemusic.shared.ui.player.MiniPlayer
+import com.xperiencemusic.shared.ui.profile.ProfileScreen
 import com.xperiencemusic.shared.ui.progress.GrowthReviewScreen
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
 import com.xperiencemusic.shared.ui.recordingform.RecordingFormScreen
@@ -197,8 +198,10 @@ private fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit, 
                 onReview = { navController.navigate(VoiceReviewRoute) },
                 onValidate = { navController.navigate(GrowthReviewRoute) },
                 onSignOut = onSignOut,
+                onProfile = { navController.navigate(ProfileRoute) },
             )
         }
+        composable<ProfileRoute> { ProfileScreen(onBack = { navController.popBackStack() }) }
         composable<PlanningRoute> {
             PlanningScreen(
                 onMyAnswers = { month -> navController.navigate(AvailabilityRoute(month.toString())) },

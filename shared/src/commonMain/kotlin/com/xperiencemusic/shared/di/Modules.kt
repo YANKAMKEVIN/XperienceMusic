@@ -84,6 +84,7 @@ import com.xperiencemusic.shared.domain.repository.SetlistRepository
 import com.xperiencemusic.shared.domain.repository.SongRepository
 import com.xperiencemusic.shared.domain.usecase.AddRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.CompleteOnboardingUseCase
+import com.xperiencemusic.shared.domain.usecase.UpdateMyProfileUseCase
 import com.xperiencemusic.shared.domain.usecase.DeleteRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
@@ -98,6 +99,7 @@ import com.xperiencemusic.shared.domain.usecase.SetReferenceRecordingUseCase
 import com.xperiencemusic.shared.presentation.app.AppViewModel
 import com.xperiencemusic.shared.presentation.library.LibraryViewModel
 import com.xperiencemusic.shared.presentation.onboarding.OnboardingViewModel
+import com.xperiencemusic.shared.presentation.profile.ProfileViewModel
 import com.xperiencemusic.shared.presentation.progress.ProgressViewModel
 import com.xperiencemusic.shared.presentation.song.SongDetailViewModel
 import com.xperiencemusic.shared.presentation.week.WeekViewModel
@@ -217,6 +219,7 @@ val dataModule = module {
 
 val domainModule = module {
     factoryOf(::CompleteOnboardingUseCase)
+    factoryOf(::UpdateMyProfileUseCase)
     factoryOf(::ObserveCurrentMemberUseCase)
     factoryOf(::SearchSongsUseCase)
     factoryOf(::ObserveSongUseCase)
@@ -286,6 +289,7 @@ val presentationModule = module {
     }
     viewModelOf(::AppViewModel)
     viewModelOf(::OnboardingViewModel)
+    viewModelOf(::ProfileViewModel)
     viewModelOf(::WeekViewModel)
     viewModelOf(::LibraryViewModel)
     viewModelOf(::ProgressViewModel)

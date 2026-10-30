@@ -87,6 +87,7 @@ import com.xperiencemusic.shared.resources.growth_top
 import com.xperiencemusic.shared.resources.growth_validate_open
 import com.xperiencemusic.shared.resources.growth_waiting
 import com.xperiencemusic.shared.resources.members_open
+import com.xperiencemusic.shared.resources.profile_open
 import com.xperiencemusic.shared.resources.progress_focus_continue
 import com.xperiencemusic.shared.resources.progress_focus_done_eyebrow
 import com.xperiencemusic.shared.resources.progress_focus_done_text
@@ -153,6 +154,7 @@ fun ProgressScreen(
     onReview: () -> Unit = {},
     onValidate: () -> Unit = {},
     onOpenLearning: (String) -> Unit = {},
+    onProfile: () -> Unit = {},
     viewModel: ProgressViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -166,6 +168,7 @@ fun ProgressScreen(
         onSignOut = onSignOut,
         onRecordVoice = onRecordVoice,
         onReview = onReview,
+        onProfile = onProfile,
     )
 }
 
@@ -195,6 +198,7 @@ fun ProgressScreenContent(
     onEvent: (ProgressEvent) -> Unit = {},
     onValidate: () -> Unit = {},
     onOpenLearning: (String) -> Unit = {},
+    onProfile: () -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.hasError) {
@@ -226,7 +230,7 @@ fun ProgressScreenContent(
                 .background(Brush.radialGradient(listOf(BrandColors.Indigo.copy(alpha = 0.22f), Palette.Night.copy(alpha = 0f)))),
         )
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = Spacing.l)) {
-            Header(state, onReview, onValidate, onManageMembers, onSignOut, Modifier.padding(horizontal = Spacing.l).enter(0))
+            Header(state, onReview, onValidate, onManageMembers, onProfile, onSignOut, Modifier.padding(horizontal = Spacing.l).enter(0))
             if (state.canReview && (state.toReviewCount > 0 || state.toValidateCount > 0)) {
                 AdminStrip(state, onReview, onValidate, Modifier.padding(start = Spacing.l, end = Spacing.l, top = Spacing.m).enter(1))
             }
@@ -301,6 +305,7 @@ private fun Header(
     onReview: () -> Unit,
     onValidate: () -> Unit,
     onManageMembers: () -> Unit,
+    onProfile: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -328,6 +333,7 @@ private fun Header(
                 Icon(Icons.Filled.MoreVert, contentDescription = stringResource(Res.string.progress_menu))
             }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenuItem(text = { Text(stringResource(Res.string.profile_open)) }, onClick = { menu = false; onProfile() })
                 if (state.canReview) {
                     DropdownMenuItem(text = { Text(stringResource(Res.string.review_open, state.toReviewCount)) }, onClick = { menu = false; onReview() })
                     DropdownMenuItem(text = { Text(stringResource(Res.string.growth_validate_open, state.toValidateCount)) }, onClick = { menu = false; onValidate() })

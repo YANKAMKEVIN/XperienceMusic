@@ -65,3 +65,7 @@ data class LearningAssessmentRoute(val moduleId: String)
 
 @Serializable
 data object PianoScaleCoachRoute
+
+/** "Mon profil", from the menu of Ma progression. */
+@Serializable
+data object ProfileRoute
