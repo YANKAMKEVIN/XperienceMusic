@@ -25,7 +25,7 @@ data class PlanningUiState(
     val isPastDeadline: Boolean = false,
     /** Once validated: the services still to come whose team lacks a part, said in the banner. */
     val incompleteAfterValidation: Int = 0,
-    /** How many of the month's services the signed-in member has not answered yet. */
+    /** How many of the month's services the signed-in member has not answered yet: dates, not people. */
     val unansweredCount: Int = 0,
     val services: List<ServiceCardUi> = emptyList(),
     val canPlan: Boolean = false,
@@ -41,6 +41,8 @@ data class PlanningUiState(
 data class MonthValidationUi(
     /** One per member and service with no answer yet. */
     val missingAnswers: Int,
+    /** The members those answers are missing from. */
+    val missingMembers: Int = 0,
     /** Services whose team still lacks a part. */
     val incompleteServices: Int,
     /** The parts missing on at least one of them. */

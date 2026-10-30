@@ -95,7 +95,10 @@
     <string name="planning_open_title">Inscriptions ouvertes</string>
     <string name="planning_open_text">Dis pour chaque vendredi et dimanche si tu sers.</string>
     <string name="planning_open_text_by">Réponds avant le %1$s pour chaque vendredi et dimanche.</string>
-    <string name="planning_unanswered">%1$d sans réponse</string>
+    <plurals name="planning_unanswered">
+        <item quantity="one">%1$d date sans ta réponse</item>
+        <item quantity="other">%1$d dates sans ta réponse</item>
+    </plurals>
     <string name="planning_late_title">Échéance passée</string>
     <string name="planning_late_text">Les réponses étaient attendues le %1$s. Tu peux encore répondre tant que le mois n'est pas validé.</string>
     <string name="planning_today">Aujourd'hui</string>
@@ -115,8 +118,12 @@
     <string name="planning_validate_confirm_title">Valider %1$s ?</string>
     <string name="planning_validate_all_answered">Tout le monde a répondu.</string>
     <plurals name="planning_validate_missing_answers">
-        <item quantity="one">Il manque encore %1$d réponse.</item>
-        <item quantity="other">Il manque encore %1$d réponses.</item>
+        <item quantity="one">Il manque encore %1$d réponse</item>
+        <item quantity="other">Il manque encore %1$d réponses</item>
+    </plurals>
+    <plurals name="planning_validate_missing_members">
+        <item quantity="one">(%1$d membre n'a pas tout rempli).</item>
+        <item quantity="other">(%1$d membres n'ont pas tout rempli).</item>
     </plurals>
     <string name="planning_validate_all_covered">Toutes les équipes sont complètes.</string>
     <plurals name="planning_validate_incomplete">

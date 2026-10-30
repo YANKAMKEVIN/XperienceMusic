@@ -69,6 +69,12 @@ class PlanningStateTest {
         val validation = derivePlanningState(planning(Role.CONTENT_ADMIN, months, signups), october, today).validation
         // From the 15th: Fridays 16, 23, 30 and Sundays 18, 25, for two members; three answers given.
         assertEquals(5 * 2 - 3, validation?.missingAnswers)
+        // Answers and people are two different counts: both members still owe at least one date.
+        assertEquals(2, validation?.missingMembers)
+        val allMine = listOf(16, 18, 23, 25, 30).map { ServiceSignup(LocalDate(2026, 10, it), "me", true) }
+        val onlyDaniel = derivePlanningState(planning(Role.CONTENT_ADMIN, months, allMine), october, today).validation
+        assertEquals(5, onlyDaniel?.missingAnswers)
+        assertEquals(1, onlyDaniel?.missingMembers)
         // Nobody plays bass or drums, on any of the five; the 16th has its singer and pianist.
         assertEquals(5, validation?.incompleteServices)
         assertEquals(listOf(Instrument.SINGER, Instrument.PIANO, Instrument.BASS, Instrument.DRUMS), validation?.uncoveredParts)

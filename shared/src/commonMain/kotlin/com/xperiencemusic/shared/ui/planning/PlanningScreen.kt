@@ -81,6 +81,7 @@ import com.xperiencemusic.shared.resources.planning_title
 import com.xperiencemusic.shared.resources.planning_to_answer
 import com.xperiencemusic.shared.resources.planning_today
 import com.xperiencemusic.shared.resources.planning_unanswered
+import com.xperiencemusic.shared.resources.planning_validate_missing_members
 import com.xperiencemusic.shared.resources.planning_validate_action
 import com.xperiencemusic.shared.resources.planning_validate_all_answered
 import com.xperiencemusic.shared.resources.planning_validate_all_covered
@@ -169,7 +170,9 @@ private fun ValidateMonthDialog(monthLabel: String, validation: MonthValidationU
                 Text(stringResource(Res.string.planning_validate_hint))
                 Text(
                     if (validation.missingAnswers > 0) {
-                        pluralStringResource(Res.plurals.planning_validate_missing_answers, validation.missingAnswers, validation.missingAnswers)
+                        // Answers (one per member and date), then the people they are missing from: never a bare count.
+                        pluralStringResource(Res.plurals.planning_validate_missing_answers, validation.missingAnswers, validation.missingAnswers) + " " +
+                            pluralStringResource(Res.plurals.planning_validate_missing_members, validation.missingMembers, validation.missingMembers)
                     } else {
                         stringResource(Res.string.planning_validate_all_answered)
                     },
@@ -256,7 +259,7 @@ private fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit
                     )
                     if (state.unansweredCount > 0) {
                         Text(
-                            stringResource(Res.string.planning_unanswered, state.unansweredCount),
+                            pluralStringResource(Res.plurals.planning_unanswered, state.unansweredCount, state.unansweredCount),
                             style = MaterialTheme.typography.labelMedium,
                             color = BrandColors.Amber,
                             modifier = Modifier.padding(top = Spacing.xs),
@@ -435,7 +438,7 @@ private fun PlanningScreenPreview() {
                 unansweredCount = 3,
                 services = previewCards,
                 canPlan = true,
-                validation = MonthValidationUi(missingAnswers = 9, incompleteServices = 2, uncoveredParts = listOf(Instrument.SINGER, Instrument.BASS, Instrument.DRUMS)),
+                validation = MonthValidationUi(missingAnswers = 22, missingMembers = 9, incompleteServices = 2, uncoveredParts = listOf(Instrument.SINGER, Instrument.BASS, Instrument.DRUMS)),
             ),
             onEvent = {}, onMyAnswers = {}, onServiceClick = {},
         )
@@ -448,7 +451,7 @@ private fun ValidateMonthDialogPreview() {
     AppTheme {
         ValidateMonthDialog(
             monthLabel = "novembre 2026",
-            validation = MonthValidationUi(missingAnswers = 9, incompleteServices = 2, uncoveredParts = listOf(Instrument.BASS, Instrument.DRUMS)),
+            validation = MonthValidationUi(missingAnswers = 22, missingMembers = 9, incompleteServices = 2, uncoveredParts = listOf(Instrument.BASS, Instrument.DRUMS)),
             onConfirm = {}, onDismiss = {},
         )
     }

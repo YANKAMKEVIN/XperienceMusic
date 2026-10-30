@@ -65,6 +65,7 @@ fun monthValidation(services: List<ServiceCardUi>, members: List<BandMember>, si
     val answered = signups.map { it.serviceDate to it.memberId }.toSet()
     return MonthValidationUi(
         missingAnswers = coming.sumOf { service -> members.count { (service.date to it.id) !in answered } },
+        missingMembers = members.count { member -> coming.any { (it.date to member.id) !in answered } },
         incompleteServices = coming.count { it.missing.isNotEmpty() },
         uncoveredParts = coming.flatMap { it.missing }.distinct().sortedBy { it.ordinal },
     )
