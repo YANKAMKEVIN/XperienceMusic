@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -15,21 +16,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 
-private val nameKeyboard = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next)
+private val nameKeyboard = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Done)
 
 /**
  * The name typed big and centred, as in recent onboarding flows, with a greeting that appears
@@ -46,6 +53,10 @@ fun NameFieldGreeting(
 ) {
     val colors = MaterialTheme.colorScheme
     val focus = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    // Centred while empty, the cursor sat in the middle of "Ton prénom": it moves to the hint's start.
+    var placeholderWidth by remember { mutableIntStateOf(0) }
+    val fontSize = nameFontSize(value.length)
     // The keyboard is up as soon as the question shows.
     LaunchedEffect(Unit) { focus.requestFocus() }
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -54,8 +65,9 @@ fun NameFieldGreeting(
             onValueChange = onValueChange,
             singleLine = true,
             keyboardOptions = nameKeyboard,
-            keyboardActions = KeyboardActions(onNext = { onDone() }),
-            textStyle = TextStyle(color = colors.onSurface, fontSize = 34.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
+            // "OK" closes the keyboard without leaving a focus that looks like a choice on the next question.
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); onDone() }),
+            textStyle = TextStyle(color = colors.onSurface, fontSize = fontSize, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
             cursorBrush = BrandColors.gradient,
             modifier = Modifier.fillMaxWidth().focusRequester(focus),
             decorationBox = { field ->
@@ -63,13 +75,14 @@ fun NameFieldGreeting(
                     if (value.isEmpty()) {
                         Text(
                             placeholder,
-                            fontSize = 34.sp,
+                            fontSize = fontSize,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurfaceVariant.copy(alpha = 0.35f),
                             textAlign = TextAlign.Center,
+                            onTextLayout = { placeholderWidth = it.size.width },
                         )
                     }
-                    field()
+                    Box(Modifier.offset { IntOffset(if (value.isEmpty()) -placeholderWidth / 2 else 0, 0) }) { field() }
                 }
             },
         )
@@ -85,4 +98,13 @@ fun NameFieldGreeting(
             )
         }
     }
+}
+
+/** Big for a short name, smaller as it grows, so a long first name stays whole on one line. */
+internal fun nameFontSize(length: Int): TextUnit = when {
+    length <= 10 -> 34.sp
+    length <= 14 -> 28.sp
+    length <= 18 -> 24.sp
+    length <= 24 -> 20.sp
+    else -> 16.sp
 }

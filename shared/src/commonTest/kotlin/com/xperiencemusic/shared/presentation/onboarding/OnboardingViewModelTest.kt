@@ -106,4 +106,29 @@ class OnboardingViewModelTest {
         assertFalse(submitting.canGoBack)
         assertTrue(submitting.copy(isSubmitting = false).canGoBack)
     }
+
+    @Test
+    fun `un chantre qui ne connaît pas sa voix peut continuer sans`() = runTest {
+        viewModel.onEvent(OnboardingEvent.NameChanged("Grâce"))
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        viewModel.onEvent(OnboardingEvent.InstrumentSelected(Instrument.SINGER))
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        assertEquals(OnboardingStep.VOICE, viewModel.state.value.step)
+        assertFalse(viewModel.state.value.canContinue)
+        viewModel.onEvent(OnboardingEvent.VoiceUnknownSelected)
+        assertTrue(viewModel.state.value.canContinue)
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        viewModel.onEvent(OnboardingEvent.LevelSelected(Level.BEGINNER))
+        assertTrue(viewModel.state.value.canSubmit)
+        // Choosing a voice afterwards replaces "je ne sais pas".
+        viewModel.onEvent(OnboardingEvent.VoicePartSelected(VoicePart.TENOR))
+        assertFalse(viewModel.state.value.isVoiceUnknown)
+    }
+
+    @Test
+    fun `la barre avance sans compter les étapes`() {
+        val singer = OnboardingUiState(step = OnboardingStep.ROLE, instrument = Instrument.SINGER)
+        assertEquals(0.5f, singer.progress)
+        assertEquals(1f, OnboardingUiState(step = OnboardingStep.LEVEL, instrument = Instrument.PIANO).progress)
+    }
 }
