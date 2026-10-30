@@ -70,10 +70,21 @@ class VoiceUseCasesTest {
             DomainResult.Failure(DomainError.FORBIDDEN),
             ReviewVoiceUseCase(FakeSessionRepository(member(Role.CONTENT_ADMIN)), submissions)(id, validated = true, feedback = ""),
         )
-        val admin = ReviewVoiceUseCase(FakeSessionRepository(member(Role.SUPER_ADMIN)), submissions)
+        val admin = ReviewVoiceUseCase(FakeSessionRepository(member(Role.SUPER_ADMIN).copy(id = "admin")), submissions)
         assertEquals(DomainResult.Failure(DomainError.INVALID_INPUT), admin(id, validated = false, feedback = "  "))
         admin(id, validated = true, feedback = "")
         assertEquals(ExerciseStatus.VALIDATED, submissions.observeAll().first().single().status)
+
+        admin.undo(id)
+        assertEquals(ExerciseStatus.SUBMITTED, submissions.observeAll().first().single().status)
+    }
+
+    @Test
+    fun `l'Admin++ ne valide pas sa propre prise`() = runTest {
+        send("s1", byteArrayOf(1), 30)
+        val id = submissions.observeMine("me").first().single().id
+        val sameAdmin = ReviewVoiceUseCase(FakeSessionRepository(member(Role.SUPER_ADMIN)), submissions)
+        assertEquals(DomainResult.Failure(DomainError.FORBIDDEN), sameAdmin(id, validated = true, feedback = ""))
     }
 
     @Test

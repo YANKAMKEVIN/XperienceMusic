@@ -389,6 +389,16 @@
     <string name="review_comment_needed">Dis ce qu'il faut retravailler.</string>
     <string name="review_rework">À retravailler</string>
     <string name="review_validate">Valider</string>
+    <string name="review_validated_snack">Prise de %1$s validée.</string>
+    <string name="review_rework_snack">Prise de %1$s renvoyée à retravailler.</string>
+    <string name="review_undo">Annuler</string>
+    <string name="review_mine">Ta propre prise : un autre Admin++ la validera.</string>
+    <string name="growth_review_level_done">Passage de niveau de %1$s confirmé.</string>
+    <string name="growth_review_objective_done">Objectif de %1$s validé.</string>
+    <string name="growth_review_sent_back">Renvoyé à %1$s avec ton commentaire.</string>
+    <string name="growth_review_show_objectives">Voir ses objectifs (%1$d validés sur %2$d)</string>
+    <string name="growth_review_hide_objectives">Masquer ses objectifs</string>
+    <string name="growth_review_objective_mic">validé au micro</string>
     <string name="review_empty_title">Rien à écouter</string>
     <string name="review_empty_text">Les voix envoyées par les chantres arriveront ici.</string>
     <string name="growth_review_title">À valider</string>

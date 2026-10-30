@@ -30,7 +30,14 @@ data class GrowthReviewUiState(
     /** The item whose send-back lacked a comment. */
     val missingCommentKey: String? = null,
     val hasError: Boolean = false,
+    /** The answer just saved, said once so the vanished card is not a mystery. */
+    val lastAnswer: GrowthAnswerUi? = null,
 )
+
+data class GrowthAnswerUi(val memberName: String, val validated: Boolean, val isLevel: Boolean)
+
+/** One objective of the level asked for; [reached] is null when the microphone tiers decide it. */
+data class RequestObjectiveUi(val title: String, val reached: Boolean?)
 
 data class LevelRequestUi(
     val key: String,
@@ -39,6 +46,8 @@ data class LevelRequestUi(
     val instrument: Instrument?,
     val voicePart: VoicePart?,
     val target: Level,
+    /** What the member did to get there, checked before confirming. */
+    val objectives: List<RequestObjectiveUi> = emptyList(),
 )
 
 data class ObjectiveReviewUi(
@@ -57,6 +66,7 @@ sealed interface GrowthReviewEvent {
     data class CommentChanged(val key: String, val comment: String) : GrowthReviewEvent
     data class Answered(val key: String, val validated: Boolean) : GrowthReviewEvent
     data object ErrorShown : GrowthReviewEvent
+    data object AnswerShown : GrowthReviewEvent
 }
 
 /** Only what still waits for an answer, oldest first. */
@@ -64,8 +74,23 @@ fun deriveGrowthReview(review: GrowthReview, objectives: List<Objective>): Growt
     val byId = objectives.associateBy { it.id }
     return GrowthReviewUiState(
         isLoading = false,
-        requests = review.requests.filter { it.status == ExerciseStatus.SUBMITTED }.sortedBy { it.submittedOn }.map {
-            LevelRequestUi("level-${it.id}", it.id, it.memberName, it.instrument, it.voicePart, it.targetLevel)
+        requests = review.requests.filter { it.status == ExerciseStatus.SUBMITTED }.sortedBy { it.submittedOn }.map { request ->
+            val needed = objectives.filter { it.instrument == request.instrument && it.level == request.targetLevel }.sortedBy { it.order }
+            LevelRequestUi(
+                "level-${request.id}", request.id, request.memberName, request.instrument, request.voicePart, request.targetLevel,
+                needed.map { objective ->
+                    RequestObjectiveUi(
+                        objective.title,
+                        if (objective.autoTier != null) {
+                            null
+                        } else {
+                            review.checks.any {
+                                it.memberId == request.memberId && it.objectiveId == objective.id && it.status == ExerciseStatus.VALIDATED
+                            }
+                        },
+                    )
+                },
+            )
         },
         objectives = review.checks.filter { it.status == ExerciseStatus.SUBMITTED }.sortedBy { it.submittedOn }.map { check ->
             val objective = byId[check.objectiveId]
@@ -88,6 +113,7 @@ class GrowthReviewViewModel(
     val state: StateFlow<GrowthReviewUiState> = combine(observeReview(), form) { review, f ->
         deriveGrowthReview(review, objectives).copy(
             comments = f.comments, savingKey = f.savingKey, missingCommentKey = f.missingCommentKey, hasError = f.hasError,
+            lastAnswer = f.lastAnswer,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GrowthReviewUiState())
 
@@ -98,6 +124,7 @@ class GrowthReviewViewModel(
             }
             is GrowthReviewEvent.Answered -> answer(event.key, event.validated)
             GrowthReviewEvent.ErrorShown -> form.update { it.copy(hasError = false) }
+            GrowthReviewEvent.AnswerShown -> form.update { it.copy(lastAnswer = null) }
         }
     }
 
@@ -111,10 +138,18 @@ class GrowthReviewViewModel(
         }
         form.update { it.copy(savingKey = key, missingCommentKey = null) }
         viewModelScope.launch {
-            val result = current.requests.firstOrNull { it.key == key }?.let { reviewRequest(it.requestId, validated, comment) }
-                ?: current.objectives.firstOrNull { it.key == key }?.let { reviewObjective(it.memberId, it.objectiveId, validated, comment) }
+            val request = current.requests.firstOrNull { it.key == key }
+            val objective = current.objectives.firstOrNull { it.key == key }
+            val result = request?.let { reviewRequest(it.requestId, validated, comment) }
+                ?: objective?.let { reviewObjective(it.memberId, it.objectiveId, validated, comment) }
+            val answer = (request?.memberName ?: objective?.memberName)?.let { GrowthAnswerUi(it, validated, isLevel = request != null) }
             form.update {
-                it.copy(savingKey = null, hasError = result is DomainResult.Failure, comments = it.comments - key)
+                it.copy(
+                    savingKey = null,
+                    hasError = result is DomainResult.Failure,
+                    comments = it.comments - key,
+                    lastAnswer = if (result is DomainResult.Success) answer else null,
+                )
             }
         }
     }

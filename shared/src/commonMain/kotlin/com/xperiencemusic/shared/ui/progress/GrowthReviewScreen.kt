@@ -1,5 +1,16 @@
 package com.xperiencemusic.shared.ui.progress
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.TextButton
+import com.xperiencemusic.shared.presentation.progress.RequestObjectiveUi
+import com.xperiencemusic.shared.resources.growth_review_hide_objectives
+import com.xperiencemusic.shared.resources.growth_review_level_done
+import com.xperiencemusic.shared.resources.growth_review_objective_done
+import com.xperiencemusic.shared.resources.growth_review_objective_mic
+import com.xperiencemusic.shared.resources.growth_review_sent_back
+import com.xperiencemusic.shared.resources.growth_review_show_objectives
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -89,6 +100,20 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
             onEvent(GrowthReviewEvent.ErrorShown)
         }
     }
+    state.lastAnswer?.let { answer ->
+        val message = stringResource(
+            when {
+                !answer.validated -> Res.string.growth_review_sent_back
+                answer.isLevel -> Res.string.growth_review_level_done
+                else -> Res.string.growth_review_objective_done
+            },
+            answer.memberName,
+        )
+        LaunchedEffect(answer) {
+            snackbar.showSnackbar(message)
+            onEvent(GrowthReviewEvent.AnswerShown)
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -135,6 +160,7 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
                         confirmLabel = stringResource(Res.string.growth_review_confirm),
                         state = state,
                         onEvent = onEvent,
+                        takes = { RequestObjectives(request.objectives) },
                     )
                 }
             }
@@ -212,6 +238,37 @@ private fun ReviewCard(
                 enabled = !isSaving,
                 modifier = Modifier.weight(1f),
             ) { Text(confirmLabel) }
+        }
+    }
+}
+
+/** Folded by default: the list is long, but the reviewer must be able to check it before confirming. */
+@Composable
+private fun RequestObjectives(objectives: List<RequestObjectiveUi>) {
+    if (objectives.isEmpty()) return
+    var isOpen by rememberSaveable { mutableStateOf(false) }
+    val reached = objectives.count { it.reached != false }
+    TextButton(onClick = { isOpen = !isOpen }, contentPadding = PaddingValues(0.dp)) {
+        Text(
+            if (isOpen) {
+                stringResource(Res.string.growth_review_hide_objectives)
+            } else {
+                stringResource(Res.string.growth_review_show_objectives, reached, objectives.size)
+            },
+        )
+    }
+    if (isOpen) {
+        val mic = stringResource(Res.string.growth_review_objective_mic)
+        objectives.forEach { objective ->
+            Text(
+                when (objective.reached) {
+                    true -> "✓ ${objective.title}"
+                    false -> "○ ${objective.title}"
+                    null -> "✓ ${objective.title} · $mic"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = if (objective.reached == false) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 }
