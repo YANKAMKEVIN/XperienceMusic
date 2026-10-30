@@ -46,6 +46,7 @@ import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.appSwitchColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -137,7 +138,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
 }
 /** The whole row is the switch: TalkBack reads its label and state, and a tap on the label toggles it. */
 @Composable private fun Setting(label:String,value:Boolean,onChange:(Boolean)->Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min=48.dp).toggleable(value,role=Role.Switch,onValueChange=onChange),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(value,onCheckedChange=null)}
+    Row(Modifier.fillMaxWidth().heightIn(min=48.dp).toggleable(value,role=Role.Switch,onValueChange=onChange),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(value,onCheckedChange=null,colors=appSwitchColors())}
 }
 
 @Composable private fun HomeContent(s:LearningUiState,event:(LearningEvent)->Unit,onModule:(String)->Unit,onRecord:()->Unit,audioReview:@Composable (String,String)->Unit,onScaleCoach:()->Unit) {

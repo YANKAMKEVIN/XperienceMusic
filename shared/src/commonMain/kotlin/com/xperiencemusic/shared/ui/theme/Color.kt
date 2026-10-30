@@ -10,6 +10,8 @@ internal object Palette {
     val NightHigh = Color(0xFF221F32)
     val Violet = Color(0xFF9B7BFF)
     val VioletDeep = Color(0xFF24184F)
+    /** A chosen chip or a tonal button: solid enough for white text (about 6:1). */
+    val VioletSolid = Color(0xFF6A4FE0)
     val Blue = Color(0xFF6E98FF)
     val BlueDeep = Color(0xFF0E1E4A)
     val Snow = Color(0xFFF4F3FA)

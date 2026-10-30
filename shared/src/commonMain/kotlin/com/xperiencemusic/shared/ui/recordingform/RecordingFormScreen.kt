@@ -75,6 +75,7 @@ import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.platform.rememberAudioFilePicker
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
+import com.xperiencemusic.shared.ui.theme.appSwitchColors
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -184,7 +185,7 @@ fun RecordingFormScreenContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Switch(checked = state.makeReference, onCheckedChange = null)
+                Switch(checked = state.makeReference, onCheckedChange = null, colors = appSwitchColors())
             }
 
             if (state.isFull) ReplaceChooser(state, onEvent)

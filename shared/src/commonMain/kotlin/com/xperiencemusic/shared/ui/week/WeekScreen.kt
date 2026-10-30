@@ -238,8 +238,8 @@ private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
                     } else {
                         MaterialTheme.colorScheme.onSurface
                     },
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 ),
                 modifier = Modifier.choiceState(week.isSelected),
             )
