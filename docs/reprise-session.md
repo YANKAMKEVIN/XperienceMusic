@@ -65,6 +65,16 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   chant de la semaine, échauffement : voir `presentation/progress/ProgressFocus.kt`), puis onglets Objectifs /
   Parcours / Ma voix. Fiche d'objectif en bas d'écran ; outils admin dans le menu ⋮ et une bande « À traiter ».
 - **Vidéo TikTok de présentation** (30 s, avec la musique du groupe) dans `video/`. Rendu : `npm run render`.
+- **QA UI/UX sur le S24** (30 octobre 2026, build démo) : 40 constats (1 bloquant, 14 majeurs, 17 mineurs,
+  8 suggestions) dans `docs/qa/2026-10-30-qa-s24.md`. Les captures sont restées hors git, dans
+  `~/dev/XperienceMusic/docs/qa/2026-10-30-captures/`.
+  - **Lot 1 (QA-01 à QA-09) corrigé** sur `fix/qa-s24-lot1`, partie de `feat/guided-piano-learning` : ViewModels
+    effacés à chaque changement d'écran racine, Koin démarré dans `XperienceMusicApplication`, retour système
+    dans l'accueil, confirmations (déconnexion, abandon des modifications, « Valider le mois » déplacé en haut du
+    mois pour les admins), fiche d'objectif, retours d'exercice et « Arrêter » toujours visibles. Choix validés
+    par Kevin le 30 octobre. Reste à vérifier sur le S24.
+  - **Lot 2 (QA-10 à QA-15)** : en cours sur `fix/qa-s24-lot2`.
+  - Hors QA, repéré : dans `LearningScreen`, le geste retour quitte l'écran au lieu de revenir à l'accueil du module.
 
 ## Reste à faire
 
@@ -80,8 +90,9 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
    - Le micro plante sur simulateur : teste-le sur mon S24.
 3. ~~**Moi (Supabase)** : migrations planning et parcours.~~ Faites le 16 octobre 2026.
 4. **Tests sur téléphone : Galaxy A17** (`adb -s adb-R5GYB2R7W2Y-HaeuqW._adb-tls-connect._tcp`).
-   Ne touche **ni** au S21 (`RFCR40827ZZ`) **ni** au S24 (`RFCX80Y0FVX`), réservés à d'autres projets, et ne
-   désinstalle pas `dev.kevin.kanto2026` sur l'A17. Ne laisse rien tourner en continu : une autre session en a
+   Ne touche pas au S21 (`RFCR40827ZZ`), et ne désinstalle pas `dev.kevin.kanto2026` sur l'A17. Le S24
+   (`RFCX80Y0FVX`) sert aussi à MEMOVERSE : on peut y faire la QA, mais seulement après avoir vérifié qu'aucune
+   autre session ne l'utilise. Ne laisse rien tourner en continu : une autre session en a
    besoin. C'est Kevin qui se connecte. À tester : micro (« Ma voix »), import accords.app, collage avec accords
    au-dessus, planning et rappels, parcours de croissance.
 5. **Plus tard.**
