@@ -73,7 +73,10 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     dans l'accueil, confirmations (déconnexion, abandon des modifications, « Valider le mois » déplacé en haut du
     mois pour les admins), fiche d'objectif, retours d'exercice et « Arrêter » toujours visibles. Choix validés
     par Kevin le 30 octobre. Reste à vérifier sur le S24.
-  - **Lot 2 (QA-10 à QA-15)** : en cours sur `fix/qa-s24-lot2`.
+  - **Lot 2 (QA-10 à QA-15) corrigé** sur `fix/qa-s24-lot2`, partie de `fix/qa-s24-lot1` : « Je le ferai plus
+    tard » sur les activités chantées, bouton « Ouvrir les réglages » après un refus du micro, grille coupée
+    entre les mots, mode scène paysage avec commandes en colonne, noms et états pour TalkBack, semaine du
+    dimanche le plus proche (`BandWeek`). Choix à valider par Kevin, puis à vérifier sur le S24.
   - Hors QA, repéré : dans `LearningScreen`, le geste retour quitte l'écran au lieu de revenir à l'accueil du module.
 
 ## Reste à faire
