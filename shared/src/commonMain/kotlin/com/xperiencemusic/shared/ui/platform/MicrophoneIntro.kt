@@ -14,6 +14,7 @@ import com.xperiencemusic.shared.domain.repository.MicrophoneIntroStore
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.microphone_intro_continue
 import com.xperiencemusic.shared.resources.microphone_intro_later
+import com.xperiencemusic.shared.resources.microphone_intro_listen_piano
 import com.xperiencemusic.shared.resources.microphone_intro_listen_voice
 import com.xperiencemusic.shared.resources.microphone_intro_record
 import com.xperiencemusic.shared.resources.microphone_intro_title
@@ -24,6 +25,9 @@ import org.jetbrains.compose.resources.stringResource
 enum class MicrophoneUse {
     /** Live pitch of the voice, nothing kept (exercises, sung activities). */
     LISTEN_VOICE,
+
+    /** Live notes of the piano, nothing kept (the scale workshop). */
+    LISTEN_PIANO,
 
     /** A take the member listens to, then chooses to send (Ma voix, recording for the leader). */
     RECORD,
@@ -73,6 +77,7 @@ private fun MicrophoneIntroDialog(use: MicrophoneUse, onContinue: () -> Unit, on
                 stringResource(
                     when (use) {
                         MicrophoneUse.LISTEN_VOICE -> Res.string.microphone_intro_listen_voice
+                        MicrophoneUse.LISTEN_PIANO -> Res.string.microphone_intro_listen_piano
                         MicrophoneUse.RECORD -> Res.string.microphone_intro_record
                     },
                 ),

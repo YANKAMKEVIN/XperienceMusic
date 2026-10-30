@@ -22,6 +22,7 @@ import com.xperiencemusic.shared.domain.learning.noteLabel
 import com.xperiencemusic.shared.presentation.learning.*
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -32,7 +33,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun PianoScaleScreen(onBack: () -> Unit, vm: PianoScaleViewModel = koinViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     val playback by vm.playback.collectAsStateWithLifecycle()
-    val permission = rememberMicrophonePermission()
+    val permission = rememberMicrophonePermission(MicrophoneUse.LISTEN_PIANO)
     if (state.phase in listOf(PianoScalePhase.PREPARING, PianoScalePhase.COUNTDOWN, PianoScalePhase.RECORDING))
         com.xperiencemusic.shared.ui.platform.KeepScreenOn()
     LifecycleEventEffect(Lifecycle.Event.ON_START) { vm.activate() }

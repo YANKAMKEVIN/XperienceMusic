@@ -529,6 +529,7 @@
     <string name="microphone_settings_hint">Si le téléphone ne pose plus la question, active le micro pour Xperience Music dans ses réglages, puis reviens ici.</string>
     <string name="microphone_intro_title">Avant d'ouvrir le micro</string>
     <string name="microphone_intro_listen_voice">Le micro écoute ta voix pendant l'exercice, pour te dire si la note est juste. Tout se passe sur ton téléphone : rien n'est enregistré ni envoyé.</string>
+    <string name="microphone_intro_listen_piano">Le micro écoute le piano pendant que tu joues ta gamme, pour repérer les notes. Tout se passe sur ton téléphone : rien n'est enregistré ni envoyé.</string>
     <string name="microphone_intro_record">Le micro n'enregistre que lorsque tu appuies sur le bouton. Tu réécoutes ta prise, et rien n'est envoyé au responsable sans toi.</string>
     <string name="microphone_intro_continue">Continuer</string>
     <string name="microphone_intro_later">Pas maintenant</string>
