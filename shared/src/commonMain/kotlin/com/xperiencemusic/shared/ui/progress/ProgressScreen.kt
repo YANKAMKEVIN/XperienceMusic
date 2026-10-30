@@ -66,6 +66,7 @@ import com.xperiencemusic.shared.domain.model.StepState
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.presentation.progress.FocusUi
 import com.xperiencemusic.shared.presentation.progress.LevelCardUi
+import com.xperiencemusic.shared.presentation.progress.ModuleProgressUi
 import com.xperiencemusic.shared.presentation.progress.ObjectiveUi
 import com.xperiencemusic.shared.presentation.progress.ProgressEvent
 import com.xperiencemusic.shared.presentation.progress.ProgressUiState
@@ -76,6 +77,7 @@ import com.xperiencemusic.shared.presentation.progress.WarmUpUi
 import com.xperiencemusic.shared.presentation.progress.WeekVoiceUi
 import com.xperiencemusic.shared.presentation.progress.focus
 import com.xperiencemusic.shared.presentation.progress.learningModules
+import com.xperiencemusic.shared.presentation.progress.startedObjectives
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.error_generic
 import com.xperiencemusic.shared.resources.growth_ask
@@ -229,7 +231,7 @@ fun ProgressScreenContent(
                 AdminStrip(state, onReview, onValidate, Modifier.padding(start = Spacing.l, end = Spacing.l, top = Spacing.m).enter(1))
             }
             state.levelCard?.let { card ->
-                LevelHero(card, state.objectives, state.isWorking, Modifier.fillMaxWidth().padding(top = Spacing.s).enter(1)) {
+                LevelHero(card, state.objectives, modules, state.isWorking, state.reduceMotion, Modifier.fillMaxWidth().padding(top = Spacing.s).enter(1)) {
                     onEvent(ProgressEvent.AskLevelUpClicked)
                 }
             }
@@ -254,7 +256,7 @@ fun ProgressScreenContent(
                     label = "section",
                 ) { shown ->
                     when (shown) {
-                        Section.OBJECTIVES -> ObjectiveCarousel(state.objectives, modules) { sheetId = it.id }
+                        Section.OBJECTIVES -> ObjectiveList(state.objectives, modules) { sheetId = it.id }
                         Section.PATH -> PathSection(state, modules, onExerciseClick, onOpenLearning)
                         Section.VOICE -> VoiceSection(state.weekVoices, onRecordVoice)
                     }
@@ -374,18 +376,27 @@ private fun AdminPill(text: String, onClick: () -> Unit) {
 
 /** The ring of the next level, the count inside, and the request to move up underneath. */
 @Composable
-private fun LevelHero(card: LevelCardUi, objectives: List<ObjectiveUi>, isWorking: Boolean, modifier: Modifier = Modifier, onAsk: () -> Unit) {
+private fun LevelHero(
+    card: LevelCardUi,
+    objectives: List<ObjectiveUi>,
+    modules: List<ModuleProgressUi>,
+    isWorking: Boolean,
+    calm: Boolean,
+    modifier: Modifier = Modifier,
+    onAsk: () -> Unit,
+) {
     val next = card.next
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         if (next == null) {
-            LevelRing(List(objectives.size.coerceAtLeast(1)) { RingSegment.VALIDATED }, stringResource(Res.string.growth_top)) {
+            LevelRing(List(objectives.size.coerceAtLeast(1)) { RingSegment.VALIDATED }, stringResource(Res.string.growth_top), calm = calm) {
                 Text(stringResource(Res.string.progress_ring_top), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
             }
             Text(stringResource(Res.string.growth_top), style = MaterialTheme.typography.bodyMedium, color = Palette.Success)
             return@Column
         }
-        val segments = objectives.map { it.segment() }.ifEmpty { List(card.required) { if (it < card.done) RingSegment.VALIDATED else RingSegment.TODO } }
-        LevelRing(segments, stringResource(Res.string.growth_objectives, card.done, card.required, next.target())) {
+        val started = startedObjectives(objectives, modules)
+        val segments = objectives.map { it.segment(it.id in started) }.ifEmpty { List(card.required) { if (it < card.done) RingSegment.VALIDATED else RingSegment.TODO } }
+        LevelRing(segments, stringResource(Res.string.growth_objectives, card.done, card.required, next.target()), calm = calm) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     CountUp(card.done, MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.ExtraBold))

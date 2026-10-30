@@ -74,27 +74,32 @@ internal fun Modifier.enter(order: Int): Modifier {
 }
 
 /** How one objective colours its segment of the level ring. */
-enum class RingSegment { VALIDATED, WAITING, REWORK, TODO }
+enum class RingSegment { VALIDATED, WAITING, REWORK, STARTED, TODO }
 
 /**
  * The way to the next level as a ring of one segment per objective. Segments sweep in one after
- * the other; the first one still to reach glows in the brand gradient, and a small dot orbits.
+ * the other; an objective under way glows in the brand gradient, and a small dot orbits. With
+ * [calm] ("Réduire les animations") nothing moves: the segments are drawn whole and the dot rests.
  */
 @Composable
-internal fun LevelRing(segments: List<RingSegment>, description: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+internal fun LevelRing(segments: List<RingSegment>, description: String, modifier: Modifier = Modifier, calm: Boolean = false, content: @Composable () -> Unit) {
     val sweeps = remember(segments.size) { List(segments.size) { Animatable(0f) } }
-    LaunchedEffect(segments.size) {
+    LaunchedEffect(segments.size, calm) {
         sweeps.forEachIndexed { i, sweep ->
             launch {
+                if (calm) return@launch sweep.snapTo(1f)
                 delay(200L + i * 90L)
                 sweep.animateTo(1f, tween(550, easing = FastOutSlowInEasing))
             }
         }
     }
-    val motion = rememberInfiniteTransition(label = "ring")
-    val orbit by motion.animateFloat(0f, 360f, infiniteRepeatable(tween(14_000, easing = LinearEasing)), label = "orbit")
-    val glow by motion.animateFloat(0.55f, 1f, infiniteRepeatable(tween(1_400), RepeatMode.Reverse), label = "glow")
-    val focus = segments.indexOfFirst { it != RingSegment.VALIDATED }
+    var orbit = 0f
+    var glow = 1f
+    if (!calm) {
+        val motion = rememberInfiniteTransition(label = "ring")
+        orbit = motion.animateFloat(0f, 360f, infiniteRepeatable(tween(14_000, easing = LinearEasing)), label = "orbit").value
+        glow = motion.animateFloat(0.55f, 1f, infiniteRepeatable(tween(1_400), RepeatMode.Reverse), label = "glow").value
+    }
     Box(modifier.size(200.dp).semantics { contentDescription = description }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(200.dp)) {
             val stroke = 12.dp.toPx()
@@ -110,10 +115,12 @@ internal fun LevelRing(segments: List<RingSegment>, description: String, modifie
                 drawArc(Palette.NightHigh, start, sweep, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
                 val drawn = sweep * sweeps[i].value
                 if (drawn <= 0f) return@forEachIndexed
-                when {
-                    i == focus && segment == RingSegment.TODO ->
+                when (segment) {
+                    // An untouched objective stays plain: at 0/7 the ring must not look under way.
+                    RingSegment.TODO -> Unit
+                    RingSegment.STARTED ->
                         drawArc(BrandColors.gradient, start, drawn, false, topLeft, arcSize, alpha = glow, style = Stroke(stroke, cap = StrokeCap.Round))
-                    segment != RingSegment.TODO ->
+                    else ->
                         drawArc(segment.color(), start, drawn, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
                 }
             }
@@ -129,6 +136,7 @@ private fun RingSegment.color(): Color = when (this) {
     RingSegment.VALIDATED -> Palette.Success
     RingSegment.WAITING -> Palette.Blue
     RingSegment.REWORK -> BrandColors.Amber
+    RingSegment.STARTED -> Palette.Violet
     RingSegment.TODO -> Palette.NightHigh
 }
 

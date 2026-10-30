@@ -457,6 +457,7 @@
     <string name="progress_focus_done_text">Ce qui reste attend l'avis du responsable. Reviens demain pour ton échauffement.</string>
     <string name="progress_objective_number">Objectif %1$d</string>
     <string name="progress_objective_todo">À découvrir</string>
+    <string name="progress_objective_started">En cours</string>
     <string name="progress_objective_module">Parcours %1$d/%2$d</string>
     <string name="progress_sheet_criterion">Pour le valider</string>
     <string name="progress_sheet_learn">Ouvrir le parcours guidé</string>

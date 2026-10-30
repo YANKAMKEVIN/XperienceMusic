@@ -34,6 +34,8 @@ data class ProgressUiState(
     val toValidateCount: Int = 0,
     val isWorking: Boolean = false,
     val hasError: Boolean = false,
+    /** "Réduire les animations", chosen in the guided path's comfort settings. */
+    val reduceMotion: Boolean = false,
 )
 
 data class LevelCardUi(
