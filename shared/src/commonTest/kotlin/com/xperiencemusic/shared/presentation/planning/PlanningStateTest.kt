@@ -79,6 +79,31 @@ class PlanningStateTest {
     }
 
     @Test
+    fun `une échéance dépassée se dit, le jour même est signalé`() {
+        // A Friday with a service, six days after the deadline.
+        val friday = LocalDate(2026, 10, 16)
+        val late = listOf(PlanningMonth(october, LocalDate(2026, 10, 10), false))
+        val state = derivePlanningState(planning(months = late), october, friday)
+        assertTrue(state.isPastDeadline)
+        assertEquals("10 oct.", state.answerByLabel)
+        assertTrue(state.services.single { it.day == 16 }.isToday)
+        assertEquals(1, state.services.count { it.isToday })
+        assertTrue(deriveAvailabilityState(planning(months = late), october, friday).isPastDeadline)
+
+        val onTime = listOf(PlanningMonth(october, LocalDate(2026, 10, 20), false))
+        assertFalse(derivePlanningState(planning(months = onTime), october, friday).isPastDeadline)
+    }
+
+    @Test
+    fun `un mois validé mais incomplet le dit dans le bandeau`() {
+        val validated = listOf(PlanningMonth(october, LocalDate(2026, 10, 10), true))
+        val state = derivePlanningState(planning(months = validated), october, today)
+        assertFalse(state.isPastDeadline, "a validated month has no deadline left")
+        // Nobody answered: the five services still to come all lack a part.
+        assertEquals(5, state.incompleteAfterValidation)
+    }
+
+    @Test
     fun `un mois pas ouvert ne montre aucun service`() {
         val state = derivePlanningState(planning(Role.CONTENT_ADMIN, months = emptyList()), november, today)
         assertEquals(MonthStatus.NOT_OPEN, state.status)

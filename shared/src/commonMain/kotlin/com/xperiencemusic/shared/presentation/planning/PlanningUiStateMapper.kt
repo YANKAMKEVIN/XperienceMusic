@@ -50,6 +50,8 @@ fun derivePlanningState(planning: Planning, monthStart: LocalDate, today: LocalD
         canGoForward = shown.any { it > monthStart },
         status = status,
         answerByLabel = month?.answerBy?.takeIf { status == MonthStatus.OPEN }?.let(Formatting::dayAndMonth),
+        isPastDeadline = status == MonthStatus.OPEN && month?.answerBy?.let { it < today } == true,
+        incompleteAfterValidation = if (status == MonthStatus.VALIDATED) services.count { !it.isPast && it.missing.isNotEmpty() } else 0,
         unansweredCount = if (status == MonthStatus.OPEN) services.count { !it.isPast && it.myAnswer == MyAnswer.UNANSWERED } else 0,
         services = services,
         canPlan = canPlan,
@@ -89,5 +91,6 @@ fun serviceCards(
             null -> MyAnswer.UNANSWERED
         },
         isPast = team.date < today,
+        isToday = team.date == today,
     )
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +61,8 @@ import com.xperiencemusic.shared.resources.error_forbidden
 import com.xperiencemusic.shared.resources.error_generic
 import com.xperiencemusic.shared.resources.planning_complete
 import com.xperiencemusic.shared.resources.planning_friday
+import com.xperiencemusic.shared.resources.planning_late_text
+import com.xperiencemusic.shared.resources.planning_late_title
 import com.xperiencemusic.shared.resources.planning_missing
 import com.xperiencemusic.shared.resources.planning_my_answers
 import com.xperiencemusic.shared.resources.planning_next_month
@@ -75,16 +79,18 @@ import com.xperiencemusic.shared.resources.planning_previous_month
 import com.xperiencemusic.shared.resources.planning_sunday
 import com.xperiencemusic.shared.resources.planning_title
 import com.xperiencemusic.shared.resources.planning_to_answer
+import com.xperiencemusic.shared.resources.planning_today
 import com.xperiencemusic.shared.resources.planning_unanswered
 import com.xperiencemusic.shared.resources.planning_validate_action
 import com.xperiencemusic.shared.resources.planning_validate_all_answered
 import com.xperiencemusic.shared.resources.planning_validate_all_covered
 import com.xperiencemusic.shared.resources.planning_validate_cancel
 import com.xperiencemusic.shared.resources.planning_validate_confirm_title
+import com.xperiencemusic.shared.resources.planning_validate_hint
 import com.xperiencemusic.shared.resources.planning_validate_incomplete
 import com.xperiencemusic.shared.resources.planning_validate_missing_answers
-import com.xperiencemusic.shared.resources.planning_validate_hint
 import com.xperiencemusic.shared.resources.planning_validated
+import com.xperiencemusic.shared.resources.planning_validated_incomplete
 import com.xperiencemusic.shared.resources.planning_validated_text
 import com.xperiencemusic.shared.resources.planning_you_serve
 import com.xperiencemusic.shared.ui.brand.GradientButton
@@ -232,10 +238,19 @@ private fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(XmIcons.Calendar, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
-                    Text(stringResource(Res.string.planning_open_title), style = MaterialTheme.typography.titleMedium)
+                    // A deadline already behind us is said as such, not as a date still to come.
+                    val late = state.isPastDeadline && state.answerByLabel != null
                     Text(
-                        state.answerByLabel?.let { stringResource(Res.string.planning_open_text_by, it) }
-                            ?: stringResource(Res.string.planning_open_text),
+                        stringResource(if (late) Res.string.planning_late_title else Res.string.planning_open_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (late) BrandColors.Amber else Color.Unspecified,
+                    )
+                    Text(
+                        when {
+                            late -> stringResource(Res.string.planning_late_text, state.answerByLabel.orEmpty())
+                            state.answerByLabel != null -> stringResource(Res.string.planning_open_text_by, state.answerByLabel)
+                            else -> stringResource(Res.string.planning_open_text)
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -264,8 +279,13 @@ private fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit
         }
         MonthStatus.VALIDATED -> AppCard {
             Text(stringResource(Res.string.planning_validated), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.tertiary)
+            // "Planning validé" next to "Manque : …" on the dates needs a word: fixed, yet not complete.
             Text(
-                stringResource(Res.string.planning_validated_text),
+                if (state.incompleteAfterValidation > 0) {
+                    pluralStringResource(Res.plurals.planning_validated_incomplete, state.incompleteAfterValidation, state.incompleteAfterValidation)
+                } else {
+                    stringResource(Res.string.planning_validated_text)
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = Spacing.xs),
@@ -295,8 +315,10 @@ private fun ServiceCard(card: ServiceCardUi, onClick: () -> Unit) {
                     Text(
                         stringResource(if (card.kind == ServiceKind.FRIDAY) Res.string.planning_friday else Res.string.planning_sunday),
                         style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f, fill = false),
                     )
+                    if (card.isToday) TodayPill(Modifier.padding(start = Spacing.s))
+                    Spacer(Modifier.weight(1f))
                     if (card.showsAnswer) AnswerBadge(card.myAnswer)
                 }
                 if (card.serving.isEmpty()) {
@@ -337,6 +359,17 @@ internal fun MissingLine(missing: List<Instrument>, modifier: Modifier = Modifie
             modifier = modifier,
         )
     }
+}
+
+@Composable
+private fun TodayPill(modifier: Modifier = Modifier) {
+    Text(
+        stringResource(Res.string.planning_today),
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Bold,
+        color = Color.White,
+        modifier = modifier.background(BrandColors.horizontalGradient, CircleShape).padding(horizontal = 10.dp, vertical = 3.dp),
+    )
 }
 
 @Composable
@@ -384,7 +417,7 @@ private val previewCards = listOf(
         ),
         listOf(Instrument.BASS, Instrument.DRUMS), MyAnswer.SERVES, isPast = false,
     ),
-    ServiceCardUi(LocalDate(2026, 11, 6), ServiceKind.FRIDAY, "ven.", 6, emptyList(), listOf(Instrument.SINGER), MyAnswer.UNANSWERED, isPast = false),
+    ServiceCardUi(LocalDate(2026, 11, 6), ServiceKind.FRIDAY, "ven.", 6, emptyList(), listOf(Instrument.SINGER), MyAnswer.UNANSWERED, isPast = false, isToday = true),
 )
 
 @Preview

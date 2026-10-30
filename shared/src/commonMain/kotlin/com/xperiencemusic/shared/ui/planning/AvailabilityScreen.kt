@@ -1,6 +1,5 @@
 package com.xperiencemusic.shared.ui.planning
 
-import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -49,6 +48,7 @@ import com.xperiencemusic.shared.presentation.planning.PlanningError
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.action_back
 import com.xperiencemusic.shared.resources.availability_answer_by
+import com.xperiencemusic.shared.resources.availability_late
 import com.xperiencemusic.shared.resources.availability_locked
 import com.xperiencemusic.shared.resources.availability_role
 import com.xperiencemusic.shared.resources.availability_saved_hint
@@ -59,8 +59,10 @@ import com.xperiencemusic.shared.resources.error_forbidden
 import com.xperiencemusic.shared.resources.error_generic
 import com.xperiencemusic.shared.resources.planning_friday_hint
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.choiceState
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Palette
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
@@ -129,6 +131,8 @@ private fun Intro(state: AvailabilityUiState) {
         if (part != null) Text(stringResource(Res.string.availability_role, part), style = MaterialTheme.typography.bodyMedium)
         val note = when {
             !state.canAnswer -> stringResource(Res.string.availability_locked)
+            state.isPastDeadline && state.answerByLabel != null -> stringResource(Res.string.availability_late, state.answerByLabel) + "\n" +
+                stringResource(Res.string.availability_saved_hint)
             state.answerByLabel != null -> stringResource(Res.string.availability_answer_by, state.answerByLabel) + "\n" +
                 stringResource(Res.string.availability_saved_hint)
             else -> stringResource(Res.string.availability_saved_hint)
@@ -155,8 +159,15 @@ private fun AnswerRow(row: AvailabilityRowUi, enabled: Boolean, onEvent: (Availa
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = Spacing.s)) {
             options.forEachIndexed { index, (serves, label) ->
                 val selected = (row.answer == MyAnswer.SERVES) == serves && row.answer != MyAnswer.UNANSWERED
+                // "Je sers" turns green and "Pas dispo" grey: the two answers no longer share one blue.
+                val tint = if (serves) Palette.Success else Palette.Mist
                 SegmentedButton(
                     selected = selected,
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = tint.copy(alpha = 0.22f),
+                        activeContentColor = if (serves) Palette.Success else Palette.Snow,
+                        activeBorderColor = tint,
+                    ),
                     onClick = { onEvent(AvailabilityEvent.Answered(row.date, serves)) },
                     enabled = enabled,
                     shape = SegmentedButtonDefaults.itemShape(index, options.size),
