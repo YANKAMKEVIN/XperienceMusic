@@ -13,16 +13,22 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -149,9 +155,19 @@ internal fun ObjectiveSheet(
     onLearn: (String) -> Unit,
     onToggle: (String, Boolean) -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Palette.NightRaised) {
+    // Opened whole, clear of the navigation bar and scrollable: with a large font the tick and the
+    // main button used to sit under the system buttons or below the half-open sheet.
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Palette.NightRaised,
+    ) {
         Column(
-            Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, bottom = 32.dp),
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(start = 22.dp, end = 22.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             val (label, color) = objective.statusLabel()
@@ -185,19 +201,25 @@ internal fun ObjectiveSheet(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Palette.Mist,
                 )
-                objective.status != ExerciseStatus.VALIDATED -> Column {
+                objective.status != ExerciseStatus.VALIDATED -> {
                     val ticked = objective.status == ExerciseStatus.SUBMITTED
+                    // The whole row, explanation included, toggles: a 48 dp target at least.
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .clickable(enabled = !isWorking, role = Role.Checkbox) { onToggle(objective.id, !ticked) },
+                            .toggleable(value = ticked, enabled = !isWorking, role = Role.Checkbox) { onToggle(objective.id, it) }
+                            .padding(vertical = Spacing.s),
                     ) {
                         Checkbox(checked = ticked, onCheckedChange = null, enabled = !isWorking)
-                        Text(stringResource(Res.string.progress_sheet_reached), style = MaterialTheme.typography.titleSmall)
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(stringResource(Res.string.progress_sheet_reached), style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(Res.string.progress_sheet_reached_hint), style = MaterialTheme.typography.bodySmall, color = Palette.Mist)
+                        }
                     }
-                    Text(stringResource(Res.string.progress_sheet_reached_hint), style = MaterialTheme.typography.bodySmall, color = Palette.Mist)
                 }
             }
         }
