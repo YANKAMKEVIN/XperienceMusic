@@ -155,4 +155,54 @@ class SetlistEditorViewModelTest {
         assertEquals("Intro douce", published.message)
         assertEquals("Grâce", published.publishedBy)
     }
+
+    @Test
+    fun `retirer un chant d'une setlist publiée demande confirmation au retour`() = runTest {
+        setlists.publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("c", "a"), "Intro", "x"))
+        val editor = editor(serviceDate = LocalDate(2026, 10, 18))
+        editor.state.test {
+            assertFalse(expectMostRecentItem().hasUnsavedChanges, "the published week as loaded is not a change")
+            editor.onEvent(SetlistEditorEvent.QueryChanged("Bé"))
+            assertFalse(expectMostRecentItem().hasUnsavedChanges, "a search is not a change")
+            editor.onEvent(SetlistEditorEvent.SongRemoved("a"))
+            assertTrue(expectMostRecentItem().hasUnsavedChanges)
+
+            editor.onEvent(SetlistEditorEvent.BackClicked)
+            val asking = expectMostRecentItem()
+            assertTrue(asking.isConfirmingDiscard)
+            assertFalse(asking.isLeaving)
+            editor.onEvent(SetlistEditorEvent.DiscardDismissed)
+            assertEquals(listOf("c"), expectMostRecentItem().selected.map { it.id })
+
+            editor.onEvent(SetlistEditorEvent.BackClicked)
+            editor.onEvent(SetlistEditorEvent.DiscardConfirmed)
+            val leaving = expectMostRecentItem()
+            assertTrue(leaving.isLeaving)
+            assertFalse(leaving.isConfirmingDiscard)
+            assertFalse(leaving.hasUnsavedChanges)
+        }
+    }
+
+    @Test
+    fun `quitter une nouvelle setlist vide ne demande rien`() = runTest {
+        viewModel.state.test {
+            assertFalse(expectMostRecentItem().hasUnsavedChanges)
+            viewModel.onEvent(SetlistEditorEvent.BackClicked)
+            val leaving = expectMostRecentItem()
+            assertTrue(leaving.isLeaving)
+            assertFalse(leaving.isConfirmingDiscard)
+        }
+    }
+
+    @Test
+    fun `remettre la setlist comme avant efface la modification`() = runTest {
+        viewModel.state.test {
+            viewModel.onEvent(SetlistEditorEvent.SongAdded("b"))
+            assertTrue(expectMostRecentItem().hasUnsavedChanges)
+            viewModel.onEvent(SetlistEditorEvent.SongRemoved("b"))
+            assertFalse(expectMostRecentItem().hasUnsavedChanges)
+            viewModel.onEvent(SetlistEditorEvent.MessageChanged("Répétition à 19 h"))
+            assertTrue(expectMostRecentItem().hasUnsavedChanges)
+        }
+    }
 }

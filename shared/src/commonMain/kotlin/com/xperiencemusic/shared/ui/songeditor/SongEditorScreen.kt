@@ -69,7 +69,9 @@ import com.xperiencemusic.shared.resources.song_delete_confirm_cancel
 import com.xperiencemusic.shared.resources.song_delete_confirm_ok
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.DiscardChangesDialog
 import com.xperiencemusic.shared.ui.components.EditorTopBar
+import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.components.KeyPicker
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.song.ChordChartView
@@ -91,15 +93,17 @@ fun SongEditorScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.savedSongId) { state.savedSongId?.let(onSaved) }
     LaunchedEffect(state.isDeleted) { if (state.isDeleted) onDeleted() }
-    SongEditorScreenContent(state = state, onEvent = viewModel::onEvent, onBack = onBack)
+    LaunchedEffect(state.isLeaving) { if (state.isLeaving) onBack() }
+    SongEditorScreenContent(state = state, onEvent = viewModel::onEvent)
 }
 
 @Composable
 fun SongEditorScreenContent(
     state: SongEditorUiState,
     onEvent: (SongEditorEvent) -> Unit,
-    onBack: () -> Unit,
 ) {
+    // Without changes the system back closes the editor as usual (with its predictive animation).
+    SystemBackHandler(enabled = state.hasUnsavedChanges) { onEvent(SongEditorEvent.BackClicked) }
     Scaffold(
         topBar = {
             EditorTopBar(
@@ -107,7 +111,7 @@ fun SongEditorScreenContent(
                 actionLabel = stringResource(Res.string.editor_save),
                 isActionEnabled = state.canSave,
                 isWorking = state.isSaving,
-                onBack = onBack,
+                onBack = { onEvent(SongEditorEvent.BackClicked) },
                 onAction = { onEvent(SongEditorEvent.SaveClicked) },
             )
         },
@@ -206,6 +210,13 @@ fun SongEditorScreenContent(
         }
     }
 
+    if (state.isConfirmingDiscard) {
+        DiscardChangesDialog(
+            onDiscard = { onEvent(SongEditorEvent.DiscardConfirmed) },
+            onKeepEditing = { onEvent(SongEditorEvent.DiscardDismissed) },
+        )
+    }
+
     if (state.isConfirmingDeletion) {
         AlertDialog(
             onDismissRequest = { onEvent(SongEditorEvent.DeleteDismissed) },
@@ -289,7 +300,6 @@ private fun SongEditorScreenPreview() {
                 unknownChords = listOf("Dp"),
             ),
             onEvent = {},
-            onBack = {},
         )
     }
 }

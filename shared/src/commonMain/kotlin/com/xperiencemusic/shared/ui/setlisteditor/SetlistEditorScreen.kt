@@ -70,7 +70,9 @@ import com.xperiencemusic.shared.resources.setlist_selected_title
 import com.xperiencemusic.shared.resources.setlist_service_label
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.DatePickerModal
+import com.xperiencemusic.shared.ui.components.DiscardChangesDialog
 import com.xperiencemusic.shared.ui.components.EditorTopBar
+import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
@@ -88,7 +90,8 @@ fun SetlistEditorScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.isPublished, state.isDeleted) { if (state.isPublished || state.isDeleted) onPublished() }
-    SetlistEditorScreenContent(state = state, onEvent = viewModel::onEvent, onBack = onBack)
+    LaunchedEffect(state.isLeaving) { if (state.isLeaving) onBack() }
+    SetlistEditorScreenContent(state = state, onEvent = viewModel::onEvent)
 }
 
 private enum class EditedDate { REHEARSAL, SERVICE }
@@ -97,10 +100,11 @@ private enum class EditedDate { REHEARSAL, SERVICE }
 fun SetlistEditorScreenContent(
     state: SetlistEditorUiState,
     onEvent: (SetlistEditorEvent) -> Unit,
-    onBack: () -> Unit,
 ) {
     var editedDate by remember { mutableStateOf<EditedDate?>(null) }
     var isConfirmingDelete by remember { mutableStateOf(false) }
+    // Without changes the system back closes the editor as usual (with its predictive animation).
+    SystemBackHandler(enabled = state.hasUnsavedChanges) { onEvent(SetlistEditorEvent.BackClicked) }
 
     Scaffold(
         topBar = {
@@ -109,7 +113,7 @@ fun SetlistEditorScreenContent(
                 actionLabel = stringResource(Res.string.setlist_publish),
                 isActionEnabled = state.canPublish,
                 isWorking = state.isPublishing,
-                onBack = onBack,
+                onBack = { onEvent(SetlistEditorEvent.BackClicked) },
                 onAction = { onEvent(SetlistEditorEvent.PublishClicked) },
             )
         },
@@ -220,6 +224,12 @@ fun SetlistEditorScreenContent(
         }
     }
 
+    if (state.isConfirmingDiscard) {
+        DiscardChangesDialog(
+            onDiscard = { onEvent(SetlistEditorEvent.DiscardConfirmed) },
+            onKeepEditing = { onEvent(SetlistEditorEvent.DiscardDismissed) },
+        )
+    }
     if (isConfirmingDelete) {
         AlertDialog(
             onDismissRequest = { isConfirmingDelete = false },
@@ -329,7 +339,6 @@ private fun SetlistEditorScreenPreview() {
                 available = listOf(SetlistSongUi("3", "Holy, Holy, Holy", "Ré majeur")),
             ),
             onEvent = {},
-            onBack = {},
         )
     }
 }

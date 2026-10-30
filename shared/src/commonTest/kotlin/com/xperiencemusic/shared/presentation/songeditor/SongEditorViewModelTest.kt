@@ -150,4 +150,55 @@ class SongEditorViewModelTest {
         val id = assertNotNull(vm.state.value.savedSongId)
         assertEquals("Nouveau", songs.song(id)?.title)
     }
+
+    @Test
+    fun `quitter un chant non modifié ne demande rien`() = runTest {
+        val vm = viewModel("s1")
+        assertFalse(vm.state.value.hasUnsavedChanges, "the loaded song is not a change")
+        vm.onEvent(SongEditorEvent.BackClicked)
+        assertFalse(vm.state.value.isConfirmingDiscard)
+        assertTrue(vm.state.value.isLeaving)
+    }
+
+    @Test
+    fun `quitter un chant modifié demande d'abandonner les modifications`() = runTest {
+        val vm = viewModel("s1")
+        vm.onEvent(SongEditorEvent.TitleChanged("Gloire à toi"))
+        assertTrue(vm.state.value.hasUnsavedChanges)
+        vm.onEvent(SongEditorEvent.BackClicked)
+        assertTrue(vm.state.value.isConfirmingDiscard)
+        assertFalse(vm.state.value.isLeaving)
+
+        vm.onEvent(SongEditorEvent.DiscardDismissed)
+        assertFalse(vm.state.value.isConfirmingDiscard)
+        assertEquals("Gloire à toi", vm.state.value.title, "keeping on editing keeps the text")
+
+        vm.onEvent(SongEditorEvent.BackClicked)
+        vm.onEvent(SongEditorEvent.DiscardConfirmed)
+        assertFalse(vm.state.value.isConfirmingDiscard)
+        assertTrue(vm.state.value.isLeaving)
+        assertFalse(vm.state.value.hasUnsavedChanges, "the system back no longer asks while leaving")
+    }
+
+    @Test
+    fun `un nouveau chant compte comme modifié dès qu'on y saisit quelque chose`() = runTest {
+        val vm = viewModel(null)
+        assertFalse(vm.state.value.hasUnsavedChanges)
+        vm.onEvent(SongEditorEvent.ImportLinkChanged("accords.app/JEM999"))
+        assertTrue(vm.state.value.hasUnsavedChanges, "a pasted link would be lost too")
+        vm.onEvent(SongEditorEvent.ImportLinkChanged(""))
+        vm.onEvent(SongEditorEvent.ChartChanged("Gloire"))
+        assertTrue(vm.state.value.hasUnsavedChanges)
+        vm.onEvent(SongEditorEvent.ChartChanged(""))
+        assertFalse(vm.state.value.hasUnsavedChanges, "back to blank: nothing to lose")
+    }
+
+    @Test
+    fun `un chant enregistré n'a plus de modifications en attente`() = runTest {
+        val vm = viewModel(null)
+        vm.onEvent(SongEditorEvent.TitleChanged("Nouveau"))
+        vm.onEvent(SongEditorEvent.SaveClicked)
+        assertNotNull(vm.state.value.savedSongId)
+        assertFalse(vm.state.value.hasUnsavedChanges)
+    }
 }

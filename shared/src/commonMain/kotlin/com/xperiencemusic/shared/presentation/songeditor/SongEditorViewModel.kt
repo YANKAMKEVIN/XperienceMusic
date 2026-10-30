@@ -39,6 +39,7 @@ class SongEditorViewModel(
                 _state.update {
                     it.copy(isLoading = false, title = song.title, artist = song.artist.orEmpty(), key = song.key)
                         .withChart(song.chart)
+                        .let { loaded -> loaded.copy(original = loaded.draft) }
                 }
             }
         }
@@ -61,6 +62,11 @@ class SongEditorViewModel(
             SongEditorEvent.DeleteClicked -> _state.update { it.copy(isConfirmingDeletion = true) }
             SongEditorEvent.DeleteDismissed -> _state.update { it.copy(isConfirmingDeletion = false) }
             SongEditorEvent.DeleteConfirmed -> delete()
+            SongEditorEvent.BackClicked -> _state.update {
+                if (it.hasUnsavedChanges) it.copy(isConfirmingDiscard = true) else it.copy(isLeaving = true)
+            }
+            SongEditorEvent.DiscardConfirmed -> _state.update { it.copy(isConfirmingDiscard = false, isLeaving = true) }
+            SongEditorEvent.DiscardDismissed -> _state.update { it.copy(isConfirmingDiscard = false) }
         }
     }
 

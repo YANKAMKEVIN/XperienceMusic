@@ -125,6 +125,10 @@
     <string name="service_roster_hint">Coche qui sert ce jour-là, même après la validation.</string>
     <string name="planning_this_week">Cette semaine tu sers : %1$s</string>
     <string name="action_back">Retour</string>
+    <string name="discard_title">Abandonner les modifications ?</string>
+    <string name="discard_text">Tes modifications ne sont pas enregistrées. Elles seront perdues si tu quittes cet écran.</string>
+    <string name="discard_confirm">Abandonner</string>
+    <string name="discard_keep">Continuer l'édition</string>
 
     <!-- Week -->
     <string name="week_title">Semaine</string>

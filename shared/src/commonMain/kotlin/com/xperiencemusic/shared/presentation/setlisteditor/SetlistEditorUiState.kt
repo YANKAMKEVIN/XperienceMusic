@@ -21,6 +21,12 @@ data class SetlistEditorUiState(
     val replacesExisting: Boolean = false,
     val isDeleting: Boolean = false,
     val isDeleted: Boolean = false,
+    /** Leaving now would lose a change to the dates, the message or the songs. */
+    val hasUnsavedChanges: Boolean = false,
+    /** "Abandonner les modifications ?" is on screen. */
+    val isConfirmingDiscard: Boolean = false,
+    /** Set when the editor may close without publishing; the screen then navigates away. */
+    val isLeaving: Boolean = false,
 ) {
     val canPublish: Boolean get() = !isPublishing && selected.isNotEmpty() && serviceDate >= rehearsalDate
     val hasDateConflict: Boolean get() = serviceDate < rehearsalDate
@@ -41,4 +47,8 @@ sealed interface SetlistEditorEvent {
     data class ServiceDatePicked(val date: LocalDate) : SetlistEditorEvent
     data object PublishClicked : SetlistEditorEvent
     data object DeleteConfirmed : SetlistEditorEvent
+    /** The back arrow or the system back. */
+    data object BackClicked : SetlistEditorEvent
+    data object DiscardConfirmed : SetlistEditorEvent
+    data object DiscardDismissed : SetlistEditorEvent
 }
