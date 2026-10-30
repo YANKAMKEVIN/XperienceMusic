@@ -3,11 +3,19 @@ package com.xperiencemusic.shared.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -102,168 +110,186 @@ fun MainScaffold(onSignOut: () -> Unit) {
     val loads = koinInject<RemoteLoadMonitor>()
     val loadFailed by loads.hasFailure.collectAsStateWithLifecycle()
     val retryScope = rememberCoroutineScope()
-    Scaffold(
-        topBar = {
-            if (loadFailed) Column(Modifier.padding(Spacing.m)) {
-                Text("Actualisation impossible. Les données peuvent être incomplètes ou anciennes.")
-                TextButton(onClick = { retryScope.launch { loads.retry() } }) { Text("Réessayer") }
+    // Landscape keeps the content's height: the tabs move to a rail on the left, the player slims down.
+    BoxWithConstraints {
+        val isLandscape = maxWidth > maxHeight
+        Scaffold(
+            topBar = {
+                if (loadFailed) Column(Modifier.padding(Spacing.m)) {
+                    Text("Actualisation impossible. Les données peuvent être incomplètes ou anciennes.")
+                    TextButton(onClick = { retryScope.launch { loads.retry() } }) { Text("Réessayer") }
+                }
+            },
+            bottomBar = {
+                // Floating: the player card (while something plays) stacked over the tab pill, both
+                // clear of the screen edges. Pushed screens keep the player only.
+                if (!isOnStage) Column(
+                    verticalArrangement = Arrangement.spacedBy(Spacing.s),
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .padding(start = Spacing.l, end = Spacing.l, top = if (isLandscape) Spacing.xs else Spacing.s, bottom = if (isLandscape) Spacing.xs else Spacing.m),
+                ) {
+                    if (!isRecordingVoice) MiniPlayer(compact = isLandscape)
+                    if (isOnTab && !isLandscape) TabBar(navController, destination)
+                }
+            },
+        ) { padding ->
+            Row(Modifier.padding(padding)) {
+                if (isOnTab && isLandscape) {
+                    Box(
+                        Modifier.fillMaxHeight().windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start)).padding(start = Spacing.s, top = Spacing.s, bottom = Spacing.s),
+                        contentAlignment = Alignment.Center,
+                    ) { TabBar(navController, destination, asRail = true) }
+                }
+                Box(Modifier.weight(1f)) {
+                    AppNavHost(navController, onSignOut)
+                    // The tabs scroll right up to the status bar: a night veil fades them out there instead of
+                    // cutting cards and titles under the clock.
+                    if (isOnTab) StatusBarVeil(Modifier.align(Alignment.TopCenter))
+                }
             }
-        },
-        bottomBar = {
-            // Floating: the player card (while something plays) stacked over the tab pill, both
-            // clear of the screen edges. Pushed screens keep the player only.
-            if (!isOnStage) Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.s),
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .padding(start = Spacing.l, end = Spacing.l, top = Spacing.s, bottom = Spacing.m),
-            ) {
-                if (!isRecordingVoice) MiniPlayer()
-                if (isOnTab) TabBar(navController, destination)
+        }
+    }
+}
+
+/** Every screen of the signed-in app, tabs and pushed screens alike. */
+@Composable
+private fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit, modifier: Modifier = Modifier) {
+    val openSong: (String) -> Unit = { id -> navController.navigate(SongRoute(id)) }
+    NavHost(navController, startDestination = WeekRoute, modifier = modifier) {
+        composable<WeekRoute> {
+            WeekScreen(
+                onSongClick = openSong,
+                onEditWeek = { date -> navController.navigate(SetlistEditorRoute(date?.toString())) },
+            )
+        }
+        composable<SetlistEditorRoute> { entry ->
+            SetlistEditorScreen(
+                serviceDate = entry.toRoute<SetlistEditorRoute>().serviceDate?.let(LocalDate::parse),
+                onBack = { navController.popBackStack() },
+                onPublished = { navController.popBackStack() },
+            )
+        }
+        composable<LibraryRoute> {
+            LibraryScreen(onSongClick = openSong, onAddSong = { navController.navigate(SongEditorRoute()) })
+        }
+        composable<PianoScaleCoachRoute> {
+            com.xperiencemusic.shared.ui.learning.PianoScaleScreen(onBack = { navController.popBackStack() })
+        }
+        composable<LearningAssessmentRoute> { entry ->
+            com.xperiencemusic.shared.ui.learning.AssessmentScreen(entry.toRoute<LearningAssessmentRoute>().moduleId, onBack = { navController.popBackStack() })
+        }
+        composable<PianoLearningRoute> { entry ->
+            val moduleId = entry.toRoute<PianoLearningRoute>().moduleId
+            com.xperiencemusic.shared.ui.learning.LearningScreen(
+                onBack = { navController.popBackStack() }, moduleId = moduleId,
+                onModule = { id -> navController.navigate(PianoLearningRoute(id)) { popUpTo<PianoLearningRoute> { inclusive = true } } },
+                onRecord = { navController.navigate(LearningAssessmentRoute(moduleId)) },
+                onScaleCoach = { navController.navigate(PianoScaleCoachRoute) },
+            )
+        }
+        composable<ProgressRoute> {
+            ProgressScreen(
+                onOpenLearning = { moduleId -> navController.navigate(PianoLearningRoute(moduleId)) },
+                onExerciseClick = { navController.navigate(ExerciseRoute(it)) },
+                onManageMembers = { navController.navigate(MembersRoute) },
+                onRecordVoice = { navController.navigate(VoiceRecordRoute(it)) },
+                onReview = { navController.navigate(VoiceReviewRoute) },
+                onValidate = { navController.navigate(GrowthReviewRoute) },
+                onSignOut = onSignOut,
+            )
+        }
+        composable<PlanningRoute> {
+            PlanningScreen(
+                onMyAnswers = { month -> navController.navigate(AvailabilityRoute(month.toString())) },
+                onServiceClick = { date -> navController.navigate(ServiceRoute(date.toString())) },
+            )
+        }
+        composable<AvailabilityRoute> { entry ->
+            AvailabilityScreen(
+                monthStart = LocalDate.parse(entry.toRoute<AvailabilityRoute>().monthStart),
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable<ServiceRoute> { entry ->
+            ServiceDetailScreen(
+                date = LocalDate.parse(entry.toRoute<ServiceRoute>().date),
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable<MembersRoute> { MembersScreen(onBack = { navController.popBackStack() }) }
+        composable<VoiceRecordRoute> { entry ->
+            VoiceRecordScreen(songId = entry.toRoute<VoiceRecordRoute>().songId, onBack = { navController.popBackStack() })
+        }
+        composable<GrowthReviewRoute> { GrowthReviewScreen(onBack = { navController.popBackStack() }) }
+        composable<VoiceReviewRoute> { VoiceReviewScreen(onBack = { navController.popBackStack() }) }
+        composable<ExerciseRoute> { entry ->
+            ExerciseScreen(exerciseId = entry.toRoute<ExerciseRoute>().exerciseId, onBack = { navController.popBackStack() })
+        }
+        composable<SongRoute> { entry ->
+            val songId = entry.toRoute<SongRoute>().songId
+            SongDetailScreen(
+                songId = songId,
+                onBack = { navController.popBackStack() },
+                onEdit = { navController.navigate(SongEditorRoute(songId)) },
+                onAddRecording = { navController.navigate(RecordingFormRoute(songId)) },
+                onOpenStage = { transpose, notation ->
+                    navController.navigate(StageRoute(songId, transpose, notation.name))
+                },
+                onRecordVoice = { navController.navigate(VoiceRecordRoute(songId)) },
+            )
+        }
+        composable<StageRoute> { entry ->
+            val route = entry.toRoute<StageRoute>()
+            // "Suivant" swaps the stage for another one, so the song detail underneath may be
+            // the starting song: closing replaces it with the song that was on screen.
+            val startedFrom = navController.previousBackStackEntry
+                ?.takeIf { it.destination.hasRoute(SongRoute::class) }
+                ?.toRoute<SongRoute>()?.songId
+            val closeStage: () -> Unit = {
+                if (startedFrom == null || startedFrom == route.songId) {
+                    navController.popBackStack()
+                } else {
+                    navController.navigate(SongRoute(route.songId)) { popUpTo<SongRoute> { inclusive = true } }
+                }
             }
-        },
-    ) { padding ->
-        val openSong: (String) -> Unit = { id -> navController.navigate(SongRoute(id)) }
-        Box(Modifier.padding(padding)) {
-            NavHost(navController, startDestination = WeekRoute) {
-                composable<WeekRoute> {
-                    WeekScreen(
-                        onSongClick = openSong,
-                        onEditWeek = { date -> navController.navigate(SetlistEditorRoute(date?.toString())) },
-                    )
-                }
-                composable<SetlistEditorRoute> { entry ->
-                    SetlistEditorScreen(
-                        serviceDate = entry.toRoute<SetlistEditorRoute>().serviceDate?.let(LocalDate::parse),
-                        onBack = { navController.popBackStack() },
-                        onPublished = { navController.popBackStack() },
-                    )
-                }
-                composable<LibraryRoute> {
-                    LibraryScreen(onSongClick = openSong, onAddSong = { navController.navigate(SongEditorRoute()) })
-                }
-                composable<PianoScaleCoachRoute> {
-                    com.xperiencemusic.shared.ui.learning.PianoScaleScreen(onBack = { navController.popBackStack() })
-                }
-                composable<LearningAssessmentRoute> { entry ->
-                    com.xperiencemusic.shared.ui.learning.AssessmentScreen(entry.toRoute<LearningAssessmentRoute>().moduleId, onBack = { navController.popBackStack() })
-                }
-                composable<PianoLearningRoute> { entry ->
-                    val moduleId = entry.toRoute<PianoLearningRoute>().moduleId
-                    com.xperiencemusic.shared.ui.learning.LearningScreen(
-                        onBack = { navController.popBackStack() }, moduleId = moduleId,
-                        onModule = { id -> navController.navigate(PianoLearningRoute(id)) { popUpTo<PianoLearningRoute> { inclusive = true } } },
-                        onRecord = { navController.navigate(LearningAssessmentRoute(moduleId)) },
-                        onScaleCoach = { navController.navigate(PianoScaleCoachRoute) },
-                    )
-                }
-                composable<ProgressRoute> {
-                    ProgressScreen(
-                        onOpenLearning = { moduleId -> navController.navigate(PianoLearningRoute(moduleId)) },
-                        onExerciseClick = { navController.navigate(ExerciseRoute(it)) },
-                        onManageMembers = { navController.navigate(MembersRoute) },
-                        onRecordVoice = { navController.navigate(VoiceRecordRoute(it)) },
-                        onReview = { navController.navigate(VoiceReviewRoute) },
-                        onValidate = { navController.navigate(GrowthReviewRoute) },
-                        onSignOut = onSignOut,
-                    )
-                }
-                composable<PlanningRoute> {
-                    PlanningScreen(
-                        onMyAnswers = { month -> navController.navigate(AvailabilityRoute(month.toString())) },
-                        onServiceClick = { date -> navController.navigate(ServiceRoute(date.toString())) },
-                    )
-                }
-                composable<AvailabilityRoute> { entry ->
-                    AvailabilityScreen(
-                        monthStart = LocalDate.parse(entry.toRoute<AvailabilityRoute>().monthStart),
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<ServiceRoute> { entry ->
-                    ServiceDetailScreen(
-                        date = LocalDate.parse(entry.toRoute<ServiceRoute>().date),
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<MembersRoute> { MembersScreen(onBack = { navController.popBackStack() }) }
-                composable<VoiceRecordRoute> { entry ->
-                    VoiceRecordScreen(songId = entry.toRoute<VoiceRecordRoute>().songId, onBack = { navController.popBackStack() })
-                }
-                composable<GrowthReviewRoute> { GrowthReviewScreen(onBack = { navController.popBackStack() }) }
-                composable<VoiceReviewRoute> { VoiceReviewScreen(onBack = { navController.popBackStack() }) }
-                composable<ExerciseRoute> { entry ->
-                    ExerciseScreen(exerciseId = entry.toRoute<ExerciseRoute>().exerciseId, onBack = { navController.popBackStack() })
-                }
-                composable<SongRoute> { entry ->
-                    val songId = entry.toRoute<SongRoute>().songId
-                    SongDetailScreen(
-                        songId = songId,
-                        onBack = { navController.popBackStack() },
-                        onEdit = { navController.navigate(SongEditorRoute(songId)) },
-                        onAddRecording = { navController.navigate(RecordingFormRoute(songId)) },
-                        onOpenStage = { transpose, notation ->
-                            navController.navigate(StageRoute(songId, transpose, notation.name))
-                        },
-                        onRecordVoice = { navController.navigate(VoiceRecordRoute(songId)) },
-                    )
-                }
-                composable<StageRoute> { entry ->
-                    val route = entry.toRoute<StageRoute>()
-                    // "Suivant" swaps the stage for another one, so the song detail underneath may be
-                    // the starting song: closing replaces it with the song that was on screen.
-                    val startedFrom = navController.previousBackStackEntry
-                        ?.takeIf { it.destination.hasRoute(SongRoute::class) }
-                        ?.toRoute<SongRoute>()?.songId
-                    val closeStage: () -> Unit = {
-                        if (startedFrom == null || startedFrom == route.songId) {
-                            navController.popBackStack()
-                        } else {
-                            navController.navigate(SongRoute(route.songId)) { popUpTo<SongRoute> { inclusive = true } }
-                        }
+            SystemBackHandler(enabled = startedFrom != null && startedFrom != route.songId, onBack = closeStage)
+            StageScreen(
+                songId = route.songId,
+                transposeSemitones = route.transposeSemitones,
+                notation = Notation.valueOf(route.notation),
+                onClose = closeStage,
+                onOpenSong = { nextId ->
+                    // Other songs open in their own key, keeping the notation.
+                    navController.navigate(StageRoute(nextId, 0, route.notation)) {
+                        popUpTo<StageRoute> { inclusive = true }
                     }
-                    SystemBackHandler(enabled = startedFrom != null && startedFrom != route.songId, onBack = closeStage)
-                    StageScreen(
-                        songId = route.songId,
-                        transposeSemitones = route.transposeSemitones,
-                        notation = Notation.valueOf(route.notation),
-                        onClose = closeStage,
-                        onOpenSong = { nextId ->
-                            // Other songs open in their own key, keeping the notation.
-                            navController.navigate(StageRoute(nextId, 0, route.notation)) {
-                                popUpTo<StageRoute> { inclusive = true }
-                            }
-                        },
-                    )
-                }
-                composable<RecordingFormRoute> { entry ->
-                    RecordingFormScreen(
-                        songId = entry.toRoute<RecordingFormRoute>().songId,
-                        onBack = { navController.popBackStack() },
-                        onSaved = { navController.popBackStack() },
-                    )
-                }
-                composable<SongEditorRoute> { entry ->
-                    val songId = entry.toRoute<SongEditorRoute>().songId
-                    SongEditorScreen(
-                        songId = songId,
-                        onBack = { navController.popBackStack() },
-                        onSaved = { savedId ->
-                            if (songId == null) {
-                                // A new song opens on its page, with the editor removed from the back stack.
-                                navController.navigate(SongRoute(savedId)) { popUpTo<SongEditorRoute> { inclusive = true } }
-                            } else {
-                                navController.popBackStack()
-                            }
-                        },
-                        // The song page under the editor no longer exists either.
-                        onDeleted = { navController.popBackStack<SongRoute>(inclusive = true) },
-                    )
-                }
-            }
-            // The tabs scroll right up to the status bar: a night veil fades them out there instead of
-            // cutting cards and titles under the clock.
-            if (isOnTab) StatusBarVeil(Modifier.align(Alignment.TopCenter))
+                },
+            )
+        }
+        composable<RecordingFormRoute> { entry ->
+            RecordingFormScreen(
+                songId = entry.toRoute<RecordingFormRoute>().songId,
+                onBack = { navController.popBackStack() },
+                onSaved = { navController.popBackStack() },
+            )
+        }
+        composable<SongEditorRoute> { entry ->
+            val songId = entry.toRoute<SongEditorRoute>().songId
+            SongEditorScreen(
+                songId = songId,
+                onBack = { navController.popBackStack() },
+                onSaved = { savedId ->
+                    if (songId == null) {
+                        // A new song opens on its page, with the editor removed from the back stack.
+                        navController.navigate(SongRoute(savedId)) { popUpTo<SongEditorRoute> { inclusive = true } }
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
+                // The song page under the editor no longer exists either.
+                onDeleted = { navController.popBackStack<SongRoute>(inclusive = true) },
+            )
         }
     }
 }
@@ -279,22 +305,21 @@ private fun StatusBarVeil(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TabBar(navController: NavHostController, destination: NavDestination?) {
-    FloatingTabBar(
-        tabs.map { tab ->
-            FloatingTab(
-                label = stringResource(tab.shortLabel),
-                description = stringResource(tab.label),
-                icon = tab.icon,
-                isSelected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true,
-                onClick = {
-                    navController.navigate(tab.route) {
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-            )
-        },
-    )
+private fun TabBar(navController: NavHostController, destination: NavDestination?, asRail: Boolean = false) {
+    val items = tabs.map { tab ->
+        FloatingTab(
+            label = stringResource(tab.shortLabel),
+            description = stringResource(tab.label),
+            icon = tab.icon,
+            isSelected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true,
+            onClick = {
+                navController.navigate(tab.route) {
+                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+        )
+    }
+    if (asRail) FloatingTabRail(items) else FloatingTabBar(items)
 }

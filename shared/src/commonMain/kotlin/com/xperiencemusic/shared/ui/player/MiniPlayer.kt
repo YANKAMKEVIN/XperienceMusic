@@ -54,7 +54,7 @@ import org.koin.compose.viewmodel.koinViewModel
  * a tap opens the full player.
  */
 @Composable
-fun MiniPlayer(viewModel: MiniPlayerViewModel = koinViewModel()) {
+fun MiniPlayer(compact: Boolean = false, viewModel: MiniPlayerViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     if (state.isVisible) {
@@ -62,6 +62,7 @@ fun MiniPlayer(viewModel: MiniPlayerViewModel = koinViewModel()) {
             state = state,
             onEvent = viewModel::onEvent,
             onExpand = { isExpanded = true },
+            compact = compact,
         )
         if (isExpanded) PlayerSheet(state, viewModel::onEvent, onDismiss = { isExpanded = false })
     } else {
@@ -74,6 +75,8 @@ fun MiniPlayerContent(
     state: MiniPlayerUiState,
     onEvent: (MiniPlayerEvent) -> Unit,
     onExpand: () -> Unit,
+    /** Landscape: one slim line, without the artwork tile nor the expand arrow (the row opens it). */
+    compact: Boolean = false,
 ) {
     val openLabel = stringResource(Res.string.player_open)
     val shape = RoundedCornerShape(22.dp)
@@ -88,9 +91,9 @@ fun MiniPlayerContent(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clickable(onClickLabel = openLabel, role = Role.Button, onClick = onExpand)
-                    .padding(start = Spacing.s, end = Spacing.xs, top = Spacing.s, bottom = Spacing.s),
+                    .padding(start = Spacing.s, end = Spacing.xs, top = if (compact) 0.dp else Spacing.s, bottom = if (compact) 0.dp else Spacing.s),
             ) {
-                Box(
+                if (!compact) Box(
                     Modifier.size(44.dp).background(BrandColors.gradient, RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -115,7 +118,7 @@ fun MiniPlayerContent(
                     itemLabel = state.title,
                     onClick = { onEvent(MiniPlayerEvent.PlayPauseClicked) },
                 )
-                IconButton(onClick = onExpand) {
+                if (!compact) IconButton(onClick = onExpand) {
                     Icon(Icons.Filled.KeyboardArrowUp, contentDescription = openLabel)
                 }
                 IconButton(onClick = { onEvent(MiniPlayerEvent.CloseClicked) }) {

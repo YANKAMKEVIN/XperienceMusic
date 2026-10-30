@@ -12,11 +12,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
@@ -76,8 +78,30 @@ fun FloatingTabBar(tabs: List<FloatingTab>, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * The same tabs standing on the left edge, for landscape: the bottom pill and the player used to
+ * take 40 % of a phone's height there. Icons only; the selected one keeps its gradient.
+ */
 @Composable
-private fun TabItem(tab: FloatingTab) {
+fun FloatingTabRail(tabs: List<FloatingTab>, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Spacing.s, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .width(64.dp)
+            .clip(CircleShape)
+            .background(colors.surfaceContainerHigh)
+            .border(1.dp, colors.outlineVariant, CircleShape)
+            .padding(vertical = Spacing.m)
+            .selectableGroup(),
+    ) {
+        tabs.forEach { tab -> TabItem(tab, showsLabel = false) }
+    }
+}
+
+@Composable
+private fun TabItem(tab: FloatingTab, showsLabel: Boolean = true) {
     val colors = MaterialTheme.colorScheme
     val content by animateColorAsState(if (tab.isSelected) Color.White else colors.onSurfaceVariant, label = "tabContent")
     Row(
@@ -96,7 +120,7 @@ private fun TabItem(tab: FloatingTab) {
     ) {
         Icon(tab.icon, contentDescription = null, tint = content, modifier = Modifier.size(22.dp))
         AnimatedVisibility(
-            visible = tab.isSelected,
+            visible = tab.isSelected && showsLabel,
             enter = expandHorizontally(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
             exit = shrinkHorizontally(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(),
         ) {
