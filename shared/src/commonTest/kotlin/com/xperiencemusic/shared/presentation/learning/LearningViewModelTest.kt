@@ -170,6 +170,16 @@ class LearningViewModelTest {
         assertNull(vm.state.value.micError)
     }
 
+    @Test fun aSilentMicrophoneSaysItHearsNothing() = runTest {
+        val (vm, _) = singerViewModel(List(FakeMicrophone.framesFor(3.5)) { null } + List(400) { null })
+        vm.onEvent(LearningEvent.Open(0))
+        vm.onEvent(LearningEvent.Check)
+        // The fake microphone plays its whole script at once; the take is still listening at its end.
+        vm.onEvent(LearningEvent.StartSinging)
+        assertTrue(vm.state.value.silentSeconds >= 3.0)
+        assertEquals(0f, vm.state.value.micLevel)
+    }
+
     @Test fun singerModulesAreClosedToOtherParts() = runTest {
         val (vm, _) = singerViewModel(emptyList(), Instrument.PIANO)
         assertFalse(vm.state.value.allowed)

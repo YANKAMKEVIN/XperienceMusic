@@ -44,6 +44,8 @@ data class LearningUiState(
     /** Sung activities: the singer's comfort note, what the microphone hears and how far the take went. */
     val comfortMidi:Int=VoicePart.ALTO.comfortMidi,val singing:Boolean=false,val sung:Boolean=false,val heardMidi:Int?=null,
     val singStep:Int=0,val holdSeconds:Double=0.0,val micError:String?=null,
+    /** While listening: distance to the note in cents, the input level, and how long nothing was heard. */
+    val heardCents:Double?=null,val micLevel:Float=0f,val silentSeconds:Double=0.0,
     /** The microphone was refused: the screen offers the phone settings. */
     val micDenied:Boolean=false,
     /** Sung activities set aside for later: never counted as done, they no longer lock the next steps. */
@@ -54,6 +56,8 @@ data class LearningUiState(
     /** The furthest step open to the member. */
     val reached get()=progress.nextIn(module,postponed)
     /** "Reprendre" only stands for a real spot left behind, still open to the member. */
+    /** About three seconds without a voice: the screen says so instead of an empty "J'entends : …". */
+    val hearsNothing get()=singing && silentSeconds>=SILENCE_WARNING_SECONDS
     val canResume get()=resumeIndex!=null && resumeIndex in module.activities.indices && (resumeIndex<=reached || complete)
     val canPostpone get()=allowed && !saving && !singing && result!=true && activity.canPostpone() && activity.id !in completed
     val singTargets get()=activity.sing?.semitones?.map { comfortMidi+it }.orEmpty()
@@ -80,6 +84,7 @@ private data class LearningForm(
     val preferences:LearningPreferences=LearningPreferences(),val feedback:String?=null,val taps:List<Double> = emptyList(),
     val plan:List<Int> = emptyList(),val done:List<String> = emptyList(),val difficult:Set<String> = emptySet(),val titles:Map<String,String> = emptyMap(),val successSerial:Int=0,
     val singing:Boolean=false,val sung:Boolean=false,val heardMidi:Int?=null,val singStep:Int=0,val holdSeconds:Double=0.0,val micError:String?=null,val micDenied:Boolean=false,
+    val heardCents:Double?=null,val micLevel:Float=0f,val silentSeconds:Double=0.0,
     val postponed:Set<String> = emptySet(),val resumeIndex:Int?=null,
 )
 sealed interface LearningEvent {
@@ -134,7 +139,7 @@ class LearningViewModel(
             result=f.result,saving=f.saving,error=f.error,moduleReviews=checks.orEmpty().filter { it.memberId==m?.id }.associate { it.objectiveId to it.status },reviewLoaded=checks!=null,reviewStatus=c?.status,feedback=c?.feedback,
             reviewDue=p.dueIn(module,dates.today()).isNotEmpty(),mode=f.mode,hints=f.hints,showSteps=f.steps,showSettings=f.settings,
             preferences=f.preferences,feedbackText=f.feedback,taps=f.taps,sessionDone=f.done,sessionDifficult=f.difficult,sessionTitles=f.titles,successSerial=f.successSerial,
-            comfortMidi=(m?.profile?.voicePart?:VoicePart.ALTO).comfortMidi,singing=f.singing,sung=f.sung,heardMidi=f.heardMidi,singStep=f.singStep,holdSeconds=f.holdSeconds,micError=f.micError,micDenied=f.micDenied,postponed=f.postponed,resumeIndex=f.resumeIndex)
+            comfortMidi=(m?.profile?.voicePart?:VoicePart.ALTO).comfortMidi,singing=f.singing,sung=f.sung,heardMidi=f.heardMidi,singStep=f.singStep,holdSeconds=f.holdSeconds,micError=f.micError,heardCents=f.heardCents,micLevel=f.micLevel,silentSeconds=f.silentSeconds,micDenied=f.micDenied,postponed=f.postponed,resumeIndex=f.resumeIndex)
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),LearningUiState(module=module))
 
     init {
@@ -249,10 +254,10 @@ class LearningViewModel(
         audio.stop()
         target.accompanimentSemitones?.let { playReferenceNote?.invoke(s.comfortMidi+it,(target.secondsEach*target.semitones.size+ACCOMPANIMENT_MARGIN).toInt()) }
         val index=s.index
-        form.update { it.copy(index=index,singing=true,sung=false,heardMidi=null,singStep=0,holdSeconds=0.0,micError=null,micDenied=false,result=null,feedback=null) }
+        form.update { it.copy(index=index,singing=true,sung=false,heardMidi=null,singStep=0,holdSeconds=0.0,micError=null,micDenied=false,result=null,feedback=null,heardCents=null,micLevel=0f,silentSeconds=0.0) }
         listening=track(s.singTargets,target.secondsEach)
             .onEach { p ->
-                form.update { it.copy(heardMidi=p.heardMidi,singStep=p.completedSteps,holdSeconds=p.holdSeconds) }
+                form.update { it.copy(heardMidi=p.heardMidi,singStep=p.completedSteps,holdSeconds=p.holdSeconds,heardCents=p.centsFromTarget,micLevel=p.level,silentSeconds=p.silentSeconds) }
                 if(p.isSuccess) {
                     form.update { it.copy(singing=false,sung=true,singStep=target.semitones.size) }
                     stopSinging()
@@ -301,4 +306,5 @@ class LearningViewModel(
     override fun onCleared(){listening?.cancel();audio.stop()}
 }
 private const val ACCOMPANIMENT_MARGIN=2.0
+private const val SILENCE_WARNING_SECONDS=3.0
 private val POSTPONED=SetSerializer(String.serializer())

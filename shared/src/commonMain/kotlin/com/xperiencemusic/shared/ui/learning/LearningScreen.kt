@@ -36,6 +36,9 @@ import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.presentation.learning.*
 import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.brand.XmIcons
+import com.xperiencemusic.shared.ui.exercise.TunerNeedle
+import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.components.SystemBackHandler
@@ -275,43 +278,63 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                 Text("Ta sélection : ${s.notes.sorted().joinToString(" · "){noteLabel(it)}.ifEmpty{"aucune"}}",style=MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick={event(LearningEvent.ListenSelection)},enabled=s.notes.isNotEmpty()){Text("Écouter ma sélection")}
             }
-            if(a.kind==LearningKind.SING) SingPanel(s,event)
+            if(a.kind==LearningKind.SING) SingPanel(s,event) { HintBlock(s,event) }
             if(a.kind==LearningKind.RHYTHM) {
                 OutlinedButton(onClick={event(LearningEvent.Metronome)}){Text("Écouter 8 clics · ${a.bpm} BPM")}
                 Button(onClick={event(LearningEvent.Tap)},modifier=Modifier.fillMaxWidth().heightIn(min=100.dp)){Text("Frapper la pulsation · ${s.taps.size}/8")}
                 TextButton(onClick={event(LearningEvent.ResetTaps)}){Text("Recommencer les appuis")}
             }
-            if(a.kind !in listOf(LearningKind.LESSON,LearningKind.PRACTICE) && s.result!=true) {
-                TextButton(onClick={event(LearningEvent.Hint)},enabled=s.hints<3){Text(if(s.hints==0)"Un indice" else if(s.hints<3)"Un peu plus d’aide" else "Les aides sont affichées")}
-                if(s.hints>0) Text(when(s.hints) {
-                    1->when(a.kind){LearningKind.KEYBOARD->"Cherche la fondamentale, puis compte les demi-tons. Majeur : 4 puis 3 ; mineur : 3 puis 4.";LearningKind.EAR->"Réécoute note par note et concentre-toi sur la distance entre les deux premières notes.";LearningKind.RHYTHM->"Relâche la main et garde un mouvement régulier. Le premier appui fixe le départ.";LearningKind.SING->"Écoute d’abord tes notes, respire, puis chante sans pousser : la note doit être stable avant de compter.";else->"Reprends la règle dans la leçon précédente."}
-                    2->if(a.kind==LearningKind.KEYBOARD)"Les notes manquantes sont maintenant repérées sur le clavier. Tu gardes ta sélection." else a.explanation
-                    else->a.explanation
-                },style=MaterialTheme.typography.bodyMedium)
-                if(s.hints>=3 && a.expectedNotes.isNotEmpty())OutlinedButton(onClick={event(LearningEvent.ListenBroken)}){Text("Écouter la démonstration")}
-            }
+            if(a.kind!=LearningKind.SING) HintBlock(s,event)
             if(a.kind==LearningKind.PRACTICE)Text(if(s.module.instrument==Instrument.SINGER)"Cette étape est déclarative. Seul le responsable peut valider la compétence en situation." else "Cette étape est déclarative. Seul le responsable peut valider la compétence sur ton instrument.",style=MaterialTheme.typography.bodySmall)
         }
     }
 }
 
+/** "Un indice", then more help on each tap; shown until the activity is passed. */
+@Composable private fun HintBlock(s:LearningUiState,event:(LearningEvent)->Unit) {
+    val a=s.activity
+    if(a.kind in listOf(LearningKind.LESSON,LearningKind.PRACTICE) || s.result==true)return
+    TextButton(onClick={event(LearningEvent.Hint)},enabled=s.hints<3){Text(if(s.hints==0)"Un indice" else if(s.hints<3)"Un peu plus d’aide" else "Les aides sont affichées")}
+    if(s.hints>0) Text(when(s.hints) {
+        1->when(a.kind){LearningKind.KEYBOARD->"Cherche la fondamentale, puis compte les demi-tons. Majeur : 4 puis 3 ; mineur : 3 puis 4.";LearningKind.EAR->"Réécoute note par note et concentre-toi sur la distance entre les deux premières notes.";LearningKind.RHYTHM->"Relâche la main et garde un mouvement régulier. Le premier appui fixe le départ.";LearningKind.SING->"Écoute d’abord tes notes, respire, puis chante sans pousser : la note doit être stable avant de compter.";else->"Reprends la règle dans la leçon précédente."}
+        2->if(a.kind==LearningKind.KEYBOARD)"Les notes manquantes sont maintenant repérées sur le clavier. Tu gardes ta sélection." else a.explanation
+        else->a.explanation
+    },style=MaterialTheme.typography.bodyMedium)
+    if(s.hints>=3 && a.expectedNotes.isNotEmpty())OutlinedButton(onClick={event(LearningEvent.ListenBroken)}){Text("Écouter la démonstration")}
+}
+
 /** Sung activity: the notes to sing from the singer's comfort note, the microphone, and the live pitch. */
-@Composable private fun SingPanel(s:LearningUiState,event:(LearningEvent)->Unit) {
+@Composable private fun SingPanel(s:LearningUiState,event:(LearningEvent)->Unit,hints:@Composable ()->Unit) {
     val target=s.activity.sing?:return
     val permission=rememberMicrophonePermission()
     val notes=s.singTargets
     Text("À chanter : ${notes.joinToString(" · "){noteLabel(it)}} · ${formatSeconds(target.secondsEach)}${if(notes.size>1)" chacune" else ""}",style=MaterialTheme.typography.titleMedium)
     OutlinedButton(onClick={event(LearningEvent.ListenBroken)},enabled=!s.singing && !s.saving){Text(if(notes.size>1)"Écouter mes notes" else "Écouter ma note")}
     if(target.accompanimentSemitones!=null) Text("Mets des écouteurs : l’autre voix joue pendant que tu chantes, et le micro ne doit entendre que toi.",style=MaterialTheme.typography.bodySmall)
+    // High in the card: under the fixed button at the bottom, "Un indice" used to be out of sight.
+    hints()
     if(s.singing) {
         OutlinedButton(onClick={event(LearningEvent.StopSinging)},modifier=Modifier.fillMaxWidth()){Text("Arrêter l’écoute")}
-        Text("J’entends : ${s.heardMidi?.let{noteLabel(it)}?:"…"}",style=MaterialTheme.typography.bodyLarge,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})
+        MicLevel(s.micLevel)
+        Text(if(s.hearsNothing)"Je ne t'entends pas encore… Approche le téléphone et chante un peu plus fort." else "J’entends : ${s.heardMidi?.let{noteLabel(it)}?:"…"}",
+            style=MaterialTheme.typography.bodyLarge,color=if(s.hearsNothing)MaterialTheme.colorScheme.tertiary else Color.Unspecified,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})
+        TunerNeedle(s.heardCents?.let{(it/100).toFloat().coerceIn(-1f,1f)},
+            when { s.heardCents==null->"Aucune note entendue";s.heardCents< -50->"Un peu bas";s.heardCents>50->"Un peu haut";else->"Juste" })
         if(notes.size>1) Text("Note ${(s.singStep+1).coerceAtMost(notes.size)} / ${notes.size}",style=MaterialTheme.typography.bodySmall)
         LinearProgressIndicator(progress={(s.singStep+(s.holdSeconds/target.secondsEach).coerceIn(0.0,1.0)).toFloat()/notes.size},modifier=Modifier.fillMaxWidth())
     } else if(s.sung) Text("Bien tenu ! Tu peux vérifier l’activité.",color=MaterialTheme.colorScheme.primary)
     else GradientButton(onClick={permission.request { if(it)event(LearningEvent.StartSinging) else event(LearningEvent.MicrophoneDenied) }},enabled=!s.saving && s.result!=true,modifier=Modifier.fillMaxWidth().heightIn(min=64.dp)){Text("Chanter maintenant",style=MaterialTheme.typography.titleMedium)}
     s.micError?.let { if(s.micDenied)MicrophoneDeniedNotice(it,permission.openSettings) else Text(it,color=MaterialTheme.colorScheme.error) }
     if(s.canPostpone && !s.sung) Text("Pas d’écouteurs ou trop de bruit autour de toi ? « Je le ferai plus tard » ouvre l’étape suivante. Cette activité restera à reprendre : elle ne compte pas comme réussie.",style=MaterialTheme.typography.bodySmall)
+}
+/** What reaches the microphone, live: a bar that moves as soon as there is sound, even without a note. */
+@Composable private fun MicLevel(level:Float) {
+    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(Spacing.s),modifier=Modifier.clearAndSetSemantics{}) {
+        Icon(XmIcons.Mic,contentDescription=null,tint=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.size(18.dp))
+        Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            Box(Modifier.fillMaxWidth(level.coerceIn(0f,1f)).height(8.dp).clip(RoundedCornerShape(4.dp)).background(BrandColors.horizontalGradient))
+        }
+    }
 }
 private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble())"${seconds.toInt()} s" else "${seconds.toString().replace('.',',')} s"
 
