@@ -89,10 +89,10 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                                     state.sessionDifficult.forEach { id ->Text(state.sessionTitles[id] ?: LearningCatalog.findActivity(id)?.title.orEmpty()) }
                                 }
                                 Text(if(state.sessionDifficult.isEmpty()) "Tu as travaillé sans difficulté signalée. La prochaine séance t’aidera à entretenir ces repères." else "Les prochaines révisions tiendront compte de tes difficultés. Tu peux aussi les reprendre depuis les étapes.",Modifier.padding(top=Spacing.m))
-                                Text("Prochaine étape : ${state.module.activities[state.progress.nextIn(state.module)].title}",Modifier.padding(top=Spacing.s))
+                                Text("Prochaine étape : ${state.module.activities[state.reached].title}",Modifier.padding(top=Spacing.s))
                             }
                             GradientButton(onClick={onEvent(LearningEvent.Home)}){Text("Terminer ma séance")}
-                            OutlinedButton(onClick={onEvent(LearningEvent.Open(state.progress.nextIn(state.module)))}){Text("Continuer librement")}
+                            OutlinedButton(onClick={onEvent(LearningEvent.Open(state.reached))}){Text("Continuer librement")}
                         }
                     }
                     state.error?.let {Text(it,color=MaterialTheme.colorScheme.error)}
@@ -102,9 +102,10 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         if(state.showSteps) AlertDialog(onDismissRequest={onEvent(LearningEvent.Steps)},title={Text("Les étapes")},text={
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 state.module.activities.forEachIndexed { i,a ->
-                    val unlocked=state.complete || i<=state.progress.nextIn(state.module)
+                    val unlocked=state.complete || i<=state.reached
+                    val later=a.id in state.postponed && a.id !in state.completed
                     TextButton(onClick={onEvent(LearningEvent.Open(i))},enabled=unlocked) {
-                        Text("${if(a.id in state.completed)"✓" else "${i+1}."} ${a.title}${if(!unlocked)" · à découvrir ensuite" else ""}")
+                        Text("${if(a.id in state.completed)"✓" else "${i+1}."} ${a.title}${if(later)" · à reprendre" else if(!unlocked)" · à découvrir ensuite" else ""}")
                     }
                 }
             }
@@ -129,14 +130,14 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     AppCard {
         Text("TA SÉANCE DU JOUR",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
         Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
-        val plan=s.progress.dailyPlan(s.module,s.today).let { if(s.progress.returning(s.today))it.take(1) else it }
+        val plan=s.progress.dailyPlan(s.module,s.today,s.postponed).let { if(s.progress.returning(s.today))it.take(1) else it }
         Text("Environ ${plan.size*2} minutes · ${plan.size} activité(s)",Modifier.padding(top=Spacing.s))
         Text("Objectif : ${s.module.activities[plan.first()].title}",Modifier.padding(top=Spacing.s))
         if(s.progress.returning(s.today)) Text("Heureux de te retrouver. Reprends doucement avec une courte révision : tes progrès sont conservés.",Modifier.padding(top=Spacing.s))
         Text("${s.completed.size} / ${s.module.activities.size} activités terminées",Modifier.padding(top=Spacing.m))
         LinearProgressIndicator(progress={s.completed.size.toFloat()/s.module.activities.size},modifier=Modifier.fillMaxWidth().padding(top=Spacing.s))
         GradientButton(onClick={event(LearningEvent.Begin)},modifier=Modifier.padding(top=Spacing.m)){Text(if(s.completed.isNotEmpty())"Continuer ma séance" else "Commencer ma séance")}
-        TextButton(onClick={event(LearningEvent.Resume)}){Text("Reprendre · ${s.module.activities[s.progress.nextIn(s.module)].title}")}
+        TextButton(onClick={event(LearningEvent.Resume)}){Text("Reprendre · ${s.module.activities[s.reached].title}")}
         TextButton(onClick={event(LearningEvent.Steps)}){Text("Explorer les étapes")}
     }
     if(s.progress.pending>0) AppCard {
@@ -215,6 +216,8 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         s.feedbackText?.let { feedback -> CheckFeedback(feedback,s.result==true,s.keptNotes) }
         if(s.result==true) GradientButton(onClick={event(LearningEvent.Next)},modifier=Modifier.fillMaxWidth()){Text("Continuer")}
         else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck,modifier=Modifier.fillMaxWidth()){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";a.kind==LearningKind.SING && !s.sung->"Chante d’abord l’exercice";else->"Vérifier"})}
+        // A sung activity never locks the session: no earphones, a noisy room or a shy microphone can wait.
+        if(s.canPostpone && !s.sung) TextButton(onClick={event(LearningEvent.Postpone)},modifier=Modifier.fillMaxWidth()){Text("Je le ferai plus tard")}
     }
 }
 
@@ -297,6 +300,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     } else if(s.sung) Text("Bien tenu ! Tu peux vérifier l’activité.",color=MaterialTheme.colorScheme.primary)
     else Button(onClick={permission.request { if(it)event(LearningEvent.StartSinging) else event(LearningEvent.MicrophoneDenied) }},enabled=!s.saving && s.result!=true,modifier=Modifier.fillMaxWidth().heightIn(min=64.dp)){Text("Chanter maintenant")}
     s.micError?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+    if(s.canPostpone && !s.sung) Text("Pas d’écouteurs ou trop de bruit autour de toi ? « Je le ferai plus tard » ouvre l’étape suivante. Cette activité restera à reprendre : elle ne compte pas comme réussie.",style=MaterialTheme.typography.bodySmall)
 }
 private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble())"${seconds.toInt()} s" else "${seconds.toString().replace('.',',')} s"
 

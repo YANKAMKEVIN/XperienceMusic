@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.domain.learning
 
 import com.xperiencemusic.shared.data.seed.GrowthObjectives
 import com.xperiencemusic.shared.domain.model.Instrument
+import kotlinx.datetime.LocalDate
 import kotlin.test.*
 
 class SingerLearningTest {
@@ -49,5 +50,34 @@ class SingerLearningTest {
 
     @Test fun singerModulesGetASungChallenge() {
         singers.forEach { assertTrue(it.challenge().title.contains(it.title), it.id) }
+    }
+
+    private val hold = LearningCatalog.module("singer-hold")
+    private val firstSung = hold.activities.indexOfFirst { it.kind == LearningKind.SING }
+    private fun passed(vararg indices: Int) = LearningProgress(indices.map {
+        LearningAttempt("a$it", "me", hold.activities[it].id, PianoBasics.VERSION, true, LocalDate(2026, 10, 30))
+    })
+
+    @Test fun onlySungActivitiesCanWait() {
+        assertTrue(hold.activities[firstSung].canPostpone())
+        assertTrue(LearningCatalog.modules.flatMap { it.activities }.filter { it.canPostpone() }.all { it.kind == LearningKind.SING })
+    }
+
+    @Test fun aSungActivitySetAsideOpensTheNextStepWithoutCountingAsDone() {
+        val progress = passed(*(0 until firstSung).toList().toIntArray())
+        val aside = setOf(hold.activities[firstSung].id)
+        assertEquals(firstSung, progress.nextIn(hold))
+        assertEquals(firstSung + 1, progress.nextIn(hold, aside))
+        assertFalse(hold.activities[firstSung].id in progress.completedIn(hold))
+        assertFalse(progress.complete(hold))
+        assertFalse(firstSung in progress.dailyPlan(hold, LocalDate(2026, 10, 30), aside))
+    }
+
+    @Test fun whenOnlySetAsideActivitiesRemainTheMemberComesBackToThem() {
+        val others = hold.activities.indices.filter { it != firstSung }
+        val progress = passed(*others.toIntArray())
+        val aside = setOf(hold.activities[firstSung].id)
+        assertEquals(firstSung, progress.nextIn(hold, aside))
+        assertTrue(firstSung in progress.dailyPlan(hold, LocalDate(2026, 10, 30), aside))
     }
 }

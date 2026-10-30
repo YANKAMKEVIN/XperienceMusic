@@ -112,6 +112,28 @@ class LearningViewModelTest {
         assertFalse(vm.state.value.canCheck)
     }
 
+    @Test fun aSungActivityCanWaitWithoutPassingAndUnlocksTheNextStep() = runTest {
+        val (vm, repository) = singerViewModel(emptyList())
+        vm.onEvent(LearningEvent.Open(0))
+        assertFalse(vm.state.value.canPostpone, "a lesson is read, not postponed")
+        vm.onEvent(LearningEvent.Check)
+        vm.onEvent(LearningEvent.Next)
+        val sung = vm.state.value.activity
+        assertEquals(LearningKind.SING, sung.kind)
+        assertTrue(vm.state.value.canPostpone)
+        vm.onEvent(LearningEvent.Postpone)
+        assertEquals(2, vm.state.value.index)
+        assertEquals(2, vm.state.value.reached)
+        assertTrue(sung.id in vm.state.value.postponed)
+        assertTrue(sung.id in vm.state.value.sessionDifficult)
+        assertFalse(sung.id in vm.state.value.completed)
+        // Nothing is recorded: setting aside is neither a success nor a failure.
+        assertTrue(repository.observe("me").first().attempts.none { it.activityId == sung.id })
+        // The set-aside activity stays open from the steps.
+        vm.onEvent(LearningEvent.Open(1))
+        assertEquals(1, vm.state.value.index)
+    }
+
     @Test fun singerModulesAreClosedToOtherParts() = runTest {
         val (vm, _) = singerViewModel(emptyList(), Instrument.PIANO)
         assertFalse(vm.state.value.allowed)

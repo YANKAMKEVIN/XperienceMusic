@@ -16,6 +16,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.SetSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 import kotlin.uuid.ExperimentalUuidApi
@@ -41,7 +43,12 @@ data class LearningUiState(
     /** Sung activities: the singer's comfort note, what the microphone hears and how far the take went. */
     val comfortMidi:Int=VoicePart.ALTO.comfortMidi,val singing:Boolean=false,val sung:Boolean=false,val heardMidi:Int?=null,
     val singStep:Int=0,val holdSeconds:Double=0.0,val micError:String?=null,
+    /** Sung activities set aside for later: never counted as done, they no longer lock the next steps. */
+    val postponed:Set<String> = emptySet(),
 ) {
+    /** The furthest step open to the member. */
+    val reached get()=progress.nextIn(module,postponed)
+    val canPostpone get()=allowed && !saving && !singing && result!=true && activity.canPostpone() && activity.id !in completed
     val singTargets get()=activity.sing?.semitones?.map { comfortMidi+it }.orEmpty()
     /** Ear questions without listed answers ask "Majeur ou mineur ?". */
     val choiceOptions get()=if(activity.kind==LearningKind.EAR && activity.choices.isEmpty())listOf("Majeur","Mineur") else activity.choices
@@ -66,6 +73,7 @@ private data class LearningForm(
     val preferences:LearningPreferences=LearningPreferences(),val feedback:String?=null,val taps:List<Double> = emptyList(),
     val plan:List<Int> = emptyList(),val done:List<String> = emptyList(),val difficult:Set<String> = emptySet(),val titles:Map<String,String> = emptyMap(),val successSerial:Int=0,
     val singing:Boolean=false,val sung:Boolean=false,val heardMidi:Int?=null,val singStep:Int=0,val holdSeconds:Double=0.0,val micError:String?=null,
+    val postponed:Set<String> = emptySet(),
 )
 sealed interface LearningEvent {
     data class Open(val index:Int):LearningEvent
@@ -89,6 +97,8 @@ sealed interface LearningEvent {
     data object StopSinging:LearningEvent
     data object MicrophoneDenied:LearningEvent
     data object Check:LearningEvent
+    /** "Je le ferai plus tard": moves on from a sung activity without passing it. */
+    data object Postpone:LearningEvent
     data object Next:LearningEvent
     data object RequestReview:LearningEvent
     data object Sync:LearningEvent
@@ -113,17 +123,18 @@ class LearningViewModel(
     val state=combine(member,learning,review,form) { m,p,checks,f ->
         val c=checks?.firstOrNull { it.memberId==m?.id && it.objectiveId==module.objectiveId }
         LearningUiState(today=dates.today(),loading=m==null,allowed=m?.profile?.instrument==module.instrument,memberId=m?.id,module=module,
-            index=f.index?:p.nextIn(module),encounter=f.encounter,progress=p,notes=f.notes,answer=f.answer,listened=f.listened,
+            index=f.index?:p.nextIn(module,f.postponed),encounter=f.encounter,progress=p,notes=f.notes,answer=f.answer,listened=f.listened,
             result=f.result,saving=f.saving,error=f.error,moduleReviews=checks.orEmpty().filter { it.memberId==m?.id }.associate { it.objectiveId to it.status },reviewLoaded=checks!=null,reviewStatus=c?.status,feedback=c?.feedback,
             reviewDue=p.dueIn(module,dates.today()).isNotEmpty(),mode=f.mode,hints=f.hints,showSteps=f.steps,showSettings=f.settings,
             preferences=f.preferences,feedbackText=f.feedback,taps=f.taps,sessionDone=f.done,sessionDifficult=f.difficult,sessionTitles=f.titles,successSerial=f.successSerial,
-            comfortMidi=(m?.profile?.voicePart?:VoicePart.ALTO).comfortMidi,singing=f.singing,sung=f.sung,heardMidi=f.heardMidi,singStep=f.singStep,holdSeconds=f.holdSeconds,micError=f.micError)
+            comfortMidi=(m?.profile?.voicePart?:VoicePart.ALTO).comfortMidi,singing=f.singing,sung=f.sung,heardMidi=f.heardMidi,singStep=f.singStep,holdSeconds=f.holdSeconds,micError=f.micError,postponed=f.postponed)
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),LearningUiState(module=module))
 
     init {
         member.filterNotNull().onEach { m ->
             val preferences=snapshots?.load("learning-settings-${m.id}",LearningPreferences.serializer())?:LearningPreferences()
-            form.update { it.copy(preferences=preferences) }
+            val postponed=snapshots?.load(postponedKey(m.id),POSTPONED)?:emptySet()
+            form.update { it.copy(preferences=preferences,postponed=it.postponed+postponed) }
             repository.sync(m.id)
         }.launchIn(viewModelScope)
     }
@@ -131,7 +142,7 @@ class LearningViewModel(
         val id=state.value.memberId?:return
         val f=form.value
         val resume = if (f.result == true) {
-            val next = state.value.progress.nextIn(module)
+            val next = state.value.reached
             Resume(next, state.value.progress.attempts.count { it.activityId == module.activities[next].id })
         } else Resume(f.index?:state.value.index,f.encounter,f.notes,f.answer,f.hints)
         snapshots?.save("learning-resume-$id-${module.id}",Resume.serializer(),resume)
@@ -142,15 +153,15 @@ class LearningViewModel(
             is LearningEvent.Open -> open(event.index)
             LearningEvent.ChallengeExample -> audio.broken(module.challenge().example)
             LearningEvent.Begin -> {
-                val plan=state.value.progress.dailyPlan(module,dates.today()).let { if(state.value.progress.returning(dates.today()))it.take(1) else it }
+                val plan=state.value.progress.dailyPlan(module,dates.today(),state.value.postponed).let { if(state.value.progress.returning(dates.today()))it.take(1) else it }
                 form.update { it.copy(plan=plan,done=emptyList(),difficult=emptySet(),titles=emptyMap()) }; open(plan.first())
             }
             LearningEvent.Resume -> {
                 val id=state.value.memberId?:return
                 val saved=snapshots?.load("learning-resume-$id-${module.id}",Resume.serializer())
-                if(saved!=null && saved.index in module.activities.indices && saved.index<=state.value.progress.nextIn(module)) {
+                if(saved!=null && saved.index in module.activities.indices && saved.index<=state.value.reached) {
                     form.update { it.copy(index=saved.index,encounter=saved.encounter,notes=saved.notes,answer=saved.answer,hints=saved.hints,mode=LearningMode.ACTIVITY,result=null,feedback=null,taps=emptyList()) }
-                } else open(state.value.progress.nextIn(module))
+                } else open(state.value.reached)
             }
             LearningEvent.Home -> { stopSinging(); audio.stop(); persist(); form.update { it.copy(mode=LearningMode.HOME,taps=emptyList()) } }
             LearningEvent.Steps -> form.update { it.copy(steps=!it.steps) }
@@ -178,13 +189,14 @@ class LearningViewModel(
             LearningEvent.StopSinging -> stopSinging()
             LearningEvent.MicrophoneDenied -> form.update { it.copy(micError="Autorise le micro dans les réglages pour chanter l'exercice.") }
             LearningEvent.Check -> check()
+            LearningEvent.Postpone -> postpone()
             LearningEvent.Next -> next()
             LearningEvent.RequestReview -> requestReview()
             LearningEvent.Sync -> state.value.memberId?.let { viewModelScope.launch { repository.sync(it) } }
         }
     }
     private fun open(index:Int) {
-        if(index !in module.activities.indices || index>state.value.progress.nextIn(module) && !state.value.complete)return
+        if(index !in module.activities.indices || index>state.value.reached && !state.value.complete)return
         stopSinging()
         audio.stop()
         val encounter=state.value.progress.attempts.count { it.activityId==module.activities[index].id }
@@ -193,6 +205,23 @@ class LearningViewModel(
     }
     private fun next() {
         if(state.value.activity.id !in state.value.completed)return
+        advance()
+    }
+    private fun postpone() {
+        val s=state.value
+        if(!s.canPostpone)return
+        val id=s.activity.id
+        form.update { it.copy(index=s.index,postponed=it.postponed+id,difficult=it.difficult+id,titles=it.titles+(id to s.activity.title)) }
+        savePostponed()
+        advance()
+    }
+    private fun savePostponed() {
+        val id=state.value.memberId?:return
+        snapshots?.save(postponedKey(id),POSTPONED,form.value.postponed)
+    }
+    private fun postponedKey(memberId:String)="learning-postponed-$memberId-${module.id}"
+    /** To the next step of the session plan, or of the module, or to the summary. */
+    private fun advance() {
         val f=form.value
         val planPosition=f.plan.indexOf(state.value.index)
         if(planPosition>=0) {
@@ -238,6 +267,7 @@ class LearningViewModel(
             try {
                 repository.record(LearningAttempt(Uuid.random().toString(),id,s.activity.id,PianoBasics.VERSION,passed,dates.today(),"${s.activity.id}:${s.encounter}",s.hints))
                 val feedback=if(passed)"${s.activity.title} : activité réussie${if(s.hints>0)" avec aide" else ""}." else if(timing!=null)"Écart moyen : ${(timing*100).toInt()} %. Vise des intervalles plus réguliers, puis recommence." else correction(s.activity,s.notes,s.answer)
+                if(passed && s.activity.id in form.value.postponed) { form.update { it.copy(postponed=it.postponed-s.activity.id) };savePostponed() }
                 form.update { it.copy(saving=false,result=passed,feedback=feedback,done=if(passed)(it.done+s.activity.id).distinct() else it.done,
                     difficult=if(!passed || s.hints>0)it.difficult+s.activity.id else it.difficult,titles=it.titles+(s.activity.id to s.activity.title),successSerial=it.successSerial+if(passed)1 else 0) }
                 if(passed && s.preferences.rewardSound)audio.reward()
@@ -259,3 +289,4 @@ class LearningViewModel(
     override fun onCleared(){listening?.cancel();audio.stop()}
 }
 private const val ACCOMPANIMENT_MARGIN=2.0
+private val POSTPONED=SetSerializer(String.serializer())

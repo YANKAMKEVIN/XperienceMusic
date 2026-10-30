@@ -61,6 +61,18 @@ fun LearningProgress.completedIn(module: LearningModule) = module.activities.fil
     attempts.any { it.activityId == activity.id && it.version == PianoBasics.VERSION && it.passed }
 }.map { it.id }.toSet()
 fun LearningProgress.nextIn(module: LearningModule) = module.activities.indexOfFirst { it.id !in completedIn(module) }.let { if(it<0) module.activities.lastIndex else it }
+/**
+ * The furthest step open to the member: the first activity neither done nor set aside for later.
+ * Setting a sung activity aside never counts as a success; when only set-aside ones remain, the
+ * member is brought back to the first of them.
+ */
+fun LearningProgress.nextIn(module: LearningModule, postponed: Set<String>): Int {
+    val done=completedIn(module)
+    val open=module.activities.indexOfFirst { it.id !in done && it.id !in postponed }
+    return if(open>=0) open else nextIn(module)
+}
+/** Only sung activities can wait: they need a microphone, earphones or a quiet room. */
+fun LearningActivity.canPostpone() = kind == LearningKind.SING
 fun LearningProgress.complete(module: LearningModule) = completedIn(module).size == module.activities.size
 
 /** Same-day repetitions do not artificially increase the spacing. Hint-assisted successes return sooner. */
@@ -74,10 +86,9 @@ fun LearningProgress.reviewDate(activityId:String): LocalDate? {
 fun LearningProgress.dueIn(module:LearningModule,today:LocalDate) = module.activities.filter {
     it.kind !in listOf(LearningKind.LESSON,LearningKind.PRACTICE) && reviewDate(it.id)?.let { due -> due<=today }==true
 }.sortedBy { reviewDate(it.id) }
-fun LearningProgress.dailyPlan(module:LearningModule,today:LocalDate):List<Int> {
-    val done=completedIn(module)
-    val start=nextIn(module)
-    val discovery=if(complete(module)) emptyList() else (start..minOf(start+2,module.activities.lastIndex)).toList()
+fun LearningProgress.dailyPlan(module:LearningModule,today:LocalDate,postponed:Set<String> = emptySet()):List<Int> {
+    val start=nextIn(module,postponed)
+    val discovery=if(complete(module)) emptyList() else (start..module.activities.lastIndex).filter { it==start || module.activities[it].id !in postponed }.take(3)
     val revision=dueIn(module,today).map { module.activities.indexOf(it) }.take(1)
     return (revision+discovery).distinct().ifEmpty { listOf(module.activities.lastIndex) }
 }
