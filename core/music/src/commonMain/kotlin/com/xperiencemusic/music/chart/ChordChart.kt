@@ -61,7 +61,48 @@ object ChordChart {
 
 sealed interface ChartLine {
     data class Section(val title: String) : ChartLine
-    data class Lyrics(val segments: List<ChartSegment>) : ChartLine
+    data class Lyrics(val segments: List<ChartSegment>) : ChartLine {
+        /**
+         * The line cut into words that must stay together on screen, so it only wraps between two
+         * words and never inside "Ressus[5]cité". Each word keeps its chords and the space after it.
+         * Punctuation set apart by a space ("cité !", "« Gloire") stays with its word.
+         */
+        fun words(): List<List<ChartSegment>> {
+            val words = mutableListOf<MutableList<ChartSegment>>()
+            var previous: ChartSegment? = null
+            pieces().forEach { piece ->
+                val glued = previous?.let { before ->
+                    !before.lyric.endsWithSpace() ||
+                        piece.lyric.isPunctuation(CLOSING) ||
+                        before.lyric.isPunctuation(OPENING)
+                } ?: false
+                if (glued) words.last() += piece else words += mutableListOf(piece)
+                previous = piece
+            }
+            return words
+        }
+
+        /** One piece per word: the chord goes with the first word of its fragment. */
+        private fun pieces(): List<ChartSegment> = segments.flatMap { segment ->
+            val tokens = WORD.findAll(segment.lyric).map { it.value }.filter { it.isNotEmpty() }.toList().ifEmpty { listOf("") }
+            tokens.mapIndexed { index, token ->
+                ChartSegment(
+                    chord = if (index == 0) segment.chord else null,
+                    lyric = token,
+                    continuesWord = index == tokens.lastIndex && segment.continuesWord,
+                )
+            }
+        }
+
+        private companion object {
+            val WORD = Regex("""\S*\s*""")
+            const val CLOSING = "!?:;»…"
+            const val OPENING = "«"
+
+            fun String.endsWithSpace() = lastOrNull()?.isWhitespace() == true
+            fun String.isPunctuation(marks: String) = trim().let { it.isNotEmpty() && it.all { char -> char in marks } }
+        }
+    }
 }
 
 /**

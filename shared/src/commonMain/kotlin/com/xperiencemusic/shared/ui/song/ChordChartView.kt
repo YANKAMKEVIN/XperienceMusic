@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,7 +19,7 @@ import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.chart.ChartSegment
 import com.xperiencemusic.shared.ui.theme.Spacing
 
-/** Lyrics with each chord printed above the syllable it falls on. */
+/** Lyrics with each chord printed above the syllable it falls on; lines wrap between words. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale: Float = 1f) {
@@ -37,7 +38,10 @@ fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale:
                     if (line.segments.isEmpty()) {
                         Spacer(Modifier.height(Spacing.s))
                     } else {
-                        FlowRow { line.segments.forEach { ChartSegmentView(it, body) } }
+                        // Wraps between words only: "Ressus-" never ends a line with "cité" on the next.
+                        FlowRow {
+                            line.words().forEach { word -> Row { word.forEach { ChartSegmentView(it, body) } } }
+                        }
                     }
             }
         }

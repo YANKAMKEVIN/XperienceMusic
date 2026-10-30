@@ -56,4 +56,42 @@ class ChordChartTest {
         assertEquals(ChartLine.Lyrics(emptyList()), lines[1])
         assertEquals(ChartLine.Lyrics(listOf(ChartSegment("1", "Gloire"))), lines[2])
     }
+
+    private fun wordsOf(source: String): List<String> =
+        (ChordChart.render(source, doMajeur, Notation.SOLFEGE).single() as ChartLine.Lyrics).words()
+            .map { word -> word.joinToString("") { it.lyric } }
+
+    @Test
+    fun `words garde un mot coupé par un accord d'un seul tenant`() {
+        assertEquals(
+            listOf("À ", "toi ", "la ", "gloire, ", "Ô ", "Ressuscité !"),
+            wordsOf("[1]À toi la gloire, Ô Ressus[5]cité !"),
+        )
+    }
+
+    @Test
+    fun `words laisse chaque accord sur le premier mot de son fragment`() {
+        val words = (ChordChart.render("[1]Tu es [5]saint, [6m]Sei[4]gneur", doMajeur, Notation.SOLFEGE).single() as ChartLine.Lyrics).words()
+        assertEquals(
+            listOf(
+                listOf(ChartSegment("Do", "Tu ")),
+                listOf(ChartSegment(null, "es ")),
+                listOf(ChartSegment("Sol", "saint, ")),
+                listOf(ChartSegment("Lam", "Sei", continuesWord = true), ChartSegment("Fa", "gneur")),
+            ),
+            words,
+        )
+    }
+
+    @Test
+    fun `words garde la ponctuation française avec son mot`() {
+        assertEquals(listOf("« Gloire ", "à ", "toi ! »"), wordsOf("« Gloire à toi ! »"))
+    }
+
+    @Test
+    fun `words garde un accord sans paroles avec le mot qui suit`() {
+        assertEquals(listOf("Gloire ", "à ", "toi ", ""), wordsOf("Gloire [5][4]à toi [1]"))
+        val words = (ChordChart.render("Gloire [5][4]à toi", doMajeur, Notation.SOLFEGE).single() as ChartLine.Lyrics).words()
+        assertEquals(listOf(ChartSegment("Sol", ""), ChartSegment("Fa", "à ")), words[1])
+    }
 }

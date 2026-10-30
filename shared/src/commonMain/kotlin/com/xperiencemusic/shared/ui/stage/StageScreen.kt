@@ -210,7 +210,8 @@ private fun StageLyrics(state: StageUiState, modifier: Modifier) {
             delay(TICK_MS)
         }
     }
-    Column(modifier.fillMaxWidth().verticalScroll(scroll).padding(horizontal = Spacing.l)) {
+    // A little room on top so the accent of a capital ("À") is not cut by the toolbar edge.
+    Column(modifier.fillMaxWidth().verticalScroll(scroll).padding(horizontal = Spacing.l).padding(top = Spacing.s)) {
         ChordChartView(state.chart, scale = state.textScale)
         // Room so the last line can scroll up to eye level.
         Spacer(Modifier.height(240.dp))
