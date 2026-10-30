@@ -142,6 +142,8 @@ fun ExerciseScreenContent(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Un
                 windowInsets = WindowInsets(0),
             )
         },
+        // While listening, "Arrêter" stays on screen however much room the gauge and the waves take.
+        bottomBar = { if (!state.isLoading && state.isListening) ListeningAction(onEvent) },
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
@@ -152,7 +154,8 @@ fun ExerciseScreenContent(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Un
             modifier = Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Spacing.l),
             verticalArrangement = Arrangement.spacedBy(Spacing.l),
         ) {
-            Text(state.instructions, style = MaterialTheme.typography.bodyLarge)
+            // Read before starting; while singing it only pushes the gauge down.
+            if (!state.isListening) Text(state.instructions, style = MaterialTheme.typography.bodyLarge)
             val check = state.check
             if (check == null) {
                 AppCard { Text(stringResource(Res.string.exercise_review_text), style = MaterialTheme.typography.bodyMedium) }
@@ -225,9 +228,11 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
                     }
                 }
             }
-            TextButton(onClick = { onEvent(ExerciseEvent.PlayReferenceClicked) }, modifier = Modifier.padding(top = Spacing.s)) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
-                Text(stringResource(Res.string.exercise_listen_reference))
+            if (phase != ExercisePhase.LISTENING) {
+                TextButton(onClick = { onEvent(ExerciseEvent.PlayReferenceClicked) }, modifier = Modifier.padding(top = Spacing.s)) {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
+                    Text(stringResource(Res.string.exercise_listen_reference))
+                }
             }
         }
     }
@@ -314,10 +319,21 @@ private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
                 Modifier.fillMaxWidth(check.holdProgress).fillMaxHeight().clip(CircleShape).background(BrandColors.horizontalGradient),
             )
         }
-        GradientButton(onClick = { onEvent(ExerciseEvent.StopClicked) }, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(Res.string.exercise_stop), style = MaterialTheme.typography.titleMedium)
-        }
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+    }
+}
+
+/** Pinned under the content while listening: the microphone indicator and the way to stop. */
+@Composable
+private fun ListeningAction(onEvent: (ExerciseEvent) -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Spacing.s),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(start = Spacing.l, end = Spacing.l, top = Spacing.s),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
             Text(
                 stringResource(Res.string.exercise_mic_on),
@@ -325,6 +341,9 @@ private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
                 color = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.padding(start = Spacing.s),
             )
+        }
+        GradientButton(onClick = { onEvent(ExerciseEvent.StopClicked) }, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(Res.string.exercise_stop), style = MaterialTheme.typography.titleMedium)
         }
     }
 }
