@@ -1,24 +1,19 @@
 package com.xperiencemusic.shared.ui.library
 
+import androidx.compose.material3.IconButton
+import com.xperiencemusic.shared.ui.brand.TabHeader
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.brand.KeyPill
 import com.xperiencemusic.shared.ui.brand.XmIcons
-import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -106,13 +101,12 @@ private fun LibraryList(
         verticalArrangement = Arrangement.spacedBy(Spacing.m),
     ) {
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(Res.string.library_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.weight(1f).semantics { heading() },
-                )
-                if (state.canAddSong) AddSongButton(onAddSong)
+            TabHeader(stringResource(Res.string.library_title)) {
+                if (state.canAddSong) {
+                    IconButton(onClick = onAddSong) {
+                        Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.action_add_song))
+                    }
+                }
             }
         }
         if (state.isOffline) item { OfflineBanner() }
@@ -200,21 +194,6 @@ private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-    }
-}
-
-/** The gradient "+" of the mockups; admins only. */
-@Composable
-private fun AddSongButton(onClick: () -> Unit) {
-    Box(
-        Modifier
-            .size(48.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(BrandColors.gradient)
-            .clickable(onClick = onClick, role = Role.Button),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.action_add_song), tint = Color.White)
     }
 }
 
