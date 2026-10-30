@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.presentation.app.AppEvent
 import com.xperiencemusic.shared.presentation.app.AppUiState
 import com.xperiencemusic.shared.presentation.app.AppViewModel
+import com.xperiencemusic.shared.presentation.app.destination
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.session_not_invited_text
 import com.xperiencemusic.shared.resources.session_not_invited_title
@@ -19,6 +20,7 @@ import com.xperiencemusic.shared.resources.session_unreachable_title
 import com.xperiencemusic.shared.ui.brand.BrandSplash
 import com.xperiencemusic.shared.ui.onboarding.OnboardingScreen
 import com.xperiencemusic.shared.ui.session.SessionMessageScreen
+import com.xperiencemusic.shared.ui.session.SignOutDialog
 import com.xperiencemusic.shared.ui.signin.SignInScreen
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import org.jetbrains.compose.resources.stringResource
@@ -37,27 +39,36 @@ fun XperienceMusicApp() {
 @Composable
 private fun AppRoot(viewModel: AppViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val isConfirmingSignOut by viewModel.isConfirmingSignOut.collectAsStateWithLifecycle()
     val signOut = { viewModel.onEvent(AppEvent.SignOutClicked) }
-    when (val current = state) {
-        AppUiState.Loading -> BrandSplash()
-        AppUiState.SignIn -> SignInScreen()
-        AppUiState.Unreachable -> SessionMessageScreen(
-            title = stringResource(Res.string.session_unreachable_title),
-            text = stringResource(Res.string.session_unreachable_text),
-            primaryLabel = stringResource(Res.string.session_retry),
-            onPrimary = { viewModel.onEvent(AppEvent.RetryClicked) },
-            signOutLabel = stringResource(Res.string.session_sign_out),
-            onSignOut = signOut,
+    DestinationViewModelScope(state.destination) {
+        when (val current = state) {
+            AppUiState.Loading -> BrandSplash()
+            AppUiState.SignIn -> SignInScreen()
+            AppUiState.Unreachable -> SessionMessageScreen(
+                title = stringResource(Res.string.session_unreachable_title),
+                text = stringResource(Res.string.session_unreachable_text),
+                primaryLabel = stringResource(Res.string.session_retry),
+                onPrimary = { viewModel.onEvent(AppEvent.RetryClicked) },
+                signOutLabel = stringResource(Res.string.session_sign_out),
+                onSignOut = signOut,
+            )
+            is AppUiState.NotInvited -> SessionMessageScreen(
+                title = stringResource(Res.string.session_not_invited_title),
+                text = stringResource(Res.string.session_not_invited_text, current.email),
+                primaryLabel = null,
+                onPrimary = {},
+                signOutLabel = stringResource(Res.string.session_sign_out),
+                onSignOut = signOut,
+            )
+            AppUiState.Onboarding -> OnboardingScreen(onSignOut = signOut)
+            AppUiState.Ready -> MainScaffold(onSignOut = signOut)
+        }
+    }
+    if (isConfirmingSignOut) {
+        SignOutDialog(
+            onConfirm = { viewModel.onEvent(AppEvent.SignOutConfirmed) },
+            onDismiss = { viewModel.onEvent(AppEvent.SignOutDismissed) },
         )
-        is AppUiState.NotInvited -> SessionMessageScreen(
-            title = stringResource(Res.string.session_not_invited_title),
-            text = stringResource(Res.string.session_not_invited_text, current.email),
-            primaryLabel = null,
-            onPrimary = {},
-            signOutLabel = stringResource(Res.string.session_sign_out),
-            onSignOut = signOut,
-        )
-        AppUiState.Onboarding -> OnboardingScreen(onSignOut = signOut)
-        AppUiState.Ready -> MainScaffold(onSignOut = signOut)
     }
 }

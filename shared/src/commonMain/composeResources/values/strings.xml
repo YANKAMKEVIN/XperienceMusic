@@ -73,6 +73,9 @@
     <string name="session_unreachable_text">On n'arrive pas à joindre le serveur. Vérifie ta connexion internet.</string>
     <string name="session_retry">Réessayer</string>
     <string name="session_sign_out">Se déconnecter</string>
+    <string name="session_sign_out_confirm_title">Se déconnecter ?</string>
+    <string name="session_sign_out_confirm_text">Les essais pas encore synchronisés seront effacés de ce téléphone, avec les chants téléchargés et tes réglages.</string>
+    <string name="session_sign_out_confirm_cancel">Annuler</string>
 
     <!-- Navigation -->
     <string name="tab_week">Semaine</string>
