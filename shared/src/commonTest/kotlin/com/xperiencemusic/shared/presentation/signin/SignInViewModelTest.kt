@@ -9,6 +9,7 @@ import com.xperiencemusic.shared.fakes.FakeSessionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -16,6 +17,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -66,8 +69,32 @@ class SignInViewModelTest {
         viewModel.onEvent(SignInEvent.CodeChanged("000000"))
         viewModel.onEvent(SignInEvent.SubmitClicked)
         assertEquals(SignInError.INVALID_CODE, viewModel.state.value.error)
-        viewModel.onEvent(SignInEvent.CodeChanged("00000"))
+        assertEquals("", viewModel.state.value.code, "the refused code is cleared")
+        viewModel.onEvent(SignInEvent.CodeChanged("1"))
         assertNull(viewModel.state.value.error)
+    }
+
+    @Test
+    fun `la flèche sans adresse explique quoi faire`() = runTest {
+        viewModel.onEvent(SignInEvent.SubmitClicked)
+        assertEquals(SignInError.EMPTY_EMAIL, viewModel.state.value.error)
+        assertEquals(SignInStep.EMAIL, viewModel.state.value.step)
+    }
+
+    @Test
+    fun `un nouveau code se demande après le délai d'attente`() = runTest {
+        viewModel.onEvent(SignInEvent.EmailChanged("g@b.fr"))
+        viewModel.onEvent(SignInEvent.SubmitClicked)
+        assertEquals(SignInUiState.RESEND_DELAY_SECONDS, viewModel.state.value.resendInSeconds)
+        assertFalse(viewModel.state.value.canResend)
+
+        advanceTimeBy(SignInUiState.RESEND_DELAY_SECONDS * 1_000L + 1)
+        assertTrue(viewModel.state.value.canResend)
+        viewModel.onEvent(SignInEvent.CodeChanged("12"))
+        viewModel.onEvent(SignInEvent.ResendCodeClicked)
+        assertTrue(viewModel.state.value.codeResent)
+        assertEquals("", viewModel.state.value.code)
+        assertEquals(SignInUiState.RESEND_DELAY_SECONDS, viewModel.state.value.resendInSeconds)
     }
 
     @Test
