@@ -21,6 +21,8 @@ data class VoiceRecordUiState(
     /** What was sent before for this song, and the answer if any. */
     val previous: PreviousSubmissionUi? = null,
     val error: VoiceError? = null,
+    /** The take is mostly silence: the singer is warned, but may still send it. */
+    val isQuietTake: Boolean = false,
 )
 
 /** [label] is the recording's title; a voice track is named after its [voicePart] on screen. */

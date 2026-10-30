@@ -78,6 +78,8 @@ import com.xperiencemusic.shared.resources.voice_pause
 import com.xperiencemusic.shared.resources.voice_previous
 import com.xperiencemusic.shared.resources.voice_record
 import com.xperiencemusic.shared.resources.voice_recording
+import com.xperiencemusic.shared.resources.voice_take
+import com.xperiencemusic.shared.resources.voice_quiet_take
 import com.xperiencemusic.shared.resources.voice_retake
 import com.xperiencemusic.shared.resources.voice_send
 import com.xperiencemusic.shared.resources.voice_sent_text
@@ -163,7 +165,10 @@ fun VoiceRecordScreenContent(
             if (state.phase == VoicePhase.SENT) {
                 SentCard()
             } else {
-                if (state.phase == VoicePhase.READY && state.guides.isNotEmpty()) GuidePicker(state, onEvent)
+                // Still there while recording, only frozen: the big button must not move under the finger.
+                if (state.phase in listOf(VoicePhase.READY, VoicePhase.RECORDING) && state.guides.isNotEmpty()) {
+                    GuidePicker(state, enabled = state.phase == VoicePhase.READY, onEvent = onEvent)
+                }
                 Recorder(state, onEvent)
             }
             if (state.error == VoiceError.MICROPHONE) {
@@ -223,12 +228,16 @@ private fun PreviousCard(previous: PreviousSubmissionUi) {
 }
 
 @Composable
-private fun GuidePicker(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> Unit) {
+private fun GuidePicker(state: VoiceRecordUiState, enabled: Boolean, onEvent: (VoiceRecordEvent) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Text(stringResource(Res.string.voice_guide_title), style = MaterialTheme.typography.titleSmall)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s), modifier = Modifier.padding(top = Spacing.s)) {
-            state.guides.forEach { guide -> GuideChip(guideLabel(guide), state.selectedGuideId == guide.id) { onEvent(VoiceRecordEvent.GuideSelected(guide.id)) } }
-            GuideChip(stringResource(Res.string.voice_guide_none), state.selectedGuideId == null) { onEvent(VoiceRecordEvent.GuideSelected(null)) }
+            state.guides.forEach { guide ->
+                GuideChip(guideLabel(guide), state.selectedGuideId == guide.id, enabled) { onEvent(VoiceRecordEvent.GuideSelected(guide.id)) }
+            }
+            GuideChip(stringResource(Res.string.voice_guide_none), state.selectedGuideId == null, enabled) {
+                onEvent(VoiceRecordEvent.GuideSelected(null))
+            }
         }
         Text(
             stringResource(Res.string.voice_earphones),
@@ -246,10 +255,11 @@ private fun guideLabel(guide: GuideUi): String = when (guide.kind) {
 }
 
 @Composable
-private fun GuideChip(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun GuideChip(label: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
     FilterChip(
         selected = selected,
         onClick = onClick,
+        enabled = enabled,
         label = { Text(label) },
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -271,7 +281,13 @@ private fun Recorder(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> U
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
         Text(
-            stringResource(if (isRecording) Res.string.voice_recording else Res.string.voice_record),
+            stringResource(
+                when (state.phase) {
+                    VoicePhase.RECORDING -> Res.string.voice_recording
+                    VoicePhase.RECORDED, VoicePhase.SENDING -> Res.string.voice_take
+                    else -> Res.string.voice_record
+                },
+            ),
             style = MaterialTheme.typography.labelLarge,
             color = if (isRecording) BrandColors.Purple else MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -307,6 +323,15 @@ private fun Recorder(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> U
             }
             VoicePhase.RECORDED, VoicePhase.SENDING -> {
                 val sending = state.phase == VoicePhase.SENDING
+                if (state.isQuietTake) {
+                    Text(
+                        stringResource(Res.string.voice_quiet_take),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = BrandColors.Amber,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = Spacing.m).semantics { liveRegion = LiveRegionMode.Polite },
+                    )
+                }
                 OutlinedButton(onClick = { onEvent(VoiceRecordEvent.PreviewClicked) }, enabled = !sending) {
                     Icon(if (state.isPreviewPlaying) PauseIcon else Icons.Filled.PlayArrow, contentDescription = null)
                     Text(

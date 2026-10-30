@@ -88,6 +88,8 @@ fun MainScaffold(onSignOut: () -> Unit) {
     val isOnTab = tabs.any { tab -> destination?.hasRoute(tab.routeClass) == true }
     // The stage takes the whole screen: no tabs, no mini player.
     val isOnStage = destination?.hasRoute(StageRoute::class) == true
+    // Recording a voice: the guide plays in the earphones, a player card would only be in the way.
+    val isRecordingVoice = destination?.hasRoute(VoiceRecordRoute::class) == true
 
     val loads = koinInject<RemoteLoadMonitor>()
     val loadFailed by loads.hasFailure.collectAsStateWithLifecycle()
@@ -108,7 +110,7 @@ fun MainScaffold(onSignOut: () -> Unit) {
                     .navigationBarsPadding()
                     .padding(start = Spacing.l, end = Spacing.l, top = Spacing.s, bottom = Spacing.m),
             ) {
-                MiniPlayer()
+                if (!isRecordingVoice) MiniPlayer()
                 if (isOnTab) TabBar(navController, destination)
             }
         },

@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -84,5 +85,14 @@ class VoiceUseCasesTest {
         val voice = assertNotNull(recorder.stop())
         assertEquals("RIFF", voice.wav.copyOfRange(0, 4).decodeToString())
         assertEquals(2, voice.durationSeconds)
+        assertFalse(voice.isNearlySilent)
+    }
+
+    @Test
+    fun `une prise silencieuse est signalée`() = runTest {
+        val recorder = VoiceRecorder(FakeMicrophone(List(30) { null }))
+        recorder.start(this)
+        testScheduler.advanceUntilIdle()
+        assertTrue(assertNotNull(recorder.stop()).isNearlySilent)
     }
 }

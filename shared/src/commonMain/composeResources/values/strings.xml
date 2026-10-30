@@ -365,6 +365,8 @@
     <string name="voice_earphones">Mets des écouteurs : le micro ne doit entendre que ta voix.</string>
     <string name="voice_record">Touche pour enregistrer</string>
     <string name="voice_recording">Enregistrement…</string>
+    <string name="voice_take">Ta prise</string>
+    <string name="voice_quiet_take">On n'entend presque rien sur cette prise. Écoute-la : si le micro n'a pas capté ta voix, recommence plus près du téléphone.</string>
     <string name="voice_stop">Arrêter l'enregistrement</string>
     <string name="voice_listen">Réécouter</string>
     <string name="voice_pause">Pause</string>
