@@ -53,7 +53,7 @@ data class LevelCardUi(
 data class ObjectiveUi(
     val id: String,
     val title: String,
-    /** "Ce qu'on apprend": the help sheet, shown on demand. */
+    /** "Ce qu’on apprend": the help sheet, shown on demand. */
     val learn: String,
     /** What the super admin checks. */
     val criterion: String,

@@ -76,7 +76,7 @@ internal object SampleSongs {
         ),
         Song(
             id = "exemple-grille",
-            title = "Grille d'exemple (4 accords)",
+            title = "Grille d’exemple (4 accords)",
             artist = null,
             key = Key(9), // La
             chart = """

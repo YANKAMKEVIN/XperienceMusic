@@ -602,7 +602,7 @@ private fun ProgressScreenSingerPreview() {
                 warmUp = WarmUpUi("warmup", isDoneToday = false),
                 levelCard = LevelCardUi(Level.BEGINNER, Level.CONFIRMED, done = 2, required = 7, requestStatus = null, feedback = null, canAsk = false),
                 objectives = listOf("Souffle et posture", "Justesse", "Intervalles", "Rythme", "Micro", "Tenir sa voix", "Présence").mapIndexed { i, title ->
-                    ObjectiveUi("singer-c${i + 1}", title, "Ce qu'on apprend", "Le critère", if (i < 2) ExerciseStatus.VALIDATED else null, null)
+                    ObjectiveUi("singer-c${i + 1}", title, "Ce qu’on apprend", "Le critère", if (i < 2) ExerciseStatus.VALIDATED else null, null)
                 },
                 tiers = listOf(
                     TierUi(
@@ -612,7 +612,7 @@ private fun ProgressScreenSingerPreview() {
                             step("a", "Tenir 5 secondes", StepState.DONE),
                             step("b", "Tenir 10 secondes", StepState.DONE),
                             step("c", "Souffle long 15 s", StepState.CURRENT),
-                            step("d", "Défi · l'escalier", StepState.LOCKED, challenge = true),
+                            step("d", "Défi · l’escalier", StepState.LOCKED, challenge = true),
                         ),
                     ),
                 ),

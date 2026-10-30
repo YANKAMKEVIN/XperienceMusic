@@ -37,8 +37,8 @@ internal object SingerExercises {
             HoldNote(0, seconds = 15.0),
         ),
         Exercise(
-            "t1-challenge", 1, 4, "Défi · l'escalier",
-            "Trois marches : tiens chaque note 4 secondes, puis monte d'un ton sans reprendre ton souffle si tu peux.",
+            "t1-challenge", 1, 4, "Défi · l’escalier",
+            "Trois marches : tiens chaque note 4 secondes, puis monte d’un ton sans reprendre ton souffle si tu peux.",
             NoteSequence(steps("0,2,4"), secondsEach = 4.0),
             isChallenge = true,
         ),
@@ -46,22 +46,22 @@ internal object SingerExercises {
         // Tier 2 · Justesse
         Exercise(
             "t2-heard", 2, 1, "La note entendue",
-            "Écoute la note, puis chante-la et tiens-la 4 secondes. L'aiguille t'aide à te placer.",
+            "Écoute la note, puis chante-la et tiens-la 4 secondes. L’aiguille t’aide à te placer.",
             HoldNote(2, seconds = 4.0),
         ),
         Exercise(
             "t2-fifth", 2, 2, "Monter à la quinte",
-            "Cinq notes au-dessus de ta note de confort. Écoute-la d'abord, puis tiens-la 5 secondes.",
+            "Cinq notes au-dessus de ta note de confort. Écoute-la d’abord, puis tiens-la 5 secondes.",
             HoldNote(7, seconds = 5.0),
         ),
         Exercise(
-            "t2-octave", 2, 3, "L'octave",
+            "t2-octave", 2, 3, "L’octave",
             "La même note, une octave plus haut. Ouvre la bouche, garde la gorge détendue, tiens 3 secondes.",
             HoldNote(12, seconds = 3.0),
         ),
         Exercise(
             "t2-challenge", 2, 4, "Défi · le grand saut",
-            "Ta note, la quinte, puis l'octave : deux secondes chacune, bien justes.",
+            "Ta note, la quinte, puis l’octave : deux secondes chacune, bien justes.",
             NoteSequence(steps("0,7,12"), secondsEach = 2.0),
             isChallenge = true,
         ),
@@ -74,16 +74,16 @@ internal object SingerExercises {
         ),
         Exercise(
             "t3-fourth", 3, 2, "La quarte",
-            "Ta note puis la quarte, l'intervalle des débuts d'hymnes. Une seconde et demie chacune.",
+            "Ta note puis la quarte, l’intervalle des débuts d’hymnes. Une seconde et demie chacune.",
             NoteSequence(steps("0,5"), secondsEach = 1.5),
         ),
         Exercise(
             "t3-fifth", 3, 3, "La quinte enchaînée",
-            "Ta note puis la quinte, sans t'arrêter entre les deux.",
+            "Ta note puis la quinte, sans t’arrêter entre les deux.",
             NoteSequence(steps("0,7"), secondsEach = 1.5),
         ),
         Exercise(
-            "t3-challenge", 3, 4, "Défi · l'arpège",
+            "t3-challenge", 3, 4, "Défi · l’arpège",
             "Ta note, la tierce, la quinte, puis redescends : cinq notes enchaînées.",
             NoteSequence(steps("0,4,7,4,0"), secondsEach = 1.2),
             isChallenge = true,
@@ -102,7 +102,7 @@ internal object SingerExercises {
         ),
         Exercise(
             "t4-scale", 4, 3, "La gamme complète",
-            "Huit notes jusqu'à l'octave, régulières.",
+            "Huit notes jusqu’à l’octave, régulières.",
             NoteSequence(steps(SCALE_UP), secondsEach = 0.8),
         ),
         Exercise(
@@ -120,17 +120,17 @@ internal object SingerExercises {
         ),
         Exercise(
             "t5-fifth-above", 5, 2, "La quinte à côté",
-            "Avec écouteurs. L'autre voix tient la quinte : reste sur ta note 6 secondes.",
+            "Avec écouteurs. L’autre voix tient la quinte : reste sur ta note 6 secondes.",
             HoldNote(0, seconds = 6.0, accompanimentSemitones = 7),
         ),
         Exercise(
             "t5-under", 5, 3, "Chanter au-dessus",
-            "Avec écouteurs. Cette fois l'autre voix est en dessous : tiens la tierce au-dessus d'elle 6 secondes.",
+            "Avec écouteurs. Cette fois l’autre voix est en dessous : tiens la tierce au-dessus d’elle 6 secondes.",
             HoldNote(4, seconds = 6.0, accompanimentSemitones = 0),
         ),
         Exercise(
             "t5-challenge", 5, 4, "Défi · tenir sa partie",
-            "Avec écouteurs. L'autre voix tient la quinte pendant que tu gardes ta note 10 secondes, comme en répétition.",
+            "Avec écouteurs. L’autre voix tient la quinte pendant que tu gardes ta note 10 secondes, comme en répétition.",
             HoldNote(0, seconds = 10.0, accompanimentSemitones = 7),
             isChallenge = true,
         ),

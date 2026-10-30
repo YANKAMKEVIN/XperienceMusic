@@ -352,7 +352,7 @@ private fun WeekScreenPreview() {
                     rangeLabel = "13 – 18 oct.",
                     rehearsalDate = "mardi 13 oct.",
                     serviceDateLabel = "dimanche 18 oct.",
-                    message = "On reprend l'intro acoustique.",
+                    message = "On reprend l’intro acoustique.",
                     publishedBy = "Responsable musical",
                     songs = listOf(
                         WeekSongUi("1", 1, "Nous élevons nos voix", "Ré", hasReference = true, isPlaying = true),

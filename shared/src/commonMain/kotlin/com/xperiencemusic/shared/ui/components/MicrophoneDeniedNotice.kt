@@ -52,5 +52,5 @@ fun MicrophoneDeniedNotice(
 @Preview
 @Composable
 private fun MicrophoneDeniedNoticePreview() = AppTheme {
-    MicrophoneDeniedNotice("Autorise l'accès au micro dans les réglages du téléphone pour faire cet exercice.", onOpenSettings = {})
+    MicrophoneDeniedNotice("Autorise l’accès au micro dans les réglages du téléphone pour faire cet exercice.", onOpenSettings = {})
 }

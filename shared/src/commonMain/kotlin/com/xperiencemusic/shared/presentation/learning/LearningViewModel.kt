@@ -56,7 +56,7 @@ data class LearningUiState(
     /** The furthest step open to the member. */
     val reached get()=progress.nextIn(module,postponed)
     /** "Reprendre" only stands for a real spot left behind, still open to the member. */
-    /** About three seconds without a voice: the screen says so instead of an empty "J'entends : …". */
+    /** About three seconds without a voice: the screen says so instead of an empty "J’entends : …". */
     val hearsNothing get()=singing && silentSeconds>=SILENCE_WARNING_SECONDS
     val canResume get()=resumeIndex!=null && resumeIndex in module.activities.indices && (resumeIndex<=reached || complete)
     val canPostpone get()=allowed && !saving && !singing && result!=true && activity.canPostpone() && activity.id !in completed
@@ -202,7 +202,7 @@ class LearningViewModel(
             LearningEvent.ResetTaps -> form.update { it.copy(taps=emptyList(),result=null,feedback=null) }
             LearningEvent.StartSinging -> startSinging()
             LearningEvent.StopSinging -> stopSinging()
-            LearningEvent.MicrophoneDenied -> form.update { it.copy(micError="Autorise le micro dans les réglages pour chanter l'exercice.",micDenied=true) }
+            LearningEvent.MicrophoneDenied -> form.update { it.copy(micError="Autorise le micro dans les réglages pour chanter l’exercice.",micDenied=true) }
             LearningEvent.Check -> check()
             LearningEvent.Postpone -> postpone()
             LearningEvent.Next -> next()
@@ -264,7 +264,7 @@ class LearningViewModel(
                 }
             }
             // Refused permission, microphone used by a call… all end the take the same way.
-            .catch { form.update { it.copy(singing=false,micError="Micro indisponible. Vérifie l'autorisation, puis réessaie.") } }
+            .catch { form.update { it.copy(singing=false,micError="Micro indisponible. Vérifie l’autorisation, puis réessaie.") } }
             .launchIn(viewModelScope)
     }
     private fun stopSinging() {
@@ -287,7 +287,7 @@ class LearningViewModel(
                     difficult=if(!passed || s.hints>0)it.difficult+s.activity.id else it.difficult,titles=it.titles+(s.activity.id to s.activity.title),successSerial=it.successSerial+if(passed)1 else 0) }
                 if(passed && s.preferences.rewardSound)audio.reward()
                 persist()
-                // A lesson is read, not answered: "J'ai compris" goes straight on, once the success is counted.
+                // A lesson is read, not answered: "J’ai compris" goes straight on, once the success is counted.
                 if(passed && s.activity.kind==LearningKind.LESSON && withTimeoutOrNull(2_000) { state.first { s.activity.id in it.completed } }!=null) advance()
                 repository.sync(id)
             } catch(e:CancellationException){throw e}

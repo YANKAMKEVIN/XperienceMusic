@@ -38,7 +38,7 @@ val LocalMicrophoneIntroStore = staticCompositionLocalOf<MicrophoneIntroStore?> 
 
 /**
  * The microphone permission, with a short explanation before the very first system prompt
- * ("rien n'est enregistré sans toi"). Afterwards, or once granted, [MicrophonePermission.request]
+ * ("rien n’est enregistré sans toi"). Afterwards, or once granted, [MicrophonePermission.request]
  * goes straight to the phone. The explanation dialog is shown by this call while it is pending.
  */
 @Composable

@@ -210,7 +210,7 @@ internal fun SectionTabs(labels: List<String>, selected: Int, onSelect: (Int) ->
     }
 }
 
-/** The "Aujourd'hui" card: one action, a gradient night background and the dancing equalizer. */
+/** The "Aujourd’hui" card: one action, a gradient night background and the dancing equalizer. */
 @Composable
 internal fun FocusCard(
     eyebrow: String,

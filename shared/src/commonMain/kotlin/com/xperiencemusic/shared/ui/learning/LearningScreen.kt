@@ -121,7 +121,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                         modifier=Modifier.fillMaxWidth().heightIn(min=40.dp).padding(horizontal=12.dp,vertical=10.dp).semantics{stateDescription="pas encore ouverte"})
                 }
                 if(!state.complete && state.reached<state.module.activities.lastIndex)
-                    Text("Les étapes suivantes s'ouvrent une à une : réussis celle en cours, ou, pour une activité chantée, choisis « Je le ferai plus tard ».",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
+                    Text("Les étapes suivantes s’ouvrent une à une : réussis celle en cours, ou, pour une activité chantée, choisis « Je le ferai plus tard ».",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
             }
         },confirmButton={TextButton(onClick={onEvent(LearningEvent.Steps)}){Text("Fermer")}})
         if(state.showSettings) AlertDialog(onDismissRequest={onEvent(LearningEvent.Settings)},title={Text("Ton confort")},text={
@@ -146,7 +146,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         Text("TA SÉANCE DU JOUR",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
         Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
         val plan=s.progress.dailyPlan(s.module,s.today,s.postponed).let { if(s.progress.returning(s.today))it.take(1) else it }
-        Text("Environ ${plan.size*2} minutes · ${frenchCount(plan.size,"activité")} aujourd'hui · ${s.module.activities.size} dans le module",Modifier.padding(top=Spacing.s))
+        Text("Environ ${plan.size*2} minutes · ${frenchCount(plan.size,"activité")} aujourd’hui · ${s.module.activities.size} dans le module",Modifier.padding(top=Spacing.s))
         Text("Objectif : ${s.module.activities[plan.first()].title}",Modifier.padding(top=Spacing.s))
         if(s.progress.returning(s.today)) Text("Heureux de te retrouver. Reprends doucement avec une courte révision : tes progrès sont conservés.",Modifier.padding(top=Spacing.s))
         Text("${s.completed.size} / ${s.module.activities.size} activités terminées",Modifier.padding(top=Spacing.m))
@@ -318,7 +318,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     if(s.singing) {
         OutlinedButton(onClick={event(LearningEvent.StopSinging)},modifier=Modifier.fillMaxWidth()){Text("Arrêter l’écoute")}
         MicLevel(s.micLevel)
-        Text(if(s.hearsNothing)"Je ne t'entends pas encore… Approche le téléphone et chante un peu plus fort." else "J’entends : ${s.heardMidi?.let{noteLabel(it)}?:"…"}",
+        Text(if(s.hearsNothing)"Je ne t’entends pas encore… Approche le téléphone et chante un peu plus fort." else "J’entends : ${s.heardMidi?.let{noteLabel(it)}?:"…"}",
             style=MaterialTheme.typography.bodyLarge,color=if(s.hearsNothing)MaterialTheme.colorScheme.tertiary else Color.Unspecified,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})
         TunerNeedle(s.heardCents?.let{(it/100).toFloat().coerceIn(-1f,1f)},
             when { s.heardCents==null->"Aucune note entendue";s.heardCents< -50->"Un peu bas";s.heardCents>50->"Un peu haut";else->"Juste" })
