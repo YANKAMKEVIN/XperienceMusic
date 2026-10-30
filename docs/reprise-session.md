@@ -77,13 +77,15 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   - **Lot 2 (QA-10 à QA-15) corrigé** sur `fix/qa-s24-lot2`, partie de `fix/qa-s24-lot1` : « Je le ferai plus
     tard » sur les activités chantées, bouton « Ouvrir les réglages » après un refus du micro, grille coupée
     entre les mots, mode scène paysage avec commandes en colonne, noms et états pour TalkBack, semaine du
-    dimanche le plus proche (`BandWeek`). Choix validés par Kevin le 30 octobre (y compris : du mercredi au
-    dimanche, « Cette semaine » montre la répétition du mardi déjà passée). Reste à vérifier sur téléphone.
-  - **Lot 3 (QA-16 à QA-40)** : à faire. Ajouter les deux défauts vus pendant la vérification du lot 1 :
-    le Planning affiche « 9 sans réponse » dans la carte mais « 22 réponses manquantes » dans la confirmation,
-    et le compteur de l'accueil passe de « sur 4 » à « sur 3 » selon le rôle. Pas encore faits du lot 2 :
-    jauge « Je ne t'entends pas », écran d'explication avant la première demande du micro, onglets en paysage.
-  - Hors QA, repéré : dans `LearningScreen`, le geste retour quitte l'écran au lieu de revenir à l'accueil du module.
+    dimanche le plus proche (`BandWeek`). Vérifié sur l'A17 le 30 octobre : 6/6 OK (`docs/qa/2026-10-30-verif-lot2.md`).
+  - **Lot 3 (QA-16 à QA-40) corrigé** le 30 octobre, à la suite sur la même branche `fix/qa-s24-lot2`, **pas encore
+    poussé** (en attente de la validation de Kevin) : un commit par constat, plus les deux défauts vus pendant la
+    vérification du lot 1 (compteurs du Planning, total de l'accueil), la jauge du micro, l'écran d'explication
+    avant la première demande du micro et le geste retour de `LearningScreen`. Détail : lignes « Corrigé (lot 3) »
+    de `docs/qa/2026-10-30-qa-s24.md`. Choix de Kevin : barre d'onglets latérale en paysage, « le responsable »
+    côté membres, onglet « Progrès », barre de progression sans total dans l'accueil. **Pas encore vérifié sur
+    téléphone** (l'A17 a été débranché avant l'essai). Restent ouverts : pochette média sur iOS, champs en pilule
+    dans l'éditeur de chant, pas d'annulation d'un passage de niveau confirmé.
 
 ## Reste à faire
 
