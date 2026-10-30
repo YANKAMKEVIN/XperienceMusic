@@ -111,6 +111,7 @@ import com.xperiencemusic.shared.resources.progress_open_step
 import com.xperiencemusic.shared.resources.progress_ring_top
 import com.xperiencemusic.shared.resources.progress_ring_towards
 import com.xperiencemusic.shared.resources.progress_streak
+import org.jetbrains.compose.resources.pluralStringResource
 import com.xperiencemusic.shared.resources.progress_tab_objectives
 import com.xperiencemusic.shared.resources.progress_tab_path
 import com.xperiencemusic.shared.resources.progress_tab_voice
@@ -326,7 +327,7 @@ private fun Header(
                     .padding(horizontal = 12.dp, vertical = 7.dp),
             ) {
                 Icon(XmIcons.Flame, contentDescription = null, tint = if (state.streakDays > 0) BrandColors.Amber else Palette.Mist, modifier = Modifier.size(16.dp))
-                Text(stringResource(Res.string.progress_streak, state.streakDays), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+                Text(pluralStringResource(Res.plurals.progress_streak, state.streakDays, state.streakDays), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
             }
         }
         Box {

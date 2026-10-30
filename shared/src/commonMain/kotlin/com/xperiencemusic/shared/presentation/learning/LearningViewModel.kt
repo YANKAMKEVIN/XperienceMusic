@@ -268,7 +268,7 @@ class LearningViewModel(
         viewModelScope.launch {
             try {
                 repository.record(LearningAttempt(Uuid.random().toString(),id,s.activity.id,PianoBasics.VERSION,passed,dates.today(),"${s.activity.id}:${s.encounter}",s.hints))
-                val feedback=if(passed)"${s.activity.title} : activité réussie${if(s.hints>0)" avec aide" else ""}." else if(timing!=null)"Écart moyen : ${(timing*100).toInt()} %. Vise des intervalles plus réguliers, puis recommence." else correction(s.activity,s.notes,s.answer)
+                val feedback=if(passed && s.activity.kind==LearningKind.LESSON)"Leçon terminée." else if(passed)"Activité réussie${if(s.hints>0)" avec aide" else ""}." else if(timing!=null)"Écart moyen : ${(timing*100).toInt()} %. Vise des intervalles plus réguliers, puis recommence." else correction(s.activity,s.notes,s.answer)
                 if(passed && s.activity.id in form.value.postponed) { form.update { it.copy(postponed=it.postponed-s.activity.id) };savePostponed() }
                 form.update { it.copy(saving=false,result=passed,feedback=feedback,done=if(passed)(it.done+s.activity.id).distinct() else it.done,
                     difficult=if(!passed || s.hints>0)it.difficult+s.activity.id else it.difficult,titles=it.titles+(s.activity.id to s.activity.title),successSerial=it.successSerial+if(passed)1 else 0) }

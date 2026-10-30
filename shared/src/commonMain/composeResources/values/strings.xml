@@ -449,7 +449,10 @@
     <string name="progress_module_count">%1$d / %2$d</string>
     <string name="progress_voice_empty">Pas de chant cette semaine pour l'instant.</string>
     <string name="progress_hello">Bonjour %1$s</string>
-    <string name="progress_streak">%1$d jours</string>
+    <plurals name="progress_streak">
+        <item quantity="one">%1$d jour</item>
+        <item quantity="other">%1$d jours</item>
+    </plurals>
     <string name="progress_medals">%1$d paliers</string>
     <string name="progress_open_step">À toi</string>
     <string name="progress_warmup_title">Échauffement du jour</string>

@@ -84,7 +84,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                         LearningMode.SUMMARY -> {
                             AppCard {
                                 Text("Une séance de plus !",style=MaterialTheme.typography.headlineMedium)
-                                Text("${state.sessionDone.size} activité(s) travaillée(s)",Modifier.padding(top=Spacing.m))
+                                Text(frenchCount(state.sessionDone.size,"activité travaillée"),Modifier.padding(top=Spacing.m))
                                 state.sessionDone.forEach { id -> Text("✓ ${state.sessionTitles[id] ?: LearningCatalog.findActivity(id)?.title.orEmpty()}",Modifier.padding(top=Spacing.s)) }
                                 if(state.sessionDifficult.isNotEmpty()) {
                                     Text("À reprendre tranquillement",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=Spacing.m))
@@ -134,7 +134,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         Text("TA SÉANCE DU JOUR",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
         Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
         val plan=s.progress.dailyPlan(s.module,s.today,s.postponed).let { if(s.progress.returning(s.today))it.take(1) else it }
-        Text("Environ ${plan.size*2} minutes · ${plan.size} activité(s)",Modifier.padding(top=Spacing.s))
+        Text("Environ ${plan.size*2} minutes · ${frenchCount(plan.size,"activité")}",Modifier.padding(top=Spacing.s))
         Text("Objectif : ${s.module.activities[plan.first()].title}",Modifier.padding(top=Spacing.s))
         if(s.progress.returning(s.today)) Text("Heureux de te retrouver. Reprends doucement avec une courte révision : tes progrès sont conservés.",Modifier.padding(top=Spacing.s))
         Text("${s.completed.size} / ${s.module.activities.size} activités terminées",Modifier.padding(top=Spacing.m))
@@ -144,7 +144,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         TextButton(onClick={event(LearningEvent.Steps)}){Text("Explorer les étapes")}
     }
     if(s.progress.pending>0) AppCard {
-        Text("${s.progress.pending} essai(s) conservé(s) sur ce téléphone, en attente d’envoi.")
+        Text("${frenchCount(s.progress.pending,"essai conservé")} sur ce téléphone, en attente d’envoi.")
         TextButton(onClick={event(LearningEvent.Sync)}){Text("Synchroniser")}
     }
     AppCard {
@@ -292,7 +292,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     val target=s.activity.sing?:return
     val permission=rememberMicrophonePermission()
     val notes=s.singTargets
-    Text("À chanter : ${notes.joinToString(" · "){noteLabel(it)}} · ${formatSeconds(target.secondsEach)} chacune",style=MaterialTheme.typography.titleMedium)
+    Text("À chanter : ${notes.joinToString(" · "){noteLabel(it)}} · ${formatSeconds(target.secondsEach)}${if(notes.size>1)" chacune" else ""}",style=MaterialTheme.typography.titleMedium)
     OutlinedButton(onClick={event(LearningEvent.ListenBroken)},enabled=!s.singing && !s.saving){Text(if(notes.size>1)"Écouter mes notes" else "Écouter ma note")}
     if(target.accompanimentSemitones!=null) Text("Mets des écouteurs : l’autre voix joue pendant que tu chantes, et le micro ne doit entendre que toi.",style=MaterialTheme.typography.bodySmall)
     if(s.singing) {
@@ -354,7 +354,7 @@ private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble()
 @Composable private fun JourneyGoal(s:LearningUiState,event:(LearningEvent)->Unit) {
     AppCard {
         Text("Mon rythme",style=MaterialTheme.typography.titleMedium)
-        Text("${s.progress.weeklyDays(s.today)} jour(s) de pratique ces 7 derniers jours · objectif ${s.preferences.weeklyTarget}")
+        Text("${frenchCount(s.progress.weeklyDays(s.today),"jour")} de pratique ces 7 derniers jours · objectif ${s.preferences.weeklyTarget}")
         Text("Une journée compte dès qu’un exercice est enregistré. Plusieurs séances le même jour comptent une fois.",style=MaterialTheme.typography.bodySmall)
         Row(horizontalArrangement=Arrangement.spacedBy(Spacing.s)) {
             listOf(1,2,3).forEach { target -> FilterChip(selected=s.preferences.weeklyTarget==target,onClick={event(LearningEvent.Preferences(s.preferences.copy(weeklyTarget=target)))},label={Text("$target j / sem.")},modifier=Modifier.choiceState(s.preferences.weeklyTarget==target)) }

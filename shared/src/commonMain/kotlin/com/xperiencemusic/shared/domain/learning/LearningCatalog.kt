@@ -125,10 +125,10 @@ fun correction(activity:LearningActivity,notes:Set<Int>,answer:String?):String =
         val missing=activity.expectedNotes-notes
         val wrong=extra.firstOrNull(); val target=missing.firstOrNull { right -> wrong!=null && abs(right-wrong)<=1 }
         when {
-            wrong!=null && target!=null -> "${correct.size} note(s) correcte(s). Tu as choisi ${noteLabel(wrong)} : déplace cette note vers ${noteLabel(target)}."
+            wrong!=null && target!=null -> "${frenchCount(correct.size,"note correcte")}. Tu as choisi ${noteLabel(wrong)} : déplace cette note vers ${noteLabel(target)}."
             wrong!=null && missing.any { it%12==wrong%12 } -> "Le nom est bon, mais vérifie l’octave de ${noteLabel(wrong)}."
-            extra.isNotEmpty() -> "${correct.size} note(s) correcte(s). Retire ${extra.sorted().joinToString(" · "){noteLabel(it)}} puis vérifie les intervalles."
-            else -> "${correct.size} note(s) correcte(s). Il manque ${missing.size} note(s) ; conserve ta sélection et cherche les suivantes."
+            extra.isNotEmpty() -> "${frenchCount(correct.size,"note correcte")}. Retire ${extra.sorted().joinToString(" · "){noteLabel(it)}} puis vérifie les intervalles."
+            else -> "${frenchCount(correct.size,"note correcte")}. Il manque ${frenchCount(missing.size,"note")} ; conserve ta sélection et cherche les suivantes."
         }
     }
     LearningKind.EAR -> if(activity.choices.isEmpty()) "Tu as choisi ${answer.orEmpty()}. Réécoute la tierce ; utilise un indice avant de réessayer."
