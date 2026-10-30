@@ -3,11 +3,13 @@ package com.xperiencemusic.shared.ui.learning
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -17,11 +19,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.*
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
@@ -206,10 +210,34 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
 
 @Composable private fun ActivityAction(s:LearningUiState,event:(LearningEvent)->Unit) {
     val a=s.activity
-    Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(start=Spacing.l,end=Spacing.l,top=Spacing.s)) {
+    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(start=Spacing.l,end=Spacing.l,top=Spacing.s),verticalArrangement=Arrangement.spacedBy(Spacing.s)) {
+        // The answer to "Vérifier" sits right above it: never under the fold, and read out by TalkBack.
+        s.feedbackText?.let { feedback -> CheckFeedback(feedback,s.result==true,s.keptNotes) }
         if(s.result==true) GradientButton(onClick={event(LearningEvent.Next)},modifier=Modifier.fillMaxWidth()){Text("Continuer")}
         else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck,modifier=Modifier.fillMaxWidth()){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";a.kind==LearningKind.SING && !s.sung->"Chante d’abord l’exercice";else->"Vérifier"})}
     }
+}
+
+@Composable private fun CheckFeedback(feedback:String,passed:Boolean,kept:Set<Int>?) {
+    Column(Modifier.fillMaxWidth().heightIn(max=160.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        .verticalScroll(rememberScrollState()).padding(Spacing.m).semantics(mergeDescendants=true){liveRegion=LiveRegionMode.Polite},
+        verticalArrangement=Arrangement.spacedBy(Spacing.xs)) {
+        Text(feedback,style=MaterialTheme.typography.bodyMedium,color=if(passed)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+        kept?.let { Text("À conserver : ${it.sorted().joinToString(" · "){note->noteLabel(note)}.ifEmpty{"cherche d’abord la fondamentale"}}",style=MaterialTheme.typography.bodySmall) }
+    }
+}
+
+/** Big answer buttons: two side by side ("Majeur" / "Mineur"), longer lists one per line. */
+@Composable private fun ChoiceButtons(choices:List<String>,selected:String?,enabled:Boolean,onPick:(String)->Unit) {
+    val button:@Composable (String,Modifier)->Unit = { choice,modifier ->
+        val isSelected=selected==choice
+        OutlinedButton(onClick={onPick(choice)},enabled=enabled,
+            colors=ButtonDefaults.outlinedButtonColors(containerColor=if(isSelected)MaterialTheme.colorScheme.primaryContainer else Color.Transparent),
+            border=BorderStroke(if(isSelected)2.dp else 1.dp,if(isSelected)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline),
+            modifier=modifier.heightIn(min=56.dp).semantics{this.selected=isSelected}) { Text(choice,textAlign=TextAlign.Center) }
+    }
+    if(choices.size<=2) Row(Modifier.fillMaxWidth().selectableGroup(),horizontalArrangement=Arrangement.spacedBy(Spacing.s)) { choices.forEach { button(it,Modifier.weight(1f)) } }
+    else Column(Modifier.fillMaxWidth().selectableGroup(),verticalArrangement=Arrangement.spacedBy(Spacing.s)) { choices.forEach { button(it,Modifier.fillMaxWidth()) } }
 }
 
 @Composable private fun ActivityCard(s:LearningUiState,event:(LearningEvent)->Unit) {
@@ -225,20 +253,13 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                 TextButton(onClick={event(LearningEvent.ListenBroken)},enabled=!s.saving){Text("Écouter note par note")}
             }
             if(a.kind in listOf(LearningKind.EAR,LearningKind.CHOICE)) {
-                Column {
-                    val choices=if(a.kind==LearningKind.EAR && a.choices.isEmpty())listOf("Majeur","Mineur") else a.choices
-                    choices.forEach { c -> FilterChip(selected=s.answer==c,onClick={event(LearningEvent.Answer(c))},label={Text(c)},enabled=!s.saving) }
-                }
+                ChoiceButtons(s.choiceOptions,s.answer,enabled=!s.saving){event(LearningEvent.Answer(it))}
                 if(a.kind==LearningKind.EAR && !s.listened)Text("Écoute avant de choisir.",style=MaterialTheme.typography.bodySmall)
             }
             if(a.kind==LearningKind.KEYBOARD) {
                 PianoKeyboard(s){event(LearningEvent.Key(it))}
                 Text("Ta sélection : ${s.notes.sorted().joinToString(" · "){noteLabel(it)}.ifEmpty{"aucune"}}",style=MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick={event(LearningEvent.ListenSelection)},enabled=s.notes.isNotEmpty()){Text("Écouter ma sélection")}
-                if(s.result==false) {
-                    val correct=s.notes.intersect(a.expectedNotes)
-                    Text("À conserver : ${correct.sorted().joinToString(" · "){noteLabel(it)}.ifEmpty{"cherche d’abord la fondamentale"}}",style=MaterialTheme.typography.bodySmall)
-                }
             }
             if(a.kind==LearningKind.SING) SingPanel(s,event)
             if(a.kind==LearningKind.RHYTHM) {
@@ -255,7 +276,6 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                 },style=MaterialTheme.typography.bodyMedium)
                 if(s.hints>=3 && a.expectedNotes.isNotEmpty())OutlinedButton(onClick={event(LearningEvent.ListenBroken)}){Text("Écouter la démonstration")}
             }
-            s.feedbackText?.let {Text(it,color=if(s.result==true)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})}
             if(a.kind==LearningKind.PRACTICE)Text(if(s.module.instrument==Instrument.SINGER)"Cette étape est déclarative. Seul le responsable peut valider la compétence en situation." else "Cette étape est déclarative. Seul le responsable peut valider la compétence sur ton instrument.",style=MaterialTheme.typography.bodySmall)
         }
     }

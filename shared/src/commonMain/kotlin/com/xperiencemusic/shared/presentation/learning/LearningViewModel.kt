@@ -43,6 +43,10 @@ data class LearningUiState(
     val singStep:Int=0,val holdSeconds:Double=0.0,val micError:String?=null,
 ) {
     val singTargets get()=activity.sing?.semitones?.map { comfortMidi+it }.orEmpty()
+    /** Ear questions without listed answers ask "Majeur ou mineur ?". */
+    val choiceOptions get()=if(activity.kind==LearningKind.EAR && activity.choices.isEmpty())listOf("Majeur","Mineur") else activity.choices
+    /** After a wrong chord: the selected notes that belong to it, shown next to the correction. */
+    val keptNotes get()=if(result==false && activity.kind==LearningKind.KEYBOARD)notes.intersect(activity.expectedNotes) else null
     val activity get()=variedActivity(module.activities[index],encounter)
     val completed get()=progress.completedIn(module)
     val complete get()=progress.complete(module)

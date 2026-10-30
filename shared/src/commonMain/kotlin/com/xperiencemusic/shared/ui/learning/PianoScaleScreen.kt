@@ -1,6 +1,8 @@
 package com.xperiencemusic.shared.ui.learning
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -54,6 +56,15 @@ private fun PianoScaleKey.label() = when (this) { PianoScaleKey.C -> "Do majeur"
 @Composable
 fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, onBack: () -> Unit,
     actions: PianoScaleActions = PianoScaleActions()) {
+    // The report appears below the settings that come back after the take: scroll down to it
+    // instead of leaving the page at the top.
+    val reportRequester = remember { BringIntoViewRequester() }
+    LaunchedEffect(state.report) {
+        if (state.report != null) {
+            withFrameNanos { }
+            reportRequester.bringIntoView()
+        }
+    }
     Scaffold(topBar = { TopAppBar(title = { Text("Mon atelier piano") }, navigationIcon = {
         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") }
     }, windowInsets = WindowInsets(0)) }, contentWindowInsets = WindowInsets(0)) { padding ->
@@ -106,7 +117,7 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                         Text("Je prépare ton retour sur ce téléphone…", Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                     }
                     else -> {
-                        state.report?.let { ScaleReport(state, it, actions) }
+                        state.report?.let { Box(Modifier.bringIntoViewRequester(reportRequester)) { ScaleReport(state, it, actions) } }
                         OutlinedButton(onClick = actions.example) { Text("Écouter l’exemple · ${state.practice.bpm} BPM") }
                         if (state.phase == PianoScalePhase.RESULT && state.seconds > 0)
                             OutlinedButton(onClick = actions.listen) { Text("Réécouter toute ma prise") }
@@ -165,10 +176,11 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                 PianoScaleQuality.TOO_QUIET -> "Le son est trop faible pour conclure. Rapproche le téléphone du piano."
                 PianoScaleQuality.CLIPPED -> "Le son sature. Éloigne un peu le téléphone ou baisse le volume du piano."
                 else -> "Je ne distingue pas assez clairement les notes. Recommence lentement, sans pédale, avec une seule main."
-            }, modifier = Modifier.padding(top = Spacing.s))
+            }, modifier = Modifier.padding(top = Spacing.s).semantics { liveRegion = LiveRegionMode.Polite })
             Text("Aucun verdict sur les notes et aucune comparaison pour cette prise.", style = MaterialTheme.typography.bodySmall)
         } else {
-            Text("${report.matched} / ${report.expectedNotes.size} notes attendues retrouvées", Modifier.padding(top = Spacing.s))
+            Text("${report.matched} / ${report.expectedNotes.size} notes attendues retrouvées",
+                Modifier.padding(top = Spacing.s).semantics { liveRegion = LiveRegionMode.Polite })
             Text("Touche une note pour réécouter son passage. Les repères et la détection restent approximatifs.", style = MaterialTheme.typography.bodySmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
                 report.steps.forEachIndexed { index, step ->
