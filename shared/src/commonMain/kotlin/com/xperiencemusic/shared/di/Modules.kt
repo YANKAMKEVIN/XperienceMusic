@@ -317,8 +317,9 @@ val presentationModule = module {
 private var isKoinStarted = false
 
 /**
- * Starts Koin once per process; safe to call from every Activity creation. [config] lets the
- * platform add what it alone can provide (the Android context).
+ * Starts Koin once per process: Android calls it from its `Application`, iOS from each
+ * `MainViewController`; later calls do nothing. [config] lets the platform add what it alone can
+ * provide (the Android context).
  */
 fun initKoin(config: KoinAppDeclaration = {}) {
     if (isKoinStarted) return
