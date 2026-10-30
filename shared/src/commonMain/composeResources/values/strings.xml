@@ -85,6 +85,7 @@
     <string name="tab_week">Semaine</string>
     <string name="tab_library">Chants</string>
     <string name="tab_progress">Ma progression</string>
+    <string name="tab_progress_short">Progrès</string>
     <string name="tab_planning">Planning</string>
 
     <!-- Planning -->

@@ -32,13 +32,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 
-/** One tab of the floating bar. */
-data class FloatingTab(val label: String, val icon: ImageVector, val isSelected: Boolean, val onClick: () -> Unit)
+/**
+ * One tab of the floating bar. [label] is the short name shown in the capsule; screen readers say
+ * [description], which can be longer.
+ */
+data class FloatingTab(
+    val label: String,
+    val icon: ImageVector,
+    val isSelected: Boolean,
+    val onClick: () -> Unit,
+    val description: String = label,
+)
 
 /**
  * The tabs in a pill that floats above the bottom edge. The selected tab widens into a gradient
@@ -74,9 +87,14 @@ private fun TabItem(tab: FloatingTab) {
             .clip(CircleShape)
             .background(if (tab.isSelected) BrandColors.horizontalGradient else SolidColor(Color.Transparent))
             .selectable(selected = tab.isSelected, onClick = tab.onClick, role = Role.Tab)
+            .clearAndSetSemantics {
+                contentDescription = tab.description
+                selected = tab.isSelected
+                role = Role.Tab
+            }
             .padding(horizontal = if (tab.isSelected) 18.dp else 16.dp),
     ) {
-        Icon(tab.icon, contentDescription = if (tab.isSelected) null else tab.label, tint = content, modifier = Modifier.size(22.dp))
+        Icon(tab.icon, contentDescription = null, tint = content, modifier = Modifier.size(22.dp))
         AnimatedVisibility(
             visible = tab.isSelected,
             enter = expandHorizontally(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(),

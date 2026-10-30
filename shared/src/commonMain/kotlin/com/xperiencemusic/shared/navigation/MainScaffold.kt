@@ -29,6 +29,7 @@ import androidx.navigation.toRoute
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.tab_library
 import com.xperiencemusic.shared.resources.tab_progress
+import com.xperiencemusic.shared.resources.tab_progress_short
 import com.xperiencemusic.shared.resources.tab_week
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.exercise.ExerciseScreen
@@ -59,13 +60,20 @@ import org.jetbrains.compose.resources.stringResource
 import kotlinx.datetime.LocalDate
 import kotlin.reflect.KClass
 
-private data class Tab(val route: Any, val routeClass: KClass<*>, val label: StringResource, val icon: ImageVector)
+/** [shortLabel] is what fits in the tab capsule; [label] is the full name read aloud. */
+private data class Tab(
+    val route: Any,
+    val routeClass: KClass<*>,
+    val label: StringResource,
+    val icon: ImageVector,
+    val shortLabel: StringResource = label,
+)
 
 private val tabs = listOf(
     Tab(WeekRoute, WeekRoute::class, Res.string.tab_week, XmIcons.Notes),
     Tab(LibraryRoute, LibraryRoute::class, Res.string.tab_library, XmIcons.Book),
     Tab(PlanningRoute, PlanningRoute::class, Res.string.tab_planning, XmIcons.Calendar),
-    Tab(ProgressRoute, ProgressRoute::class, Res.string.tab_progress, XmIcons.Bars),
+    Tab(ProgressRoute, ProgressRoute::class, Res.string.tab_progress, XmIcons.Bars, Res.string.tab_progress_short),
 )
 
 /** The signed-in shell: four tabs, with the song detail pushed on top of them. */
@@ -237,7 +245,8 @@ private fun TabBar(navController: NavHostController, destination: NavDestination
     FloatingTabBar(
         tabs.map { tab ->
             FloatingTab(
-                label = stringResource(tab.label),
+                label = stringResource(tab.shortLabel),
+                description = stringResource(tab.label),
                 icon = tab.icon,
                 isSelected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true,
                 onClick = {
