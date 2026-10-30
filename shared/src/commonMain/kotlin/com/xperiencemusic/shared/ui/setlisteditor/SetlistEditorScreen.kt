@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import com.xperiencemusic.shared.ui.components.ClearSearchButton
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -203,6 +204,9 @@ fun SetlistEditorScreenContent(
                     onValueChange = { onEvent(SetlistEditorEvent.QueryChanged(it)) },
                     placeholder = { Text(stringResource(Res.string.library_search)) },
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    trailingIcon = if (state.query.isEmpty()) null else {
+                        { ClearSearchButton { onEvent(SetlistEditorEvent.QueryChanged("")) } }
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )

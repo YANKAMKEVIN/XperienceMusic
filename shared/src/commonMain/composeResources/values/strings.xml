@@ -176,6 +176,7 @@
 
     <!-- Library -->
     <string name="library_title">Chants</string>
+    <string name="search_clear">Effacer la recherche</string>
     <string name="library_search">Rechercher un chant ou un auteur</string>
     <string name="library_empty">Aucun chant ne correspond à ta recherche.</string>
     <string name="library_all_keys">Toutes</string>

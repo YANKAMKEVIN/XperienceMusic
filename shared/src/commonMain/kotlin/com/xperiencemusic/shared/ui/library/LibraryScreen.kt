@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import com.xperiencemusic.shared.ui.components.ClearSearchButton
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -121,6 +122,9 @@ private fun LibraryList(
                 onValueChange = { onEvent(LibraryEvent.QueryChanged(it)) },
                 placeholder = { Text(stringResource(Res.string.library_search)) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                trailingIcon = if (state.query.isEmpty()) null else {
+                    { ClearSearchButton { onEvent(LibraryEvent.QueryChanged("")) } }
+                },
                 singleLine = true,
                 shape = RoundedCornerShape(Radius.card),
                 modifier = Modifier.fillMaxWidth(),
