@@ -175,6 +175,7 @@ val dataModule = module {
         }
     }
     single<AnnouncedMonthsStore> { FileAnnouncedMonthsStore(get()) }
+    single<com.xperiencemusic.shared.domain.repository.MicrophoneIntroStore> { com.xperiencemusic.shared.data.local.FileMicrophoneIntroStore(get()) }
     if (SupabaseConfig.isConfigured) {
         single { AppEnvironment(isDemo = false, demoCode = null) }
         single { createXperienceSupabaseClient() }

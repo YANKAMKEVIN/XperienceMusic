@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.presentation.learning.AssessmentViewModel
+import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.components.AppCard
@@ -25,7 +26,7 @@ import org.koin.core.parameter.parametersOf
     val sending by vm.sending.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
     val microphoneDenied by vm.microphoneDenied.collectAsStateWithLifecycle()
-    val permission=rememberMicrophonePermission()
+    val permission=rememberMicrophonePermission(MicrophoneUse.RECORD)
     Scaffold(topBar={TopAppBar(title={Text(if(vm.module.instrument==com.xperiencemusic.shared.domain.model.Instrument.SINGER)"Ma prise chantée" else "Mon jeu sur l’instrument")},navigationIcon={IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Retour")}},windowInsets=WindowInsets(0))},contentWindowInsets=WindowInsets(0)) {padding->
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
             AppCard {

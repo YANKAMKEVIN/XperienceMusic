@@ -94,6 +94,7 @@ import com.xperiencemusic.shared.resources.exercise_too_high
 import com.xperiencemusic.shared.resources.exercise_too_low
 import com.xperiencemusic.shared.resources.exercise_tuner
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
@@ -110,7 +111,7 @@ fun ExerciseScreen(
     viewModel: ExerciseViewModel = koinViewModel(key = "exercise-$exerciseId") { parametersOf(exerciseId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val microphone = rememberMicrophonePermission()
+    val microphone = rememberMicrophonePermission(MicrophoneUse.LISTEN_VOICE)
     ExerciseScreenContent(
         state = state,
         onEvent = { event ->

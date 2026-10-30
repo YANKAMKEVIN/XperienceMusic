@@ -94,6 +94,7 @@ import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
@@ -111,7 +112,7 @@ fun VoiceRecordScreen(
     viewModel: VoiceRecordViewModel = koinViewModel(key = "voice-$songId") { parametersOf(songId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val microphone = rememberMicrophonePermission()
+    val microphone = rememberMicrophonePermission(MicrophoneUse.RECORD)
     VoiceRecordScreenContent(
         state = state,
         onEvent = { event ->
