@@ -60,7 +60,10 @@ class SongEditorViewModelTest {
         assertEquals(Key(4, Mode.MINOR), state.key)
         assertEquals("# Refrain\n[Em]Gloire\n# Source\n© Éditeur\naccords.app/JEM999", state.chart)
         assertEquals("", state.importLink)
+        assertEquals("Chant d'essai", state.importedTitle)
         assertTrue(state.unknownChords.isEmpty())
+        vm.onEvent(SongEditorEvent.ImportAgainClicked)
+        assertNull(vm.state.value.importedTitle)
     }
 
     @Test

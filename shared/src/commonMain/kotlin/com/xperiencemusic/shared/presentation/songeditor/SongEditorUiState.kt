@@ -22,6 +22,8 @@ data class SongEditorUiState(
     val importLink: String = "",
     val isImporting: Boolean = false,
     val importError: SongImportError? = null,
+    /** Title of the song just imported: the import card then folds into a confirmation. */
+    val importedTitle: String? = null,
     val isSaving: Boolean = false,
     val error: SongEditorError? = null,
     /** Set once saved; the screen then navigates away. */
@@ -57,6 +59,8 @@ sealed interface SongEditorEvent {
     data class ChartChanged(val chart: String) : SongEditorEvent
     data class ImportLinkChanged(val link: String) : SongEditorEvent
     data object ImportClicked : SongEditorEvent
+    /** Unfolds the import card again after a successful import. */
+    data object ImportAgainClicked : SongEditorEvent
     data object PlaceChordsClicked : SongEditorEvent
     data object SaveClicked : SongEditorEvent
     data object DeleteClicked : SongEditorEvent

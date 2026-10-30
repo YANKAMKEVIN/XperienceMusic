@@ -218,7 +218,10 @@
     <string name="editor_save">Enregistrer</string>
     <string name="editor_title_label">Titre</string>
     <string name="editor_import_title">Importer depuis accords.app</string>
-    <string name="editor_import_help">Colle le lien d'un chant (par exemple accords.app/JEM414) : titre, auteur, tonalité, paroles et accords se remplissent, avec la source en bas du chant. Vérifie puis enregistre.</string>
+    <string name="editor_import_help">Colle le lien d'un chant, par exemple :\naccords.app/JEM414\nTitre, auteur, tonalité, paroles et accords se remplissent, avec la source en bas du chant. Vérifie puis enregistre.</string>
+    <string name="editor_import_done">“%1$s” importé. Vérifie puis enregistre.</string>
+    <string name="editor_import_again">Importer un autre chant</string>
+    <string name="editor_key_chosen">Tonalité choisie : %1$s</string>
     <string name="editor_import_link">Lien du chant</string>
     <string name="editor_import_button">Importer</string>
     <string name="editor_import_not_a_link">Ce n'est pas le lien d'un chant sur accords.app.</string>

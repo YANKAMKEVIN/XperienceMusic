@@ -24,6 +24,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -50,6 +53,8 @@ import com.xperiencemusic.shared.resources.editor_delete_title
 import com.xperiencemusic.shared.resources.editor_edit_title
 import com.xperiencemusic.shared.resources.editor_error_title
 import com.xperiencemusic.shared.resources.editor_import_button
+import com.xperiencemusic.shared.resources.editor_import_again
+import com.xperiencemusic.shared.resources.editor_import_done
 import com.xperiencemusic.shared.resources.editor_import_help
 import com.xperiencemusic.shared.resources.editor_import_link
 import com.xperiencemusic.shared.resources.editor_import_network
@@ -239,6 +244,20 @@ fun SongEditorScreenContent(
 /** Fills the new song from one accords.app page. */
 @Composable
 private fun ImportFromLink(state: SongEditorUiState, onEvent: (SongEditorEvent) -> Unit) {
+    // After a success the card folds into a confirmation: the filled fields are below, out of sight.
+    state.importedTitle?.let { title ->
+        AppCard {
+            Text(
+                stringResource(Res.string.editor_import_done, title),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+            TextButton(onClick = { onEvent(SongEditorEvent.ImportAgainClicked) }) {
+                Text(stringResource(Res.string.editor_import_again))
+            }
+        }
+        return
+    }
     AppCard {
         SectionTitle(stringResource(Res.string.editor_import_title))
         Text(
