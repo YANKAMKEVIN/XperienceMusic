@@ -45,7 +45,8 @@ class SetlistEditorViewModelTest {
 
     private val session = FakeSessionRepository(member(Role.CONTENT_ADMIN))
 
-    private fun editor(today: LocalDate = LocalDate(2026, 10, 10), serviceDate: LocalDate? = null) = SetlistEditorViewModel(
+    // Monday 12 October 2026: the coming week runs from Tuesday 13 to Sunday 18.
+    private fun editor(today: LocalDate = LocalDate(2026, 10, 12), serviceDate: LocalDate? = null) = SetlistEditorViewModel(
         SearchSongsUseCase(songs),
         PublishSetlistUseCase(session, setlists),
         DeleteSetlistUseCase(session, setlists),
@@ -73,6 +74,16 @@ class SetlistEditorViewModelTest {
             assertFalse(state.isEditing)
             assertEquals(LocalDate(2026, 10, 25), state.serviceDate)
             assertTrue(state.selected.isEmpty())
+        }
+    }
+
+    @Test
+    fun `un vendredi la nouvelle setlist propose le dimanche qui vient`() = runTest {
+        // Friday 30 October 2026: Sunday 1 November is still ahead, its rehearsal was on 27 October.
+        editor(today = LocalDate(2026, 10, 30)).state.test {
+            val state = expectMostRecentItem()
+            assertEquals(LocalDate(2026, 11, 1), state.serviceDate)
+            assertEquals(LocalDate(2026, 10, 27), state.rehearsalDate)
         }
     }
 

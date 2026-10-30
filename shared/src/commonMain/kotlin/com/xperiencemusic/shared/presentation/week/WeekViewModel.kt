@@ -61,7 +61,7 @@ class WeekViewModel(
         week.copy(
             canPublish = member?.role?.can(Permission.PUBLISH_SETLIST) == true,
             nextRehearsal = getToday().let { today ->
-                val rehearsal = BandWeek.startingFrom(today).rehearsalDate
+                val rehearsal = BandWeek.nextRehearsal(today)
                 RehearsalCountdownUi(today.daysUntil(rehearsal), Formatting.dayAndDate(rehearsal))
             },
             isRefreshing = refreshing,
