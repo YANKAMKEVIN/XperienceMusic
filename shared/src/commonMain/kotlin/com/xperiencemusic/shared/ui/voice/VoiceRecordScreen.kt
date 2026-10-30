@@ -92,6 +92,7 @@ import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
+import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
@@ -120,12 +121,18 @@ fun VoiceRecordScreen(
             }
         },
         onBack = onBack,
+        onOpenSettings = microphone.openSettings,
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VoiceRecordScreenContent(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> Unit, onBack: () -> Unit) {
+fun VoiceRecordScreenContent(
+    state: VoiceRecordUiState,
+    onEvent: (VoiceRecordEvent) -> Unit,
+    onBack: () -> Unit,
+    onOpenSettings: () -> Unit = {},
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -158,7 +165,9 @@ fun VoiceRecordScreenContent(state: VoiceRecordUiState, onEvent: (VoiceRecordEve
                 if (state.phase == VoicePhase.READY && state.guides.isNotEmpty()) GuidePicker(state, onEvent)
                 Recorder(state, onEvent)
             }
-            state.error?.let { error ->
+            if (state.error == VoiceError.MICROPHONE) {
+                MicrophoneDeniedNotice(stringResource(Res.string.voice_error_mic), onOpenSettings, textAlign = TextAlign.Center)
+            } else state.error?.let { error ->
                 Text(
                     stringResource(
                         when (error) {

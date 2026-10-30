@@ -22,6 +22,7 @@ import com.xperiencemusic.shared.presentation.learning.*
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
+import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
@@ -42,13 +43,13 @@ fun PianoScaleScreen(onBack: () -> Unit, vm: PianoScaleViewModel = koinViewModel
             stop = vm::stop, countdown = vm::beginCountdown, cancel = { vm.cancelPreparation() },
             example = vm::listenExample, listen = vm::listenTake, stopAudio = vm::stopPlayback,
             configure = vm::configure, select = vm::selectStep, passage = vm::listenPassage,
-            expected = vm::listenExpected, focus = vm::focusStep))
+            expected = vm::listenExpected, focus = vm::focusStep, openSettings = permission.openSettings))
 }
 class PianoScaleActions(
     val start: () -> Unit = {}, val stop: () -> Unit = {}, val countdown: () -> Unit = {}, val cancel: () -> Unit = {},
     val example: () -> Unit = {}, val listen: () -> Unit = {}, val stopAudio: () -> Unit = {},
     val configure: (PianoScalePractice) -> Unit = {}, val select: (Int) -> Unit = {}, val passage: (Int) -> Unit = {},
-    val expected: (Int) -> Unit = {}, val focus: (Int) -> Unit = {},
+    val expected: (Int) -> Unit = {}, val focus: (Int) -> Unit = {}, val openSettings: () -> Unit = {},
 )
 private fun PianoScaleKey.label() = when (this) { PianoScaleKey.C -> "Do majeur"; PianoScaleKey.G -> "Sol majeur"; PianoScaleKey.F -> "Fa majeur" }
 
@@ -126,7 +127,10 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                 }
             }
             if (playing) OutlinedButton(onClick = actions.stopAudio) { Text("Arrêter l’écoute") }
-            state.message?.let { Text(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+            state.message?.let {
+                if (state.microphoneDenied) MicrophoneDeniedNotice(it, actions.openSettings)
+                else Text(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+            }
             Text("Essai local, sans envoi au serveur. L’audio est effacé au nouvel essai ou au changement d’exercice, à la sortie ou en arrière-plan. Seul le bilan précédent reste temporairement pour comparer deux essais identiques ; il est aussi effacé à la sortie. Aucun niveau n’est validé automatiquement.", style = MaterialTheme.typography.bodySmall)
         }
     }

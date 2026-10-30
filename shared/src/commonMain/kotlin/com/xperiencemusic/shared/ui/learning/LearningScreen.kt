@@ -36,6 +36,7 @@ import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.presentation.learning.*
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -299,7 +300,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         LinearProgressIndicator(progress={(s.singStep+(s.holdSeconds/target.secondsEach).coerceIn(0.0,1.0)).toFloat()/notes.size},modifier=Modifier.fillMaxWidth())
     } else if(s.sung) Text("Bien tenu ! Tu peux vérifier l’activité.",color=MaterialTheme.colorScheme.primary)
     else Button(onClick={permission.request { if(it)event(LearningEvent.StartSinging) else event(LearningEvent.MicrophoneDenied) }},enabled=!s.saving && s.result!=true,modifier=Modifier.fillMaxWidth().heightIn(min=64.dp)){Text("Chanter maintenant")}
-    s.micError?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+    s.micError?.let { if(s.micDenied)MicrophoneDeniedNotice(it,permission.openSettings) else Text(it,color=MaterialTheme.colorScheme.error) }
     if(s.canPostpone && !s.sung) Text("Pas d’écouteurs ou trop de bruit autour de toi ? « Je le ferai plus tard » ouvre l’étape suivante. Cette activité restera à reprendre : elle ne compte pas comme réussie.",style=MaterialTheme.typography.bodySmall)
 }
 private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble())"${seconds.toInt()} s" else "${seconds.toString().replace('.',',')} s"

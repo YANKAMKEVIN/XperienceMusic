@@ -134,6 +134,19 @@ class LearningViewModelTest {
         assertEquals(1, vm.state.value.index)
     }
 
+    @Test fun aRefusedMicrophoneOffersTheSettingsUntilTheNextTake() = runTest {
+        val (vm, _) = singerViewModel(List(FakeMicrophone.framesFor(5.5)) { 62 })
+        vm.onEvent(LearningEvent.Open(0))
+        vm.onEvent(LearningEvent.Check)
+        vm.onEvent(LearningEvent.Next)
+        vm.onEvent(LearningEvent.MicrophoneDenied)
+        assertTrue(vm.state.value.micDenied)
+        assertNotNull(vm.state.value.micError)
+        vm.onEvent(LearningEvent.StartSinging)
+        assertFalse(vm.state.value.micDenied)
+        assertNull(vm.state.value.micError)
+    }
+
     @Test fun singerModulesAreClosedToOtherParts() = runTest {
         val (vm, _) = singerViewModel(emptyList(), Instrument.PIANO)
         assertFalse(vm.state.value.allowed)

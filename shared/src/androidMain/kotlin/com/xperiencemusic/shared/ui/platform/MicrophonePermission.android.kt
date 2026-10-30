@@ -1,7 +1,10 @@
 package com.xperiencemusic.shared.ui.platform
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -24,12 +27,20 @@ actual fun rememberMicrophonePermission(): MicrophonePermission {
         pendingCallback?.invoke(granted)
         pendingCallback = null
     }
-    return MicrophonePermission(isGranted) { onResult ->
-        if (isGranted) {
-            onResult(true)
-        } else {
-            pendingCallback = onResult
-            launcher.launch(Manifest.permission.RECORD_AUDIO)
-        }
-    }
+    return MicrophonePermission(
+        isGranted = isGranted,
+        request = { onResult ->
+            if (isGranted) {
+                onResult(true)
+            } else {
+                pendingCallback = onResult
+                launcher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        },
+        openSettings = {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        },
+    )
 }

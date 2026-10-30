@@ -95,6 +95,7 @@ import com.xperiencemusic.shared.resources.exercise_too_low
 import com.xperiencemusic.shared.resources.exercise_tuner
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
+import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
@@ -122,12 +123,18 @@ fun ExerciseScreen(
             }
         },
         onBack = onBack,
+        onOpenSettings = microphone.openSettings,
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExerciseScreenContent(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Unit, onBack: () -> Unit) {
+fun ExerciseScreenContent(
+    state: ExerciseUiState,
+    onEvent: (ExerciseEvent) -> Unit,
+    onBack: () -> Unit,
+    onOpenSettings: () -> Unit = {},
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -163,16 +170,20 @@ fun ExerciseScreenContent(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Un
                 AutomaticCheck(check, state, onEvent)
             }
             state.error?.let { error ->
-                Text(
-                    stringResource(
-                        when (error) {
-                            ExerciseError.MICROPHONE_DENIED -> Res.string.exercise_error_denied
-                            ExerciseError.MICROPHONE_UNAVAILABLE -> Res.string.exercise_error_mic
-                            ExerciseError.SAVE_FAILED -> Res.string.exercise_error_save
-                        },
-                    ),
-                    color = MaterialTheme.colorScheme.error,
-                )
+                if (error == ExerciseError.MICROPHONE_DENIED) {
+                    MicrophoneDeniedNotice(stringResource(Res.string.exercise_error_denied), onOpenSettings)
+                } else {
+                    Text(
+                        stringResource(
+                            when (error) {
+                                ExerciseError.MICROPHONE_DENIED -> Res.string.exercise_error_denied
+                                ExerciseError.MICROPHONE_UNAVAILABLE -> Res.string.exercise_error_mic
+                                ExerciseError.SAVE_FAILED -> Res.string.exercise_error_save
+                            },
+                        ),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
     }

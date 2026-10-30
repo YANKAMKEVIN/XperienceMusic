@@ -52,6 +52,7 @@ class PianoScaleViewModelTest {
         vm.activate(); vm.denied()
         assertEquals(PianoScalePhase.READY, vm.state.value.phase)
         assertNotNull(vm.state.value.message)
+        assertTrue(vm.state.value.microphoneDenied)
         assertFalse(mic.active)
         vm.interrupt()
     }

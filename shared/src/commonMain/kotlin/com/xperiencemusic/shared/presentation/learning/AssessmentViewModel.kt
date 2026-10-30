@@ -16,6 +16,8 @@ class AssessmentViewModel(moduleId:String,private val sessions:SessionRepository
     val module=LearningCatalog.module(moduleId)
     val level=recorder.level
     val message=MutableStateFlow<String?>(null)
+    /** The microphone was refused: the screen offers the phone settings. */
+    val microphoneDenied=MutableStateFlow(false)
     val recordedSeconds=MutableStateFlow(0)
     val sending=MutableStateFlow(false)
     private var voice:RecordedVoice?=null
@@ -24,10 +26,10 @@ class AssessmentViewModel(moduleId:String,private val sessions:SessionRepository
     }
     fun start() {
         if(sending.value)return
-        preview.stop();voice=null;recordedSeconds.value=0;message.value=null
+        preview.stop();voice=null;recordedSeconds.value=0;message.value=null;microphoneDenied.value=false
         recorder.start(viewModelScope)
     }
-    fun denied(){message.value="Autorise le microphone pour enregistrer ton instrument."}
+    fun denied(){message.value=if(module.instrument==Instrument.SINGER)"Autorise le microphone pour enregistrer ta voix." else "Autorise le microphone pour enregistrer ton instrument.";microphoneDenied.value=true}
     fun stop(){voice=recorder.stop();recordedSeconds.value=voice?.durationSeconds?:0}
     fun listen(){voice?.let {preview("voice/objective-${module.objectiveId}.wav",it.wav,NowPlaying("Mon essai",module.title))}}
     fun send() {
