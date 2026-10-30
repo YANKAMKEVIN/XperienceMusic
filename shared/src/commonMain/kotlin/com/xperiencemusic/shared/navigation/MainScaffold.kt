@@ -41,6 +41,7 @@ import com.xperiencemusic.shared.ui.progress.ProgressScreen
 import com.xperiencemusic.shared.ui.recordingform.RecordingFormScreen
 import com.xperiencemusic.shared.ui.setlisteditor.SetlistEditorScreen
 import com.xperiencemusic.music.theory.Notation
+import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.song.SongDetailScreen
 import com.xperiencemusic.shared.ui.stage.StageScreen
 import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
@@ -201,11 +202,24 @@ fun MainScaffold(onSignOut: () -> Unit) {
             }
             composable<StageRoute> { entry ->
                 val route = entry.toRoute<StageRoute>()
+                // "Suivant" swaps the stage for another one, so the song detail underneath may be
+                // the starting song: closing replaces it with the song that was on screen.
+                val startedFrom = navController.previousBackStackEntry
+                    ?.takeIf { it.destination.hasRoute(SongRoute::class) }
+                    ?.toRoute<SongRoute>()?.songId
+                val closeStage: () -> Unit = {
+                    if (startedFrom == null || startedFrom == route.songId) {
+                        navController.popBackStack()
+                    } else {
+                        navController.navigate(SongRoute(route.songId)) { popUpTo<SongRoute> { inclusive = true } }
+                    }
+                }
+                SystemBackHandler(enabled = startedFrom != null && startedFrom != route.songId, onBack = closeStage)
                 StageScreen(
                     songId = route.songId,
                     transposeSemitones = route.transposeSemitones,
                     notation = Notation.valueOf(route.notation),
-                    onClose = { navController.popBackStack() },
+                    onClose = closeStage,
                     onOpenSong = { nextId ->
                         // Other songs open in their own key, keeping the notation.
                         navController.navigate(StageRoute(nextId, 0, route.notation)) {

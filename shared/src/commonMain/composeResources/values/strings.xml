@@ -290,6 +290,7 @@
     <string name="stage_text_smaller">Réduire le texte</string>
     <string name="stage_scroll_start">Défilement auto</string>
     <string name="stage_scroll_stop">Pause défilement</string>
+    <string name="stage_speed">Vitesse %1$d/%2$d</string>
     <string name="stage_faster">Plus vite</string>
     <string name="stage_slower">Moins vite</string>
     <string name="stage_previous">Précédent</string>

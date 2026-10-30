@@ -59,6 +59,7 @@ import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.stage_close
 import com.xperiencemusic.shared.resources.stage_faster
 import com.xperiencemusic.shared.resources.stage_next
+import com.xperiencemusic.shared.resources.stage_speed
 import com.xperiencemusic.shared.resources.stage_previous
 import com.xperiencemusic.shared.resources.stage_scroll_start
 import com.xperiencemusic.shared.resources.stage_scroll_stop
@@ -160,7 +161,13 @@ private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpen
                 contentDescription = stringResource(if (state.isAutoScrolling) Res.string.stage_scroll_stop else Res.string.stage_scroll_start),
                 tint = MaterialTheme.colorScheme.primary,
             )
-            if (state.isAutoScrolling) Text("${state.scrollSpeed}", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = Spacing.xs))
+            if (state.isAutoScrolling) {
+                Text(
+                    stringResource(Res.string.stage_speed, state.speedLevel, StageUiState.MAX_LEVEL),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(start = Spacing.xs),
+                )
+            }
         }
         if (state.isAutoScrolling) {
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
@@ -243,7 +250,11 @@ private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
                     maxLines = 1,
                 )
                 if (state.isAutoScrolling) {
-                    Text("${state.scrollSpeed}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(Res.string.stage_speed, state.speedLevel, StageUiState.MAX_LEVEL),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
@@ -259,8 +270,12 @@ private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            TextButton(onClick = { onEvent(StageEvent.SlowerClicked) }) { Text(stringResource(Res.string.stage_slower)) }
-            TextButton(onClick = { onEvent(StageEvent.FasterClicked) }) { Text(stringResource(Res.string.stage_faster)) }
+            StageButton(onClick = { onEvent(StageEvent.SlowerClicked) }, modifier = Modifier.width(64.dp)) {
+                Icon(StageIcons.Minus, contentDescription = stringResource(Res.string.stage_slower))
+            }
+            StageButton(onClick = { onEvent(StageEvent.FasterClicked) }, modifier = Modifier.padding(start = Spacing.s).width(64.dp)) {
+                Icon(StageIcons.Plus, contentDescription = stringResource(Res.string.stage_faster))
+            }
         }
     }
 }
