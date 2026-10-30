@@ -483,7 +483,6 @@
     <string name="progress_modules_title">Parcours guidé</string>
     <string name="progress_module_count">%1$d / %2$d</string>
     <string name="progress_voice_empty">Pas de chant cette semaine pour l'instant.</string>
-    <string name="progress_hello">Bonjour %1$s</string>
     <plurals name="progress_streak">
         <item quantity="one">%1$d jour</item>
         <item quantity="other">%1$d jours</item>

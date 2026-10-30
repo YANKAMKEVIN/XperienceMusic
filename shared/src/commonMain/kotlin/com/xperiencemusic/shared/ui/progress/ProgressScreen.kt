@@ -52,7 +52,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -104,7 +103,6 @@ import com.xperiencemusic.shared.resources.progress_focus_voice_eyebrow
 import com.xperiencemusic.shared.resources.progress_focus_voice_text
 import com.xperiencemusic.shared.resources.progress_focus_warmup_eyebrow
 import com.xperiencemusic.shared.resources.progress_focus_warmup_text
-import com.xperiencemusic.shared.resources.progress_hello
 import com.xperiencemusic.shared.resources.progress_menu
 import com.xperiencemusic.shared.resources.progress_modules_title
 import com.xperiencemusic.shared.resources.progress_musicians_soon_text
@@ -113,7 +111,6 @@ import com.xperiencemusic.shared.resources.progress_open_step
 import com.xperiencemusic.shared.resources.progress_ring_top
 import com.xperiencemusic.shared.resources.progress_ring_towards
 import com.xperiencemusic.shared.resources.progress_streak
-import org.jetbrains.compose.resources.pluralStringResource
 import com.xperiencemusic.shared.resources.progress_tab_objectives
 import com.xperiencemusic.shared.resources.progress_tab_path
 import com.xperiencemusic.shared.resources.progress_tab_voice
@@ -128,9 +125,11 @@ import com.xperiencemusic.shared.resources.progress_warmup_hint
 import com.xperiencemusic.shared.resources.progress_warmup_title
 import com.xperiencemusic.shared.resources.review_open
 import com.xperiencemusic.shared.resources.session_sign_out
+import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.voice_week_none
 import com.xperiencemusic.shared.resources.voice_week_title
 import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.brand.TabHeader
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.EmptyState
@@ -141,6 +140,7 @@ import com.xperiencemusic.shared.ui.theme.Palette
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -305,20 +305,11 @@ private fun Header(
     modifier: Modifier = Modifier,
 ) {
     var menu by remember { mutableStateOf(false) }
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                stringResource(Res.string.progress_hello, state.name),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(
-                listOfNotNull(state.voicePart?.label() ?: state.instrument?.label(), state.level?.label()).joinToString(" · "),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Palette.Mist,
-            )
-        }
+    TabHeader(
+        title = stringResource(Res.string.tab_progress),
+        subtitle = listOfNotNull(state.name.takeIf { it.isNotBlank() }, state.voicePart?.label() ?: state.instrument?.label(), state.level?.label()).joinToString(" · "),
+        modifier = modifier,
+    ) {
         if (state.hasPath) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

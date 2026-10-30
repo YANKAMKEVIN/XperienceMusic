@@ -37,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -81,7 +80,6 @@ import com.xperiencemusic.shared.resources.planning_title
 import com.xperiencemusic.shared.resources.planning_to_answer
 import com.xperiencemusic.shared.resources.planning_today
 import com.xperiencemusic.shared.resources.planning_unanswered
-import com.xperiencemusic.shared.resources.planning_validate_missing_members
 import com.xperiencemusic.shared.resources.planning_validate_action
 import com.xperiencemusic.shared.resources.planning_validate_all_answered
 import com.xperiencemusic.shared.resources.planning_validate_all_covered
@@ -90,11 +88,13 @@ import com.xperiencemusic.shared.resources.planning_validate_confirm_title
 import com.xperiencemusic.shared.resources.planning_validate_hint
 import com.xperiencemusic.shared.resources.planning_validate_incomplete
 import com.xperiencemusic.shared.resources.planning_validate_missing_answers
+import com.xperiencemusic.shared.resources.planning_validate_missing_members
 import com.xperiencemusic.shared.resources.planning_validated
 import com.xperiencemusic.shared.resources.planning_validated_incomplete
 import com.xperiencemusic.shared.resources.planning_validated_text
 import com.xperiencemusic.shared.resources.planning_you_serve
 import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.brand.TabHeader
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.EmptyState
@@ -205,11 +205,7 @@ private fun ValidateMonthDialog(monthLabel: String, validation: MonthValidationU
 @Composable
 private fun Header(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit) {
     Column {
-        Text(
-            stringResource(Res.string.planning_title),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.semantics { heading() },
-        )
+        TabHeader(stringResource(Res.string.planning_title))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Spacing.xs)) {
             IconButton(onClick = { onEvent(PlanningEvent.PreviousMonth) }, enabled = state.canGoBack) {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.planning_previous_month))

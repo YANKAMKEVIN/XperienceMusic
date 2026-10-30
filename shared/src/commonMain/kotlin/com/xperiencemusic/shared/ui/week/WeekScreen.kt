@@ -1,6 +1,5 @@
 package com.xperiencemusic.shared.ui.week
 
-import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,13 +74,14 @@ import com.xperiencemusic.shared.resources.week_this_week
 import com.xperiencemusic.shared.resources.week_title
 import com.xperiencemusic.shared.ui.brand.BrandWaves
 import com.xperiencemusic.shared.ui.brand.KeyPill
-import com.xperiencemusic.shared.ui.brand.XmMonogram
+import com.xperiencemusic.shared.ui.brand.TabHeader
+import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.CountdownEmptyState
 import com.xperiencemusic.shared.ui.components.EmptyState
-import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.components.PauseIcon
+import com.xperiencemusic.shared.ui.components.choiceState
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
@@ -205,17 +205,7 @@ private fun EmptyWeek(state: WeekUiState, onPublish: () -> Unit) {
 
 @Composable
 private fun WeekHeader(rangeLabel: String?) {
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        XmMonogram(size = 56.dp)
-        Text(
-            stringResource(Res.string.week_title),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(top = Spacing.s).semantics { heading() },
-        )
-        rangeLabel?.let {
-            Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
+    TabHeader(stringResource(Res.string.week_title), subtitle = rangeLabel)
 }
 
 /** The kept weeks, opened on the selected one: past weeks stay readable, coming ones are ready. */
