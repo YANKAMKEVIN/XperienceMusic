@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.voice
 
+import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -254,6 +255,7 @@ private fun GuideChip(label: String, selected: Boolean, onClick: () -> Unit) {
             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
             selectedLabelColor = MaterialTheme.colorScheme.onSurface,
         ),
+        modifier = Modifier.choiceState(selected),
     )
 }
 

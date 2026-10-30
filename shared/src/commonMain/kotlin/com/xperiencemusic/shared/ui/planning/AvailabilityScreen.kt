@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.planning
 
+import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -161,6 +162,7 @@ private fun AnswerRow(row: AvailabilityRowUi, enabled: Boolean, onEvent: (Availa
                     shape = SegmentedButtonDefaults.itemShape(index, options.size),
                     icon = { if (selected) Icon(Icons.Filled.Check, contentDescription = null) },
                     label = { Text(stringResource(label)) },
+                    modifier = Modifier.choiceState(selected),
                 )
             }
         }

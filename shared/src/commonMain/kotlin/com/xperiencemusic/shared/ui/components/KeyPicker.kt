@@ -38,6 +38,7 @@ fun KeyPicker(
                     selected = key.tonic == tonic,
                     onClick = { onTonicSelected(tonic) },
                     label = { Text(Key(tonic, key.mode).tonicName(Notation.SOLFEGE)) },
+                    modifier = Modifier.choiceState(key.tonic == tonic),
                 )
             }
         }

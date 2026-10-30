@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.learning
 
+import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -123,8 +124,9 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         },confirmButton={TextButton(onClick={onEvent(LearningEvent.Settings)}){Text("C’est réglé")}})
     }
 }
+/** The whole row is the switch: TalkBack reads its label and state, and a tap on the label toggles it. */
 @Composable private fun Setting(label:String,value:Boolean,onChange:(Boolean)->Unit) {
-    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(value,onChange)}
+    Row(Modifier.fillMaxWidth().heightIn(min=48.dp).toggleable(value,role=Role.Switch,onValueChange=onChange),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(value,onCheckedChange=null)}
 }
 
 @Composable private fun HomeContent(s:LearningUiState,event:(LearningEvent)->Unit,onModule:(String)->Unit,onRecord:()->Unit,audioReview:@Composable (String,String)->Unit,onScaleCoach:()->Unit) {
@@ -355,7 +357,7 @@ private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble()
         Text("${s.progress.weeklyDays(s.today)} jour(s) de pratique ces 7 derniers jours · objectif ${s.preferences.weeklyTarget}")
         Text("Une journée compte dès qu’un exercice est enregistré. Plusieurs séances le même jour comptent une fois.",style=MaterialTheme.typography.bodySmall)
         Row(horizontalArrangement=Arrangement.spacedBy(Spacing.s)) {
-            listOf(1,2,3).forEach { target -> FilterChip(selected=s.preferences.weeklyTarget==target,onClick={event(LearningEvent.Preferences(s.preferences.copy(weeklyTarget=target)))},label={Text("$target j / sem.")}) }
+            listOf(1,2,3).forEach { target -> FilterChip(selected=s.preferences.weeklyTarget==target,onClick={event(LearningEvent.Preferences(s.preferences.copy(weeklyTarget=target)))},label={Text("$target j / sem.")},modifier=Modifier.choiceState(s.preferences.weeklyTarget==target)) }
         }
         Text("Un repère personnel, à ajuster librement. Tu peux reprendre à tout moment.",style=MaterialTheme.typography.bodySmall)
     }

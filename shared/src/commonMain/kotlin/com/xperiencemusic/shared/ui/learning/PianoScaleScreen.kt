@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.learning
 
+import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -142,15 +143,15 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
         Text("Mon exercice", style = MaterialTheme.typography.titleMedium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
             PianoScaleKey.entries.forEach { key -> FilterChip(selected = s.practice.key == key,
-                onClick = { actions.configure(s.practice.copy(key = key, focusStart = null)) }, label = { Text(key.label()) }) }
+                onClick = { actions.configure(s.practice.copy(key = key, focusStart = null)) }, label = { Text(key.label()) }, modifier = Modifier.choiceState(s.practice.key == key)) }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
             listOf(false, true).forEach { down -> FilterChip(selected = s.practice.descending == down,
-                onClick = { actions.configure(s.practice.copy(descending = down, focusStart = null)) }, label = { Text(if (down) "Descente" else "Montée") }) }
+                onClick = { actions.configure(s.practice.copy(descending = down, focusStart = null)) }, label = { Text(if (down) "Descente" else "Montée") }, modifier = Modifier.choiceState(s.practice.descending == down)) }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
             listOf(40, 60, 80).forEach { bpm -> FilterChip(selected = s.practice.bpm == bpm,
-                onClick = { actions.configure(s.practice.copy(bpm = bpm)) }, label = { Text("$bpm BPM") }) }
+                onClick = { actions.configure(s.practice.copy(bpm = bpm)) }, label = { Text("$bpm BPM") }, modifier = Modifier.choiceState(s.practice.bpm == bpm)) }
         }
         Text("Le tempo règle l’exemple et le guide visuel. La correction évalue les notes, sans imposer une synchronisation exacte.", style = MaterialTheme.typography.bodySmall)
         if (s.practice.focusStart != null) TextButton(onClick = { actions.configure(s.practice.copy(focusStart = null)) }) { Text("Revenir à la gamme complète") }

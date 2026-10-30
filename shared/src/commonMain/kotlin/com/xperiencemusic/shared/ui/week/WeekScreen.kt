@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.week
 
+import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -240,6 +241,7 @@ private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
                     selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                     selectedLabelColor = MaterialTheme.colorScheme.onSurface,
                 ),
+                modifier = Modifier.choiceState(week.isSelected),
             )
         }
     }

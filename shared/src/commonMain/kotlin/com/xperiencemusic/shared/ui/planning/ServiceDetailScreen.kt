@@ -1,5 +1,9 @@
 package com.xperiencemusic.shared.ui.planning
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -176,12 +180,17 @@ private fun Note(text: String) {
 @Composable
 private fun RosterRow(row: RosterRowUi, enabled: Boolean, onEvent: (ServiceDetailEvent) -> Unit) {
     val part = row.member.voicePart?.label() ?: row.member.instrument?.label()
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(
-            checked = row.serves == true,
-            onCheckedChange = { onEvent(ServiceDetailEvent.Toggled(row.member.memberId, it)) },
+    // The whole row (name included) is the checkbox, so TalkBack reads "Kevin, Ténor, coché".
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().toggleable(
+            value = row.serves == true,
             enabled = enabled,
-        )
+            role = Role.Checkbox,
+            onValueChange = { onEvent(ServiceDetailEvent.Toggled(row.member.memberId, it)) },
+        ),
+    ) {
+        Checkbox(checked = row.serves == true, onCheckedChange = null, enabled = enabled, modifier = Modifier.minimumInteractiveComponentSize())
         Column(Modifier.weight(1f)) {
             Text(row.member.name, style = MaterialTheme.typography.bodyLarge)
             if (part != null) Text(part, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

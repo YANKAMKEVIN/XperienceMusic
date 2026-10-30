@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.song
 
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -321,8 +322,11 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { onEvent(SongDetailEvent.TransposeDownClicked) }) {
-                    Text("−", style = MaterialTheme.typography.titleLarge)
+                IconButton(
+                    onClick = { onEvent(SongDetailEvent.TransposeDownClicked) },
+                    modifier = Modifier.semantics { contentDescription = "Baisser d’un demi-ton" },
+                ) {
+                    Text("−", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
                 }
                 Text(
                     state.keyLabel,
@@ -332,8 +336,11 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
                         contentDescription = "Tonalité ${state.keyLabel}"
                     },
                 )
-                IconButton(onClick = { onEvent(SongDetailEvent.TransposeUpClicked) }) {
-                    Text("+", style = MaterialTheme.typography.titleLarge)
+                IconButton(
+                    onClick = { onEvent(SongDetailEvent.TransposeUpClicked) },
+                    modifier = Modifier.semantics { contentDescription = "Monter d’un demi-ton" },
+                ) {
+                    Text("+", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
                 }
             }
         }
