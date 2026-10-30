@@ -14,6 +14,8 @@ import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -100,15 +102,96 @@ fun StageScreenContent(
     onOpenSong: (String) -> Unit,
 ) {
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(Modifier.safeDrawingPadding()) {
-            StageToolbar(state, onEvent, onClose)
-            if (state.isLoading) {
-                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        BoxWithConstraints(Modifier.safeDrawingPadding()) {
+            // On a music stand the phone lies sideways: the controls move to a narrow rail on the
+            // right so the lyrics keep the whole height.
+            if (maxWidth > maxHeight) {
+                Row(Modifier.fillMaxSize()) {
+                    Column(Modifier.weight(1f)) {
+                        StageToolbar(state, onEvent, onClose)
+                        StageBody(state, Modifier.weight(1f))
+                    }
+                    StageRail(state, onEvent, onOpenSong)
+                }
             } else {
-                StageLyrics(state, Modifier.weight(1f))
+                Column(Modifier.fillMaxSize()) {
+                    StageToolbar(state, onEvent, onClose)
+                    StageBody(state, Modifier.weight(1f))
+                    StageControls(state, onEvent)
+                    if (state.setlistPosition != null) SetlistNavigation(state, onOpenSong)
+                }
             }
-            StageControls(state, onEvent)
-            if (state.setlistPosition != null) SetlistNavigation(state, onOpenSong)
+        }
+    }
+}
+
+@Composable
+private fun StageBody(state: StageUiState, modifier: Modifier) {
+    if (state.isLoading) {
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    } else {
+        StageLyrics(state, modifier)
+    }
+}
+
+/** Landscape: every control in a column of compact buttons beside the lyrics. */
+@Composable
+private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpenSong: (String) -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Spacing.s, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxHeight().width(RAIL_WIDTH).verticalScroll(rememberScrollState()).padding(Spacing.s),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            StageButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }, modifier = Modifier.weight(1f), compact = true) {
+                Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
+                    contentDescription = "Réduire le texte"
+                })
+            }
+            StageButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }, modifier = Modifier.weight(1f), compact = true) {
+                Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
+                    contentDescription = "Agrandir le texte"
+                })
+            }
+        }
+        StageButton(onClick = { onEvent(StageEvent.AutoScrollToggled) }, modifier = Modifier.fillMaxWidth(), compact = true) {
+            Icon(
+                if (state.isAutoScrolling) PauseIcon else Icons.Filled.PlayArrow,
+                contentDescription = stringResource(if (state.isAutoScrolling) Res.string.stage_scroll_stop else Res.string.stage_scroll_start),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            if (state.isAutoScrolling) Text("${state.scrollSpeed}", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = Spacing.xs))
+        }
+        if (state.isAutoScrolling) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                StageButton(onClick = { onEvent(StageEvent.SlowerClicked) }, modifier = Modifier.weight(1f), compact = true) {
+                    Icon(StageIcons.Minus, contentDescription = stringResource(Res.string.stage_slower))
+                }
+                StageButton(onClick = { onEvent(StageEvent.FasterClicked) }, modifier = Modifier.weight(1f), compact = true) {
+                    Icon(StageIcons.Plus, contentDescription = stringResource(Res.string.stage_faster))
+                }
+            }
+        }
+        if (state.setlistPosition != null) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                StageButton(
+                    onClick = { state.previousSongId?.let(onOpenSong) },
+                    modifier = Modifier.weight(1f).alpha(if (state.previousSongId != null) 1f else 0.4f),
+                    compact = true,
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.stage_previous))
+                }
+                StageButton(
+                    onClick = { state.nextSongId?.let(onOpenSong) },
+                    modifier = Modifier.weight(1f).alpha(if (state.nextSongId != null) 1f else 0.4f),
+                    compact = true,
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = listOfNotNull(stringResource(Res.string.stage_next), state.nextSongTitle).joinToString(" : "),
+                    )
+                }
+            }
         }
     }
 }
@@ -183,7 +266,12 @@ private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
 }
 
 @Composable
-private fun StageButton(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+private fun StageButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+    content: @Composable RowScope.() -> Unit,
+) {
     OutlinedButton(
         onClick = onClick,
         shape = RoundedCornerShape(Radius.card),
@@ -192,8 +280,8 @@ private fun StageButton(onClick: () -> Unit, modifier: Modifier = Modifier, cont
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),
-        contentPadding = PaddingValues(horizontal = Spacing.m),
-        modifier = modifier.height(56.dp),
+        contentPadding = PaddingValues(horizontal = if (compact) Spacing.xs else Spacing.m),
+        modifier = modifier.height(if (compact) 48.dp else 56.dp),
         content = content,
     )
 }
@@ -253,6 +341,7 @@ private fun SetlistNavigation(state: StageUiState, onOpenSong: (String) -> Unit)
 }
 
 private const val TICK_MS = 50L
+private val RAIL_WIDTH = 120.dp
 
 @Preview
 @Composable
@@ -267,6 +356,31 @@ private fun StageScreenPreview() {
                     ChartLine.Section("Refrain"),
                     ChartLine.Lyrics(listOf(ChartSegment("Ré", "À toi la "), ChartSegment("La", "gloire"))),
                 ),
+                setlistPosition = "1 / 3",
+                nextSongId = "2",
+                nextSongTitle = "Holy, Holy, Holy",
+            ),
+            onEvent = {},
+            onClose = {},
+            onOpenSong = {},
+        )
+    }
+}
+
+@Preview(widthDp = 780, heightDp = 360)
+@Composable
+private fun StageScreenLandscapePreview() {
+    AppTheme {
+        StageScreenContent(
+            StageUiState(
+                isLoading = false,
+                title = "À toi la gloire",
+                keyLabel = "Ré majeur",
+                chart = listOf(
+                    ChartLine.Section("Refrain"),
+                    ChartLine.Lyrics(listOf(ChartSegment("Ré", "À toi la "), ChartSegment("La", "gloire, Ô Ressus", continuesWord = true), ChartSegment("Si m", "cité !"))),
+                ),
+                isAutoScrolling = true,
                 setlistPosition = "1 / 3",
                 nextSongId = "2",
                 nextSongTitle = "Holy, Holy, Holy",
