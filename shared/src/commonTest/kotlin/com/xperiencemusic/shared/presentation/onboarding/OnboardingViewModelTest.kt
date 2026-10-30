@@ -77,4 +77,33 @@ class OnboardingViewModelTest {
         viewModel.onEvent(OnboardingEvent.BackClicked)
         assertEquals(OnboardingStep.ROLE, viewModel.state.value.step)
     }
+
+    @Test
+    fun `revenir en arrière garde les réponses et s'arrête à la première question`() = runTest {
+        assertFalse(viewModel.state.value.canGoBack, "the first question leaves the app")
+        viewModel.onEvent(OnboardingEvent.NameChanged("Grâce"))
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        viewModel.onEvent(OnboardingEvent.InstrumentSelected(Instrument.SINGER))
+        viewModel.onEvent(OnboardingEvent.ContinueClicked)
+        viewModel.onEvent(OnboardingEvent.VoicePartSelected(VoicePart.SOPRANO))
+        assertTrue(viewModel.state.value.canGoBack)
+
+        viewModel.onEvent(OnboardingEvent.BackClicked)
+        viewModel.onEvent(OnboardingEvent.BackClicked)
+        val first = viewModel.state.value
+        assertEquals(OnboardingStep.NAME, first.step)
+        assertEquals("Grâce", first.name)
+        assertEquals(Instrument.SINGER, first.instrument)
+        assertEquals(VoicePart.SOPRANO, first.voicePart)
+        assertFalse(first.canGoBack)
+        viewModel.onEvent(OnboardingEvent.BackClicked)
+        assertEquals(OnboardingStep.NAME, viewModel.state.value.step)
+    }
+
+    @Test
+    fun `on ne revient pas en arrière pendant la création du profil`() {
+        val submitting = OnboardingUiState(step = OnboardingStep.LEVEL, name = "Daniel", instrument = Instrument.PIANO, isSubmitting = true)
+        assertFalse(submitting.canGoBack)
+        assertTrue(submitting.copy(isSubmitting = false).canGoBack)
+    }
 }

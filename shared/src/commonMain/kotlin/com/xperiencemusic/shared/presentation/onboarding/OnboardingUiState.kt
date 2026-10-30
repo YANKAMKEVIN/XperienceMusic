@@ -27,6 +27,9 @@ data class OnboardingUiState(
 
     val isLastStep: Boolean get() = step == steps.last()
 
+    /** The back arrow and the system back return to the previous question, answers kept. */
+    val canGoBack: Boolean get() = stepIndex > 0 && !isSubmitting
+
     val canContinue: Boolean
         get() = !isSubmitting && when (step) {
             OnboardingStep.NAME -> name.isNotBlank()

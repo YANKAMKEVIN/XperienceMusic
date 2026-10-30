@@ -30,7 +30,7 @@ class OnboardingViewModel(
             is OnboardingEvent.LevelSelected -> _state.update { it.copy(level = event.level) }
             OnboardingEvent.ContinueClicked -> next()
             OnboardingEvent.BackClicked -> _state.update { current ->
-                current.copy(step = current.steps.getOrNull(current.stepIndex - 1) ?: current.step)
+                if (current.canGoBack) current.copy(step = current.steps[current.stepIndex - 1]) else current
             }
         }
     }

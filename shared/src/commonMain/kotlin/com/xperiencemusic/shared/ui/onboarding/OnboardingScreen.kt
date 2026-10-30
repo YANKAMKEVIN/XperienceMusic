@@ -82,6 +82,7 @@ import com.xperiencemusic.shared.ui.brand.BrandHeader
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.brand.XmMonogram
+import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
@@ -98,6 +99,8 @@ fun OnboardingScreen(onSignOut: () -> Unit, viewModel: OnboardingViewModel = koi
 @Composable
 fun OnboardingScreenContent(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit, onSignOut: () -> Unit = {}) {
     val next = { onEvent(OnboardingEvent.ContinueClicked) }
+    // From the second question on, the system back returns to the previous one instead of leaving.
+    SystemBackHandler(enabled = state.canGoBack) { onEvent(OnboardingEvent.BackClicked) }
     BrandBackground {
         Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
             Column(
@@ -107,7 +110,7 @@ fun OnboardingScreenContent(state: OnboardingUiState, onEvent: (OnboardingEvent)
                     BrandHeader()
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Spacing.s)) {
-                        IconButton(onClick = { onEvent(OnboardingEvent.BackClicked) }) {
+                        IconButton(onClick = { onEvent(OnboardingEvent.BackClicked) }, enabled = state.canGoBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.onboarding_back))
                         }
                         Spacer(Modifier.weight(1f))
