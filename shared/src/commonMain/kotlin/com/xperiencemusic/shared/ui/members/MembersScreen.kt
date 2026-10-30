@@ -1,5 +1,8 @@
 package com.xperiencemusic.shared.ui.members
 
+import com.xperiencemusic.shared.ui.theme.Palette
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.text.style.TextOverflow
 import com.xperiencemusic.shared.resources.members_change_level
 import androidx.compose.foundation.clickable
 import com.xperiencemusic.shared.domain.model.Level
@@ -235,10 +238,14 @@ private fun MemberRow(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
     AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Initial(member.name, member.role)
+            // The name gets the whole width; level and role share a second line, so neither is
+            // ever broken in the middle of a word.
             Column(Modifier.weight(1f).padding(start = Spacing.m)) {
                 Text(
                     if (member.isMe) "${member.name} (${stringResource(Res.string.members_me)})" else member.name,
                     style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.MiddleEllipsis,
                 )
                 Text(
                     when {
@@ -249,9 +256,11 @@ private fun MemberRow(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (member.level != null) LevelMenu(member, member.level, onEvent)
+                FlowRow(verticalArrangement = Arrangement.Center, itemVerticalAlignment = Alignment.CenterVertically) {
+                    if (member.level != null) LevelMenu(member, member.level, onEvent)
+                    RoleMenu(member, onEvent)
+                }
             }
-            RoleMenu(member, onEvent)
             if (!member.isMe) {
                 IconButton(onClick = { onEvent(MembersEvent.RemoveClicked(member.id)) }) {
                     Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.members_remove, member.name))
@@ -270,7 +279,13 @@ private fun LevelMenu(member: MemberRowUi, level: Level, onEvent: (MembersEvent)
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { isOpen = true },
         ) {
-            Text(level.label(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            Text(
+                level.label(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                softWrap = false,
+            )
             Icon(
                 Icons.Filled.ArrowDropDown,
                 contentDescription = stringResource(Res.string.members_change_level, member.name),
@@ -320,7 +335,12 @@ private fun InvitationRow(invitation: InvitationRowUi, onEvent: (MembersEvent) -
     AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(invitation.email, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    invitation.email,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.MiddleEllipsis,
+                )
                 Text(invitation.role.label(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
             }
             IconButton(onClick = { onEvent(MembersEvent.CancelInvitationClicked(invitation.email)) }) {
@@ -370,7 +390,9 @@ private fun Initial(name: String, role: Role) {
 private fun roleColor(role: Role): Color = when (role) {
     Role.MEMBER -> BrandColors.Purple
     Role.CONTENT_ADMIN -> BrandColors.Blue
-    Role.SUPER_ADMIN -> BrandColors.Indigo
+    // White, not a third violet: the three roles must be told apart at a glance (amber already
+    // means "missing" in the planning).
+    Role.SUPER_ADMIN -> Palette.Snow
 }
 
 @Composable
