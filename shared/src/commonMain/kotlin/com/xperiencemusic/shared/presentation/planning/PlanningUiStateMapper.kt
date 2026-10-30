@@ -12,15 +12,17 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 
+private const val ADMIN_MONTHS_AHEAD = 2
+
 /**
  * The months the planning shows: this one, and every later month an admin opened — admins also get
- * the month after, so they can open it.
+ * the next two, so they can open a month early enough to leave time for the answers.
  */
 fun planningMonths(today: LocalDate, months: List<PlanningMonth>, canPlan: Boolean): List<LocalDate> {
     val thisMonth = today.monthStart()
     val opened = months.map { it.monthStart }.filter { it >= thisMonth }
-    val next = thisMonth.plus(DatePeriod(months = 1))
-    return (listOf(thisMonth) + opened + listOfNotNull(next.takeIf { canPlan })).distinct().sorted()
+    val upcoming = if (canPlan) (1..ADMIN_MONTHS_AHEAD).map { thisMonth.plus(DatePeriod(months = it)) } else emptyList()
+    return (listOf(thisMonth) + opened + upcoming).distinct().sorted()
 }
 
 fun derivePlanningState(planning: Planning, monthStart: LocalDate, today: LocalDate): PlanningUiState {

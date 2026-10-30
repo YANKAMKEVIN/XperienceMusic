@@ -28,10 +28,13 @@ class PlanningStateTest {
         Planning(months, signups, band, member(role))
 
     @Test
-    fun `un membre voit ce mois et les mois ouverts, un admin aussi le suivant`() {
+    fun `un membre voit ce mois et les mois ouverts, un admin aussi les deux suivants`() {
         val months = listOf(PlanningMonth(october, null, true))
         assertEquals(listOf(october), planningMonths(today, months, canPlan = false))
-        assertEquals(listOf(october, november), planningMonths(today, months, canPlan = true))
+        assertEquals(listOf(october, november, LocalDate(2026, 12, 1)), planningMonths(today, months, canPlan = true))
+        // A month already open further ahead stays reachable for everyone.
+        val march = LocalDate(2027, 3, 1)
+        assertEquals(listOf(october, march), planningMonths(today, months + PlanningMonth(march, null, false), canPlan = false))
     }
 
     @Test
