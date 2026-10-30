@@ -186,7 +186,7 @@
 
     <!-- Song detail -->
     <string name="song_key">Tonalité : %1$s</string>
-    <string name="song_original_key">tonalité d'origine : %1$s</string>
+    <string name="song_original_key">Tonalité d'origine : %1$s</string>
     <string name="song_transpose_down">Descendre d'un demi-ton</string>
     <string name="song_transpose_up">Monter d'un demi-ton</string>
     <string name="song_transpose_reset">Revenir à l'origine</string>

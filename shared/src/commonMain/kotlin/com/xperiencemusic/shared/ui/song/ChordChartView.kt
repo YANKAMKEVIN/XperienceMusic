@@ -72,7 +72,8 @@ private fun ChartSegmentView(segment: ChartSegment, style: TextStyle) {
         val lyric = measurables[1].measure(loose)
         val hyphen = measurables[2].measure(loose)
         val chordWidth = if (segment.chord != null) chord.width + chordGap.roundToPx() else 0
-        val showHyphen = segment.continuesWord && chordWidth > lyric.width
+        // Only when the chord really overhangs the syllable: the padding added after a chord is not a gap to bridge.
+        val showHyphen = segment.continuesWord && segment.chord != null && chord.width > lyric.width
         val width = if (showHyphen) maxOf(chordWidth, lyric.width + hyphen.width) else maxOf(chordWidth, lyric.width)
         layout(width, chord.height + lyric.height) {
             chord.placeRelative(0, 0)

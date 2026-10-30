@@ -45,6 +45,14 @@ class SongDetailUiStateMapperTest {
     }
 
     @Test
+    fun `en lettres le sous-titre nomme aussi la tonalité en solfège`() {
+        val letters = deriveSongDetailState(sample, member(), SongDetailLocalState(notation = Notation.LETTERS))
+        assertEquals("Do majeur (C)", letters.keyHeading)
+        val solfege = deriveSongDetailState(sample, member(), SongDetailLocalState(notation = Notation.SOLFEGE))
+        assertEquals("Do majeur", solfege.keyHeading)
+    }
+
+    @Test
     fun `seuls les admins voient la gestion des versions`() {
         assertFalse(deriveSongDetailState(sample, member(Role.MEMBER), SongDetailLocalState()).canManageRecordings)
         assertTrue(deriveSongDetailState(sample, member(Role.CONTENT_ADMIN), SongDetailLocalState()).canManageRecordings)

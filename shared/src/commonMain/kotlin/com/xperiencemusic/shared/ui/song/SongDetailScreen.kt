@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -304,7 +305,7 @@ private fun SongHero(state: SongDetailUiState) {
             modifier = Modifier.semantics { heading() },
         )
         Text(
-            listOfNotNull(state.keyLabel, state.artist).joinToString(" · "),
+            listOfNotNull(state.keyHeading.ifEmpty { null }, state.artist).joinToString(" · "),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -345,7 +346,7 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
             }
         }
         state.originalKeyLabel?.let {
-            TextButton(onClick = { onEvent(SongDetailEvent.TransposeResetClicked) }) {
+            TextButton(onClick = { onEvent(SongDetailEvent.TransposeResetClicked) }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(Res.string.song_original_key, it) + " · " + stringResource(Res.string.song_transpose_reset))
             }
         }
@@ -513,6 +514,7 @@ private fun SongDetailScreenPreview() {
                 title = "À toi la gloire",
                 artist = "E. Budry",
                 keyLabel = "Mi majeur",
+                keyHeading = "Mi majeur",
                 originalKeyLabel = "Ré majeur",
                 notation = Notation.SOLFEGE,
                 chart = listOf(

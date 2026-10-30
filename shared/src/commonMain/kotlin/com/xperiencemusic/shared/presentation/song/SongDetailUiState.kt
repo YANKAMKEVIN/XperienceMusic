@@ -11,6 +11,8 @@ data class SongDetailUiState(
     val title: String = "",
     val artist: String? = null,
     val keyLabel: String = "",
+    /** The key under the title: in letters it also says the name in solfège, so "E" is not read as an initial. */
+    val keyHeading: String = "",
     /** Set only while the song is transposed away from its original key. */
     val originalKeyLabel: String? = null,
     val notation: Notation = Notation.NASHVILLE,
