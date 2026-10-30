@@ -54,6 +54,28 @@ class PlanningStateTest {
     }
 
     @Test
+    fun `valider un mois rappelle les réponses manquantes et les parties non couvertes`() {
+        val months = listOf(PlanningMonth(october, null, false))
+        val signups = listOf(
+            ServiceSignup(LocalDate(2026, 10, 16), "me", true),
+            ServiceSignup(LocalDate(2026, 10, 16), "d", true),
+            ServiceSignup(LocalDate(2026, 10, 18), "d", false),
+            // A past service: no longer counted.
+            ServiceSignup(LocalDate(2026, 10, 2), "me", true),
+        )
+        val validation = derivePlanningState(planning(Role.CONTENT_ADMIN, months, signups), october, today).validation
+        // From the 15th: Fridays 16, 23, 30 and Sundays 18, 25, for two members; three answers given.
+        assertEquals(5 * 2 - 3, validation?.missingAnswers)
+        // Nobody plays bass or drums, on any of the five; the 16th has its singer and pianist.
+        assertEquals(5, validation?.incompleteServices)
+        assertEquals(listOf(Instrument.SINGER, Instrument.PIANO, Instrument.BASS, Instrument.DRUMS), validation?.uncoveredParts)
+
+        assertEquals(null, derivePlanningState(planning(months = months, signups = signups), october, today).validation, "members cannot validate")
+        val validated = listOf(PlanningMonth(october, null, true))
+        assertEquals(null, derivePlanningState(planning(Role.CONTENT_ADMIN, validated), october, today).validation)
+    }
+
+    @Test
     fun `un mois pas ouvert ne montre aucun service`() {
         val state = derivePlanningState(planning(Role.CONTENT_ADMIN, months = emptyList()), november, today)
         assertEquals(MonthStatus.NOT_OPEN, state.status)

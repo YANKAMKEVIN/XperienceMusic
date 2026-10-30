@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,6 +27,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +46,7 @@ import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.ServiceKind
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.presentation.planning.MonthStatus
+import com.xperiencemusic.shared.presentation.planning.MonthValidationUi
 import com.xperiencemusic.shared.presentation.planning.MyAnswer
 import com.xperiencemusic.shared.presentation.planning.PlanningError
 import com.xperiencemusic.shared.presentation.planning.PlanningEvent
@@ -74,6 +77,12 @@ import com.xperiencemusic.shared.resources.planning_title
 import com.xperiencemusic.shared.resources.planning_to_answer
 import com.xperiencemusic.shared.resources.planning_unanswered
 import com.xperiencemusic.shared.resources.planning_validate_action
+import com.xperiencemusic.shared.resources.planning_validate_all_answered
+import com.xperiencemusic.shared.resources.planning_validate_all_covered
+import com.xperiencemusic.shared.resources.planning_validate_cancel
+import com.xperiencemusic.shared.resources.planning_validate_confirm_title
+import com.xperiencemusic.shared.resources.planning_validate_incomplete
+import com.xperiencemusic.shared.resources.planning_validate_missing_answers
 import com.xperiencemusic.shared.resources.planning_validate_hint
 import com.xperiencemusic.shared.resources.planning_validated
 import com.xperiencemusic.shared.resources.planning_validated_text
@@ -88,6 +97,7 @@ import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -128,27 +138,59 @@ fun PlanningScreenContent(
                 items(state.services, key = { it.date.toString() }) { card ->
                     ServiceCard(card, onClick = { onServiceClick(card.date) })
                 }
-                if (state.canPlan && state.status == MonthStatus.OPEN) {
-                    item {
-                        Column(Modifier.padding(top = Spacing.s)) {
-                            GradientButton(
-                                onClick = { onEvent(PlanningEvent.ValidateMonthClicked) },
-                                enabled = !state.isWorking,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) { Text(stringResource(Res.string.planning_validate_action), style = MaterialTheme.typography.titleMedium) }
-                            Text(
-                                stringResource(Res.string.planning_validate_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = Spacing.xs).align(Alignment.CenterHorizontally),
-                            )
-                        }
-                    }
-                }
             }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
+    state.validation?.takeIf { state.isConfirmingValidation }?.let { validation ->
+        ValidateMonthDialog(
+            monthLabel = state.monthLabel,
+            validation = validation,
+            onConfirm = { onEvent(PlanningEvent.ValidateMonthConfirmed) },
+            onDismiss = { onEvent(PlanningEvent.ValidateMonthDismissed) },
+        )
+    }
+}
+
+/** Validating locks the members' answers: say what is still missing before doing it. */
+@Composable
+private fun ValidateMonthDialog(monthLabel: String, validation: MonthValidationUi, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.planning_validate_confirm_title, monthLabel)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                Text(stringResource(Res.string.planning_validate_hint))
+                Text(
+                    if (validation.missingAnswers > 0) {
+                        pluralStringResource(Res.plurals.planning_validate_missing_answers, validation.missingAnswers, validation.missingAnswers)
+                    } else {
+                        stringResource(Res.string.planning_validate_all_answered)
+                    },
+                    color = if (validation.missingAnswers > 0) BrandColors.Amber else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    if (validation.incompleteServices > 0) {
+                        pluralStringResource(
+                            Res.plurals.planning_validate_incomplete,
+                            validation.incompleteServices,
+                            validation.incompleteServices,
+                            validation.uncoveredParts.map { it.label().lowercase() }.joinToString(", "),
+                        )
+                    } else {
+                        stringResource(Res.string.planning_validate_all_covered)
+                    },
+                    color = if (validation.incompleteServices > 0) BrandColors.Amber else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(Res.string.planning_validate_action)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.planning_validate_cancel)) }
+        },
+    )
 }
 
 @Composable
@@ -211,6 +253,14 @@ private fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit
                 onClick = { state.monthStart?.let(onMyAnswers) },
                 modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),
             ) { Text(stringResource(Res.string.planning_my_answers), style = MaterialTheme.typography.titleMedium) }
+            // At the top for the admin, rather than after every service of the month; it asks first.
+            if (state.validation != null) {
+                OutlinedButton(
+                    onClick = { onEvent(PlanningEvent.ValidateMonthClicked) },
+                    enabled = !state.isWorking,
+                    modifier = Modifier.fillMaxWidth().padding(top = Spacing.s),
+                ) { Text(stringResource(Res.string.planning_validate_action)) }
+            }
         }
         MonthStatus.VALIDATED -> AppCard {
             Text(stringResource(Res.string.planning_validated), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.tertiary)
@@ -352,8 +402,21 @@ private fun PlanningScreenPreview() {
                 unansweredCount = 3,
                 services = previewCards,
                 canPlan = true,
+                validation = MonthValidationUi(missingAnswers = 9, incompleteServices = 2, uncoveredParts = listOf(Instrument.SINGER, Instrument.BASS, Instrument.DRUMS)),
             ),
             onEvent = {}, onMyAnswers = {}, onServiceClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ValidateMonthDialogPreview() {
+    AppTheme {
+        ValidateMonthDialog(
+            monthLabel = "novembre 2026",
+            validation = MonthValidationUi(missingAnswers = 9, incompleteServices = 2, uncoveredParts = listOf(Instrument.BASS, Instrument.DRUMS)),
+            onConfirm = {}, onDismiss = {},
         )
     }
 }

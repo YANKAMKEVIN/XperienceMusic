@@ -100,6 +100,18 @@
     <string name="planning_open_action">Ouvrir les inscriptions</string>
     <string name="planning_validate_action">Valider le mois</string>
     <string name="planning_validate_hint">Les membres ne pourront plus changer leurs réponses.</string>
+    <string name="planning_validate_confirm_title">Valider %1$s ?</string>
+    <string name="planning_validate_all_answered">Tout le monde a répondu.</string>
+    <plurals name="planning_validate_missing_answers">
+        <item quantity="one">Il manque encore %1$d réponse.</item>
+        <item quantity="other">Il manque encore %1$d réponses.</item>
+    </plurals>
+    <string name="planning_validate_all_covered">Toutes les équipes sont complètes.</string>
+    <plurals name="planning_validate_incomplete">
+        <item quantity="one">%1$d service n'a pas d'équipe complète. Manque : %2$s.</item>
+        <item quantity="other">%1$d services n'ont pas d'équipe complète. Manque : %2$s.</item>
+    </plurals>
+    <string name="planning_validate_cancel">Annuler</string>
     <string name="planning_friday">Vendredi</string>
     <string name="planning_sunday">Dimanche</string>
     <string name="planning_friday_hint">Sans setlist</string>

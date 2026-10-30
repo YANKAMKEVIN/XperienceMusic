@@ -51,6 +51,18 @@ fun derivePlanningState(planning: Planning, monthStart: LocalDate, today: LocalD
         unansweredCount = if (status == MonthStatus.OPEN) services.count { !it.isPast && it.myAnswer == MyAnswer.UNANSWERED } else 0,
         services = services,
         canPlan = canPlan,
+        validation = if (canPlan && status == MonthStatus.OPEN) monthValidation(services, planning.members, planning.signups) else null,
+    )
+}
+
+/** Past services are left out: nobody can answer for them any more. */
+fun monthValidation(services: List<ServiceCardUi>, members: List<BandMember>, signups: List<ServiceSignup>): MonthValidationUi {
+    val coming = services.filterNot { it.isPast }
+    val answered = signups.map { it.serviceDate to it.memberId }.toSet()
+    return MonthValidationUi(
+        missingAnswers = coming.sumOf { service -> members.count { (service.date to it.id) !in answered } },
+        incompleteServices = coming.count { it.missing.isNotEmpty() },
+        uncoveredParts = coming.flatMap { it.missing }.distinct().sortedBy { it.ordinal },
     )
 }
 
