@@ -191,7 +191,7 @@ val dataModule = module {
         single<GrowthRepository> { SupabaseGrowthRepository(get(), get()) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
-        single<SessionRepository> { InMemorySessionRepository() }
+        single<SessionRepository> { InMemorySessionRepository(files = get()) }
         single<GrowthRepository> {
             val today = get<DateProvider>().today()
             InMemoryGrowthRepository(get(), get(), get(), SampleGrowth.requests(today), SampleGrowth.checks(today))
