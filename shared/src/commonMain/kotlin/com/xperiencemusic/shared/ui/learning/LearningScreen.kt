@@ -38,6 +38,7 @@ import com.xperiencemusic.shared.presentation.learning.*
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
+import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
 import com.xperiencemusic.shared.ui.theme.AppTheme
@@ -60,6 +61,8 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     LaunchedEffect(state.successSerial) {
         if(state.successSerial>0 && state.preferences.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
+    // The system back gesture does what the arrow does: from an activity or the summary, back to the module.
+    SystemBackHandler(enabled=state.mode!=LearningMode.HOME) { onEvent(LearningEvent.Home) }
     CompositionLocalProvider(LocalDensity provides Density(density.density,density.fontScale*if(state.preferences.largeText)1.2f else 1f)) {
         Scaffold(topBar={ TopAppBar(title={Text(state.module.title,style=MaterialTheme.typography.titleLarge)},navigationIcon={
             IconButton(onClick={ if(state.mode==LearningMode.HOME)onBack() else onEvent(LearningEvent.Home) }) { Icon(Icons.AutoMirrored.Filled.ArrowBack,"Retour") }
@@ -74,7 +77,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                     when(state.mode) {
                         LearningMode.HOME -> HomeContent(state,onEvent,onModule,onRecord,audioReview,onScaleCoach)
                         LearningMode.ACTIVITY -> {
-                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
                                 Text("Étape ${state.index+1} / ${state.module.activities.size}",style=MaterialTheme.typography.labelLarge)
                                 TextButton(onClick={onEvent(LearningEvent.Steps)}){Text("Voir les étapes")}
                             }
@@ -106,10 +109,14 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                 state.module.activities.forEachIndexed { i,a ->
                     val unlocked=state.complete || i<=state.reached
                     val later=a.id in state.postponed && a.id !in state.completed
-                    TextButton(onClick={onEvent(LearningEvent.Open(i))},enabled=unlocked) {
-                        Text("${if(a.id in state.completed)"✓" else "${i+1}."} ${a.title}${if(later)" · à reprendre" else if(!unlocked)" · à découvrir ensuite" else ""}")
-                    }
+                    val label="${if(a.id in state.completed)"✓" else "${i+1}."} ${a.title}${if(later)" · à reprendre" else ""}"
+                    // A step still closed is plain text, read as such: no button that does nothing.
+                    if(unlocked) TextButton(onClick={onEvent(LearningEvent.Open(i))}) { Text(label) }
+                    else Text("$label · à découvrir ensuite",color=MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier=Modifier.fillMaxWidth().heightIn(min=40.dp).padding(horizontal=12.dp,vertical=10.dp).semantics{stateDescription="pas encore ouverte"})
                 }
+                if(!state.complete && state.reached<state.module.activities.lastIndex)
+                    Text("Les étapes suivantes s'ouvrent une à une : réussis celle en cours, ou, pour une activité chantée, choisis « Je le ferai plus tard ».",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
             }
         },confirmButton={TextButton(onClick={onEvent(LearningEvent.Steps)}){Text("Fermer")}})
         if(state.showSettings) AlertDialog(onDismissRequest={onEvent(LearningEvent.Settings)},title={Text("Ton confort")},text={
@@ -134,13 +141,14 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         Text("TA SÉANCE DU JOUR",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
         Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
         val plan=s.progress.dailyPlan(s.module,s.today,s.postponed).let { if(s.progress.returning(s.today))it.take(1) else it }
-        Text("Environ ${plan.size*2} minutes · ${frenchCount(plan.size,"activité")}",Modifier.padding(top=Spacing.s))
+        Text("Environ ${plan.size*2} minutes · ${frenchCount(plan.size,"activité")} aujourd'hui · ${s.module.activities.size} dans le module",Modifier.padding(top=Spacing.s))
         Text("Objectif : ${s.module.activities[plan.first()].title}",Modifier.padding(top=Spacing.s))
         if(s.progress.returning(s.today)) Text("Heureux de te retrouver. Reprends doucement avec une courte révision : tes progrès sont conservés.",Modifier.padding(top=Spacing.s))
         Text("${s.completed.size} / ${s.module.activities.size} activités terminées",Modifier.padding(top=Spacing.m))
         LinearProgressIndicator(progress={s.completed.size.toFloat()/s.module.activities.size},modifier=Modifier.fillMaxWidth().padding(top=Spacing.s))
         GradientButton(onClick={event(LearningEvent.Begin)},modifier=Modifier.padding(top=Spacing.m)){Text(if(s.completed.isNotEmpty())"Continuer ma séance" else "Commencer ma séance")}
-        TextButton(onClick={event(LearningEvent.Resume)}){Text("Reprendre · ${s.module.activities[s.reached].title}")}
+        // Only a spot really left behind competes with the main button: never at 0 / 6 on a first visit.
+        if(s.canResume) s.resumeIndex?.let { TextButton(onClick={event(LearningEvent.Resume)}){Text("Reprendre · ${s.module.activities[it.coerceAtMost(s.reached)].title}")} }
         TextButton(onClick={event(LearningEvent.Steps)}){Text("Explorer les étapes")}
     }
     if(s.progress.pending>0) AppCard {
@@ -301,7 +309,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         if(notes.size>1) Text("Note ${(s.singStep+1).coerceAtMost(notes.size)} / ${notes.size}",style=MaterialTheme.typography.bodySmall)
         LinearProgressIndicator(progress={(s.singStep+(s.holdSeconds/target.secondsEach).coerceIn(0.0,1.0)).toFloat()/notes.size},modifier=Modifier.fillMaxWidth())
     } else if(s.sung) Text("Bien tenu ! Tu peux vérifier l’activité.",color=MaterialTheme.colorScheme.primary)
-    else Button(onClick={permission.request { if(it)event(LearningEvent.StartSinging) else event(LearningEvent.MicrophoneDenied) }},enabled=!s.saving && s.result!=true,modifier=Modifier.fillMaxWidth().heightIn(min=64.dp)){Text("Chanter maintenant")}
+    else GradientButton(onClick={permission.request { if(it)event(LearningEvent.StartSinging) else event(LearningEvent.MicrophoneDenied) }},enabled=!s.saving && s.result!=true,modifier=Modifier.fillMaxWidth().heightIn(min=64.dp)){Text("Chanter maintenant",style=MaterialTheme.typography.titleMedium)}
     s.micError?.let { if(s.micDenied)MicrophoneDeniedNotice(it,permission.openSettings) else Text(it,color=MaterialTheme.colorScheme.error) }
     if(s.canPostpone && !s.sung) Text("Pas d’écouteurs ou trop de bruit autour de toi ? « Je le ferai plus tard » ouvre l’étape suivante. Cette activité restera à reprendre : elle ne compte pas comme réussie.",style=MaterialTheme.typography.bodySmall)
 }

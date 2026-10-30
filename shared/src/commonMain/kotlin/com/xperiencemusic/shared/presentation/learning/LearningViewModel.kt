@@ -15,6 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.builtins.serializer
@@ -47,9 +48,13 @@ data class LearningUiState(
     val micDenied:Boolean=false,
     /** Sung activities set aside for later: never counted as done, they no longer lock the next steps. */
     val postponed:Set<String> = emptySet(),
+    /** Where the member left off last time, if they ever opened an activity of this module. */
+    val resumeIndex:Int?=null,
 ) {
     /** The furthest step open to the member. */
     val reached get()=progress.nextIn(module,postponed)
+    /** "Reprendre" only stands for a real spot left behind, still open to the member. */
+    val canResume get()=resumeIndex!=null && resumeIndex in module.activities.indices && (resumeIndex<=reached || complete)
     val canPostpone get()=allowed && !saving && !singing && result!=true && activity.canPostpone() && activity.id !in completed
     val singTargets get()=activity.sing?.semitones?.map { comfortMidi+it }.orEmpty()
     /** Ear questions without listed answers ask "Majeur ou mineur ?". */
@@ -75,7 +80,7 @@ private data class LearningForm(
     val preferences:LearningPreferences=LearningPreferences(),val feedback:String?=null,val taps:List<Double> = emptyList(),
     val plan:List<Int> = emptyList(),val done:List<String> = emptyList(),val difficult:Set<String> = emptySet(),val titles:Map<String,String> = emptyMap(),val successSerial:Int=0,
     val singing:Boolean=false,val sung:Boolean=false,val heardMidi:Int?=null,val singStep:Int=0,val holdSeconds:Double=0.0,val micError:String?=null,val micDenied:Boolean=false,
-    val postponed:Set<String> = emptySet(),
+    val postponed:Set<String> = emptySet(),val resumeIndex:Int?=null,
 )
 sealed interface LearningEvent {
     data class Open(val index:Int):LearningEvent
@@ -129,14 +134,15 @@ class LearningViewModel(
             result=f.result,saving=f.saving,error=f.error,moduleReviews=checks.orEmpty().filter { it.memberId==m?.id }.associate { it.objectiveId to it.status },reviewLoaded=checks!=null,reviewStatus=c?.status,feedback=c?.feedback,
             reviewDue=p.dueIn(module,dates.today()).isNotEmpty(),mode=f.mode,hints=f.hints,showSteps=f.steps,showSettings=f.settings,
             preferences=f.preferences,feedbackText=f.feedback,taps=f.taps,sessionDone=f.done,sessionDifficult=f.difficult,sessionTitles=f.titles,successSerial=f.successSerial,
-            comfortMidi=(m?.profile?.voicePart?:VoicePart.ALTO).comfortMidi,singing=f.singing,sung=f.sung,heardMidi=f.heardMidi,singStep=f.singStep,holdSeconds=f.holdSeconds,micError=f.micError,micDenied=f.micDenied,postponed=f.postponed)
+            comfortMidi=(m?.profile?.voicePart?:VoicePart.ALTO).comfortMidi,singing=f.singing,sung=f.sung,heardMidi=f.heardMidi,singStep=f.singStep,holdSeconds=f.holdSeconds,micError=f.micError,micDenied=f.micDenied,postponed=f.postponed,resumeIndex=f.resumeIndex)
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),LearningUiState(module=module))
 
     init {
         member.filterNotNull().onEach { m ->
             val preferences=snapshots?.load("learning-settings-${m.id}",LearningPreferences.serializer())?:LearningPreferences()
             val postponed=snapshots?.load(postponedKey(m.id),POSTPONED)?:emptySet()
-            form.update { it.copy(preferences=preferences,postponed=it.postponed+postponed) }
+            val resume=snapshots?.load(resumeKey(m.id),Resume.serializer())
+            form.update { it.copy(preferences=preferences,postponed=it.postponed+postponed,resumeIndex=it.resumeIndex?:resume?.index) }
             repository.sync(m.id)
         }.launchIn(viewModelScope)
     }
@@ -147,8 +153,10 @@ class LearningViewModel(
             val next = state.value.reached
             Resume(next, state.value.progress.attempts.count { it.activityId == module.activities[next].id })
         } else Resume(f.index?:state.value.index,f.encounter,f.notes,f.answer,f.hints)
-        snapshots?.save("learning-resume-$id-${module.id}",Resume.serializer(),resume)
+        snapshots?.save(resumeKey(id),Resume.serializer(),resume)
+        form.update { it.copy(resumeIndex=resume.index) }
     }
+    private fun resumeKey(memberId:String)="learning-resume-$memberId-${module.id}"
     fun onEvent(event:LearningEvent) {
         if(state.value.saving)return
         when(event) {
@@ -160,7 +168,7 @@ class LearningViewModel(
             }
             LearningEvent.Resume -> {
                 val id=state.value.memberId?:return
-                val saved=snapshots?.load("learning-resume-$id-${module.id}",Resume.serializer())
+                val saved=snapshots?.load(resumeKey(id),Resume.serializer())
                 if(saved!=null && saved.index in module.activities.indices && saved.index<=state.value.reached) {
                     form.update { it.copy(index=saved.index,encounter=saved.encounter,notes=saved.notes,answer=saved.answer,hints=saved.hints,mode=LearningMode.ACTIVITY,result=null,feedback=null,taps=emptyList()) }
                 } else open(state.value.reached)
@@ -274,6 +282,8 @@ class LearningViewModel(
                     difficult=if(!passed || s.hints>0)it.difficult+s.activity.id else it.difficult,titles=it.titles+(s.activity.id to s.activity.title),successSerial=it.successSerial+if(passed)1 else 0) }
                 if(passed && s.preferences.rewardSound)audio.reward()
                 persist()
+                // A lesson is read, not answered: "J'ai compris" goes straight on, once the success is counted.
+                if(passed && s.activity.kind==LearningKind.LESSON && withTimeoutOrNull(2_000) { state.first { s.activity.id in it.completed } }!=null) advance()
                 repository.sync(id)
             } catch(e:CancellationException){throw e}
             catch(e:Exception){form.update { it.copy(saving=false,error="Sauvegarde impossible. Ta sélection est conservée ; réessaie.") }}

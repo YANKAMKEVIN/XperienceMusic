@@ -37,10 +37,10 @@ class LearningViewModelTest {
         assertEquals(0, vm.state.value.index)
         vm.onEvent(LearningEvent.RequestReview)
         assertTrue(growth.observeChecks().first().isEmpty())
+        // A lesson goes on in one tap: "J'ai compris" opens the next step.
         vm.onEvent(LearningEvent.Check)
-        assertEquals(true, vm.state.value.result)
-        vm.onEvent(LearningEvent.Next)
         assertEquals(1, vm.state.value.index)
+        assertNull(vm.state.value.result)
         vm.onEvent(LearningEvent.Key(60))
         vm.onEvent(LearningEvent.Check)
         assertEquals(false, vm.state.value.result)
@@ -64,8 +64,31 @@ class LearningViewModelTest {
         vm.onEvent(LearningEvent.Open(0))
         val played = vm.state.value.activity
         vm.onEvent(LearningEvent.Check)
-        assertEquals(true, vm.state.value.result)
+        assertTrue(played.id in vm.state.value.completed)
         assertEquals(played.title, vm.state.value.sessionTitles[played.id])
+    }
+
+    @Test fun resumeOnlyShowsOnceAnActivityWasOpened() = runTest {
+        val sessions = FakeSessionRepository(member(instrument = Instrument.PIANO))
+        val dates = DateProvider { LocalDate(2026, 10, 18) }
+        val growth = InMemoryGrowthRepository(sessions, InMemoryMembersRepository(sessions), dates)
+        val files = FakeFileStore()
+        val snapshots = SnapshotStore(files)
+        val player = FakeAudioPlayer()
+        fun open() = LearningViewModel(ObserveCurrentMemberUseCase(sessions), FileLearningRepository(snapshots), growth,
+            TickObjectiveUseCase(sessions, growth, GrowthObjectives.all), dates,
+            PlayLearningExample(files, player, PlaybackController(player, { it }, backgroundScope)), snapshots)
+        val first = open()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { first.state.collect() }
+        assertFalse(first.state.value.canResume, "nothing to resume on a first visit")
+        first.onEvent(LearningEvent.Open(0))
+        first.onEvent(LearningEvent.Home)
+        assertTrue(first.state.value.canResume)
+        // Kept for the next visit too.
+        val again = open()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { again.state.collect() }
+        assertTrue(again.state.value.canResume)
+        assertEquals(0, again.state.value.resumeIndex)
     }
 
     private fun TestScope.singerViewModel(script: List<Int?>, instrument: Instrument = Instrument.SINGER): Pair<LearningViewModel, FileLearningRepository> {
