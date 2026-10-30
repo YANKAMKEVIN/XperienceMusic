@@ -78,7 +78,6 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                 Text(state.practice.key.label(), style = MaterialTheme.typography.headlineSmall)
                 Text("${if (state.practice.descending) "Descente" else "Montée"} · ${state.practice.bpm} BPM · une note par pulsation", Modifier.padding(top = Spacing.s))
                 Text("Relâche chaque touche avant la suivante. Joue une seule fois, sans pédale ni accompagnement. Do4 est le Do central.", Modifier.padding(top = Spacing.s))
-                Text("Correction expérimentale de notes isolées : les accords, la pédale et le bruit peuvent tromper l’analyse. Le responsable garde la validation finale.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Spacing.s))
             }
             if (!state.allowed) Text("Connecte-toi avec ton profil piano pour utiliser cet exercice.")
             else {
@@ -91,11 +90,11 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                         LinearProgressIndicator(progress = { state.level }, modifier = Modifier.fillMaxWidth().padding(top = Spacing.m))
                         Text(when {
                             state.signal == PianoInputSignal.LOUD -> "Le son sature : éloigne un peu le téléphone ou baisse le volume."
-                            state.signalSeen -> "Le micro reçoit du son. Attends qu’il s’éteigne avant de commencer."
+                            state.signalSeen -> "Le micro reçoit du son. Laisse la note s’éteindre avant de commencer."
                             else -> "J’attends un son. Rapproche le téléphone du piano si nécessaire."
                         }, Modifier.padding(top = Spacing.s).semantics { liveRegion = LiveRegionMode.Polite })
                         GradientButton(onClick = actions.countdown, enabled = state.signalSeen && state.signal != PianoInputSignal.LOUD,
-                            modifier = Modifier.padding(top = Spacing.m)) { Text("Je suis prêt · démarrer dans 3 secondes") }
+                            modifier = Modifier.padding(top = Spacing.m)) { Text("C’est parti · départ dans 3 s") }
                         TextButton(onClick = actions.cancel) { Text("Annuler le test micro") }
                     }
                     PianoScalePhase.COUNTDOWN -> AppCard {
@@ -132,7 +131,7 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                 if (state.microphoneDenied) MicrophoneDeniedNotice(it, actions.openSettings)
                 else Text(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             }
-            Text("Essai local, sans envoi au serveur. L’audio est effacé au nouvel essai ou au changement d’exercice, à la sortie ou en arrière-plan. Seul le bilan précédent reste temporairement pour comparer deux essais identiques ; il est aussi effacé à la sortie. Aucun niveau n’est validé automatiquement.", style = MaterialTheme.typography.bodySmall)
+            GoodToKnow()
         }
     }
 }
@@ -153,11 +152,27 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
             listOf(40, 60, 80).forEach { bpm -> FilterChip(selected = s.practice.bpm == bpm,
                 onClick = { actions.configure(s.practice.copy(bpm = bpm)) }, label = { Text("$bpm BPM") }, modifier = Modifier.choiceState(s.practice.bpm == bpm)) }
         }
-        Text("Le tempo règle l’exemple et le guide visuel. La correction évalue les notes, sans imposer une synchronisation exacte.", style = MaterialTheme.typography.bodySmall)
         if (s.practice.focusStart != null) TextButton(onClick = { actions.configure(s.practice.copy(focusStart = null)) }) { Text("Revenir à la gamme complète") }
-        if (s.report != null) Text("Changer d’exercice efface la prise et sa comparaison.", style = MaterialTheme.typography.bodySmall)
     }
 }
+/** The small print of the workshop, folded: said once instead of under every block. */
+@Composable private fun GoodToKnow() {
+    var open by remember { mutableStateOf(false) }
+    val notes = listOf(
+        "Correction expérimentale de notes isolées : les accords, la pédale et le bruit peuvent tromper l’analyse. Le responsable garde la validation finale.",
+        "Essai local, sans envoi au serveur. L’audio est effacé au nouvel essai ou au changement d’exercice, à la sortie ou en arrière-plan. Seul le bilan précédent reste temporairement pour comparer deux essais identiques ; il est aussi effacé à la sortie. Aucun niveau n’est validé automatiquement.",
+        "Le tempo règle l’exemple et le guide visuel. La correction évalue les notes, sans imposer une synchronisation exacte.",
+        "Changer d’exercice efface la prise et sa comparaison.",
+    )
+    AppCard {
+        TextButton(onClick = { open = !open }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+            .semantics { stateDescription = if (open) "déplié" else "replié" }) {
+            Text(if (open) "À savoir ▴" else "À savoir ▾", style = MaterialTheme.typography.titleMedium)
+        }
+        if (open) notes.forEach { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Spacing.s)) }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable private fun TargetNotes(s: PianoScaleUiState) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
