@@ -113,6 +113,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
@@ -148,9 +149,13 @@ fun PlanningScreenContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.m),
             ) {
                 item { Header(state, onEvent) }
-                item { MonthBanner(state, onEvent, onMyAnswers) }
+                // Keyed by month (the cards by date), so changing month fades the old content out and
+                // the new one in rather than swapping it in one frame.
+                item(key = "banner-${state.monthStart}") {
+                    Box(Modifier.animateItem()) { MonthBanner(state, onEvent, onMyAnswers) }
+                }
                 items(state.services, key = { it.date.toString() }) { card ->
-                    ServiceCard(card, onClick = { onServiceClick(card.date) })
+                    ServiceCard(card, onClick = { onServiceClick(card.date) }, modifier = Modifier.animateItem())
                 }
             }
         }
@@ -224,8 +229,9 @@ private fun Header(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit) {
                     val from = initialState.first
                     val to = targetState.first
                     val direction = if (from != null && to != null && to < from) -1 else 1
-                    (slideInHorizontally { it / 3 * direction } + fadeIn())
-                        .togetherWith(slideOutHorizontally { -it / 3 * direction } + fadeOut())
+                    // The old title is gone before the new one shows, so the two never overlap.
+                    (slideInHorizontally(tween(220, delayMillis = 90)) { it / 3 * direction } + fadeIn(tween(220, delayMillis = 90)))
+                        .togetherWith(slideOutHorizontally(tween(90)) { -it / 3 * direction } + fadeOut(tween(90)))
                 },
                 contentAlignment = Alignment.Center,
                 label = "month",
@@ -324,8 +330,8 @@ private fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit
 /** A Friday or Sunday: big date on the left, the team, what is missing, and the member's answer. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ServiceCard(card: ServiceCardUi, onClick: () -> Unit) {
-    AppCard(onClick = onClick, modifier = Modifier.alpha(if (card.isPast) 0.55f else 1f)) {
+private fun ServiceCard(card: ServiceCardUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    AppCard(onClick = onClick, modifier = modifier.alpha(if (card.isPast) 0.55f else 1f)) {
         Row(verticalAlignment = Alignment.Top) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(48.dp)) {
                 Text(card.weekday, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
