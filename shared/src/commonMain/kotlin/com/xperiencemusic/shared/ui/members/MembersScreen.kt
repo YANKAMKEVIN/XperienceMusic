@@ -105,6 +105,10 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.xperiencemusic.shared.ui.theme.Radius
 
 @Composable
 fun MembersScreen(onBack: () -> Unit, viewModel: MembersViewModel = koinViewModel()) {
@@ -275,9 +279,14 @@ private fun MemberRow(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
 private fun LevelMenu(member: MemberRowUi, level: Level, onEvent: (MembersEvent) -> Unit) {
     var isOpen by remember { mutableStateOf(false) }
     Box {
+        // As tall as the role button next to it: a full 48 dp target, still aligned with the name.
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { isOpen = true },
+            modifier = Modifier
+                .heightIn(min = 48.dp)
+                .clip(RoundedCornerShape(Radius.card))
+                .clickable(role = androidx.compose.ui.semantics.Role.Button) { isOpen = true }
+                .padding(end = Spacing.xs),
         ) {
             Text(
                 level.label(),
