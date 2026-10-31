@@ -128,7 +128,12 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
 ## Polish UX (branche feat/ux-polish)
 
 Vingt finitions cosmétiques, une par commit (`61390b4` à `ffd2846`), sans changement de comportement ni de
-données. Rien n'a été vérifié sur un téléphone : les trois commandes Gradle passent.
+données. QA sur le S24 le 31 octobre (`docs/qa/2026-10-31-qa-ux-polish.md`) : 13 OK, 4 non testables en
+démo (4, 12, 17 pour le message en bas d'écran, 18), 4 défauts corrigés ensuite (`0aeef2e` à `768039a`) :
+le Planning fait glisser tout le mois, la partie basse de l'éditeur de setlist suit le retrait, niveau et rôle
+des membres ont le même style, l'onglet de Ma progression change sans fondu en mouvement réduit. Ces quatre
+corrections compilent et passent les tests mais n'ont pas été revues sur un téléphone (S24 indisponible, A17 à
+réserver auprès de la session coordinatrice).
 
 1. Les boutons en dégradé réagissent à l'appui (léger rétrécissement et assombrissement) — `BrandControls.kt`.
 2. Lecture, chargement et pause passent de l'un à l'autre en fondu — `PlayPauseButton.kt`, `PlayerSheet.kt`.
