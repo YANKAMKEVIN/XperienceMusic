@@ -113,6 +113,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun PlanningScreen(
@@ -388,6 +389,8 @@ private fun TodayPill(modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Bold,
         color = Color.White,
+        maxLines = 1,
+        softWrap = false,
         modifier = modifier.background(BrandColors.horizontalGradient, CircleShape).padding(horizontal = 10.dp, vertical = 3.dp),
     )
 }
@@ -403,6 +406,8 @@ private fun AnswerBadge(answer: MyAnswer) {
         label,
         style = MaterialTheme.typography.labelMedium,
         color = color,
+        maxLines = 1,
+        softWrap = false,
         modifier = Modifier
             .background(color.copy(alpha = 0.14f), CircleShape)
             .padding(horizontal = 10.dp, vertical = 3.dp),
@@ -418,6 +423,8 @@ internal fun PersonPill(person: ServingUi) {
         listOfNotNull(person.name, part).joinToString(" · "),
         style = MaterialTheme.typography.labelMedium,
         color = color,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .background(
                 if (person.isMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,

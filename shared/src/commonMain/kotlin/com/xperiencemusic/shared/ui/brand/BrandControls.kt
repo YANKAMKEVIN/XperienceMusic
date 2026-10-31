@@ -82,13 +82,15 @@ fun GradientButton(
     }
 }
 
-/** A key ("Sol", "Mim") in a small tinted pill. */
+/** A key ("Sol", "Mim") in a small tinted pill, always on one line. */
 @Composable
 fun KeyPill(label: String, modifier: Modifier = Modifier, dimmed: Boolean = false) {
     Text(
         label,
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.primary,
+        maxLines = 1,
+        softWrap = false,
         modifier = modifier
             .alpha(if (dimmed) 0.6f else 1f)
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
