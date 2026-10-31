@@ -17,18 +17,27 @@ import com.xperiencemusic.shared.resources.player_loading
 import com.xperiencemusic.shared.resources.player_pause
 import com.xperiencemusic.shared.resources.player_play
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 
-/** Round play/pause button; [itemLabel] names what is played, for screen readers. */
+/**
+ * Round play/pause button; [itemLabel] names what is played, for screen readers. The icons cross-fade
+ * so play, loading and pause do not flicker into each other.
+ */
 @Composable
 fun PlayPauseButton(status: PlaybackStatus, itemLabel: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     FilledTonalIconButton(onClick = onClick, modifier = modifier) {
-        when (status) {
-            PlaybackStatus.LOADING -> Box(contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+        // Idle and paused look the same: no fade between them.
+        val shown = if (status == PlaybackStatus.IDLE) PlaybackStatus.PAUSED else status
+        Crossfade(targetState = shown, animationSpec = tween(180), label = "play-pause") { visual ->
+            when (visual) {
+                PlaybackStatus.LOADING -> Box(contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                }
+                PlaybackStatus.PLAYING -> Icon(PauseIcon, contentDescription = stringResource(Res.string.player_pause, itemLabel))
+                PlaybackStatus.IDLE, PlaybackStatus.PAUSED ->
+                    Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(Res.string.player_play, itemLabel))
             }
-            PlaybackStatus.PLAYING -> Icon(PauseIcon, contentDescription = stringResource(Res.string.player_pause, itemLabel))
-            PlaybackStatus.IDLE, PlaybackStatus.PAUSED ->
-                Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(Res.string.player_play, itemLabel))
         }
     }
 }
