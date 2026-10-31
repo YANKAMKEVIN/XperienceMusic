@@ -149,13 +149,17 @@ fun PlanningScreenContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.m),
             ) {
                 item { Header(state, onEvent) }
-                // Keyed by month (the cards by date), so changing month fades the old content out and
-                // the new one in rather than swapping it in one frame.
+                // Keyed by month (the cards by date), so changing month fades the old content out, then
+                // the new one in, on the same beat as the title: never one frame swap, never both at once.
                 item(key = "banner-${state.monthStart}") {
-                    Box(Modifier.animateItem()) { MonthBanner(state, onEvent, onMyAnswers) }
+                    Box(Modifier.animateItem(fadeInSpec = monthFadeIn, fadeOutSpec = monthFadeOut)) { MonthBanner(state, onEvent, onMyAnswers) }
                 }
                 items(state.services, key = { it.date.toString() }) { card ->
-                    ServiceCard(card, onClick = { onServiceClick(card.date) }, modifier = Modifier.animateItem())
+                    ServiceCard(
+                        card,
+                        onClick = { onServiceClick(card.date) },
+                        modifier = Modifier.animateItem(fadeInSpec = monthFadeIn, fadeOutSpec = monthFadeOut),
+                    )
                 }
             }
         }
@@ -214,6 +218,10 @@ private fun ValidateMonthDialog(monthLabel: String, validation: MonthValidationU
     )
 }
 
+/** The old month leaves quickly, then the new one arrives: title, banner and cards share this beat. */
+private val monthFadeOut = tween<Float>(90)
+private val monthFadeIn = tween<Float>(220, delayMillis = 90)
+
 @Composable
 private fun Header(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit) {
     Column {
@@ -230,8 +238,8 @@ private fun Header(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit) {
                     val to = targetState.first
                     val direction = if (from != null && to != null && to < from) -1 else 1
                     // The old title is gone before the new one shows, so the two never overlap.
-                    (slideInHorizontally(tween(220, delayMillis = 90)) { it / 3 * direction } + fadeIn(tween(220, delayMillis = 90)))
-                        .togetherWith(slideOutHorizontally(tween(90)) { -it / 3 * direction } + fadeOut(tween(90)))
+                    (slideInHorizontally(tween(220, delayMillis = 90)) { it / 3 * direction } + fadeIn(monthFadeIn))
+                        .togetherWith(slideOutHorizontally(tween(90)) { -it / 3 * direction } + fadeOut(monthFadeOut))
                 },
                 contentAlignment = Alignment.Center,
                 label = "month",
