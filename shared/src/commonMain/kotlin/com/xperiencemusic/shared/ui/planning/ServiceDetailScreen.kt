@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,6 +67,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun ServiceDetailScreen(
@@ -106,7 +106,7 @@ fun ServiceDetailScreenContent(state: ServiceDetailUiState, onEvent: (ServiceDet
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         LazyColumn(

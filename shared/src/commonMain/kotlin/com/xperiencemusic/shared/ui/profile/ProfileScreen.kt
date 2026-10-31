@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,6 +66,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun ProfileScreen(onBack: () -> Unit, viewModel: ProfileViewModel = koinViewModel()) {
@@ -112,7 +112,7 @@ fun ProfileScreenContent(state: ProfileUiState, onEvent: (ProfileEvent) -> Unit,
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         Column(

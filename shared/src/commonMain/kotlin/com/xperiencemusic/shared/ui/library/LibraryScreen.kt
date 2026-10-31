@@ -61,6 +61,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun LibraryScreen(
@@ -134,6 +135,10 @@ private fun LibraryList(
                     onSelect = { onEvent(LibraryEvent.KeySelected(it)) },
                 )
             }
+        }
+        // The first load used to leave a blank list under the search field.
+        if (state.isLoading && state.songs.isEmpty()) {
+            item { LoadingIndicator(Modifier.padding(top = Spacing.xxl)) }
         }
         if (!state.isLoading && state.songs.isEmpty()) {
             item {

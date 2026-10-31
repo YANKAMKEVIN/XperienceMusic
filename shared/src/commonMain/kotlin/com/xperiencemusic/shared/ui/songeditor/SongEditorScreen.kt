@@ -85,6 +85,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 /** [songId] null creates a new song. */
 @Composable
@@ -123,7 +124,7 @@ fun SongEditorScreenContent(
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         Column(

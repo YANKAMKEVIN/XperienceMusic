@@ -54,7 +54,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -138,6 +137,7 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun SongDetailScreen(
@@ -207,7 +207,7 @@ fun SongDetailScreenContent(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                state.isLoading -> LoadingIndicator()
                 state.isMissing -> Text(stringResource(Res.string.song_not_found), Modifier.align(Alignment.Center))
                 else -> SongDetailBody(state, onEvent, onAddRecording, onOpenStage, onRecordVoice)
             }

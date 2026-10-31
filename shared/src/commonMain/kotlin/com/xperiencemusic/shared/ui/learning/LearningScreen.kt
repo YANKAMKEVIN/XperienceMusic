@@ -50,6 +50,7 @@ import com.xperiencemusic.shared.ui.theme.appSwitchColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun LearningScreen(onBack:()->Unit,moduleId:String=LearningCatalog.DEFAULT,onModule:(String)->Unit={},onRecord:()->Unit={},onScaleCoach:()->Unit={},
@@ -75,7 +76,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
             // The main action stays on screen however long the hints and corrections above it grow.
             bottomBar={ if(!state.loading && state.allowed && state.mode==LearningMode.ACTIVITY) ActivityAction(state,onEvent) },
             contentWindowInsets=WindowInsets(0)) { padding ->
-            if(state.loading) Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.Center){CircularProgressIndicator()}
+            if(state.loading) LoadingIndicator(Modifier.padding(padding))
             else if(!state.allowed)Text(if(state.module.instrument==Instrument.SINGER)"Ces modules sont proposés au parcours chantre." else "Ces modules sont proposés au parcours piano.",Modifier.padding(padding).padding(Spacing.l))
             else key(state.mode,state.index,state.module.id) {
                 Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {

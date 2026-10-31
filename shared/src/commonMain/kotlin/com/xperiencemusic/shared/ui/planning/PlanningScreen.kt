@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -107,6 +106,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun PlanningScreen(
@@ -134,7 +134,7 @@ fun PlanningScreenContent(
     }
     Box(Modifier.fillMaxSize()) {
         if (state.isLoading) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
+            LoadingIndicator()
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(start = Spacing.l, top = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),

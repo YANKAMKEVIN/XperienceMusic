@@ -36,7 +36,6 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -105,6 +104,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun MembersScreen(onBack: () -> Unit, viewModel: MembersViewModel = koinViewModel()) {
@@ -150,7 +150,7 @@ fun MembersScreenContent(state: MembersUiState, onEvent: (MembersEvent) -> Unit,
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         LazyColumn(
