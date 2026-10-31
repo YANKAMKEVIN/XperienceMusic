@@ -34,6 +34,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 
 /** A big tappable answer: icon tile, title, one line of explanation; the gradient marks the choice. */
 @Composable
@@ -47,12 +52,17 @@ fun ChoiceCard(
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(20.dp)
+    // The tint and the check ease in, so a choice is felt rather than flashed.
+    val background by animateColorAsState(
+        if (isSelected) colors.primaryContainer.copy(alpha = 0.35f) else colors.surfaceContainer,
+        label = "choice-background",
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.35f) else colors.surfaceContainer)
+            .background(background)
             .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) BrandColors.gradient else SolidColor(colors.outlineVariant), shape)
             .selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton)
             .padding(Spacing.m),
@@ -62,7 +72,9 @@ fun ChoiceCard(
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(description, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
         }
-        if (isSelected) Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = colors.primary)
+        AnimatedVisibility(visible = isSelected, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
+            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = colors.primary)
+        }
     }
 }
 
