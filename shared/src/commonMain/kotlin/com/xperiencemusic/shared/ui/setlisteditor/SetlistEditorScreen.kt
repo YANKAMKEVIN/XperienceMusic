@@ -81,6 +81,8 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.brand.KeyPill
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun SetlistEditorScreen(
@@ -298,8 +300,8 @@ private fun SelectedSongRow(
                 modifier = Modifier.padding(end = Spacing.m),
             )
             Column(Modifier.weight(1f)) {
-                Text(song.title, style = MaterialTheme.typography.titleSmall)
-                Text(song.keyLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+                Text(song.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                KeyPill(song.keyLabel, modifier = Modifier.padding(top = Spacing.xs))
             }
             IconButton(onClick = { onEvent(SetlistEditorEvent.SongMovedUp(song.id)) }, enabled = !isFirst) {
                 Icon(Icons.Filled.KeyboardArrowUp, contentDescription = stringResource(Res.string.setlist_move_up, song.title))
@@ -319,8 +321,8 @@ private fun AvailableSongRow(song: SetlistSongUi, onAdd: () -> Unit, modifier: M
     AppCard(onClick = onAdd, modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(song.title, style = MaterialTheme.typography.titleSmall)
-                Text(song.keyLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+                Text(song.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                KeyPill(song.keyLabel, modifier = Modifier.padding(top = Spacing.xs))
             }
             Icon(
                 Icons.Filled.Add,
