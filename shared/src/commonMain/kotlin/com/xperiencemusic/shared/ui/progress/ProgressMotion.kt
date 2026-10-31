@@ -2,6 +2,8 @@ package com.xperiencemusic.shared.ui.progress
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -204,8 +206,9 @@ internal fun SectionTabs(labels: List<String>, selected: Int, onSelect: (Int) ->
     ) {
         labels.forEachIndexed { i, label ->
             val isOn = i == selected
-            val background by animateColorAsState(if (isOn) Palette.Snow else Color.Transparent, tween(250), label = "tab-bg")
-            val content by animateColorAsState(if (isOn) Palette.Night else Palette.Mist, tween(250), label = "tab-fg")
+            val fade: AnimationSpec<Color> = if (LocalCalmMotion.current) snap() else tween(250)
+            val background by animateColorAsState(if (isOn) Palette.Snow else Color.Transparent, fade, label = "tab-bg")
+            val content by animateColorAsState(if (isOn) Palette.Night else Palette.Mist, fade, label = "tab-fg")
             Box(
                 Modifier
                     .weight(1f)
