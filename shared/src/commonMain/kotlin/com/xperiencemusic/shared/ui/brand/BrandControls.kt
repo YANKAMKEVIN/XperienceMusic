@@ -22,8 +22,18 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
 
-/** The screen's main action, in the brand gradient. One per screen at most. */
+/**
+ * The screen's main action, in the brand gradient. One per screen at most. The gradient hides
+ * Material's ripple, so a press shrinks the button a little and darkens it instead.
+ */
 @Composable
 fun GradientButton(
     onClick: () -> Unit,
@@ -32,10 +42,14 @@ fun GradientButton(
     content: @Composable RowScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(16.dp)
+    val interaction = remember { MutableInteractionSource() }
+    val isPressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.97f else 1f, tween(120), label = "gradient-press")
     Button(
         onClick = onClick,
         enabled = enabled,
         shape = shape,
+        interactionSource = interaction,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
             contentColor = Color.White,
@@ -43,13 +57,19 @@ fun GradientButton(
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
         contentPadding = PaddingValues(0.dp),
-        modifier = modifier.defaultMinSize(minHeight = 56.dp),
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .defaultMinSize(minHeight = 56.dp),
     ) {
         Box(
             Modifier
                 .fillMaxWidth()
                 .defaultMinSize(minHeight = 56.dp)
-                .then(if (enabled) Modifier.background(BrandColors.horizontalGradient, shape) else Modifier),
+                .then(if (enabled) Modifier.background(BrandColors.horizontalGradient, shape) else Modifier)
+                .then(if (isPressed) Modifier.background(Color.Black.copy(alpha = 0.16f), shape) else Modifier),
             contentAlignment = Alignment.Center,
         ) {
             Row(
