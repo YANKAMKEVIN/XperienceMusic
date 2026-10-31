@@ -24,6 +24,10 @@ internal object Palette {
     val VioletEdge = Color(0xFF3A3260)
     val Outline = Color(0xFF2E2A44)
     val Success = Color(0xFF6FD3A0)
+    /** A black piano key, and the ink of the labels on the white ones. */
+    val Ebony = Color(0xFF161320)
+    /** The line between two piano keys. */
+    val KeyEdge = Color(0xFF555164)
     val Error = Color(0xFFFF8A8A)
 }
 
