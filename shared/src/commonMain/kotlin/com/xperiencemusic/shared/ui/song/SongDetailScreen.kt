@@ -145,6 +145,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 
 @Composable
 fun SongDetailScreen(
@@ -393,18 +396,25 @@ private fun NotationSwitch(selected: Notation, onSelect: (Notation) -> Unit, mod
     ) {
         notations.forEach { (notation, label) ->
             val isSelected = notation == selected
+            // The gradient fades from the old choice to the new one rather than jumping.
+            val highlight by animateFloatAsState(if (isSelected) 1f else 0f, tween(220), label = "notation-highlight")
+            val textColor by animateColorAsState(
+                if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                tween(220),
+                label = "notation-text",
+            )
             Box(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .then(if (isSelected) Modifier.background(BrandColors.horizontalGradient, shape) else Modifier)
+                    .background(BrandColors.horizontalGradient, shape, alpha = highlight)
                     .selectable(selected = isSelected, onClick = { onSelect(notation) }, role = Role.Tab),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     stringResource(label),
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = textColor,
                     maxLines = 1,
                 )
             }
