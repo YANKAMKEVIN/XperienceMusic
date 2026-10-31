@@ -186,8 +186,12 @@ fun SetlistEditorScreenContent(
             }
             item { SectionTitle(stringResource(Res.string.setlist_selected_title, state.selected.size)) }
             if (state.selected.isEmpty()) {
-                item {
-                    Text(stringResource(Res.string.setlist_selected_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                item(key = "selected-empty") {
+                    Text(
+                        stringResource(Res.string.setlist_selected_empty),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.animateItem(),
+                    )
                 }
             }
             itemsIndexed(state.selected, key = { _, song -> "selected-${song.id}" }) { index, song ->
@@ -200,8 +204,10 @@ fun SetlistEditorScreenContent(
                     modifier = Modifier.animateItem(),
                 )
             }
-            item { SectionTitle(stringResource(Res.string.setlist_add_title), Modifier.padding(top = Spacing.l)) }
-            item {
+            // Keyed and animated too, so the section below glides up with the list instead of jumping
+            // over a song that is still fading out.
+            item(key = "add-title") { SectionTitle(stringResource(Res.string.setlist_add_title), Modifier.animateItem().padding(top = Spacing.l)) }
+            item(key = "add-search") {
                 OutlinedTextField(
                     value = state.query,
                     onValueChange = { onEvent(SetlistEditorEvent.QueryChanged(it)) },
@@ -211,18 +217,18 @@ fun SetlistEditorScreenContent(
                         { ClearSearchButton { onEvent(SetlistEditorEvent.QueryChanged("")) } }
                     },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.animateItem().fillMaxWidth(),
                 )
             }
             items(state.available, key = { "available-${it.id}" }) { song ->
                 AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) }, modifier = Modifier.animateItem())
             }
             if (state.isEditing) {
-                item {
+                item(key = "delete") {
                     TextButton(
                         onClick = { isConfirmingDelete = true },
                         enabled = !state.isDeleting,
-                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.xl),
+                        modifier = Modifier.animateItem().fillMaxWidth().padding(top = Spacing.xl),
                     ) {
                         Text(stringResource(Res.string.setlist_delete), color = MaterialTheme.colorScheme.error)
                     }
