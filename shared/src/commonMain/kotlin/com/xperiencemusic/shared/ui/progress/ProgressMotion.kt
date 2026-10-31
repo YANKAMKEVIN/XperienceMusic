@@ -58,12 +58,18 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.runtime.staticCompositionLocalOf
 
-/** Fades and lifts an element in once, [order] steps after the screen opened. */
+/** "Réduire les animations", provided by the progress screen and read by its moving parts. */
+internal val LocalCalmMotion = staticCompositionLocalOf { false }
+
+/** Fades and lifts an element in once, [order] steps after the screen opened; shown at once when calm. */
 @Composable
 internal fun Modifier.enter(order: Int): Modifier {
-    val shown = remember { Animatable(0f) }
+    val calm = LocalCalmMotion.current
+    val shown = remember { Animatable(if (calm) 1f else 0f) }
     LaunchedEffect(Unit) {
+        if (calm) return@LaunchedEffect
         delay(order * 70L)
         shown.animateTo(1f, tween(500, easing = FastOutSlowInEasing))
     }
@@ -140,11 +146,16 @@ private fun RingSegment.color(): Color = when (this) {
     RingSegment.TODO -> Palette.NightHigh
 }
 
-/** A number that counts up from zero the first time it shows. */
+/** A number that counts up from zero the first time it shows; written straight away when calm. */
 @Composable
 internal fun CountUp(target: Int, style: androidx.compose.ui.text.TextStyle, modifier: Modifier = Modifier) {
-    var shown by remember { mutableIntStateOf(0) }
-    LaunchedEffect(target) {
+    val calm = LocalCalmMotion.current
+    var shown by remember { mutableIntStateOf(if (calm) target else 0) }
+    LaunchedEffect(target, calm) {
+        if (calm) {
+            shown = target
+            return@LaunchedEffect
+        }
         delay(450)
         while (shown != target) {
             shown += if (target > shown) 1 else -1
@@ -154,10 +165,13 @@ internal fun CountUp(target: Int, style: androidx.compose.ui.text.TextStyle, mod
     Text("$shown", style = style, modifier = modifier)
 }
 
-/** A small equalizer that dances while the focus card waits for a tap. */
+/** A small equalizer that dances while the focus card waits for a tap; it holds still when calm. */
 @Composable
 internal fun Equalizer(modifier: Modifier = Modifier, color: Color = Palette.Violet) {
-    val time by rememberInfiniteTransition(label = "eq").animateFloat(0f, 1f, infiniteRepeatable(tween(1_100, easing = LinearEasing)), label = "t")
+    var time = 0.3f
+    if (!LocalCalmMotion.current) {
+        time = rememberInfiniteTransition(label = "eq").animateFloat(0f, 1f, infiniteRepeatable(tween(1_100, easing = LinearEasing)), label = "t").value
+    }
     val phases = remember { listOf(0f, .15f, .3f, .1f, .45f, .2f, .35f, .05f, .25f) }
     Canvas(modifier.width(64.dp).height(36.dp)) {
         val bar = 4.dp.toPx()
