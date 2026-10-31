@@ -14,7 +14,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.brand.KeyPill
 import com.xperiencemusic.shared.ui.brand.XmIcons
-import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -121,7 +120,6 @@ private fun LibraryList(
                     { ClearSearchButton { onEvent(LibraryEvent.QueryChanged("")) } }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(Radius.card),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
