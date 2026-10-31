@@ -148,6 +148,8 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import com.xperiencemusic.shared.ui.components.EmptyState
+import com.xperiencemusic.shared.resources.song_not_found_text
 
 @Composable
 fun SongDetailScreen(
@@ -218,7 +220,12 @@ fun SongDetailScreenContent(
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
                 state.isLoading -> LoadingIndicator()
-                state.isMissing -> Text(stringResource(Res.string.song_not_found), Modifier.align(Alignment.Center))
+                state.isMissing -> EmptyState(
+                    icon = XmIcons.Book,
+                    title = stringResource(Res.string.song_not_found),
+                    text = stringResource(Res.string.song_not_found_text),
+                    modifier = Modifier.align(Alignment.Center).padding(horizontal = Spacing.l),
+                )
                 else -> SongDetailBody(state, onEvent, onAddRecording, onOpenStage, onRecordVoice)
             }
         }
