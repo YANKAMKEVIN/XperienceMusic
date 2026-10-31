@@ -285,9 +285,11 @@ private fun WeekSongRow(song: WeekSongUi, dimmed: Boolean, onClick: () -> Unit, 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.width(28.dp),
             )
+            // A past week reads as history: the title fades with its key, not the key alone.
             Text(
                 song.title,
                 style = MaterialTheme.typography.titleMedium,
+                color = if (dimmed) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
