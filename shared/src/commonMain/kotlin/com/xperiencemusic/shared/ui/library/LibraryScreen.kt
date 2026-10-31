@@ -160,15 +160,16 @@ private fun LibraryList(
                 }
             }
         }
+        // Rows glide into place as the search or the key filter narrows the list.
         items(state.songs, key = { it.id }) { song ->
-            LibrarySongRow(song, onClick = { onSongClick(song.id) })
+            LibrarySongRow(song, onClick = { onSongClick(song.id) }, modifier = Modifier.animateItem())
         }
     }
 }
 
 @Composable
-private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit) {
-    AppCard(onClick = onClick) {
+private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    AppCard(onClick = onClick, modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 Modifier.size(44.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp)),
