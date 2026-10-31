@@ -77,6 +77,11 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 
 @Composable
 fun StageScreen(
@@ -264,7 +269,12 @@ private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
             })
         }
     }
-    if (state.isAutoScrolling) {
+    // The speed buttons unfold under the controls rather than shoving the lyrics down at once.
+    AnimatedVisibility(
+        visible = state.isAutoScrolling,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically() + fadeOut(),
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
