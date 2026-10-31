@@ -195,6 +195,7 @@ fun SetlistEditorScreenContent(
                     isFirst = index == 0,
                     isLast = index == state.selected.lastIndex,
                     onEvent = onEvent,
+                    modifier = Modifier.animateItem(),
                 )
             }
             item { SectionTitle(stringResource(Res.string.setlist_add_title), Modifier.padding(top = Spacing.l)) }
@@ -212,7 +213,7 @@ fun SetlistEditorScreenContent(
                 )
             }
             items(state.available, key = { "available-${it.id}" }) { song ->
-                AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) })
+                AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) }, modifier = Modifier.animateItem())
             }
             if (state.isEditing) {
                 item {
@@ -286,8 +287,9 @@ private fun SelectedSongRow(
     isFirst: Boolean,
     isLast: Boolean,
     onEvent: (SetlistEditorEvent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    AppCard {
+    AppCard(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "$position",
@@ -313,8 +315,8 @@ private fun SelectedSongRow(
 }
 
 @Composable
-private fun AvailableSongRow(song: SetlistSongUi, onAdd: () -> Unit) {
-    AppCard(onClick = onAdd) {
+private fun AvailableSongRow(song: SetlistSongUi, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+    AppCard(onClick = onAdd, modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(song.title, style = MaterialTheme.typography.titleSmall)
