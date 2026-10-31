@@ -16,6 +16,12 @@ internal object Palette {
     val BlueDeep = Color(0xFF0E1E4A)
     val Snow = Color(0xFFF4F3FA)
     val Mist = Color(0xFFA9A6BD)
+    /** Body text on a raised gradient card: a step brighter than [Mist]. */
+    val MistLight = Color(0xFFC9C6DA)
+    /** Eyebrow text over the violet gradient. */
+    val VioletLight = Color(0xFFB9A2FF)
+    /** The hairline around a violet gradient card. */
+    val VioletEdge = Color(0xFF3A3260)
     val Outline = Color(0xFF2E2A44)
     val Success = Color(0xFF6FD3A0)
     val Error = Color(0xFFFF8A8A)

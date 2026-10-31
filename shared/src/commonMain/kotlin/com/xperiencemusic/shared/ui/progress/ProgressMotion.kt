@@ -59,6 +59,7 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.xperiencemusic.shared.ui.theme.Radius
 
 /** "Réduire les animations", provided by the progress screen and read by its moving parts. */
 internal val LocalCalmMotion = staticCompositionLocalOf { false }
@@ -233,20 +234,20 @@ internal fun FocusCard(
     modifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
 ) {
-    val shape = RoundedCornerShape(28.dp)
+    val shape = RoundedCornerShape(Radius.hero)
     Box(
         modifier
             .fillMaxWidth()
             .clip(shape)
             .background(Brush.linearGradient(listOf(Palette.VioletDeep, Palette.NightRaised, Palette.BlueDeep)))
-            .border(1.dp, Color(0xFF3A3260), shape)
+            .border(1.dp, Palette.VioletEdge, shape)
             .padding(20.dp),
     ) {
         Equalizer(Modifier.align(Alignment.TopEnd))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = Color(0xFFB9A2FF), modifier = Modifier.padding(end = 72.dp))
+            Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = Palette.VioletLight, modifier = Modifier.padding(end = 72.dp))
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(end = 56.dp))
-            text?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFC9C6DA)) }
+            text?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Palette.MistLight) }
             if (action != null) Box(Modifier.padding(top = 10.dp)) { action() }
         }
     }

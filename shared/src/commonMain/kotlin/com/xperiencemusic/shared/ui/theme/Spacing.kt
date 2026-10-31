@@ -14,4 +14,6 @@ object Spacing {
 
 object Radius {
     val card = 16.dp
+    /** The large hero surfaces: the focus card, the empty-state tile. */
+    val hero = 28.dp
 }
