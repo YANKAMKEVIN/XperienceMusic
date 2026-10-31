@@ -132,8 +132,8 @@ données. QA sur le S24 le 31 octobre (`docs/qa/2026-10-31-qa-ux-polish.md`) : 1
 démo (4, 12, 17 pour le message en bas d'écran, 18), 4 défauts corrigés ensuite (`0aeef2e` à `768039a`) :
 le Planning fait glisser tout le mois, la partie basse de l'éditeur de setlist suit le retrait, niveau et rôle
 des membres ont le même style, l'onglet de Ma progression change sans fondu en mouvement réduit. Ces quatre
-corrections compilent et passent les tests mais n'ont pas été revues sur un téléphone (S24 indisponible, A17 à
-réserver auprès de la session coordinatrice).
+corrections sont vérifiées sur l'A17 (build démo, 31 octobre au soir) ; le fondu des cartes du Planning a été
+décalé ensuite pour que l'ancien et le nouveau mois ne se superposent plus, également vérifié sur l'A17.
 
 1. Les boutons en dégradé réagissent à l'appui (léger rétrécissement et assombrissement) — `BrandControls.kt`.
 2. Lecture, chargement et pause passent de l'un à l'autre en fondu — `PlayPauseButton.kt`, `PlayerSheet.kt`.
