@@ -279,28 +279,7 @@ private fun MemberRow(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
 private fun LevelMenu(member: MemberRowUi, level: Level, onEvent: (MembersEvent) -> Unit) {
     var isOpen by remember { mutableStateOf(false) }
     Box {
-        // As tall as the role button next to it: a full 48 dp target, still aligned with the name.
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .clip(RoundedCornerShape(Radius.card))
-                .clickable(role = androidx.compose.ui.semantics.Role.Button) { isOpen = true }
-                .padding(end = Spacing.xs),
-        ) {
-            Text(
-                level.label(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                softWrap = false,
-            )
-            Icon(
-                Icons.Filled.ArrowDropDown,
-                contentDescription = stringResource(Res.string.members_change_level, member.name),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
+        MenuTrigger(level.label(), stringResource(Res.string.members_change_level, member.name)) { isOpen = true }
         DropdownMenu(expanded = isOpen, onDismissRequest = { isOpen = false }) {
             Level.entries.forEach { option ->
                 DropdownMenuItem(
@@ -319,12 +298,11 @@ private fun LevelMenu(member: MemberRowUi, level: Level, onEvent: (MembersEvent)
 private fun RoleMenu(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
     var isOpen by remember { mutableStateOf(false) }
     Box {
-        TextButton(onClick = { isOpen = true }, enabled = !member.isMe) {
-            Text(member.role.label())
-            if (!member.isMe) {
-                Icon(Icons.Filled.ArrowDropDown, contentDescription = stringResource(Res.string.members_change_role, member.name))
-            }
-        }
+        MenuTrigger(
+            member.role.label(),
+            stringResource(Res.string.members_change_role, member.name),
+            enabled = !member.isMe,
+        ) { isOpen = true }
         DropdownMenu(expanded = isOpen, onDismissRequest = { isOpen = false }) {
             Role.entries.forEach { role ->
                 DropdownMenuItem(
@@ -336,6 +314,26 @@ private fun RoleMenu(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
                 )
             }
         }
+    }
+}
+
+/**
+ * The level and role pickers share one look: same text, no inner indent, a full 48 dp target, so
+ * they line up with the name whether they sit side by side or wrap onto two lines.
+ */
+@Composable
+private fun MenuTrigger(label: String, description: String, enabled: Boolean = true, onClick: () -> Unit) {
+    val color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(Radius.card))
+            .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .padding(end = Spacing.s),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = color, maxLines = 1, softWrap = false)
+        if (enabled) Icon(Icons.Filled.ArrowDropDown, contentDescription = description, tint = color)
     }
 }
 
