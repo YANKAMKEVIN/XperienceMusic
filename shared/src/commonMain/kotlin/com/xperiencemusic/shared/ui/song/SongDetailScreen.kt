@@ -138,6 +138,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.draw.clipToBounds
 
 @Composable
 fun SongDetailScreen(
@@ -329,14 +336,27 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
                 ) {
                     Text("−", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
                 }
-                Text(
-                    state.keyLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.widthIn(min = 96.dp).semantics {
-                        contentDescription = "Tonalité ${state.keyLabel}"
+                // The key rolls up when it goes higher and down when it goes lower.
+                AnimatedContent(
+                    targetState = state.transposeSemitones to state.keyLabel,
+                    transitionSpec = {
+                        val direction = if (targetState.first < initialState.first) -1 else 1
+                        (slideInVertically { it * direction } + fadeIn())
+                            .togetherWith(slideOutVertically { -it * direction } + fadeOut())
                     },
-                )
+                    contentAlignment = Alignment.Center,
+                    label = "key",
+                    modifier = Modifier.widthIn(min = 96.dp).clipToBounds(),
+                ) { (_, keyLabel) ->
+                    Text(
+                        keyLabel,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.semantics {
+                            contentDescription = "Tonalité $keyLabel"
+                        },
+                    )
+                }
                 IconButton(
                     onClick = { onEvent(SongDetailEvent.TransposeUpClicked) },
                     modifier = Modifier.semantics { contentDescription = "Monter d’un demi-ton" },
