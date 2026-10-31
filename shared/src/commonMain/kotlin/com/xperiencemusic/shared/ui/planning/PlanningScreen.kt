@@ -107,6 +107,12 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 
 @Composable
 fun PlanningScreen(
@@ -210,12 +216,27 @@ private fun Header(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit) {
             IconButton(onClick = { onEvent(PlanningEvent.PreviousMonth) }, enabled = state.canGoBack) {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.planning_previous_month))
             }
-            Text(
-                state.monthLabel.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.titleLarge,
+            // The month slides the way the arrows point.
+            AnimatedContent(
+                targetState = state.monthStart to state.monthLabel,
+                transitionSpec = {
+                    val from = initialState.first
+                    val to = targetState.first
+                    val direction = if (from != null && to != null && to < from) -1 else 1
+                    (slideInHorizontally { it / 3 * direction } + fadeIn())
+                        .togetherWith(slideOutHorizontally { -it / 3 * direction } + fadeOut())
+                },
+                contentAlignment = Alignment.Center,
+                label = "month",
                 modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center,
-            )
+            ) { (_, label) ->
+                Text(
+                    label.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                )
+            }
             IconButton(onClick = { onEvent(PlanningEvent.NextMonth) }, enabled = state.canGoForward) {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(Res.string.planning_next_month))
             }
