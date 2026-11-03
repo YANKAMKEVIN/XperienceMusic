@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.ui.onboarding
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -34,11 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 
 /** A big tappable answer: icon tile, title, one line of explanation; the gradient marks the choice. */
 @Composable
@@ -72,9 +69,14 @@ fun ChoiceCard(
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(description, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
         }
-        AnimatedVisibility(visible = isSelected, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
-            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = colors.primary)
-        }
+        // The check keeps its room while hidden, so the description does not reflow when it appears.
+        val check by animateFloatAsState(if (isSelected) 1f else 0f, label = "choice-check")
+        Icon(
+            Icons.Filled.CheckCircle,
+            contentDescription = null,
+            tint = colors.primary,
+            modifier = Modifier.size(24.dp).graphicsLayer { alpha = check; scaleX = check; scaleY = check },
+        )
     }
 }
 
