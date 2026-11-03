@@ -29,7 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -144,6 +143,10 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 
 @Composable
 fun ProgressScreen(
@@ -208,7 +211,7 @@ fun ProgressScreenContent(
         }
     }
     if (state.isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        LoadingIndicator()
         return
     }
     val modules = remember(state.learning, state.instrument) { state.learningModules() }
@@ -221,61 +224,64 @@ fun ProgressScreenContent(
     val section = sections.getOrNull(tab) ?: sections.firstOrNull()
     var sheetId by rememberSaveable { mutableStateOf<String?>(null) }
 
-    Box(Modifier.fillMaxSize()) {
-        Box(
-            Modifier
-                .align(Alignment.TopCenter)
-                .size(520.dp)
-                .padding(bottom = 160.dp)
-                .background(Brush.radialGradient(listOf(BrandColors.Indigo.copy(alpha = 0.22f), Palette.Night.copy(alpha = 0f)))),
-        )
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = Spacing.l)) {
-            Header(state, onReview, onValidate, onManageMembers, onProfile, onSignOut, Modifier.padding(horizontal = Spacing.l).enter(0))
-            if (state.canReview && (state.toReviewCount > 0 || state.toValidateCount > 0)) {
-                AdminStrip(state, onReview, onValidate, Modifier.padding(start = Spacing.l, end = Spacing.l, top = Spacing.m).enter(1))
-            }
-            state.levelCard?.let { card ->
-                LevelHero(card, state.objectives, modules, state.isWorking, state.reduceMotion, Modifier.fillMaxWidth().padding(top = Spacing.s).enter(1)) {
-                    onEvent(ProgressEvent.AskLevelUpClicked)
+    CompositionLocalProvider(LocalCalmMotion provides state.reduceMotion) {
+        Box(Modifier.fillMaxSize()) {
+            Box(
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .size(520.dp)
+                    .padding(bottom = 160.dp)
+                    .background(Brush.radialGradient(listOf(BrandColors.Indigo.copy(alpha = 0.22f), Palette.Night.copy(alpha = 0f)))),
+            )
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = Spacing.l)) {
+                Header(state, onReview, onValidate, onManageMembers, onProfile, onSignOut, Modifier.padding(horizontal = Spacing.l).enter(0))
+                if (state.canReview && (state.toReviewCount > 0 || state.toValidateCount > 0)) {
+                    AdminStrip(state, onReview, onValidate, Modifier.padding(start = Spacing.l, end = Spacing.l, top = Spacing.m).enter(1))
                 }
-            }
-            TodayCard(state.focus(), onExerciseClick, onOpenLearning, onRecordVoice, Modifier.padding(horizontal = Spacing.l, vertical = Spacing.m).enter(2))
-            if (sections.size > 1 && section != null) {
-                SectionTabs(
-                    labels = sections.map { stringResource(it.label()) },
-                    selected = sections.indexOf(section),
-                    onSelect = { tab = it },
-                    modifier = Modifier.padding(horizontal = Spacing.l).padding(bottom = Spacing.m).enter(3),
-                )
-            }
-            if (section != null) {
-                AnimatedContent(
-                    targetState = section,
-                    transitionSpec = {
-                        val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
-                        (slideInHorizontally { it / 5 * direction } + fadeIn())
-                            .togetherWith(slideOutHorizontally { -it / 5 * direction } + fadeOut())
-                            .using(SizeTransform(clip = false))
-                    },
-                    label = "section",
-                ) { shown ->
-                    when (shown) {
-                        Section.OBJECTIVES -> ObjectiveList(state.objectives, modules) { sheetId = it.id }
-                        Section.PATH -> PathSection(state, modules, onExerciseClick, onOpenLearning)
-                        Section.VOICE -> VoiceSection(state.weekVoices, onRecordVoice)
+                state.levelCard?.let { card ->
+                    LevelHero(card, state.objectives, modules, state.isWorking, state.reduceMotion, Modifier.fillMaxWidth().padding(top = Spacing.s).enter(1)) {
+                        onEvent(ProgressEvent.AskLevelUpClicked)
                     }
                 }
-            } else if (state.levelCard?.next != null) {
-                EmptyState(
-                    icon = XmIcons.Piano,
-                    title = stringResource(Res.string.progress_musicians_soon_title),
-                    text = stringResource(Res.string.progress_musicians_soon_text),
-                    modifier = Modifier.padding(horizontal = Spacing.l),
-                )
+                TodayCard(state.focus(), onExerciseClick, onOpenLearning, onRecordVoice, Modifier.padding(horizontal = Spacing.l, vertical = Spacing.m).enter(2))
+                if (sections.size > 1 && section != null) {
+                    SectionTabs(
+                        labels = sections.map { stringResource(it.label()) },
+                        selected = sections.indexOf(section),
+                        onSelect = { tab = it },
+                        modifier = Modifier.padding(horizontal = Spacing.l).padding(bottom = Spacing.m).enter(3),
+                    )
+                }
+                if (section != null) {
+                    AnimatedContent(
+                        targetState = section,
+                        transitionSpec = {
+                            if (state.reduceMotion) return@AnimatedContent EnterTransition.None togetherWith ExitTransition.None
+                            val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                            (slideInHorizontally { it / 5 * direction } + fadeIn())
+                                .togetherWith(slideOutHorizontally { -it / 5 * direction } + fadeOut())
+                                .using(SizeTransform(clip = false))
+                        },
+                        label = "section",
+                    ) { shown ->
+                        when (shown) {
+                            Section.OBJECTIVES -> ObjectiveList(state.objectives, modules) { sheetId = it.id }
+                            Section.PATH -> PathSection(state, modules, onExerciseClick, onOpenLearning)
+                            Section.VOICE -> VoiceSection(state.weekVoices, onRecordVoice)
+                        }
+                    }
+                } else if (state.levelCard?.next != null) {
+                    EmptyState(
+                        icon = XmIcons.Piano,
+                        title = stringResource(Res.string.progress_musicians_soon_title),
+                        text = stringResource(Res.string.progress_musicians_soon_text),
+                        modifier = Modifier.padding(horizontal = Spacing.l),
+                    )
+                }
+                Spacer(Modifier.height(Spacing.xl))
             }
-            Spacer(Modifier.height(Spacing.xl))
+            SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
         }
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 
     val open = state.objectives.indexOfFirst { it.id == sheetId }

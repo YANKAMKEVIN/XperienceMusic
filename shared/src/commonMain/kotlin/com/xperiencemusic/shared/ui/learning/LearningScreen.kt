@@ -50,6 +50,8 @@ import com.xperiencemusic.shared.ui.theme.appSwitchColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
+import com.xperiencemusic.shared.ui.theme.Palette
 
 @Composable
 fun LearningScreen(onBack:()->Unit,moduleId:String=LearningCatalog.DEFAULT,onModule:(String)->Unit={},onRecord:()->Unit={},onScaleCoach:()->Unit={},
@@ -75,7 +77,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
             // The main action stays on screen however long the hints and corrections above it grow.
             bottomBar={ if(!state.loading && state.allowed && state.mode==LearningMode.ACTIVITY) ActivityAction(state,onEvent) },
             contentWindowInsets=WindowInsets(0)) { padding ->
-            if(state.loading) Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.Center){CircularProgressIndicator()}
+            if(state.loading) LoadingIndicator(Modifier.padding(padding))
             else if(!state.allowed)Text(if(state.module.instrument==Instrument.SINGER)"Ces modules sont proposés au parcours chantre." else "Ces modules sont proposés au parcours piano.",Modifier.padding(padding).padding(Spacing.l))
             else key(state.mode,state.index,state.module.id) {
                 Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
@@ -375,13 +377,13 @@ private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble()
     val selected=midi in s.notes
     val wrong=s.result==false && selected && midi !in s.activity.expectedNotes
     val missing=s.hints>=2 && midi in s.activity.expectedNotes && !selected
-    val color=when {wrong->MaterialTheme.colorScheme.error;s.result==true && selected->Color(0xFF6FD3A0);selected->MaterialTheme.colorScheme.primary;missing->MaterialTheme.colorScheme.tertiary;black->Color(0xFF161320);else->Color(0xFFF4F3FA)}
+    val color=when {wrong->MaterialTheme.colorScheme.error;s.result==true && selected->Palette.Success;selected->MaterialTheme.colorScheme.primary;missing->MaterialTheme.colorScheme.tertiary;black->Palette.Ebony;else->Palette.Snow}
     val label=noteLabel(midi)
     val keyColor by animateColorAsState(color, tween(if(s.preferences.reduceMotion)0 else 140), label="key-color")
-    Box(modifier.background(keyColor,RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp)).border(1.dp,Color(0xFF555164),RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp))
+    Box(modifier.background(keyColor,RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp)).border(1.dp,Palette.KeyEdge,RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp))
         .toggleable(selected,enabled=!s.saving,role=Role.Checkbox,onValueChange={onClick()})
         .semantics {contentDescription=label;stateDescription=when{wrong->"sélectionnée, à corriger";selected->"sélectionnée";missing->"indice : note à ajouter";else->"non sélectionnée"}},contentAlignment=Alignment.BottomCenter) {
-        Text(label,color=if(black && !selected && !missing)Color.White else Color(0xFF161320),style=MaterialTheme.typography.labelSmall,modifier=Modifier.padding(bottom=10.dp))
+        Text(label,color=if(black && !selected && !missing)Color.White else Palette.Ebony,style=MaterialTheme.typography.labelSmall,modifier=Modifier.padding(bottom=10.dp))
     }
 }
 @Preview @Composable private fun LearningPreview()=AppTheme {

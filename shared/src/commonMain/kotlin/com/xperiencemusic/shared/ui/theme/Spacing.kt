@@ -14,4 +14,8 @@ object Spacing {
 
 object Radius {
     val card = 16.dp
+    /** Text fields, menus and snack bars: softer than Material's 4 dp, a step under the cards. */
+    val field = 12.dp
+    /** The large hero surfaces: the focus card, the empty-state tile. */
+    val hero = 28.dp
 }

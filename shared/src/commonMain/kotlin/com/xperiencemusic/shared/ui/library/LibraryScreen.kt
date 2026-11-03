@@ -14,7 +14,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.brand.KeyPill
 import com.xperiencemusic.shared.ui.brand.XmIcons
-import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -61,6 +60,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun LibraryScreen(
@@ -120,7 +120,6 @@ private fun LibraryList(
                     { ClearSearchButton { onEvent(LibraryEvent.QueryChanged("")) } }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(Radius.card),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -134,6 +133,10 @@ private fun LibraryList(
                     onSelect = { onEvent(LibraryEvent.KeySelected(it)) },
                 )
             }
+        }
+        // The first load used to leave a blank list under the search field.
+        if (state.isLoading && state.songs.isEmpty()) {
+            item { LoadingIndicator(Modifier.padding(top = Spacing.xxl)) }
         }
         if (!state.isLoading && state.songs.isEmpty()) {
             item {
@@ -155,15 +158,16 @@ private fun LibraryList(
                 }
             }
         }
+        // Rows glide into place as the search or the key filter narrows the list.
         items(state.songs, key = { it.id }) { song ->
-            LibrarySongRow(song, onClick = { onSongClick(song.id) })
+            LibrarySongRow(song, onClick = { onSongClick(song.id) }, modifier = Modifier.animateItem())
         }
     }
 }
 
 @Composable
-private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit) {
-    AppCard(onClick = onClick) {
+private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    AppCard(onClick = onClick, modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 Modifier.size(44.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp)),

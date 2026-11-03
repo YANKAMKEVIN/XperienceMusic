@@ -125,8 +125,8 @@ class SetlistEditorViewModelTest {
     fun `les dates sont proposées et l'ordre des chants se règle`() = runTest {
         viewModel.state.test {
             val initial = awaitItem()
-            assertEquals("mardi 13 oct.", initial.rehearsalLabel)
-            assertEquals("dimanche 18 oct.", initial.serviceLabel)
+            assertEquals("mardi 13\u00A0oct.", initial.rehearsalLabel)
+            assertEquals("dimanche 18\u00A0oct.", initial.serviceLabel)
             assertFalse(initial.canPublish)
 
             viewModel.onEvent(SetlistEditorEvent.SongAdded("c"))

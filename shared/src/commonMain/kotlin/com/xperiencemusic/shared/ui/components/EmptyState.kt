@@ -35,6 +35,7 @@ import com.xperiencemusic.shared.ui.brand.BrandWaves
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
+import com.xperiencemusic.shared.ui.theme.Radius
 
 /**
  * An empty screen that still looks finished: an icon in a glowing tile, the brand waves, what will
@@ -61,8 +62,8 @@ fun EmptyState(
             Box(
                 Modifier
                     .size(88.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(28.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(28.dp)),
+                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(Radius.hero))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(Radius.hero)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(icon, contentDescription = null, tint = BrandColors.Purple, modifier = Modifier.size(42.dp))

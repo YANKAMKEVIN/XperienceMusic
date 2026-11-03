@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -107,6 +106,15 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun PlanningScreen(
@@ -134,16 +142,24 @@ fun PlanningScreenContent(
     }
     Box(Modifier.fillMaxSize()) {
         if (state.isLoading) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
+            LoadingIndicator()
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(start = Spacing.l, top = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
                 verticalArrangement = Arrangement.spacedBy(Spacing.m),
             ) {
                 item { Header(state, onEvent) }
-                item { MonthBanner(state, onEvent, onMyAnswers) }
+                // Keyed by month (the cards by date), so changing month fades the old content out, then
+                // the new one in, on the same beat as the title: never one frame swap, never both at once.
+                item(key = "banner-${state.monthStart}") {
+                    Box(Modifier.animateItem(fadeInSpec = monthFadeIn, fadeOutSpec = monthFadeOut)) { MonthBanner(state, onEvent, onMyAnswers) }
+                }
                 items(state.services, key = { it.date.toString() }) { card ->
-                    ServiceCard(card, onClick = { onServiceClick(card.date) })
+                    ServiceCard(
+                        card,
+                        onClick = { onServiceClick(card.date) },
+                        modifier = Modifier.animateItem(fadeInSpec = monthFadeIn, fadeOutSpec = monthFadeOut),
+                    )
                 }
             }
         }
@@ -202,6 +218,10 @@ private fun ValidateMonthDialog(monthLabel: String, validation: MonthValidationU
     )
 }
 
+/** The old month leaves quickly, then the new one arrives: title, banner and cards share this beat. */
+private val monthFadeOut = tween<Float>(90)
+private val monthFadeIn = tween<Float>(220, delayMillis = 90)
+
 @Composable
 private fun Header(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit) {
     Column {
@@ -210,12 +230,28 @@ private fun Header(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit) {
             IconButton(onClick = { onEvent(PlanningEvent.PreviousMonth) }, enabled = state.canGoBack) {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.planning_previous_month))
             }
-            Text(
-                state.monthLabel.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.titleLarge,
+            // The month slides the way the arrows point.
+            AnimatedContent(
+                targetState = state.monthStart to state.monthLabel,
+                transitionSpec = {
+                    val from = initialState.first
+                    val to = targetState.first
+                    val direction = if (from != null && to != null && to < from) -1 else 1
+                    // The old title is gone before the new one shows, so the two never overlap.
+                    (slideInHorizontally(tween(220, delayMillis = 90)) { it / 3 * direction } + fadeIn(monthFadeIn))
+                        .togetherWith(slideOutHorizontally(tween(90)) { -it / 3 * direction } + fadeOut(monthFadeOut))
+                },
+                contentAlignment = Alignment.Center,
+                label = "month",
                 modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center,
-            )
+            ) { (_, label) ->
+                Text(
+                    label.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                )
+            }
             IconButton(onClick = { onEvent(PlanningEvent.NextMonth) }, enabled = state.canGoForward) {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(Res.string.planning_next_month))
             }
@@ -302,8 +338,8 @@ private fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit
 /** A Friday or Sunday: big date on the left, the team, what is missing, and the member's answer. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ServiceCard(card: ServiceCardUi, onClick: () -> Unit) {
-    AppCard(onClick = onClick, modifier = Modifier.alpha(if (card.isPast) 0.55f else 1f)) {
+private fun ServiceCard(card: ServiceCardUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    AppCard(onClick = onClick, modifier = modifier.alpha(if (card.isPast) 0.55f else 1f)) {
         Row(verticalAlignment = Alignment.Top) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(48.dp)) {
                 Text(card.weekday, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -367,6 +403,8 @@ private fun TodayPill(modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Bold,
         color = Color.White,
+        maxLines = 1,
+        softWrap = false,
         modifier = modifier.background(BrandColors.horizontalGradient, CircleShape).padding(horizontal = 10.dp, vertical = 3.dp),
     )
 }
@@ -382,6 +420,8 @@ private fun AnswerBadge(answer: MyAnswer) {
         label,
         style = MaterialTheme.typography.labelMedium,
         color = color,
+        maxLines = 1,
+        softWrap = false,
         modifier = Modifier
             .background(color.copy(alpha = 0.14f), CircleShape)
             .padding(horizontal = 10.dp, vertical = 3.dp),
@@ -397,6 +437,8 @@ internal fun PersonPill(person: ServingUi) {
         listOfNotNull(person.name, part).joinToString(" · "),
         style = MaterialTheme.typography.labelMedium,
         color = color,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .background(
                 if (person.isMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,

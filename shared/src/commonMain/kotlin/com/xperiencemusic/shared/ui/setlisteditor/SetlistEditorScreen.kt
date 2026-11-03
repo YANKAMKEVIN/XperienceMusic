@@ -81,6 +81,8 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.brand.KeyPill
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun SetlistEditorScreen(
@@ -184,8 +186,12 @@ fun SetlistEditorScreenContent(
             }
             item { SectionTitle(stringResource(Res.string.setlist_selected_title, state.selected.size)) }
             if (state.selected.isEmpty()) {
-                item {
-                    Text(stringResource(Res.string.setlist_selected_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                item(key = "selected-empty") {
+                    Text(
+                        stringResource(Res.string.setlist_selected_empty),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.animateItem(),
+                    )
                 }
             }
             itemsIndexed(state.selected, key = { _, song -> "selected-${song.id}" }) { index, song ->
@@ -195,10 +201,13 @@ fun SetlistEditorScreenContent(
                     isFirst = index == 0,
                     isLast = index == state.selected.lastIndex,
                     onEvent = onEvent,
+                    modifier = Modifier.animateItem(),
                 )
             }
-            item { SectionTitle(stringResource(Res.string.setlist_add_title), Modifier.padding(top = Spacing.l)) }
-            item {
+            // Keyed and animated too, so the section below glides up with the list instead of jumping
+            // over a song that is still fading out.
+            item(key = "add-title") { SectionTitle(stringResource(Res.string.setlist_add_title), Modifier.animateItem().padding(top = Spacing.l)) }
+            item(key = "add-search") {
                 OutlinedTextField(
                     value = state.query,
                     onValueChange = { onEvent(SetlistEditorEvent.QueryChanged(it)) },
@@ -208,18 +217,18 @@ fun SetlistEditorScreenContent(
                         { ClearSearchButton { onEvent(SetlistEditorEvent.QueryChanged("")) } }
                     },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.animateItem().fillMaxWidth(),
                 )
             }
             items(state.available, key = { "available-${it.id}" }) { song ->
-                AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) })
+                AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) }, modifier = Modifier.animateItem())
             }
             if (state.isEditing) {
-                item {
+                item(key = "delete") {
                     TextButton(
                         onClick = { isConfirmingDelete = true },
                         enabled = !state.isDeleting,
-                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.xl),
+                        modifier = Modifier.animateItem().fillMaxWidth().padding(top = Spacing.xl),
                     ) {
                         Text(stringResource(Res.string.setlist_delete), color = MaterialTheme.colorScheme.error)
                     }
@@ -286,8 +295,9 @@ private fun SelectedSongRow(
     isFirst: Boolean,
     isLast: Boolean,
     onEvent: (SetlistEditorEvent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    AppCard {
+    AppCard(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "$position",
@@ -296,8 +306,8 @@ private fun SelectedSongRow(
                 modifier = Modifier.padding(end = Spacing.m),
             )
             Column(Modifier.weight(1f)) {
-                Text(song.title, style = MaterialTheme.typography.titleSmall)
-                Text(song.keyLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+                Text(song.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                KeyPill(song.keyLabel, modifier = Modifier.padding(top = Spacing.xs))
             }
             IconButton(onClick = { onEvent(SetlistEditorEvent.SongMovedUp(song.id)) }, enabled = !isFirst) {
                 Icon(Icons.Filled.KeyboardArrowUp, contentDescription = stringResource(Res.string.setlist_move_up, song.title))
@@ -313,12 +323,12 @@ private fun SelectedSongRow(
 }
 
 @Composable
-private fun AvailableSongRow(song: SetlistSongUi, onAdd: () -> Unit) {
-    AppCard(onClick = onAdd) {
+private fun AvailableSongRow(song: SetlistSongUi, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+    AppCard(onClick = onAdd, modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(song.title, style = MaterialTheme.typography.titleSmall)
-                Text(song.keyLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+                Text(song.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                KeyPill(song.keyLabel, modifier = Modifier.padding(top = Spacing.xs))
             }
             Icon(
                 Icons.Filled.Add,

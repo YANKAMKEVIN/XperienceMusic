@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
@@ -37,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -87,6 +87,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 /** [onEditWeek] opens the editor on a week's service date, or on the next free week when null. */
 @Composable
@@ -113,7 +114,7 @@ fun WeekScreenContent(
         modifier = Modifier.fillMaxSize(),
     ) {
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator()
         } else {
             WeekList(state, onEvent, onSongClick, onEditWeek)
         }
@@ -285,21 +286,22 @@ private fun WeekSongRow(song: WeekSongUi, dimmed: Boolean, onClick: () -> Unit, 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.width(28.dp),
             )
+            // A past week reads as history: the title fades with its key, not the key alone.
             Text(
                 song.title,
                 style = MaterialTheme.typography.titleMedium,
+                color = if (dimmed) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
             KeyPill(song.keyLabel, dimmed = dimmed, modifier = Modifier.padding(horizontal = Spacing.s))
             if (song.hasReference) {
-                FilledTonalIconButton(onClick = onPlay, modifier = Modifier.size(40.dp)) {
-                    if (song.isPlaying) {
-                        Icon(PauseIcon, contentDescription = stringResource(Res.string.week_pause_reference, song.title))
-                    } else {
-                        Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(Res.string.week_play_reference, song.title))
-                    }
+                // The label sits on the button itself, so a screen reader hears "pause" as soon as the icon shows it.
+                val label = if (song.isPlaying) stringResource(Res.string.week_pause_reference, song.title)
+                else stringResource(Res.string.week_play_reference, song.title)
+                FilledTonalIconButton(onClick = onPlay, modifier = Modifier.size(40.dp).semantics { contentDescription = label }) {
+                    Icon(if (song.isPlaying) PauseIcon else Icons.Filled.PlayArrow, contentDescription = null)
                 }
             } else {
                 // Keeps titles and keys aligned with the rows that have a play button.

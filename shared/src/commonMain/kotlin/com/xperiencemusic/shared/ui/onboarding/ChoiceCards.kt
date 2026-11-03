@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.ui.onboarding
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -47,12 +49,17 @@ fun ChoiceCard(
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(20.dp)
+    // The tint and the check ease in, so a choice is felt rather than flashed.
+    val background by animateColorAsState(
+        if (isSelected) colors.primaryContainer.copy(alpha = 0.35f) else colors.surfaceContainer,
+        label = "choice-background",
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.35f) else colors.surfaceContainer)
+            .background(background)
             .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) BrandColors.gradient else SolidColor(colors.outlineVariant), shape)
             .selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton)
             .padding(Spacing.m),
@@ -62,7 +69,14 @@ fun ChoiceCard(
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(description, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
         }
-        if (isSelected) Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = colors.primary)
+        // The check keeps its room while hidden, so the description does not reflow when it appears.
+        val check by animateFloatAsState(if (isSelected) 1f else 0f, label = "choice-check")
+        Icon(
+            Icons.Filled.CheckCircle,
+            contentDescription = null,
+            tint = colors.primary,
+            modifier = Modifier.size(24.dp).graphicsLayer { alpha = check; scaleX = check; scaleY = check },
+        )
     }
 }
 

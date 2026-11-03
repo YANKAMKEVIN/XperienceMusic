@@ -2,6 +2,8 @@ package com.xperiencemusic.shared.ui.progress
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -58,12 +60,19 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.runtime.staticCompositionLocalOf
+import com.xperiencemusic.shared.ui.theme.Radius
 
-/** Fades and lifts an element in once, [order] steps after the screen opened. */
+/** "Réduire les animations", provided by the progress screen and read by its moving parts. */
+internal val LocalCalmMotion = staticCompositionLocalOf { false }
+
+/** Fades and lifts an element in once, [order] steps after the screen opened; shown at once when calm. */
 @Composable
 internal fun Modifier.enter(order: Int): Modifier {
-    val shown = remember { Animatable(0f) }
+    val calm = LocalCalmMotion.current
+    val shown = remember { Animatable(if (calm) 1f else 0f) }
     LaunchedEffect(Unit) {
+        if (calm) return@LaunchedEffect
         delay(order * 70L)
         shown.animateTo(1f, tween(500, easing = FastOutSlowInEasing))
     }
@@ -140,11 +149,16 @@ private fun RingSegment.color(): Color = when (this) {
     RingSegment.TODO -> Palette.NightHigh
 }
 
-/** A number that counts up from zero the first time it shows. */
+/** A number that counts up from zero the first time it shows; written straight away when calm. */
 @Composable
 internal fun CountUp(target: Int, style: androidx.compose.ui.text.TextStyle, modifier: Modifier = Modifier) {
-    var shown by remember { mutableIntStateOf(0) }
-    LaunchedEffect(target) {
+    val calm = LocalCalmMotion.current
+    var shown by remember { mutableIntStateOf(if (calm) target else 0) }
+    LaunchedEffect(target, calm) {
+        if (calm) {
+            shown = target
+            return@LaunchedEffect
+        }
         delay(450)
         while (shown != target) {
             shown += if (target > shown) 1 else -1
@@ -154,10 +168,13 @@ internal fun CountUp(target: Int, style: androidx.compose.ui.text.TextStyle, mod
     Text("$shown", style = style, modifier = modifier)
 }
 
-/** A small equalizer that dances while the focus card waits for a tap. */
+/** A small equalizer that dances while the focus card waits for a tap; it holds still when calm. */
 @Composable
 internal fun Equalizer(modifier: Modifier = Modifier, color: Color = Palette.Violet) {
-    val time by rememberInfiniteTransition(label = "eq").animateFloat(0f, 1f, infiniteRepeatable(tween(1_100, easing = LinearEasing)), label = "t")
+    var time = 0.3f
+    if (!LocalCalmMotion.current) {
+        time = rememberInfiniteTransition(label = "eq").animateFloat(0f, 1f, infiniteRepeatable(tween(1_100, easing = LinearEasing)), label = "t").value
+    }
     val phases = remember { listOf(0f, .15f, .3f, .1f, .45f, .2f, .35f, .05f, .25f) }
     Canvas(modifier.width(64.dp).height(36.dp)) {
         val bar = 4.dp.toPx()
@@ -189,8 +206,9 @@ internal fun SectionTabs(labels: List<String>, selected: Int, onSelect: (Int) ->
     ) {
         labels.forEachIndexed { i, label ->
             val isOn = i == selected
-            val background by animateColorAsState(if (isOn) Palette.Snow else Color.Transparent, tween(250), label = "tab-bg")
-            val content by animateColorAsState(if (isOn) Palette.Night else Palette.Mist, tween(250), label = "tab-fg")
+            val fade: AnimationSpec<Color> = if (LocalCalmMotion.current) snap() else tween(250)
+            val background by animateColorAsState(if (isOn) Palette.Snow else Color.Transparent, fade, label = "tab-bg")
+            val content by animateColorAsState(if (isOn) Palette.Night else Palette.Mist, fade, label = "tab-fg")
             Box(
                 Modifier
                     .weight(1f)
@@ -219,20 +237,20 @@ internal fun FocusCard(
     modifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
 ) {
-    val shape = RoundedCornerShape(28.dp)
+    val shape = RoundedCornerShape(Radius.hero)
     Box(
         modifier
             .fillMaxWidth()
             .clip(shape)
             .background(Brush.linearGradient(listOf(Palette.VioletDeep, Palette.NightRaised, Palette.BlueDeep)))
-            .border(1.dp, Color(0xFF3A3260), shape)
+            .border(1.dp, Palette.VioletEdge, shape)
             .padding(20.dp),
     ) {
         Equalizer(Modifier.align(Alignment.TopEnd))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = Color(0xFFB9A2FF), modifier = Modifier.padding(end = 72.dp))
+            Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = Palette.VioletLight, modifier = Modifier.padding(end = 72.dp))
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(end = 56.dp))
-            text?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFC9C6DA)) }
+            text?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Palette.MistLight) }
             if (action != null) Box(Modifier.padding(top = 10.dp)) { action() }
         }
     }

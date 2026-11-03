@@ -36,7 +36,6 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -105,6 +104,11 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.xperiencemusic.shared.ui.theme.Radius
 
 @Composable
 fun MembersScreen(onBack: () -> Unit, viewModel: MembersViewModel = koinViewModel()) {
@@ -150,7 +154,7 @@ fun MembersScreenContent(state: MembersUiState, onEvent: (MembersEvent) -> Unit,
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         LazyColumn(
@@ -275,23 +279,7 @@ private fun MemberRow(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
 private fun LevelMenu(member: MemberRowUi, level: Level, onEvent: (MembersEvent) -> Unit) {
     var isOpen by remember { mutableStateOf(false) }
     Box {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { isOpen = true },
-        ) {
-            Text(
-                level.label(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                softWrap = false,
-            )
-            Icon(
-                Icons.Filled.ArrowDropDown,
-                contentDescription = stringResource(Res.string.members_change_level, member.name),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
+        MenuTrigger(level.label(), stringResource(Res.string.members_change_level, member.name)) { isOpen = true }
         DropdownMenu(expanded = isOpen, onDismissRequest = { isOpen = false }) {
             Level.entries.forEach { option ->
                 DropdownMenuItem(
@@ -310,12 +298,11 @@ private fun LevelMenu(member: MemberRowUi, level: Level, onEvent: (MembersEvent)
 private fun RoleMenu(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
     var isOpen by remember { mutableStateOf(false) }
     Box {
-        TextButton(onClick = { isOpen = true }, enabled = !member.isMe) {
-            Text(member.role.label())
-            if (!member.isMe) {
-                Icon(Icons.Filled.ArrowDropDown, contentDescription = stringResource(Res.string.members_change_role, member.name))
-            }
-        }
+        MenuTrigger(
+            member.role.label(),
+            stringResource(Res.string.members_change_role, member.name),
+            enabled = !member.isMe,
+        ) { isOpen = true }
         DropdownMenu(expanded = isOpen, onDismissRequest = { isOpen = false }) {
             Role.entries.forEach { role ->
                 DropdownMenuItem(
@@ -327,6 +314,26 @@ private fun RoleMenu(member: MemberRowUi, onEvent: (MembersEvent) -> Unit) {
                 )
             }
         }
+    }
+}
+
+/**
+ * The level and role pickers share one look: same text, no inner indent, a full 48 dp target, so
+ * they line up with the name whether they sit side by side or wrap onto two lines.
+ */
+@Composable
+private fun MenuTrigger(label: String, description: String, enabled: Boolean = true, onClick: () -> Unit) {
+    val color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(Radius.card))
+            .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .padding(end = Spacing.s),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = color, maxLines = 1, softWrap = false)
+        if (enabled) Icon(Icons.Filled.ArrowDropDown, contentDescription = description, tint = color)
     }
 }
 

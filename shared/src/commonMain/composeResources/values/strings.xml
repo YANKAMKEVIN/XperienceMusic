@@ -102,7 +102,7 @@
         <item quantity="other">%1$d dates sans ta réponse</item>
     </plurals>
     <string name="planning_late_title">Échéance passée</string>
-    <string name="planning_late_text">Les réponses étaient attendues le %1$s. Tu peux encore répondre tant que le mois n’est pas validé.</string>
+    <string name="planning_late_text">Les réponses étaient attendues le %1$s : tu peux encore répondre tant que le mois n’est pas validé.</string>
     <string name="planning_today">Aujourd’hui</string>
     <string name="planning_my_answers">Mes dispos</string>
     <string name="planning_validated">Planning validé</string>
@@ -227,6 +227,7 @@
     <string name="song_voice_tracks_title">Pistes par voix</string>
     <string name="song_links_title">Liens</string>
     <string name="song_not_found">Ce chant n’existe plus.</string>
+    <string name="song_not_found_text">Il a peut-être été retiré de la bibliothèque. Reviens en arrière pour retrouver les autres chants.</string>
     <string name="error_forbidden">Tu n’as pas les droits pour cette action.</string>
     <string name="error_generic">Une erreur est survenue, réessaie.</string>
 

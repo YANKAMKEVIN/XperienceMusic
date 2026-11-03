@@ -48,6 +48,12 @@ import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.remember
 
 /**
  * A floating card above the tabs while something is loaded, so listening goes on across screens;
@@ -57,18 +63,29 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MiniPlayer(compact: Boolean = false, viewModel: MiniPlayerViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var isExpanded by rememberSaveable { mutableStateOf(false) }
-    if (state.isVisible) {
+    // The card slides away showing what was playing, not the emptied state that hid it.
+    val lastShown = remember { LastShown(state) }
+    if (state.isVisible) lastShown.state = state
+    AnimatedVisibility(
+        visible = state.isVisible,
+        enter = slideInVertically { it / 2 } + fadeIn(),
+        exit = slideOutVertically { it / 2 } + fadeOut(),
+    ) {
         MiniPlayerContent(
-            state = state,
+            state = lastShown.state,
             onEvent = viewModel::onEvent,
             onExpand = { isExpanded = true },
             compact = compact,
         )
+    }
+    if (state.isVisible) {
         if (isExpanded) PlayerSheet(state, viewModel::onEvent, onDismiss = { isExpanded = false })
     } else {
         isExpanded = false
     }
 }
+
+private class LastShown(var state: MiniPlayerUiState)
 
 @Composable
 fun MiniPlayerContent(

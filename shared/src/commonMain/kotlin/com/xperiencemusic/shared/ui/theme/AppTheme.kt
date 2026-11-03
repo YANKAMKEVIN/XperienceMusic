@@ -5,6 +5,8 @@ import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Shapes
 
 private val colors = darkColorScheme(
     primary = Palette.Violet,
@@ -42,8 +44,11 @@ fun appSwitchColors(): SwitchColors = SwitchDefaults.colors(
     uncheckedBorderColor = Palette.Mist,
 )
 
+/** Text fields, menus and snack bars draw from extraSmall: rounded to sit with the cards. */
+private val shapes = Shapes(extraSmall = RoundedCornerShape(Radius.field))
+
 /** Dark only: the app is mostly used in dim rehearsal rooms and churches. */
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = colors, content = content)
+    MaterialTheme(colorScheme = colors, shapes = shapes, content = content)
 }
