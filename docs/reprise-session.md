@@ -134,6 +134,11 @@ le Planning fait glisser tout le mois, la partie basse de l'éditeur de setlist 
 des membres ont le même style, l'onglet de Ma progression change sans fondu en mouvement réduit. Ces quatre
 corrections sont vérifiées sur l'A17 (build démo, 31 octobre au soir) ; le fondu des cartes du Planning a été
 décalé ensuite pour que l'ancien et le nouveau mois ne se superposent plus, également vérifié sur l'A17.
+Les six défauts « vus en passant » du compte rendu sont corrigés le 3 novembre (un commit chacun, détail sous
+chaque point du compte rendu) : trait d'union au lieu d'un blanc dans un mot coupé par un accord, fondu en haut
+des paroles du mode scène, double point du Planning, titre de l'en-tête sur une ligne, espace insécable dans
+les dates, place de la coche réservée dans les cartes de choix, libellé du bouton lecture/pause porté par le
+bouton. **Pas encore vérifiés sur téléphone** (A17 à réserver auprès de la session coordinatrice).
 
 1. Les boutons en dégradé réagissent à l'appui (léger rétrécissement et assombrissement) — `BrandControls.kt`.
 2. Lecture, chargement et pause passent de l'un à l'autre en fondu — `PlayPauseButton.kt`, `PlayerSheet.kt`.
