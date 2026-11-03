@@ -8,6 +8,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.xperiencemusic.shared.ui.theme.Radius
@@ -323,8 +329,28 @@ private fun StageLyrics(state: StageUiState, modifier: Modifier) {
             delay(TICK_MS)
         }
     }
-    // A little room on top so the accent of a capital ("À") is not cut by the toolbar edge.
-    Column(modifier.fillMaxWidth().verticalScroll(scroll).padding(horizontal = Spacing.l).padding(top = Spacing.s)) {
+    // A little room on top so the accent of a capital ("À") is not cut by the toolbar edge, and once
+    // the text scrolls under it the edge softens: a line fades out instead of losing its accents first.
+    val fadeHeight = with(density) { Spacing.l.toPx() }
+    Column(
+        modifier
+            .fillMaxWidth()
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+            .drawWithContent {
+                drawContent()
+                val fade = minOf(scroll.value.toFloat(), fadeHeight)
+                if (fade > 0f) {
+                    drawRect(
+                        brush = Brush.verticalGradient(0f to Color.Transparent, 1f to Color.Black, endY = fade),
+                        size = size.copy(height = fade),
+                        blendMode = BlendMode.DstIn,
+                    )
+                }
+            }
+            .verticalScroll(scroll)
+            .padding(horizontal = Spacing.l)
+            .padding(top = Spacing.s),
+    ) {
         ChordChartView(state.chart, scale = state.textScale)
         // Room so the last line can scroll up to eye level.
         Spacer(Modifier.height(240.dp))
