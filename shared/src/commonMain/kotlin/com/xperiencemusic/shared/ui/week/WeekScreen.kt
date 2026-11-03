@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -296,12 +297,11 @@ private fun WeekSongRow(song: WeekSongUi, dimmed: Boolean, onClick: () -> Unit, 
             )
             KeyPill(song.keyLabel, dimmed = dimmed, modifier = Modifier.padding(horizontal = Spacing.s))
             if (song.hasReference) {
-                FilledTonalIconButton(onClick = onPlay, modifier = Modifier.size(40.dp)) {
-                    if (song.isPlaying) {
-                        Icon(PauseIcon, contentDescription = stringResource(Res.string.week_pause_reference, song.title))
-                    } else {
-                        Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(Res.string.week_play_reference, song.title))
-                    }
+                // The label sits on the button itself, so a screen reader hears "pause" as soon as the icon shows it.
+                val label = if (song.isPlaying) stringResource(Res.string.week_pause_reference, song.title)
+                else stringResource(Res.string.week_play_reference, song.title)
+                FilledTonalIconButton(onClick = onPlay, modifier = Modifier.size(40.dp).semantics { contentDescription = label }) {
+                    Icon(if (song.isPlaying) PauseIcon else Icons.Filled.PlayArrow, contentDescription = null)
                 }
             } else {
                 // Keeps titles and keys aligned with the rows that have a play button.
