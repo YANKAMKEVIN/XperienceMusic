@@ -91,7 +91,7 @@ class PlanningStateTest {
         val late = listOf(PlanningMonth(october, LocalDate(2026, 10, 10), false))
         val state = derivePlanningState(planning(months = late), october, friday)
         assertTrue(state.isPastDeadline)
-        assertEquals("10 oct.", state.answerByLabel)
+        assertEquals("10\u00A0oct.", state.answerByLabel)
         assertTrue(state.services.single { it.day == 16 }.isToday)
         assertEquals(1, state.services.count { it.isToday })
         assertTrue(deriveAvailabilityState(planning(months = late), october, friday).isPastDeadline)
