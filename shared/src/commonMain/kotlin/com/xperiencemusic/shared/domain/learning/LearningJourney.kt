@@ -6,6 +6,7 @@ import kotlinx.datetime.daysUntil
 
 enum class Mastery(val label:String,val explanation:String) {
     DISCOVER("À découvrir", "Commence par les repères et les premières activités."),
+    SUBMITTED("Envoyé au responsable", "Le responsable va vérifier ton objectif. Tu peux continuer les activités en attendant."),
     PRACTISING("En pratique", "Tu as commencé les exercices. La pratique régulière construit tes repères."),
     CONSOLIDATING("À consolider", "Certaines activités demandent encore de l’aide ou une révision. Une réussite à l’écran ne valide pas le jeu réel."),
     VALIDATED("Validée par le responsable", "Le responsable a confirmé la compétence sur ton instrument. Continue à l’entretenir.")
@@ -15,7 +16,8 @@ fun LearningProgress.mastery(module:LearningModule,status:ExerciseStatus?,today:
     val latest=attempts.filter { a -> a.version==PianoBasics.VERSION && module.activities.any { it.id==a.activityId } }.groupBy { it.activityId }.values.map { it.last() }
     if(latest.any { !it.passed || it.hints>0 })return Mastery.CONSOLIDATING
     if(status==ExerciseStatus.TO_REWORK || complete(module) || dueIn(module,today).isNotEmpty())return Mastery.CONSOLIDATING
-    return if(completedIn(module).isEmpty())Mastery.DISCOVER else Mastery.PRACTISING
+    if(completedIn(module).isNotEmpty())return Mastery.PRACTISING
+    return if(status==ExerciseStatus.SUBMITTED)Mastery.SUBMITTED else Mastery.DISCOVER
 }
 fun LearningProgress.weeklyDays(today:LocalDate):Int = attempts.map { it.day }.distinct().count { it.daysUntil(today) in 0..6 }
 fun LearningProgress.returning(today:LocalDate):Boolean = attempts.maxOfOrNull { it.day }?.daysUntil(today)?.let { it>=7 }==true

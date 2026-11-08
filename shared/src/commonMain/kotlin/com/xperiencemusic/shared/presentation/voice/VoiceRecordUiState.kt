@@ -23,7 +23,10 @@ data class VoiceRecordUiState(
     val error: VoiceError? = null,
     /** The take is mostly silence: the singer is warned, but may still send it. */
     val isQuietTake: Boolean = false,
-)
+) {
+    /** Leaving now would lose what the singer just recorded. */
+    val hasUnsentTake: Boolean get() = phase == VoicePhase.RECORDING || phase == VoicePhase.RECORDED
+}
 
 /** [label] is the recording's title; a voice track is named after its [voicePart] on screen. */
 data class GuideUi(val id: String, val label: String, val kind: GuideKind, val voicePart: VoicePart? = null)
@@ -32,7 +35,7 @@ enum class GuideKind { MY_VOICE, REFERENCE }
 
 enum class VoicePhase { READY, RECORDING, RECORDED, SENDING, SENT }
 
-enum class VoiceError { MICROPHONE, TOO_SHORT, SEND_FAILED }
+enum class VoiceError { MICROPHONE, TOO_SHORT, SEND_FAILED, INTERRUPTED }
 
 data class PreviousSubmissionUi(val date: String, val status: ExerciseStatus, val feedback: String?)
 
@@ -42,6 +45,8 @@ sealed interface VoiceRecordEvent {
     data object RecordClicked : VoiceRecordEvent
     data object PermissionDenied : VoiceRecordEvent
     data object StopClicked : VoiceRecordEvent
+    /** The app left the screen: the system would silence the microphone from here on. */
+    data object AppLeft : VoiceRecordEvent
     data object PreviewClicked : VoiceRecordEvent
     data object RetakeClicked : VoiceRecordEvent
     data object SendClicked : VoiceRecordEvent

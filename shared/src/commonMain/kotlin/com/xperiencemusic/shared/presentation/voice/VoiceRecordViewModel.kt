@@ -85,6 +85,7 @@ class VoiceRecordViewModel(
             VoiceRecordEvent.RecordClicked -> start()
             VoiceRecordEvent.PermissionDenied -> local.update { it.copy(error = VoiceError.MICROPHONE) }
             VoiceRecordEvent.StopClicked -> stop()
+            VoiceRecordEvent.AppLeft -> interrupt()
             VoiceRecordEvent.PreviewClicked -> togglePreview()
             VoiceRecordEvent.RetakeClicked -> retake()
             VoiceRecordEvent.SendClicked -> send()
@@ -119,6 +120,13 @@ class VoiceRecordViewModel(
         }
         recorded = voice
         local.update { it.copy(phase = VoicePhase.RECORDED, isQuietTake = voice.isNearlySilent) }
+    }
+
+    /** Ends the take where the microphone stops hearing, rather than sending a silent gap. */
+    private fun interrupt() {
+        if (local.value.phase != VoicePhase.RECORDING) return
+        stop()
+        local.update { it.copy(error = VoiceError.INTERRUPTED) }
     }
 
     private fun failRecording() {

@@ -73,7 +73,10 @@ private fun ChartSegmentView(segment: ChartSegment, style: TextStyle) {
         val chord = measurables[0].measure(loose)
         val lyric = measurables[1].measure(loose)
         val hyphen = measurables[2].measure(loose)
-        val chordWidth = if (segment.chord != null) chord.width + chordGap.roundToPx() else 0
+        // The gap grows with the text: at stage size the token alone left two chords touching.
+        val gapRatio = if (segment.continuesWord) 0.3f else 0.5f
+        val gap = maxOf(chordGap.roundToPx(), (style.fontSize * gapRatio).roundToPx())
+        val chordWidth = if (segment.chord != null) chord.width + gap else 0
         // Any room left after the syllable would split the word on screen, so a hyphen bridges it.
         val showHyphen = segment.continuesWord && chordWidth > lyric.width
         val width = if (showHyphen) maxOf(chordWidth, lyric.width + hyphen.width) else maxOf(chordWidth, lyric.width)

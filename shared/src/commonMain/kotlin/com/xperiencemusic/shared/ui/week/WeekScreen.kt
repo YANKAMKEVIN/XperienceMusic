@@ -1,5 +1,7 @@
 package com.xperiencemusic.shared.ui.week
 
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -240,9 +242,9 @@ private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
 
 @Composable
 private fun DatesRow(setlist: WeekSetlistUi) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
-        DateCard(stringResource(Res.string.setlist_rehearsal_label), setlist.rehearsalDate, Modifier.weight(1f))
-        DateCard(stringResource(Res.string.setlist_service_label), setlist.serviceDateLabel, Modifier.weight(1f))
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m), modifier = Modifier.height(IntrinsicSize.Min)) {
+        DateCard(stringResource(Res.string.setlist_rehearsal_label), setlist.rehearsalDate, Modifier.weight(1f).fillMaxHeight())
+        DateCard(stringResource(Res.string.setlist_service_label), setlist.serviceDateLabel, Modifier.weight(1f).fillMaxHeight())
     }
 }
 

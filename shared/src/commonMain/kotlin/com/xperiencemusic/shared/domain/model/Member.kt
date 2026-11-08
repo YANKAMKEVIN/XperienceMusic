@@ -1,5 +1,8 @@
 package com.xperiencemusic.shared.domain.model
 
+/** Long enough for any real name, short enough for the headers that show it. */
+const val MAX_DISPLAY_NAME_LENGTH = 40
+
 data class Member(
     val id: String,
     val profile: MemberProfile,

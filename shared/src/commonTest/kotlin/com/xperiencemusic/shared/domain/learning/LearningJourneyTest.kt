@@ -14,6 +14,7 @@ class LearningJourneyTest {
         assertEquals(Mastery.VALIDATED,completed.mastery(module,ExerciseStatus.VALIDATED,today))
         assertEquals(Mastery.CONSOLIDATING,LearningProgress().mastery(module,ExerciseStatus.TO_REWORK,today))
         assertEquals(Mastery.DISCOVER,LearningProgress().mastery(module,null,today))
+        assertEquals(Mastery.SUBMITTED,LearningProgress().mastery(module,ExerciseStatus.SUBMITTED,today))
     }
     @Test fun assistanceAndErrorsStayVisibleBeforeCompletingModule() {
         val failed=attempt("error",18).copy(passed=false)

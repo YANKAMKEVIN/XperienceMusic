@@ -95,7 +95,8 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                             AppCard {
                                 Text("Une séance de plus !",style=MaterialTheme.typography.headlineMedium)
                                 Text(frenchCount(state.sessionDone.size,"activité travaillée"),Modifier.padding(top=Spacing.m))
-                                state.sessionDone.forEach { id -> Text("✓ ${state.sessionTitles[id] ?: LearningCatalog.findActivity(id)?.title.orEmpty()}",Modifier.padding(top=Spacing.s)) }
+                                // An activity to take up again is listed once, below, not also as a success.
+                                state.sessionDone.filterNot { it in state.sessionDifficult }.forEach { id -> Text("✓ ${state.sessionTitles[id] ?: LearningCatalog.findActivity(id)?.title.orEmpty()}",Modifier.padding(top=Spacing.s)) }
                                 if(state.sessionDifficult.isNotEmpty()) {
                                     Text("À reprendre tranquillement",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=Spacing.m))
                                     state.sessionDifficult.forEach { id ->Text(state.sessionTitles[id] ?: LearningCatalog.findActivity(id)?.title.orEmpty()) }
@@ -149,7 +150,7 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
         val plan=s.progress.dailyPlan(s.module,s.today,s.postponed).let { if(s.progress.returning(s.today))it.take(1) else it }
         Text("Environ ${plan.size*2} minutes · ${frenchCount(plan.size,"activité")} aujourd’hui · ${s.module.activities.size} dans le module",Modifier.padding(top=Spacing.s))
-        Text("Objectif : ${s.module.activities[plan.first()].title}",Modifier.padding(top=Spacing.s))
+        Text("Au programme : ${s.module.activities[plan.first()].title}",Modifier.padding(top=Spacing.s))
         if(s.progress.returning(s.today)) Text("Heureux de te retrouver. Reprends doucement avec une courte révision : tes progrès sont conservés.",Modifier.padding(top=Spacing.s))
         Text("${s.completed.size} / ${s.module.activities.size} activités terminées",Modifier.padding(top=Spacing.m))
         LinearProgressIndicator(progress={s.completed.size.toFloat()/s.module.activities.size},modifier=Modifier.fillMaxWidth().padding(top=Spacing.s))
@@ -232,8 +233,10 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(start=Spacing.l,end=Spacing.l,top=Spacing.s),verticalArrangement=Arrangement.spacedBy(Spacing.s)) {
         // The answer to "Vérifier" sits right above it: never under the fold, and read out by TalkBack.
         s.feedbackText?.let { feedback -> CheckFeedback(feedback,s.result==true,s.keptNotes) }
+        // Before the singing, the real action is "Chanter maintenant" in the card: no grey button competing with it.
+        val awaitsSinging=a.kind==LearningKind.SING && !s.sung
         if(s.result==true) GradientButton(onClick={event(LearningEvent.Next)},modifier=Modifier.fillMaxWidth()){Text("Continuer")}
-        else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck,modifier=Modifier.fillMaxWidth()){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";a.kind==LearningKind.SING && !s.sung->"Chante d’abord l’exercice";else->"Vérifier"})}
+        else if(!awaitsSinging) GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck,modifier=Modifier.fillMaxWidth()){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";else->"Vérifier"})}
         // A sung activity never locks the session: no earphones, a noisy room or a shy microphone can wait.
         if(s.canPostpone && !s.sung) TextButton(onClick={event(LearningEvent.Postpone)},modifier=Modifier.fillMaxWidth()){Text("Je le ferai plus tard")}
     }

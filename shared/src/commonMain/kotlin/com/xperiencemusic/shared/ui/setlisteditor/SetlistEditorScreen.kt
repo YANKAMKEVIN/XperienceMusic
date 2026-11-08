@@ -1,5 +1,9 @@
 package com.xperiencemusic.shared.ui.setlisteditor
 
+import com.xperiencemusic.shared.resources.setlist_date_long_gap
+import com.xperiencemusic.shared.resources.setlist_date_past
+import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.presentation.setlisteditor.SetlistDateWarning
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -163,6 +167,18 @@ fun SetlistEditorScreenContent(
                         Text(
                             stringResource(Res.string.setlist_replaces_hint),
                             color = MaterialTheme.colorScheme.secondary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    state.dateWarning?.let { warning ->
+                        Text(
+                            stringResource(
+                                when (warning) {
+                                    SetlistDateWarning.PAST_REHEARSAL -> Res.string.setlist_date_past
+                                    SetlistDateWarning.LONG_GAP -> Res.string.setlist_date_long_gap
+                                },
+                            ),
+                            color = BrandColors.Amber,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }

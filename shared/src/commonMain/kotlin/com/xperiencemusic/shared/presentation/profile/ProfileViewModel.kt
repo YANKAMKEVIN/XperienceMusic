@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.presentation.profile
 
+import com.xperiencemusic.shared.domain.model.MAX_DISPLAY_NAME_LENGTH
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.DomainResult
@@ -30,7 +31,7 @@ class ProfileViewModel(
 
     fun onEvent(event: ProfileEvent) {
         when (event) {
-            is ProfileEvent.NameChanged -> _state.update { it.copy(name = event.name) }
+            is ProfileEvent.NameChanged -> _state.update { it.copy(name = event.name.take(MAX_DISPLAY_NAME_LENGTH)) }
             is ProfileEvent.InstrumentSelected -> _state.update { it.copy(instrument = event.instrument) }
             is ProfileEvent.VoicePartSelected -> _state.update { it.copy(voicePart = event.voicePart, isVoiceUnknown = false) }
             ProfileEvent.VoiceUnknownSelected -> _state.update { it.copy(voicePart = null, isVoiceUnknown = true) }

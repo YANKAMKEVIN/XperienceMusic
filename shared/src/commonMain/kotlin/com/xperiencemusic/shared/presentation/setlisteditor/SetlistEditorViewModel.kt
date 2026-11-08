@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.presentation.setlisteditor
 
+import kotlinx.datetime.daysUntil
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.music.theory.Notation
@@ -47,6 +48,7 @@ data class SetlistDraft(
     val original: SetlistChoices? = null,
     val isConfirmingDiscard: Boolean = false,
     val isLeaving: Boolean = false,
+    val today: LocalDate? = null,
 ) {
     val choices: SetlistChoices get() = SetlistChoices(rehearsalDate, serviceDate, message, selectedIds)
 }
@@ -73,7 +75,7 @@ class SetlistEditorViewModel(
     serviceDate: LocalDate?,
 ) : ViewModel() {
     private val draft = MutableStateFlow(
-        suggestBandWeek().let { SetlistDraft(rehearsalDate = it.rehearsalDate, serviceDate = it.serviceDate) },
+        suggestBandWeek().let { SetlistDraft(rehearsalDate = it.rehearsalDate, serviceDate = it.serviceDate, today = suggestBandWeek.today()) },
     )
 
     init {
@@ -189,8 +191,19 @@ fun deriveSetlistEditorState(draft: SetlistDraft, library: List<Song>, matches: 
         hasUnsavedChanges = draft.hasUnsavedChanges,
         isConfirmingDiscard = draft.isConfirmingDiscard,
         isLeaving = draft.isLeaving,
+        dateWarning = draft.dateWarning(),
     )
 }
+
+/** A past date already published is left alone: only a date the admin just picked is questioned. */
+private fun SetlistDraft.dateWarning(): SetlistDateWarning? = when {
+    serviceDate < rehearsalDate -> null
+    today != null && rehearsalDate < today && rehearsalDate != original?.rehearsalDate -> SetlistDateWarning.PAST_REHEARSAL
+    rehearsalDate.daysUntil(serviceDate) > MAX_DAYS_BEFORE_SERVICE -> SetlistDateWarning.LONG_GAP
+    else -> null
+}
+
+private const val MAX_DAYS_BEFORE_SERVICE = 21
 
 /** Not once published or deleted: the week then left the editor on purpose. */
 val SetlistDraft.hasUnsavedChanges: Boolean

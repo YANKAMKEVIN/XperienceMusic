@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.signin
 
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -156,7 +157,8 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                 )
             }
             if (state.step == SignInStep.CODE) {
-                Row(
+                // Two lines of buttons rather than a label broken in two on a narrow phone.
+                FlowRow(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -170,7 +172,7 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                         )
                     }
                     TextButton(onClick = { onEvent(SignInEvent.ChangeEmailClicked) }) {
-                        Text(stringResource(Res.string.signin_change_email))
+                        Text(stringResource(Res.string.signin_change_email), softWrap = false, maxLines = 1)
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.planning
 
+import com.xperiencemusic.shared.resources.service_setlist_none_past
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.ui.semantics.Role
@@ -142,7 +143,7 @@ fun ServiceDetailScreenContent(state: ServiceDetailUiState, onEvent: (ServiceDet
                             }
                         }
                     }
-                    MissingLine(state.missing, Modifier.padding(top = Spacing.m))
+                    if (!state.isPast) MissingLine(state.missing, Modifier.padding(top = Spacing.m))
                 }
             }
             item {
@@ -150,7 +151,7 @@ fun ServiceDetailScreenContent(state: ServiceDetailUiState, onEvent: (ServiceDet
                     SectionTitle(stringResource(Res.string.service_setlist))
                     when {
                         state.kind == ServiceKind.FRIDAY -> Note(stringResource(Res.string.service_friday_free))
-                        state.songTitles.isEmpty() -> Note(stringResource(Res.string.service_setlist_none))
+                        state.songTitles.isEmpty() -> Note(stringResource(if (state.isPast) Res.string.service_setlist_none_past else Res.string.service_setlist_none))
                         else -> state.songTitles.forEachIndexed { index, title ->
                             Text("${index + 1}  $title", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = Spacing.s))
                         }
