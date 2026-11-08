@@ -48,14 +48,14 @@ class ExerciseViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel(mic: FakeMicrophone): ExerciseViewModel {
+    private fun viewModel(mic: FakeMicrophone, repository: com.xperiencemusic.shared.domain.repository.ExerciseRepository = exercises): ExerciseViewModel {
         val playback = PlaybackController(player, { it }, CoroutineScope(UnconfinedTestDispatcher()))
         return ExerciseViewModel(
             "fifth",
             ObserveCurrentMemberUseCase(sessions),
-            ObserveSingerPathUseCase(exercises, today),
+            ObserveSingerPathUseCase(repository, today),
             TrackSingingUseCase(mic),
-            CompleteExerciseUseCase(sessions, exercises, today),
+            CompleteExerciseUseCase(sessions, repository, today),
             PlayReferenceNoteUseCase(FakeFileStore(), player, playback),
             playback,
         )
@@ -76,6 +76,21 @@ class ExerciseViewModelTest {
         assertEquals(ExerciseStatus.VALIDATED, vm.state.value.status)
         assertEquals(ExerciseStatus.VALIDATED, exercises.observeStatuses("me").first()["fifth"])
         assertEquals(setOf(LocalDate(2026, 10, 12)), exercises.observePracticeDays("me").first(), "today counts for the streak")
+    }
+
+    @Test
+    fun `une sauvegarde échouée ne montre pas de réussite et permet de recommencer`() = runTest {
+        val failing = object : com.xperiencemusic.shared.domain.repository.ExerciseRepository by exercises {
+            override suspend fun recordPractice(memberId: String, day: LocalDate) {
+                error("offline")
+            }
+        }
+        val vm = viewModel(FakeMicrophone(List(FakeMicrophone.framesFor(1.0)) { 62 }), failing)
+        vm.onEvent(ExerciseEvent.StartClicked)
+        assertEquals(ExercisePhase.READY, vm.state.value.phase)
+        assertEquals(ExerciseError.SAVE_FAILED, vm.state.value.error)
+        assertEquals(ExerciseStatus.TODO, vm.state.value.status)
+        assertTrue(exercises.observeStatuses("me").first().isEmpty())
     }
 
     @Test

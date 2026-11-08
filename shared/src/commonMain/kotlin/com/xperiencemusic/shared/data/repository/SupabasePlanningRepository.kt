@@ -20,23 +20,32 @@ import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
 
 /** `service_months` and `service_signups`; the RLS policies keep members to their own answers. */
-class SupabasePlanningRepository(private val client: SupabaseClient) : PlanningRepository {
+class SupabasePlanningRepository(private val client: SupabaseClient,
+    private val loads: com.xperiencemusic.shared.data.remote.RemoteLoadMonitor = com.xperiencemusic.shared.data.remote.RemoteLoadMonitor()) : PlanningRepository, com.xperiencemusic.shared.domain.repository.SessionResettable {
+    private var sessionGeneration = 0
+
+    override fun resetSession() {
+        sessionGeneration++
+        months.value = null
+        signups.value = null
+    }
+
     private val months = MutableStateFlow<List<PlanningMonth>?>(null)
     private val signups = MutableStateFlow<List<ServiceSignup>?>(null)
 
     override fun observeMonths(): Flow<List<PlanningMonth>> =
-        months.onStart { ignoringFailures { reload() } }.filterNotNull()
+        months.onStart { loads.load("Planning") { reload() } }.filterNotNull()
 
     override fun observeSignups(): Flow<List<ServiceSignup>> =
-        signups.onStart { ignoringFailures { reload() } }.filterNotNull()
+        signups.onStart { loads.load("Planning") { reload() } }.filterNotNull()
 
     override suspend fun openMonth(monthStart: LocalDate, answerBy: LocalDate?) {
-        postgrestCall { client.from(MONTHS).insert(ServiceMonthOpenDto(monthStart.toString(), answerBy?.toString())) }
+        accountCall { client.from(MONTHS).insert(ServiceMonthOpenDto(monthStart.toString(), answerBy?.toString())) }
         reload()
     }
 
     override suspend fun validateMonth(monthStart: LocalDate) {
-        postgrestCall {
+        accountCall {
             client.from(MONTHS).update(ServiceMonthValidateDto(Clock.System.now().toString())) {
                 filter { eq("month", monthStart.toString()) }
             }
@@ -45,7 +54,7 @@ class SupabasePlanningRepository(private val client: SupabaseClient) : PlanningR
     }
 
     override suspend fun answer(memberId: String, serviceDate: LocalDate, serves: Boolean) {
-        postgrestCall {
+        accountCall {
             client.from(SIGNUPS).upsert(
                 ServiceSignupUpsertDto(serviceDate.toString(), memberId, serves, Clock.System.now().toString()),
             ) { onConflict = "service_date,member_id" }
@@ -54,9 +63,9 @@ class SupabasePlanningRepository(private val client: SupabaseClient) : PlanningR
     }
 
     private suspend fun reload() {
-        months.value = postgrestCall { client.from(MONTHS).select().decodeList<ServiceMonthDto>() }
+        months.value = accountCall { client.from(MONTHS).select().decodeList<ServiceMonthDto>() }
             .map { PlanningMonth(LocalDate.parse(it.month), it.answerBy?.let(LocalDate::parse), it.validatedAt != null) }
-        signups.value = postgrestCall { client.from(SIGNUPS).select().decodeList<ServiceSignupDto>() }
+        signups.value = accountCall { client.from(SIGNUPS).select().decodeList<ServiceSignupDto>() }
             .map { ServiceSignup(LocalDate.parse(it.serviceDate), it.memberId, it.serves) }
     }
 
@@ -64,4 +73,12 @@ class SupabasePlanningRepository(private val client: SupabaseClient) : PlanningR
         const val MONTHS = "service_months"
         const val SIGNUPS = "service_signups"
     }
+    /** Discard responses started under a previous account, including snapshot writes. */
+    private suspend fun <T> accountCall(block: suspend () -> T): T {
+        val generation = sessionGeneration
+        val result = postgrestCall(block)
+        if (generation != sessionGeneration) throw kotlin.coroutines.cancellation.CancellationException("Session ended")
+        return result
+    }
+
 }

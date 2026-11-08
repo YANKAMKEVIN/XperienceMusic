@@ -25,7 +25,15 @@ import kotlin.time.Clock
  * Row level security decides what comes back: a singer gets their own submissions, the super admin
  * everyone's. Reloaded each time a screen starts watching, and after every change.
  */
-class SupabaseVoiceSubmissionRepository(private val client: SupabaseClient) : VoiceSubmissionRepository {
+class SupabaseVoiceSubmissionRepository(private val client: SupabaseClient,
+    private val loads: com.xperiencemusic.shared.data.remote.RemoteLoadMonitor = com.xperiencemusic.shared.data.remote.RemoteLoadMonitor()) : VoiceSubmissionRepository, com.xperiencemusic.shared.domain.repository.SessionResettable {
+    private var sessionGeneration = 0
+
+    override fun resetSession() {
+        sessionGeneration++
+        all.value = null
+    }
+
     private val all = MutableStateFlow<List<VoiceSubmission>?>(null)
 
     override fun observeMine(memberId: String): Flow<List<VoiceSubmission>> =
@@ -34,10 +42,10 @@ class SupabaseVoiceSubmissionRepository(private val client: SupabaseClient) : Vo
     override fun observeAll(): Flow<List<VoiceSubmission>> = observe()
 
     private fun observe(): Flow<List<VoiceSubmission>> =
-        all.onStart { ignoringFailures { reload() } }.filterNotNull()
+        all.onStart { loads.load("VoiceSubmission") { reload() } }.filterNotNull()
 
     override suspend fun submit(memberId: String, songId: String, audioPath: String, durationSeconds: Int): String? {
-        val previous = postgrestCall {
+        val previous = accountCall {
             client.from(TABLE).select(Columns.list("audio_path")) {
                 filter {
                     eq("member_id", memberId)
@@ -45,7 +53,7 @@ class SupabaseVoiceSubmissionRepository(private val client: SupabaseClient) : Vo
                 }
             }.decodeSingleOrNull<AudioPathDto>()
         }
-        postgrestCall {
+        accountCall {
             client.from(TABLE).upsert(
                 VoiceSubmissionUpsertDto(memberId, songId, audioPath, durationSeconds, Clock.System.now().toString()),
             ) { onConflict = "member_id,song_id" }
@@ -55,7 +63,7 @@ class SupabaseVoiceSubmissionRepository(private val client: SupabaseClient) : Vo
     }
 
     override suspend fun review(submissionId: String, status: ExerciseStatus, feedback: String?) {
-        postgrestCall {
+        accountCall {
             client.from(TABLE).update(VoiceReviewDto(status.name, feedback, Clock.System.now().toString())) {
                 filter { eq("id", submissionId) }
             }
@@ -64,7 +72,7 @@ class SupabaseVoiceSubmissionRepository(private val client: SupabaseClient) : Vo
     }
 
     private suspend fun reload() {
-        all.value = postgrestCall {
+        all.value = accountCall {
             client.from(TABLE).select(Columns.raw(VoiceSubmissionDto.COLUMNS)) {
                 order("submitted_at", Order.DESCENDING)
             }.decodeList<VoiceSubmissionDto>()
@@ -74,4 +82,12 @@ class SupabaseVoiceSubmissionRepository(private val client: SupabaseClient) : Vo
     private companion object {
         const val TABLE = "voice_submissions"
     }
+    /** Discard responses started under a previous account, including snapshot writes. */
+    private suspend fun <T> accountCall(block: suspend () -> T): T {
+        val generation = sessionGeneration
+        val result = postgrestCall(block)
+        if (generation != sessionGeneration) throw kotlin.coroutines.cancellation.CancellationException("Session ended")
+        return result
+    }
+
 }

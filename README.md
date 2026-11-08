@@ -45,3 +45,15 @@ automatiquement si besoin.
 Les règles d'accès de la base se testent sur un Postgres jetable : voir
 [docs/supabase-setup.md](docs/supabase-setup.md#ce-que-garantit-le-serveur). Les deux
 tournent à chaque push via GitHub Actions (`.github/workflows/ci.yml`).
+
+## Limites du mode hors connexion
+
+Les chants, setlists et pistes déjà téléchargées restent consultables sans réseau.
+La progression des exercices et les jours d’entraînement sont sauvegardés localement après une
+écriture serveur réussie. Les nouvelles validations nécessitent une connexion : en cas d’échec,
+l’exercice peut être recommencé ; aucune réussite non sauvegardée n’est annoncée comme acquise.
+Le planning, les demandes de niveau, les validations et les prises envoyées nécessitent le réseau
+au premier chargement. Une bannière permet de relancer un chargement échoué.
+
+Les exercices automatiques évaluent la hauteur et la tenue des notes ; ils ne constituent pas
+une évaluation complète du chant. Le responsable reste décisionnaire du passage de niveau.

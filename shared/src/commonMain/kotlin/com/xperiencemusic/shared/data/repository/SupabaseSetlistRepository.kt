@@ -31,7 +31,15 @@ import kotlinx.serialization.json.putJsonArray
 class SupabaseSetlistRepository(
     private val client: SupabaseClient,
     private val snapshots: SnapshotStore,
-) : SetlistRepository {
+) : SetlistRepository, com.xperiencemusic.shared.domain.repository.SessionResettable {
+    private var sessionGeneration = 0
+
+    override fun resetSession() {
+        sessionGeneration++
+        setlists.value = null
+        hasRefreshed = false
+    }
+
     /** Null until loaded, so "no setlist yet" differs from "not loaded". */
     private val setlists = MutableStateFlow<List<Setlist>?>(null)
     private var hasRefreshed = false
@@ -50,7 +58,7 @@ class SupabaseSetlistRepository(
         }.filterNotNull()
 
     override suspend fun publish(setlist: Setlist) {
-        postgrestCall {
+        accountCall {
             client.postgrest.rpc(
                 "publish_setlist",
                 buildJsonObject {
@@ -65,14 +73,14 @@ class SupabaseSetlistRepository(
     }
 
     override suspend fun delete(serviceDate: LocalDate) {
-        postgrestCall {
+        accountCall {
             client.postgrest.rpc("delete_setlist", buildJsonObject { put("p_service_date", serviceDate.toString()) })
         }
         reload()
     }
 
     private suspend fun reload() {
-        val fetched = postgrestCall {
+        val fetched = accountCall {
             client.from(SETLISTS).select(Columns.raw(SetlistDto.COLUMNS)) {
                 // Every week ahead, and about six months of history.
                 order("service_date", Order.DESCENDING)
@@ -91,4 +99,12 @@ class SupabaseSetlistRepository(
     }
 
     private fun List<SetlistDto>.toDomainSorted() = map { it.toDomain() }.sortedBy { it.serviceDate }
+    /** Discard responses started under a previous account, including snapshot writes. */
+    private suspend fun <T> accountCall(block: suspend () -> T): T {
+        val generation = sessionGeneration
+        val result = postgrestCall(block)
+        if (generation != sessionGeneration) throw kotlin.coroutines.cancellation.CancellationException("Session ended")
+        return result
+    }
+
 }

@@ -154,7 +154,18 @@ val dataModule = module {
     // Drives the platform players, which expect the main thread.
     single { PlaybackController(get(), get(), CoroutineScope(SupervisorJob() + Dispatchers.Main)) }
     single { SnapshotStore(get()) }
-    single<LocalDataStore> { DeviceDataStore(get(), get(), get(), get()) }
+    single { com.xperiencemusic.shared.data.remote.RemoteLoadMonitor() }
+    single<LocalDataStore> {
+        DeviceDataStore(get(), get(), get(), get()) {
+            get<PlaybackController>().stop()
+            listOf(get<SongRepository>(), get<SetlistRepository>(), get<ExerciseRepository>(),
+                get<MembersRepository>(), get<PlanningRepository>(), get<GrowthRepository>(),
+                get<VoiceSubmissionRepository>()).forEach {
+                (it as? com.xperiencemusic.shared.domain.repository.SessionResettable)?.resetSession()
+            }
+            get<com.xperiencemusic.shared.data.remote.RemoteLoadMonitor>().clear()
+        }
+    }
     single<AnnouncedMonthsStore> { FileAnnouncedMonthsStore(get()) }
     if (SupabaseConfig.isConfigured) {
         single { AppEnvironment(isDemo = false, demoCode = null) }
@@ -165,11 +176,11 @@ val dataModule = module {
         single<ExerciseRepository> { SupabaseExerciseRepository(get(), SingerExercises.all, get()) }
         single<AudioStorage> { SupabaseAudioStorage(get()) }
         single<AudioCache> { FileAudioCache(get(), get()) }
-        single<MembersRepository> { SupabaseMembersRepository(get()) }
+        single<MembersRepository> { SupabaseMembersRepository(get(), get()) }
         single<AudioUrlProvider> { OfflineFirstAudioUrlProvider(get(), SupabaseAudioUrlProvider(get())) }
-        single<VoiceSubmissionRepository> { SupabaseVoiceSubmissionRepository(get()) }
-        single<PlanningRepository> { SupabasePlanningRepository(get()) }
-        single<GrowthRepository> { SupabaseGrowthRepository(get()) }
+        single<VoiceSubmissionRepository> { SupabaseVoiceSubmissionRepository(get(), get()) }
+        single<PlanningRepository> { SupabasePlanningRepository(get(), get()) }
+        single<GrowthRepository> { SupabaseGrowthRepository(get(), get()) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
         single<SessionRepository> { InMemorySessionRepository() }

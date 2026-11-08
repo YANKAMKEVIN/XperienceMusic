@@ -5,6 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import com.xperiencemusic.shared.data.remote.RemoteLoadMonitor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -74,7 +81,16 @@ fun MainScaffold(onSignOut: () -> Unit) {
     // The stage takes the whole screen: no tabs, no mini player.
     val isOnStage = destination?.hasRoute(StageRoute::class) == true
 
+    val loads = koinInject<RemoteLoadMonitor>()
+    val loadFailed by loads.hasFailure.collectAsStateWithLifecycle()
+    val retryScope = rememberCoroutineScope()
     Scaffold(
+        topBar = {
+            if (loadFailed) Column(Modifier.padding(Spacing.m)) {
+                Text("Actualisation impossible. Les données peuvent être incomplètes ou anciennes.")
+                TextButton(onClick = { retryScope.launch { loads.retry() } }) { Text("Réessayer") }
+            }
+        },
         bottomBar = {
             // Floating: the player card (while something plays) stacked over the tab pill, both
             // clear of the screen edges. Pushed screens keep the player only.

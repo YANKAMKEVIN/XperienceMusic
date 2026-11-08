@@ -26,7 +26,15 @@ class SupabaseExerciseRepository(
     private val client: SupabaseClient,
     private val exercises: List<Exercise>,
     private val snapshots: SnapshotStore,
-) : ExerciseRepository {
+) : ExerciseRepository, com.xperiencemusic.shared.domain.repository.SessionResettable {
+    private var sessionGeneration = 0
+
+    override fun resetSession() {
+        sessionGeneration++
+        statuses.value = emptyMap()
+        practiceDays.value = emptyMap()
+    }
+
     /** memberId -> (exerciseId -> status) */
     private val statuses = MutableStateFlow<Map<String, Map<String, ExerciseStatus>>>(emptyMap())
 
@@ -43,14 +51,16 @@ class SupabaseExerciseRepository(
             .filterNotNull()
 
     override suspend fun setStatus(memberId: String, exerciseId: String, status: ExerciseStatus) {
-        postgrestCall {
+        accountCall {
             client.from(PROGRESS).upsert(ExerciseProgressDto(memberId, exerciseId, status.name))
         }
         statuses.update { all -> all + (memberId to (all[memberId].orEmpty() + (exerciseId to status))) }
+        snapshots.save(snapshotOf(memberId), ListSerializer(ExerciseProgressDto.serializer()),
+            statuses.value[memberId].orEmpty().map { (id, value) -> ExerciseProgressDto(memberId, id, value.name) })
     }
 
     private suspend fun reload(memberId: String) {
-        val rows = postgrestCall {
+        val rows = accountCall {
             client.from(PROGRESS).select { filter { eq("member_id", memberId) } }.decodeList<ExerciseProgressDto>()
         }
         publish(memberId, rows)
@@ -76,14 +86,16 @@ class SupabaseExerciseRepository(
             .map { it[memberId].orEmpty() }
 
     override suspend fun recordPractice(memberId: String, day: LocalDate) {
-        practiceDays.update { all -> all + (memberId to (all[memberId].orEmpty() + day)) }
-        postgrestCall {
+        accountCall {
             client.from(PRACTICE_DAYS).upsert(PracticeDayDto(memberId, day)) { ignoreDuplicates = true }
         }
+        practiceDays.update { all -> all + (memberId to (all[memberId].orEmpty() + day)) }
+        snapshots.save(daysSnapshotOf(memberId), ListSerializer(PracticeDayDto.serializer()),
+            practiceDays.value[memberId].orEmpty().map { PracticeDayDto(memberId, it) })
     }
 
     private suspend fun reloadDays(memberId: String) {
-        val rows = postgrestCall {
+        val rows = accountCall {
             client.from(PRACTICE_DAYS).select { filter { eq("member_id", memberId) } }.decodeList<PracticeDayDto>()
         }
         practiceDays.update { it + (memberId to rows.map { row -> row.day }.toSet()) }
@@ -97,4 +109,12 @@ class SupabaseExerciseRepository(
         fun snapshotOf(memberId: String) = "progress-$memberId"
         fun daysSnapshotOf(memberId: String) = "practice-$memberId"
     }
+    /** Discard responses started under a previous account, including snapshot writes. */
+    private suspend fun <T> accountCall(block: suspend () -> T): T {
+        val generation = sessionGeneration
+        val result = postgrestCall(block)
+        if (generation != sessionGeneration) throw kotlin.coroutines.cancellation.CancellationException("Session ended")
+        return result
+    }
+
 }

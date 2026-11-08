@@ -40,7 +40,15 @@ import kotlinx.serialization.json.put
 class SupabaseSongRepository(
     private val client: SupabaseClient,
     private val snapshots: SnapshotStore,
-) : SongRepository {
+) : SongRepository, com.xperiencemusic.shared.domain.repository.SessionResettable {
+    private var sessionGeneration = 0
+
+    override fun resetSession() {
+        sessionGeneration++
+        songs.value = null
+        hasRefreshed = false
+    }
+
     private val songs = MutableStateFlow<Map<String, Song>?>(null)
     private val loading = Mutex()
     private var hasRefreshed = false
@@ -61,7 +69,7 @@ class SupabaseSongRepository(
     }
 
     override suspend fun createSong(draft: SongDraft): String {
-        val created = postgrestCall {
+        val created = accountCall {
             client.from(SONGS).insert(draft.toWriteDto()) { select(Columns.list("id")) }.decodeSingle<IdDto>()
         }
         reload()
@@ -69,7 +77,7 @@ class SupabaseSongRepository(
     }
 
     override suspend fun updateSong(id: String, draft: SongDraft) {
-        postgrestCall {
+        accountCall {
             client.from(SONGS).update(draft.toWriteDto()) { filter { eq("id", id) } }
         }
         reload()
@@ -80,13 +88,13 @@ class SupabaseSongRepository(
             song.recordings.map { it.audioPath } + song.voiceTracks.map { it.audioPath }
         }.orEmpty()
         // Rows of recordings, voice tracks and setlist entries go with the song (on delete cascade).
-        postgrestCall { client.from(SONGS).delete { filter { eq("id", id) } } }
+        accountCall { client.from(SONGS).delete { filter { eq("id", id) } } }
         if (audioPaths.isNotEmpty()) ignoringFailures { client.storage.from(AUDIO_BUCKET).delete(audioPaths) }
         reload()
     }
 
     override suspend fun addRecording(songId: String, recording: Recording, replacingId: String?) {
-        postgrestCall {
+        accountCall {
             client.postgrest.rpc(
                 "add_recording",
                 buildJsonObject {
@@ -105,7 +113,7 @@ class SupabaseSongRepository(
     }
 
     override suspend fun deleteRecording(songId: String, recordingId: String, newReferenceId: String?) {
-        val deletedPath = postgrestCall {
+        val deletedPath = accountCall {
             client.postgrest.rpc(
                 "delete_recording",
                 buildJsonObject {
@@ -120,7 +128,7 @@ class SupabaseSongRepository(
     }
 
     override suspend fun setReference(songId: String, recordingId: String) {
-        postgrestCall {
+        accountCall {
             client.postgrest.rpc("set_reference_recording", buildJsonObject { put("p_recording_id", recordingId) })
         }
         reload()
@@ -142,7 +150,7 @@ class SupabaseSongRepository(
     }
 
     private suspend fun reload() = loading.withLock {
-        val fetched = postgrestCall {
+        val fetched = accountCall {
             client.from(SONGS).select(Columns.raw(SongDto.COLUMNS)).decodeList<SongDto>()
         }
         publish(fetched)
@@ -158,4 +166,12 @@ class SupabaseSongRepository(
         const val SONGS = "songs"
         const val SNAPSHOT = "songs"
     }
+    /** Discard responses started under a previous account, including snapshot writes. */
+    private suspend fun <T> accountCall(block: suspend () -> T): T {
+        val generation = sessionGeneration
+        val result = postgrestCall(block)
+        if (generation != sessionGeneration) throw kotlin.coroutines.cancellation.CancellationException("Session ended")
+        return result
+    }
+
 }
