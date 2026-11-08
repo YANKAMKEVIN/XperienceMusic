@@ -23,8 +23,11 @@ data class RecordingLevel(
     val reachedLimit: Boolean = false,
 )
 
-/** A finished recording, ready to be listened to and sent. */
-class RecordedVoice(val wav: ByteArray, val durationSeconds: Int)
+/**
+ * A finished recording, ready to be listened to and sent. [isNearlySilent] when the microphone
+ * heard almost nothing: worth a warning before it goes to the responsable.
+ */
+class RecordedVoice(val wav: ByteArray, val durationSeconds: Int, val isNearlySilent: Boolean = false)
 
 /**
  * Records the singer's voice in memory, up to [MAX_SECONDS]. Unlike the exercises, the audio is
@@ -67,9 +70,11 @@ class VoiceRecorder(private val microphone: MicrophoneInput) {
         val samples = FloatArray(chunks.sumOf { it.size })
         var offset = 0
         chunks.forEach { it.copyInto(samples, offset); offset += it.size }
+        val loudness = sqrt(samples.sumOf { it.toDouble() * it } / samples.size)
         return RecordedVoice(
             WavEncoder.encode(samples, sampleRate, maxSampleRate = VOICE_SAMPLE_RATE),
             durationSeconds = (samples.size / sampleRate).coerceAtLeast(1),
+            isNearlySilent = loudness < SILENCE_LOUDNESS,
         )
     }
 
@@ -85,5 +90,7 @@ class VoiceRecorder(private val microphone: MicrophoneInput) {
         /** Enough for a voice; halves the file. */
         private const val VOICE_SAMPLE_RATE = 24_000
         private const val LEVEL_GAIN = 6.0
+        /** Average loudness (RMS) under which a take is mostly silence: about -46 dBFS. */
+        internal const val SILENCE_LOUDNESS = 0.005
     }
 }

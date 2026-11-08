@@ -64,4 +64,15 @@ class ProgressFocusTest {
         assertEquals(LearningCatalog.modulesFor(Instrument.PIANO).map { it.id }, piano.learningModules().map { it.id })
         assertTrue(piano.copy(learning = null).learningModules().isEmpty())
     }
+
+    @Test fun onlyObjectivesWithWorkDoneCountAsStarted() {
+        val modules = listOf(
+            ModuleProgressUi("m4", "Rythme", done = 2, total = 6, objectiveId = "singer-c4"),
+            ModuleProgressUi("m5", "Micro", done = 0, total = 6, objectiveId = "singer-c5"),
+            ModuleProgressUi("m6", "Tenir", done = 6, total = 6, objectiveId = "singer-c6"),
+        )
+        val objectives = listOf(objective("singer-c4"), objective("singer-c5"), objective("singer-c6", ExerciseStatus.SUBMITTED), objective("singer-c7"))
+        assertEquals(setOf("singer-c4"), startedObjectives(objectives, modules))
+        assertEquals(emptySet(), startedObjectives(objectives, emptyList()))
+    }
 }

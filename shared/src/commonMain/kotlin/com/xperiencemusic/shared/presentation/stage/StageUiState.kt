@@ -17,6 +17,9 @@ data class StageUiState(
     val nextSongId: String? = null,
     val nextSongTitle: String? = null,
 ) {
+    /** The speed as a small step number, "3" of [MAX_LEVEL], which says more than raw pixels per second. */
+    val speedLevel: Int get() = scrollSpeed / SPEED_STEP
+
     companion object {
         const val DEFAULT_SCALE = 1.6f
         const val MIN_SCALE = 1f
@@ -26,6 +29,7 @@ data class StageUiState(
         const val MIN_SPEED = 10
         const val MAX_SPEED = 120
         const val SPEED_STEP = 10
+        const val MAX_LEVEL = MAX_SPEED / SPEED_STEP
     }
 }
 

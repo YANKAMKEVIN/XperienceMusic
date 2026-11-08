@@ -60,9 +60,16 @@ fun CodeBoxes(
 ) {
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
-    LaunchedEffect(Unit) { focus.requestFocus() }
-    // Checking the code: the boxes freeze and the keyboard gets out of the way.
-    LaunchedEffect(enabled) { if (!enabled) keyboard?.hide() }
+    // Checking the code: the boxes freeze and the keyboard gets out of the way. Back from a refused
+    // code, the boxes are empty again and ready for the next one.
+    LaunchedEffect(enabled) {
+        if (enabled) {
+            focus.requestFocus()
+            keyboard?.show()
+        } else {
+            keyboard?.hide()
+        }
+    }
     // A refused code shakes the boxes, like a head saying no.
     val shake = remember { Animatable(0f) }
     LaunchedEffect(isError) {

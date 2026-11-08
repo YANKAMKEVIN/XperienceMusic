@@ -9,6 +9,7 @@ import com.xperiencemusic.shared.domain.model.PlaybackState
 import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.model.VoiceSubmission
 import com.xperiencemusic.shared.domain.repository.VoiceSubmissionRepository
+import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.ReviewVoiceUseCase
 import com.xperiencemusic.shared.presentation.common.Formatting
@@ -27,6 +28,7 @@ internal data class ReviewLocal(
     val saving: Set<String> = emptySet(),
     val needsComment: Set<String> = emptySet(),
     val hasError: Boolean = false,
+    val lastAnswer: AnswerUi? = null,
 )
 
 /** The super admin's "À écouter": every singer's part, played here and answered in one place. */
@@ -34,12 +36,14 @@ class VoiceReviewViewModel(
     private val submissions: VoiceSubmissionRepository,
     private val review: ReviewVoiceUseCase,
     private val playback: PlaybackController,
+    currentMember: ObserveCurrentMemberUseCase,
 ) : ViewModel() {
     private val local = MutableStateFlow(ReviewLocal())
     private val all = submissions.observeAll()
 
-    val state: StateFlow<VoiceReviewUiState> = combine(all, local, playback.state, ::deriveVoiceReviewState)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), VoiceReviewUiState())
+    val state: StateFlow<VoiceReviewUiState> = combine(all, local, playback.state, currentMember()) { all, local, playing, me ->
+        deriveVoiceReviewState(all, local, playing, me?.id)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), VoiceReviewUiState())
 
     fun onEvent(event: VoiceReviewEvent) {
         when (event) {
@@ -54,6 +58,11 @@ class VoiceReviewViewModel(
             is VoiceReviewEvent.ValidateClicked -> answer(event.id, validated = true)
             is VoiceReviewEvent.ReworkClicked -> answer(event.id, validated = false)
             VoiceReviewEvent.ErrorShown -> local.update { it.copy(hasError = false) }
+            VoiceReviewEvent.AnswerShown -> local.update { it.copy(lastAnswer = null) }
+            is VoiceReviewEvent.UndoClicked -> viewModelScope.launch {
+                local.update { it.copy(lastAnswer = null) }
+                if (review.undo(event.submissionId) is DomainResult.Failure) local.update { it.copy(hasError = true) }
+            }
         }
     }
 
@@ -62,10 +71,15 @@ class VoiceReviewViewModel(
         val draft = local.value.drafts[id].orEmpty()
         local.update { it.copy(saving = it.saving + id) }
         viewModelScope.launch {
+            val memberName = all.first().firstOrNull { it.id == id }?.memberName.orEmpty()
             val result = review(id, validated, draft)
             local.update { current ->
                 when (result) {
-                    is DomainResult.Success -> current.copy(saving = current.saving - id, drafts = current.drafts - id)
+                    is DomainResult.Success -> current.copy(
+                        saving = current.saving - id,
+                        drafts = current.drafts - id,
+                        lastAnswer = AnswerUi(id, memberName, validated),
+                    )
                     is DomainResult.Failure -> current.copy(
                         saving = current.saving - id,
                         needsComment = if (result.error == DomainError.INVALID_INPUT) current.needsComment + id else current.needsComment,
@@ -81,6 +95,7 @@ internal fun deriveVoiceReviewState(
     all: List<VoiceSubmission>,
     local: ReviewLocal,
     playing: PlaybackState,
+    myId: String? = null,
 ): VoiceReviewUiState {
     fun VoiceSubmission.toUi() = SubmissionUi(
         id = id,
@@ -100,6 +115,7 @@ internal fun deriveVoiceReviewState(
         draft = local.drafts[id].orEmpty(),
         isSaving = id in local.saving,
         needsComment = id in local.needsComment,
+        isMine = memberId == myId,
     )
     val (waiting, done) = all.partition { it.status == ExerciseStatus.SUBMITTED }
     return VoiceReviewUiState(
@@ -107,5 +123,6 @@ internal fun deriveVoiceReviewState(
         toReview = waiting.sortedBy { it.submittedOn }.map { it.toUi() },
         reviewed = done.sortedByDescending { it.submittedOn }.map { it.toUi() },
         hasError = local.hasError,
+        lastAnswer = local.lastAnswer,
     )
 }

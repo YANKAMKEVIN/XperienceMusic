@@ -1,5 +1,11 @@
 package com.xperiencemusic.shared.ui.voice
 
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
+import com.xperiencemusic.shared.resources.review_mine
+import com.xperiencemusic.shared.resources.review_rework_snack
+import com.xperiencemusic.shared.resources.review_undo
+import com.xperiencemusic.shared.resources.review_validated_snack
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +22,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,6 +75,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun VoiceReviewScreen(onBack: () -> Unit, viewModel: VoiceReviewViewModel = koinViewModel()) {
@@ -85,6 +91,18 @@ fun VoiceReviewScreenContent(state: VoiceReviewUiState, onEvent: (VoiceReviewEve
         if (state.hasError) {
             snackbar.showSnackbar(getString(Res.string.error_generic))
             onEvent(VoiceReviewEvent.ErrorShown)
+        }
+    }
+    // The card is gone at once: say what happened, and let a slip be taken back.
+    state.lastAnswer?.let { answer ->
+        val message = stringResource(
+            if (answer.validated) Res.string.review_validated_snack else Res.string.review_rework_snack,
+            answer.memberName,
+        )
+        val undo = stringResource(Res.string.review_undo)
+        LaunchedEffect(answer) {
+            val result = snackbar.showSnackbar(message, actionLabel = undo, duration = SnackbarDuration.Long)
+            onEvent(if (result == SnackbarResult.ActionPerformed) VoiceReviewEvent.UndoClicked(answer.submissionId) else VoiceReviewEvent.AnswerShown)
         }
     }
     Scaffold(
@@ -104,7 +122,7 @@ fun VoiceReviewScreenContent(state: VoiceReviewUiState, onEvent: (VoiceReviewEve
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         LazyColumn(
@@ -158,6 +176,18 @@ private fun SubmitterRow(item: SubmissionUi, onEvent: (VoiceReviewEvent) -> Unit
 
 @Composable
 private fun ToReviewCard(item: SubmissionUi, onEvent: (VoiceReviewEvent) -> Unit) {
+    if (item.isMine) {
+        AppCard {
+            SubmitterRow(item, onEvent)
+            Text(
+                stringResource(Res.string.review_mine),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = Spacing.s),
+            )
+        }
+        return
+    }
     AppCard {
         SubmitterRow(item, onEvent)
         OutlinedTextField(

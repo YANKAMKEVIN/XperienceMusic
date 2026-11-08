@@ -23,6 +23,9 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlanningViewModelTest {
@@ -49,9 +52,22 @@ class PlanningViewModelTest {
             viewModel.onEvent(PlanningEvent.OpenMonthClicked)
             val opened = expectMostRecentItem()
             assertEquals(MonthStatus.OPEN, opened.status)
-            assertEquals("25 oct.", opened.answerByLabel)
+            assertEquals("25\u00A0oct.", opened.answerByLabel)
             viewModel.onEvent(PlanningEvent.ValidateMonthClicked)
-            assertEquals(MonthStatus.VALIDATED, expectMostRecentItem().status)
+            val asking = expectMostRecentItem()
+            assertTrue(asking.isConfirmingValidation, "validating asks first")
+            assertEquals(MonthStatus.OPEN, asking.status)
+            viewModel.onEvent(PlanningEvent.ValidateMonthDismissed)
+            val dismissed = expectMostRecentItem()
+            assertFalse(dismissed.isConfirmingValidation)
+            assertEquals(MonthStatus.OPEN, dismissed.status)
+
+            viewModel.onEvent(PlanningEvent.ValidateMonthClicked)
+            viewModel.onEvent(PlanningEvent.ValidateMonthConfirmed)
+            val validated = expectMostRecentItem()
+            assertEquals(MonthStatus.VALIDATED, validated.status)
+            assertFalse(validated.isConfirmingValidation)
+            assertNull(validated.validation, "nothing left to validate")
         }
     }
 }

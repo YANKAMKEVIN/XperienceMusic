@@ -39,6 +39,7 @@ internal data class VoiceLocal(
     val guideChoice: String? = null,
     val phase: VoicePhase = VoicePhase.READY,
     val error: VoiceError? = null,
+    val isQuietTake: Boolean = false,
 )
 
 /**
@@ -117,7 +118,7 @@ class VoiceRecordViewModel(
             return
         }
         recorded = voice
-        local.update { it.copy(phase = VoicePhase.RECORDED) }
+        local.update { it.copy(phase = VoicePhase.RECORDED, isQuietTake = voice.isNearlySilent) }
     }
 
     private fun failRecording() {
@@ -148,7 +149,7 @@ class VoiceRecordViewModel(
         stopPreview()
         recorded = null
         recorder.discard()
-        local.update { it.copy(phase = VoicePhase.READY, error = null) }
+        local.update { it.copy(phase = VoicePhase.READY, error = null, isQuietTake = false) }
     }
 
     private fun send() {
@@ -210,6 +211,7 @@ internal fun deriveVoiceRecordState(
         level = if (local.phase == VoicePhase.RECORDING) level else 0f,
         previous = previous?.let { PreviousSubmissionUi(Formatting.dayAndDate(it.submittedOn), it.status, it.feedback) },
         error = local.error,
+        isQuietTake = local.isQuietTake && local.phase in listOf(VoicePhase.RECORDED, VoicePhase.SENDING),
     )
 }
 

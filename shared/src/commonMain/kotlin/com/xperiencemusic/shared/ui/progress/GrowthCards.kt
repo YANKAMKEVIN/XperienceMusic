@@ -9,20 +9,23 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +41,7 @@ import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Level
 import com.xperiencemusic.shared.presentation.progress.ModuleProgressUi
 import com.xperiencemusic.shared.presentation.progress.ObjectiveUi
+import com.xperiencemusic.shared.presentation.progress.startedObjectives
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.growth_by_microphone
 import com.xperiencemusic.shared.resources.growth_level_to_confirmed
@@ -46,6 +50,7 @@ import com.xperiencemusic.shared.resources.growth_learn_title
 import com.xperiencemusic.shared.resources.progress_module_count
 import com.xperiencemusic.shared.resources.progress_objective_module
 import com.xperiencemusic.shared.resources.progress_objective_number
+import com.xperiencemusic.shared.resources.progress_objective_started
 import com.xperiencemusic.shared.resources.progress_objective_todo
 import com.xperiencemusic.shared.resources.progress_sheet_criterion
 import com.xperiencemusic.shared.resources.progress_sheet_learn
@@ -67,57 +72,60 @@ internal fun Level.target(): String = stringResource(
     if (this == Level.PRO) Res.string.growth_level_to_pro else Res.string.growth_level_to_confirmed,
 )
 
-internal fun ObjectiveUi.segment(): RingSegment = when (status) {
+internal fun ObjectiveUi.segment(started: Boolean): RingSegment = when (status) {
     ExerciseStatus.VALIDATED -> RingSegment.VALIDATED
     ExerciseStatus.SUBMITTED -> RingSegment.WAITING
     ExerciseStatus.TO_REWORK -> RingSegment.REWORK
-    else -> RingSegment.TODO
+    else -> if (started) RingSegment.STARTED else RingSegment.TODO
 }
 
 @Composable
-private fun ObjectiveUi.statusLabel(): Pair<String, Color> = when (status) {
+private fun ObjectiveUi.statusLabel(started: Boolean = false): Pair<String, Color> = when (status) {
     ExerciseStatus.VALIDATED -> stringResource(Res.string.status_validated) to Palette.Success
     ExerciseStatus.SUBMITTED -> stringResource(Res.string.status_submitted) to Palette.Blue
     ExerciseStatus.TO_REWORK -> stringResource(Res.string.status_to_rework) to BrandColors.Amber
-    else -> stringResource(Res.string.progress_objective_todo) to Palette.Mist
+    else -> if (started) stringResource(Res.string.progress_objective_started) to Palette.Violet
+    else stringResource(Res.string.progress_objective_todo) to Palette.Mist
 }
 
 /**
- * The objectives of the next level as cards to swipe, the ones still open first. A tap opens the
- * objective's sheet.
+ * The objectives of the next level as one compact row each, in their order (the ring's), with the
+ * status on the right: all seven fit on screen, no hidden carousel. A tap opens the objective's sheet.
  */
 @Composable
-internal fun ObjectiveCarousel(objectives: List<ObjectiveUi>, modules: List<ModuleProgressUi>, onOpen: (ObjectiveUi) -> Unit) {
-    val numbered = objectives.mapIndexed { i, o -> i + 1 to o }
-        .sortedBy { (_, o) -> if (o.status == ExerciseStatus.VALIDATED) 1 else 0 }
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = Spacing.l),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        itemsIndexed(numbered, key = { _, (_, o) -> o.id }) { order, (number, objective) ->
-            val (label, color) = objective.statusLabel()
+internal fun ObjectiveList(objectives: List<ObjectiveUi>, modules: List<ModuleProgressUi>, onOpen: (ObjectiveUi) -> Unit) {
+    val started = remember(objectives, modules) { startedObjectives(objectives, modules) }
+    Column(Modifier.padding(horizontal = Spacing.l), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        objectives.forEachIndexed { i, objective ->
+            val (label, color) = objective.statusLabel(objective.id in started)
             val module = modules.firstOrNull { it.objectiveId == objective.id }
-            val shape = RoundedCornerShape(22.dp)
-            Column(
-                Modifier
-                    .enter(order)
-                    .width(156.dp)
-                    .height(172.dp)
+            val shape = RoundedCornerShape(18.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .enter(i)
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
                     .clip(shape)
                     .background(Palette.NightRaised)
                     .border(1.dp, if (objective.status == null) Palette.Outline else color.copy(alpha = 0.45f), shape)
                     .clickable(role = Role.Button) { onOpen(objective) }
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.SpaceBetween,
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
             ) {
-                StatusChip(label, color)
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(Res.string.progress_objective_number, number), style = MaterialTheme.typography.labelMedium, color = Palette.Mist)
-                    Text(objective.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, maxLines = 2)
+                Box(
+                    Modifier.size(28.dp).clip(CircleShape).background(Palette.NightHigh),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("${i + 1}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Palette.Mist)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(objective.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     if (module != null && module.done > 0 && objective.status != ExerciseStatus.VALIDATED) {
                         Text(stringResource(Res.string.progress_objective_module, module.done, module.total), style = MaterialTheme.typography.labelSmall, color = Palette.Blue)
                     }
                 }
+                StatusChip(label, color)
             }
         }
     }
@@ -149,9 +157,19 @@ internal fun ObjectiveSheet(
     onLearn: (String) -> Unit,
     onToggle: (String, Boolean) -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Palette.NightRaised) {
+    // Opened whole, clear of the navigation bar and scrollable: with a large font the tick and the
+    // main button used to sit under the system buttons or below the half-open sheet.
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Palette.NightRaised,
+    ) {
         Column(
-            Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, bottom = 32.dp),
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(start = 22.dp, end = 22.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             val (label, color) = objective.statusLabel()
@@ -185,19 +203,25 @@ internal fun ObjectiveSheet(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Palette.Mist,
                 )
-                objective.status != ExerciseStatus.VALIDATED -> Column {
+                objective.status != ExerciseStatus.VALIDATED -> {
                     val ticked = objective.status == ExerciseStatus.SUBMITTED
+                    // The whole row, explanation included, toggles: a 48 dp target at least.
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .clickable(enabled = !isWorking, role = Role.Checkbox) { onToggle(objective.id, !ticked) },
+                            .toggleable(value = ticked, enabled = !isWorking, role = Role.Checkbox) { onToggle(objective.id, it) }
+                            .padding(vertical = Spacing.s),
                     ) {
                         Checkbox(checked = ticked, onCheckedChange = null, enabled = !isWorking)
-                        Text(stringResource(Res.string.progress_sheet_reached), style = MaterialTheme.typography.titleSmall)
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(stringResource(Res.string.progress_sheet_reached), style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(Res.string.progress_sheet_reached_hint), style = MaterialTheme.typography.bodySmall, color = Palette.Mist)
+                        }
                     }
-                    Text(stringResource(Res.string.progress_sheet_reached_hint), style = MaterialTheme.typography.bodySmall, color = Palette.Mist)
                 }
             }
         }

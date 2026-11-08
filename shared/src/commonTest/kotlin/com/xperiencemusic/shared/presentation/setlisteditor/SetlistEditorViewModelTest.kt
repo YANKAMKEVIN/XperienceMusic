@@ -45,7 +45,8 @@ class SetlistEditorViewModelTest {
 
     private val session = FakeSessionRepository(member(Role.CONTENT_ADMIN))
 
-    private fun editor(today: LocalDate = LocalDate(2026, 10, 10), serviceDate: LocalDate? = null) = SetlistEditorViewModel(
+    // Monday 12 October 2026: the coming week runs from Tuesday 13 to Sunday 18.
+    private fun editor(today: LocalDate = LocalDate(2026, 10, 12), serviceDate: LocalDate? = null) = SetlistEditorViewModel(
         SearchSongsUseCase(songs),
         PublishSetlistUseCase(session, setlists),
         DeleteSetlistUseCase(session, setlists),
@@ -73,6 +74,16 @@ class SetlistEditorViewModelTest {
             assertFalse(state.isEditing)
             assertEquals(LocalDate(2026, 10, 25), state.serviceDate)
             assertTrue(state.selected.isEmpty())
+        }
+    }
+
+    @Test
+    fun `un vendredi la nouvelle setlist propose le dimanche qui vient`() = runTest {
+        // Friday 30 October 2026: Sunday 1 November is still ahead, its rehearsal was on 27 October.
+        editor(today = LocalDate(2026, 10, 30)).state.test {
+            val state = expectMostRecentItem()
+            assertEquals(LocalDate(2026, 11, 1), state.serviceDate)
+            assertEquals(LocalDate(2026, 10, 27), state.rehearsalDate)
         }
     }
 
@@ -114,8 +125,8 @@ class SetlistEditorViewModelTest {
     fun `les dates sont proposées et l'ordre des chants se règle`() = runTest {
         viewModel.state.test {
             val initial = awaitItem()
-            assertEquals("mardi 13 oct.", initial.rehearsalLabel)
-            assertEquals("dimanche 18 oct.", initial.serviceLabel)
+            assertEquals("mardi 13\u00A0oct.", initial.rehearsalLabel)
+            assertEquals("dimanche 18\u00A0oct.", initial.serviceLabel)
             assertFalse(initial.canPublish)
 
             viewModel.onEvent(SetlistEditorEvent.SongAdded("c"))
@@ -154,5 +165,55 @@ class SetlistEditorViewModelTest {
         assertEquals(listOf("b", "a"), published.songIds)
         assertEquals("Intro douce", published.message)
         assertEquals("Grâce", published.publishedBy)
+    }
+
+    @Test
+    fun `retirer un chant d'une setlist publiée demande confirmation au retour`() = runTest {
+        setlists.publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("c", "a"), "Intro", "x"))
+        val editor = editor(serviceDate = LocalDate(2026, 10, 18))
+        editor.state.test {
+            assertFalse(expectMostRecentItem().hasUnsavedChanges, "the published week as loaded is not a change")
+            editor.onEvent(SetlistEditorEvent.QueryChanged("Bé"))
+            assertFalse(expectMostRecentItem().hasUnsavedChanges, "a search is not a change")
+            editor.onEvent(SetlistEditorEvent.SongRemoved("a"))
+            assertTrue(expectMostRecentItem().hasUnsavedChanges)
+
+            editor.onEvent(SetlistEditorEvent.BackClicked)
+            val asking = expectMostRecentItem()
+            assertTrue(asking.isConfirmingDiscard)
+            assertFalse(asking.isLeaving)
+            editor.onEvent(SetlistEditorEvent.DiscardDismissed)
+            assertEquals(listOf("c"), expectMostRecentItem().selected.map { it.id })
+
+            editor.onEvent(SetlistEditorEvent.BackClicked)
+            editor.onEvent(SetlistEditorEvent.DiscardConfirmed)
+            val leaving = expectMostRecentItem()
+            assertTrue(leaving.isLeaving)
+            assertFalse(leaving.isConfirmingDiscard)
+            assertFalse(leaving.hasUnsavedChanges)
+        }
+    }
+
+    @Test
+    fun `quitter une nouvelle setlist vide ne demande rien`() = runTest {
+        viewModel.state.test {
+            assertFalse(expectMostRecentItem().hasUnsavedChanges)
+            viewModel.onEvent(SetlistEditorEvent.BackClicked)
+            val leaving = expectMostRecentItem()
+            assertTrue(leaving.isLeaving)
+            assertFalse(leaving.isConfirmingDiscard)
+        }
+    }
+
+    @Test
+    fun `remettre la setlist comme avant efface la modification`() = runTest {
+        viewModel.state.test {
+            viewModel.onEvent(SetlistEditorEvent.SongAdded("b"))
+            assertTrue(expectMostRecentItem().hasUnsavedChanges)
+            viewModel.onEvent(SetlistEditorEvent.SongRemoved("b"))
+            assertFalse(expectMostRecentItem().hasUnsavedChanges)
+            viewModel.onEvent(SetlistEditorEvent.MessageChanged("Répétition à 19 h"))
+            assertTrue(expectMostRecentItem().hasUnsavedChanges)
+        }
     }
 }

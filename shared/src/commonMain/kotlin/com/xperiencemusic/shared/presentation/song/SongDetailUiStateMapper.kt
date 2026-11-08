@@ -45,6 +45,9 @@ fun deriveSongDetailState(
         title = song.title,
         artist = song.artist,
         keyLabel = displayedKey.label(keyNotation),
+        keyHeading = displayedKey.label(keyNotation).let {
+            if (local.notation == Notation.LETTERS) "${displayedKey.label(Notation.SOLFEGE)} ($it)" else it
+        },
         originalKeyLabel = song.key.label(keyNotation).takeIf { displayedKey != song.key },
         notation = local.notation,
         transposeSemitones = local.transposeSemitones,

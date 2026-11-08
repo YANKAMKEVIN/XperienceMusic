@@ -16,7 +16,10 @@ data class ExerciseUiState(
     /** The daily warm-up: it keeps the streak but has no status. */
     val isWarmUp: Boolean = false,
     val isChallenge: Boolean = false,
-)
+) {
+    /** The microphone is on: the screen keeps the live gauge and a way to stop, little else. */
+    val isListening: Boolean get() = check != null && phase == ExercisePhase.LISTENING
+}
 
 data class AutomaticCheckUi(
     /** The note to sing now: the only one for a hold, the current one in a sequence. */

@@ -12,15 +12,17 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 
+private const val ADMIN_MONTHS_AHEAD = 2
+
 /**
  * The months the planning shows: this one, and every later month an admin opened — admins also get
- * the month after, so they can open it.
+ * the next two, so they can open a month early enough to leave time for the answers.
  */
 fun planningMonths(today: LocalDate, months: List<PlanningMonth>, canPlan: Boolean): List<LocalDate> {
     val thisMonth = today.monthStart()
     val opened = months.map { it.monthStart }.filter { it >= thisMonth }
-    val next = thisMonth.plus(DatePeriod(months = 1))
-    return (listOf(thisMonth) + opened + listOfNotNull(next.takeIf { canPlan })).distinct().sorted()
+    val upcoming = if (canPlan) (1..ADMIN_MONTHS_AHEAD).map { thisMonth.plus(DatePeriod(months = it)) } else emptyList()
+    return (listOf(thisMonth) + opened + upcoming).distinct().sorted()
 }
 
 fun derivePlanningState(planning: Planning, monthStart: LocalDate, today: LocalDate): PlanningUiState {
@@ -48,9 +50,24 @@ fun derivePlanningState(planning: Planning, monthStart: LocalDate, today: LocalD
         canGoForward = shown.any { it > monthStart },
         status = status,
         answerByLabel = month?.answerBy?.takeIf { status == MonthStatus.OPEN }?.let(Formatting::dayAndMonth),
+        isPastDeadline = status == MonthStatus.OPEN && month?.answerBy?.let { it < today } == true,
+        incompleteAfterValidation = if (status == MonthStatus.VALIDATED) services.count { !it.isPast && it.missing.isNotEmpty() } else 0,
         unansweredCount = if (status == MonthStatus.OPEN) services.count { !it.isPast && it.myAnswer == MyAnswer.UNANSWERED } else 0,
         services = services,
         canPlan = canPlan,
+        validation = if (canPlan && status == MonthStatus.OPEN) monthValidation(services, planning.members, planning.signups) else null,
+    )
+}
+
+/** Past services are left out: nobody can answer for them any more. */
+fun monthValidation(services: List<ServiceCardUi>, members: List<BandMember>, signups: List<ServiceSignup>): MonthValidationUi {
+    val coming = services.filterNot { it.isPast }
+    val answered = signups.map { it.serviceDate to it.memberId }.toSet()
+    return MonthValidationUi(
+        missingAnswers = coming.sumOf { service -> members.count { (service.date to it.id) !in answered } },
+        missingMembers = members.count { member -> coming.any { (it.date to member.id) !in answered } },
+        incompleteServices = coming.count { it.missing.isNotEmpty() },
+        uncoveredParts = coming.flatMap { it.missing }.distinct().sortedBy { it.ordinal },
     )
 }
 
@@ -75,5 +92,6 @@ fun serviceCards(
             null -> MyAnswer.UNANSWERED
         },
         isPast = team.date < today,
+        isToday = team.date == today,
     )
 }

@@ -49,7 +49,7 @@ private fun SessionMessageScreenPreview() {
     AppTheme {
         SessionMessageScreen(
             title = "Connexion impossible",
-            text = "On n'arrive pas à joindre le serveur.",
+            text = "On n’arrive pas à joindre le serveur.",
             primaryLabel = "Réessayer",
             onPrimary = {},
             signOutLabel = "Se déconnecter",

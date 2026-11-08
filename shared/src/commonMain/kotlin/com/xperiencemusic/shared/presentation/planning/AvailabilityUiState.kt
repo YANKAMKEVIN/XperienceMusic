@@ -9,6 +9,8 @@ data class AvailabilityUiState(
     val isLoading: Boolean = true,
     val monthLabel: String = "",
     val answerByLabel: String? = null,
+    /** The deadline has passed; answers are still taken until the month is validated. */
+    val isPastDeadline: Boolean = false,
     val instrument: Instrument? = null,
     val voicePart: VoicePart? = null,
     /** False once the month is validated (or was never opened): answers are read-only. */

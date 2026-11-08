@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -69,10 +70,21 @@ class VoiceUseCasesTest {
             DomainResult.Failure(DomainError.FORBIDDEN),
             ReviewVoiceUseCase(FakeSessionRepository(member(Role.CONTENT_ADMIN)), submissions)(id, validated = true, feedback = ""),
         )
-        val admin = ReviewVoiceUseCase(FakeSessionRepository(member(Role.SUPER_ADMIN)), submissions)
+        val admin = ReviewVoiceUseCase(FakeSessionRepository(member(Role.SUPER_ADMIN).copy(id = "admin")), submissions)
         assertEquals(DomainResult.Failure(DomainError.INVALID_INPUT), admin(id, validated = false, feedback = "  "))
         admin(id, validated = true, feedback = "")
         assertEquals(ExerciseStatus.VALIDATED, submissions.observeAll().first().single().status)
+
+        admin.undo(id)
+        assertEquals(ExerciseStatus.SUBMITTED, submissions.observeAll().first().single().status)
+    }
+
+    @Test
+    fun `l'Admin++ ne valide pas sa propre prise`() = runTest {
+        send("s1", byteArrayOf(1), 30)
+        val id = submissions.observeMine("me").first().single().id
+        val sameAdmin = ReviewVoiceUseCase(FakeSessionRepository(member(Role.SUPER_ADMIN)), submissions)
+        assertEquals(DomainResult.Failure(DomainError.FORBIDDEN), sameAdmin(id, validated = true, feedback = ""))
     }
 
     @Test
@@ -84,5 +96,14 @@ class VoiceUseCasesTest {
         val voice = assertNotNull(recorder.stop())
         assertEquals("RIFF", voice.wav.copyOfRange(0, 4).decodeToString())
         assertEquals(2, voice.durationSeconds)
+        assertFalse(voice.isNearlySilent)
+    }
+
+    @Test
+    fun `une prise silencieuse est signalée`() = runTest {
+        val recorder = VoiceRecorder(FakeMicrophone(List(30) { null }))
+        recorder.start(this)
+        testScheduler.advanceUntilIdle()
+        assertTrue(assertNotNull(recorder.stop()).isNearlySilent)
     }
 }

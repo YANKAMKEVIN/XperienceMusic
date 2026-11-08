@@ -29,6 +29,8 @@ data class PianoScaleUiState(
     val selectedStep: Int? = null,
     val preparingReplay: Boolean = false,
     val message: String? = null,
+    /** The microphone was refused: the screen offers the phone settings. */
+    val microphoneDenied: Boolean = false,
 ) {
     val busy get() = phase !in listOf(PianoScalePhase.READY, PianoScalePhase.RESULT)
     val visualBeat get() = (seconds * practice.bpm / 60).toInt().takeIf { it in practice.notes.indices }
@@ -74,7 +76,7 @@ class PianoScaleViewModel(
         }.launchIn(viewModelScope)
     }
     fun activate() { foreground = true }
-    fun denied() { if (foreground) mutableState.update { it.copy(message = "Autorise le microphone pour essayer la correction.") } }
+    fun denied() { if (foreground) mutableState.update { it.copy(message = "Autorise le microphone pour essayer la correction.", microphoneDenied = true) } }
     fun configure(practice: PianoScalePractice) {
         if (state.value.busy || state.value.practice == practice) return
         generation++

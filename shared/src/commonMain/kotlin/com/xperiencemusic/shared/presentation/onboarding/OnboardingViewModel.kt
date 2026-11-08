@@ -26,11 +26,12 @@ class OnboardingViewModel(
                 // A musician has no voice part; keep none from an earlier choice.
                 it.copy(instrument = event.instrument, voicePart = it.voicePart.takeIf { event.instrument == Instrument.SINGER })
             }
-            is OnboardingEvent.VoicePartSelected -> _state.update { it.copy(voicePart = event.voicePart) }
+            is OnboardingEvent.VoicePartSelected -> _state.update { it.copy(voicePart = event.voicePart, isVoiceUnknown = false) }
+            OnboardingEvent.VoiceUnknownSelected -> _state.update { it.copy(voicePart = null, isVoiceUnknown = true) }
             is OnboardingEvent.LevelSelected -> _state.update { it.copy(level = event.level) }
             OnboardingEvent.ContinueClicked -> next()
             OnboardingEvent.BackClicked -> _state.update { current ->
-                current.copy(step = current.steps.getOrNull(current.stepIndex - 1) ?: current.step)
+                if (current.canGoBack) current.copy(step = current.steps[current.stepIndex - 1]) else current
             }
         }
     }

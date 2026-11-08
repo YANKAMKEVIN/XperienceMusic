@@ -1,5 +1,9 @@
 package com.xperiencemusic.shared.ui.planning
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +19,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,6 +67,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun ServiceDetailScreen(
@@ -102,7 +106,7 @@ fun ServiceDetailScreenContent(state: ServiceDetailUiState, onEvent: (ServiceDet
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         LazyColumn(
@@ -176,12 +180,17 @@ private fun Note(text: String) {
 @Composable
 private fun RosterRow(row: RosterRowUi, enabled: Boolean, onEvent: (ServiceDetailEvent) -> Unit) {
     val part = row.member.voicePart?.label() ?: row.member.instrument?.label()
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(
-            checked = row.serves == true,
-            onCheckedChange = { onEvent(ServiceDetailEvent.Toggled(row.member.memberId, it)) },
+    // The whole row (name included) is the checkbox, so TalkBack reads "Kevin, Ténor, coché".
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().toggleable(
+            value = row.serves == true,
             enabled = enabled,
-        )
+            role = Role.Checkbox,
+            onValueChange = { onEvent(ServiceDetailEvent.Toggled(row.member.memberId, it)) },
+        ),
+    ) {
+        Checkbox(checked = row.serves == true, onCheckedChange = null, enabled = enabled, modifier = Modifier.minimumInteractiveComponentSize())
         Column(Modifier.weight(1f)) {
             Text(row.member.name, style = MaterialTheme.typography.bodyLarge)
             if (part != null) Text(part, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

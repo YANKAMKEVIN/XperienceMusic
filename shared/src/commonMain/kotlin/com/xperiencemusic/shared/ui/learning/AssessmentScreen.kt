@@ -10,7 +10,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.presentation.learning.AssessmentViewModel
+import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
+import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.theme.Spacing
@@ -23,7 +25,8 @@ import org.koin.core.parameter.parametersOf
     val seconds by vm.recordedSeconds.collectAsStateWithLifecycle()
     val sending by vm.sending.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
-    val permission=rememberMicrophonePermission()
+    val microphoneDenied by vm.microphoneDenied.collectAsStateWithLifecycle()
+    val permission=rememberMicrophonePermission(MicrophoneUse.RECORD)
     Scaffold(topBar={TopAppBar(title={Text(if(vm.module.instrument==com.xperiencemusic.shared.domain.model.Instrument.SINGER)"Ma prise chantée" else "Mon jeu sur l’instrument")},navigationIcon={IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Retour")}},windowInsets=WindowInsets(0))},contentWindowInsets=WindowInsets(0)) {padding->
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
             AppCard {
@@ -42,7 +45,7 @@ import org.koin.core.parameter.parametersOf
                     OutlinedButton(onClick=vm::send,enabled=!sending){Text(if(sending)"Envoi…" else "Envoyer pour évaluation")}
                 } else if(seconds>0)Text("La prise est trop courte. Enregistre au moins 3 secondes.")
             }
-            message?.let{Text(it)}
+            message?.let{ if(microphoneDenied)MicrophoneDeniedNotice(it,permission.openSettings) else Text(it) }
             Text("Tu peux aussi demander une évaluation en répétition sans envoyer d’enregistrement.",style=MaterialTheme.typography.bodySmall)
         }
     }

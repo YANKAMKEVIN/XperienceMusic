@@ -76,6 +76,8 @@ class StageViewModelTest {
         assertEquals(StageUiState.MAX_SCALE, store.settings.value.textScale)
         assertEquals(StageUiState.MIN_SPEED, store.settings.value.scrollSpeed)
         assertEquals(true, store.settings.value.isAutoScrolling)
+        assertEquals(1, StageUiState(scrollSpeed = store.settings.value.scrollSpeed).speedLevel)
+        assertEquals(12, StageUiState.MAX_LEVEL)
         second.onEvent(StageEvent.TextSmallerClicked)
         assertEquals(StageUiState.MAX_SCALE - StageUiState.SCALE_STEP, store.settings.value.textScale, 0.001f)
     }

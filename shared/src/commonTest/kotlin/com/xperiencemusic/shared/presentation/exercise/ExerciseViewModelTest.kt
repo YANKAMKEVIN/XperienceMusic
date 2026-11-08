@@ -31,6 +31,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -115,5 +116,14 @@ class ExerciseViewModelTest {
         assertEquals(-0.8f, low.needle!!, 0.001f)
         assertEquals(Tuning.IN_TUNE, check.withProgress(SingingProgress(62, 30.0, 1.0, false)).tuning)
         assertTrue(check.withProgress(SingingProgress(64, 250.0, 0.0, false)).needle == 1f)
+    }
+
+    @Test
+    fun `pendant l'écoute l'écran ne garde que la mesure et le bouton pour arrêter`() {
+        val ready = ExerciseUiState(isLoading = false, check = AutomaticCheckUi("Ré4", 62, 5))
+        assertFalse(ready.isListening)
+        assertTrue(ready.copy(phase = ExercisePhase.LISTENING).isListening)
+        assertFalse(ready.copy(phase = ExercisePhase.SUCCEEDED).isListening)
+        assertFalse(ready.copy(check = null, phase = ExercisePhase.LISTENING).isListening, "no microphone for a reviewed exercise")
     }
 }

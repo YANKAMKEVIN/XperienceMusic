@@ -11,7 +11,11 @@ data class VoiceReviewUiState(
     /** Already answered, most recent first. */
     val reviewed: List<SubmissionUi> = emptyList(),
     val hasError: Boolean = false,
+    /** The answer just given, offered back with « Annuler » for a few seconds. */
+    val lastAnswer: AnswerUi? = null,
 )
+
+data class AnswerUi(val submissionId: String, val memberName: String, val validated: Boolean)
 
 data class SubmissionUi(
     val id: String,
@@ -28,6 +32,8 @@ data class SubmissionUi(
     val isSaving: Boolean = false,
     /** Sending work back needs a comment. */
     val needsComment: Boolean = false,
+    /** The reviewer's own part: another Admin++ answers it. */
+    val isMine: Boolean = false,
 )
 
 sealed interface VoiceReviewEvent {
@@ -36,4 +42,6 @@ sealed interface VoiceReviewEvent {
     data class ValidateClicked(val id: String) : VoiceReviewEvent
     data class ReworkClicked(val id: String) : VoiceReviewEvent
     data object ErrorShown : VoiceReviewEvent
+    data class UndoClicked(val submissionId: String) : VoiceReviewEvent
+    data object AnswerShown : VoiceReviewEvent
 }

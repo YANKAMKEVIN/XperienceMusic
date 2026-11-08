@@ -17,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -75,10 +74,12 @@ import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.platform.rememberAudioFilePicker
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
+import com.xperiencemusic.shared.ui.theme.appSwitchColors
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun RecordingFormScreen(
@@ -116,7 +117,7 @@ fun RecordingFormScreenContent(
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         Column(
@@ -184,7 +185,7 @@ fun RecordingFormScreenContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Switch(checked = state.makeReference, onCheckedChange = null)
+                Switch(checked = state.makeReference, onCheckedChange = null, colors = appSwitchColors())
             }
 
             if (state.isFull) ReplaceChooser(state, onEvent)

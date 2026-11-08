@@ -12,6 +12,8 @@ data class OnboardingUiState(
     val name: String = "",
     val instrument: Instrument? = null,
     val voicePart: VoicePart? = null,
+    /** "Je ne sais pas encore": a singer may go on without a voice part (exercises then start mid-range). */
+    val isVoiceUnknown: Boolean = false,
     val level: Level? = null,
     val isSubmitting: Boolean = false,
 ) {
@@ -25,13 +27,19 @@ data class OnboardingUiState(
     /** 0-based, for the progress bar. */
     val stepIndex: Int get() = steps.indexOf(step)
 
+    /** How far along, 0..1; the bar shows no count, so a role that skips the voice changes nothing visible but its length. */
+    val progress: Float get() = (stepIndex + 1).toFloat() / steps.size
+
     val isLastStep: Boolean get() = step == steps.last()
+
+    /** The back arrow and the system back return to the previous question, answers kept. */
+    val canGoBack: Boolean get() = stepIndex > 0 && !isSubmitting
 
     val canContinue: Boolean
         get() = !isSubmitting && when (step) {
             OnboardingStep.NAME -> name.isNotBlank()
             OnboardingStep.ROLE -> instrument != null
-            OnboardingStep.VOICE -> voicePart != null
+            OnboardingStep.VOICE -> voicePart != null || isVoiceUnknown
             OnboardingStep.LEVEL -> level != null
         }
 
@@ -40,13 +48,14 @@ data class OnboardingUiState(
             name.isNotBlank() &&
             instrument != null &&
             level != null &&
-            (!isVoicePartVisible || voicePart != null)
+            (!isVoicePartVisible || voicePart != null || isVoiceUnknown)
 }
 
 sealed interface OnboardingEvent {
     data class NameChanged(val name: String) : OnboardingEvent
     data class InstrumentSelected(val instrument: Instrument) : OnboardingEvent
     data class VoicePartSelected(val voicePart: VoicePart) : OnboardingEvent
+    data object VoiceUnknownSelected : OnboardingEvent
     data class LevelSelected(val level: Level) : OnboardingEvent
     /** "Continuer"; on the last question it creates the profile. */
     data object ContinueClicked : OnboardingEvent

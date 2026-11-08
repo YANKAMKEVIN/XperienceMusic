@@ -13,6 +13,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.offline_banner
+import com.xperiencemusic.shared.ui.theme.Palette
 import com.xperiencemusic.shared.ui.theme.Radius
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -21,14 +22,15 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun OfflineBanner(modifier: Modifier = Modifier) {
     Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
+        // A quiet notice, not a choice: kept in night blue while chips moved to solid violet.
+        color = Palette.BlueDeep,
         shape = RoundedCornerShape(Radius.card),
         modifier = modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
     ) {
         Text(
             stringResource(Res.string.offline_banner),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            color = Palette.Blue,
             modifier = Modifier.padding(horizontal = Spacing.l, vertical = Spacing.m),
         )
     }

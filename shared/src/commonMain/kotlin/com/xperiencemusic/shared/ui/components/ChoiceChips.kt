@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.ui.Modifier
 import com.xperiencemusic.shared.ui.theme.Spacing
 
@@ -20,7 +21,7 @@ fun <T> ChoiceChips(
     modifier: Modifier = Modifier,
 ) {
     FlowRow(
-        modifier = modifier,
+        modifier = modifier.selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(Spacing.s),
     ) {
         options.forEach { option ->
@@ -28,6 +29,7 @@ fun <T> ChoiceChips(
                 selected = option == selected,
                 onClick = { onSelect(option) },
                 label = { Text(label(option)) },
+                modifier = Modifier.choiceState(option == selected),
             )
         }
     }

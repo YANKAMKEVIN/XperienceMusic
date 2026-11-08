@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.voice
 
+import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -77,6 +78,8 @@ import com.xperiencemusic.shared.resources.voice_pause
 import com.xperiencemusic.shared.resources.voice_previous
 import com.xperiencemusic.shared.resources.voice_record
 import com.xperiencemusic.shared.resources.voice_recording
+import com.xperiencemusic.shared.resources.voice_take
+import com.xperiencemusic.shared.resources.voice_quiet_take
 import com.xperiencemusic.shared.resources.voice_retake
 import com.xperiencemusic.shared.resources.voice_send
 import com.xperiencemusic.shared.resources.voice_sent_text
@@ -91,7 +94,9 @@ import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
+import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
@@ -99,6 +104,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun VoiceRecordScreen(
@@ -107,7 +113,7 @@ fun VoiceRecordScreen(
     viewModel: VoiceRecordViewModel = koinViewModel(key = "voice-$songId") { parametersOf(songId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val microphone = rememberMicrophonePermission()
+    val microphone = rememberMicrophonePermission(MicrophoneUse.RECORD)
     VoiceRecordScreenContent(
         state = state,
         onEvent = { event ->
@@ -120,12 +126,18 @@ fun VoiceRecordScreen(
             }
         },
         onBack = onBack,
+        onOpenSettings = microphone.openSettings,
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VoiceRecordScreenContent(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> Unit, onBack: () -> Unit) {
+fun VoiceRecordScreenContent(
+    state: VoiceRecordUiState,
+    onEvent: (VoiceRecordEvent) -> Unit,
+    onBack: () -> Unit,
+    onOpenSettings: () -> Unit = {},
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -142,7 +154,7 @@ fun VoiceRecordScreenContent(state: VoiceRecordUiState, onEvent: (VoiceRecordEve
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         Column(
@@ -155,10 +167,15 @@ fun VoiceRecordScreenContent(state: VoiceRecordUiState, onEvent: (VoiceRecordEve
             if (state.phase == VoicePhase.SENT) {
                 SentCard()
             } else {
-                if (state.phase == VoicePhase.READY && state.guides.isNotEmpty()) GuidePicker(state, onEvent)
+                // Still there while recording, only frozen: the big button must not move under the finger.
+                if (state.phase in listOf(VoicePhase.READY, VoicePhase.RECORDING) && state.guides.isNotEmpty()) {
+                    GuidePicker(state, enabled = state.phase == VoicePhase.READY, onEvent = onEvent)
+                }
                 Recorder(state, onEvent)
             }
-            state.error?.let { error ->
+            if (state.error == VoiceError.MICROPHONE) {
+                MicrophoneDeniedNotice(stringResource(Res.string.voice_error_mic), onOpenSettings, textAlign = TextAlign.Center)
+            } else state.error?.let { error ->
                 Text(
                     stringResource(
                         when (error) {
@@ -213,12 +230,16 @@ private fun PreviousCard(previous: PreviousSubmissionUi) {
 }
 
 @Composable
-private fun GuidePicker(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> Unit) {
+private fun GuidePicker(state: VoiceRecordUiState, enabled: Boolean, onEvent: (VoiceRecordEvent) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Text(stringResource(Res.string.voice_guide_title), style = MaterialTheme.typography.titleSmall)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s), modifier = Modifier.padding(top = Spacing.s)) {
-            state.guides.forEach { guide -> GuideChip(guideLabel(guide), state.selectedGuideId == guide.id) { onEvent(VoiceRecordEvent.GuideSelected(guide.id)) } }
-            GuideChip(stringResource(Res.string.voice_guide_none), state.selectedGuideId == null) { onEvent(VoiceRecordEvent.GuideSelected(null)) }
+            state.guides.forEach { guide ->
+                GuideChip(guideLabel(guide), state.selectedGuideId == guide.id, enabled) { onEvent(VoiceRecordEvent.GuideSelected(guide.id)) }
+            }
+            GuideChip(stringResource(Res.string.voice_guide_none), state.selectedGuideId == null, enabled) {
+                onEvent(VoiceRecordEvent.GuideSelected(null))
+            }
         }
         Text(
             stringResource(Res.string.voice_earphones),
@@ -236,15 +257,17 @@ private fun guideLabel(guide: GuideUi): String = when (guide.kind) {
 }
 
 @Composable
-private fun GuideChip(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun GuideChip(label: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
     FilterChip(
         selected = selected,
         onClick = onClick,
+        enabled = enabled,
         label = { Text(label) },
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
             selectedLabelColor = MaterialTheme.colorScheme.onSurface,
         ),
+        modifier = Modifier.choiceState(selected),
     )
 }
 
@@ -260,7 +283,13 @@ private fun Recorder(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> U
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
         Text(
-            stringResource(if (isRecording) Res.string.voice_recording else Res.string.voice_record),
+            stringResource(
+                when (state.phase) {
+                    VoicePhase.RECORDING -> Res.string.voice_recording
+                    VoicePhase.RECORDED, VoicePhase.SENDING -> Res.string.voice_take
+                    else -> Res.string.voice_record
+                },
+            ),
             style = MaterialTheme.typography.labelLarge,
             color = if (isRecording) BrandColors.Purple else MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -296,6 +325,15 @@ private fun Recorder(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> U
             }
             VoicePhase.RECORDED, VoicePhase.SENDING -> {
                 val sending = state.phase == VoicePhase.SENDING
+                if (state.isQuietTake) {
+                    Text(
+                        stringResource(Res.string.voice_quiet_take),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = BrandColors.Amber,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = Spacing.m).semantics { liveRegion = LiveRegionMode.Polite },
+                    )
+                }
                 OutlinedButton(onClick = { onEvent(VoiceRecordEvent.PreviewClicked) }, enabled = !sending) {
                     Icon(if (state.isPreviewPlaying) PauseIcon else Icons.Filled.PlayArrow, contentDescription = null)
                     Text(

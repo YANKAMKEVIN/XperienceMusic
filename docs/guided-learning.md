@@ -191,6 +191,10 @@ ces modules, et un pianiste ne voit que les siens.
 Les activités « Chanter » écoutent le micro, avec la même détection de hauteur que les paliers.
 Les notes partent de la note de confort de la voix du chantre (alto par défaut). On ne peut les
 réussir qu’en chantant juste et assez longtemps ; « Vérifier » reste bloqué tant que ce n’est pas fait.
+Sans écouteurs, dans le bruit ou si le micro n’entend rien, « Je le ferai plus tard » passe à l’étape
+suivante sans rien enregistrer : l’activité n’est pas réussie, elle reste « à reprendre » dans les étapes et
+le bilan, et la séance y revient quand il ne reste qu’elle. Le module n’est terminé (et l’envoi au
+responsable ouvert) qu’une fois toutes les activités réussies, comme avant.
 Dans « Tenir sa voix », une autre voix joue pendant la prise, et l’écran conseille des écouteurs.
 Les leçons, les questions et les écoutes (intervalle, direction, majeur ou mineur) fonctionnent
 comme pour le piano.

@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.data.local
 
+import com.xperiencemusic.shared.data.repository.InMemorySessionRepository
 import com.xperiencemusic.shared.domain.repository.AudioCache
 import com.xperiencemusic.shared.domain.repository.FileStore
 import com.xperiencemusic.shared.domain.repository.LocalDataStore
@@ -18,6 +19,7 @@ class DeviceDataStore(
         files.delete("voice")
         audioCache.clear()
         files.delete(DEMO_UPLOADS)
+        files.delete(InMemorySessionRepository.DIRECTORY)
         files.delete(FileAnnouncedMonthsStore.DIRECTORY)
         // Someone else may sign in next: no more reminders about this member's services.
         runCatching { reminders.replaceAll(emptyList()) }

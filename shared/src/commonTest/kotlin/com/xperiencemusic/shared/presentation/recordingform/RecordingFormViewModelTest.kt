@@ -53,7 +53,7 @@ class RecordingFormViewModelTest {
         val state = viewModel("empty").state.value
         assertTrue(state.makeReference)
         assertFalse(state.isFull)
-        assertEquals("13 oct. 2026", state.dateLabel)
+        assertEquals("13\u00A0oct. 2026", state.dateLabel)
     }
 
     @Test

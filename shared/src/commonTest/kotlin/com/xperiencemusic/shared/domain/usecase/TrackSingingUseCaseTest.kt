@@ -27,6 +27,17 @@ class TrackSingingUseCaseTest {
     }
 
     @Test
+    fun `le silence se compte et le niveau suit la voix`() = runTest {
+        val mic = FakeMicrophone(List(FakeMicrophone.framesFor(3.0)) { null } + List(4) { 57 })
+        val progress = TrackSingingUseCase(mic)(listOf(57), secondsEach = 1.0).toList()
+        val beforeVoice = progress[progress.size - 5]
+        assertTrue(beforeVoice.silentSeconds >= 3.0)
+        assertEquals(0f, beforeVoice.level)
+        assertEquals(0.0, progress.last().silentSeconds)
+        assertTrue(progress.last().level > 0.5f)
+    }
+
+    @Test
     fun `une autre note est entendue mais ne valide pas`() = runTest {
         val mic = FakeMicrophone(List(FakeMicrophone.framesFor(1.0)) { 59 })
         val last = TrackSingingUseCase(mic)(listOf(57), secondsEach = 1.0).toList().last()

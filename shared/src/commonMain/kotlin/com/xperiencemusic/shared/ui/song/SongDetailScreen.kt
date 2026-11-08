@@ -1,10 +1,12 @@
 package com.xperiencemusic.shared.ui.song
 
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -52,7 +54,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -136,6 +137,19 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import com.xperiencemusic.shared.ui.components.EmptyState
+import com.xperiencemusic.shared.resources.song_not_found_text
 
 @Composable
 fun SongDetailScreen(
@@ -205,8 +219,13 @@ fun SongDetailScreenContent(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                state.isMissing -> Text(stringResource(Res.string.song_not_found), Modifier.align(Alignment.Center))
+                state.isLoading -> LoadingIndicator()
+                state.isMissing -> EmptyState(
+                    icon = XmIcons.Book,
+                    title = stringResource(Res.string.song_not_found),
+                    text = stringResource(Res.string.song_not_found_text),
+                    modifier = Modifier.align(Alignment.Center).padding(horizontal = Spacing.l),
+                )
                 else -> SongDetailBody(state, onEvent, onAddRecording, onOpenStage, onRecordVoice)
             }
         }
@@ -303,7 +322,7 @@ private fun SongHero(state: SongDetailUiState) {
             modifier = Modifier.semantics { heading() },
         )
         Text(
-            listOfNotNull(state.keyLabel, state.artist).joinToString(" · "),
+            listOfNotNull(state.keyHeading.ifEmpty { null }, state.artist).joinToString(" · "),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -321,24 +340,43 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { onEvent(SongDetailEvent.TransposeDownClicked) }) {
-                    Text("−", style = MaterialTheme.typography.titleLarge)
+                IconButton(
+                    onClick = { onEvent(SongDetailEvent.TransposeDownClicked) },
+                    modifier = Modifier.semantics { contentDescription = "Baisser d’un demi-ton" },
+                ) {
+                    Text("−", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
                 }
-                Text(
-                    state.keyLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.widthIn(min = 96.dp).semantics {
-                        contentDescription = "Tonalité ${state.keyLabel}"
+                // The key rolls up when it goes higher and down when it goes lower.
+                AnimatedContent(
+                    targetState = state.transposeSemitones to state.keyLabel,
+                    transitionSpec = {
+                        val direction = if (targetState.first < initialState.first) -1 else 1
+                        (slideInVertically { it * direction } + fadeIn())
+                            .togetherWith(slideOutVertically { -it * direction } + fadeOut())
                     },
-                )
-                IconButton(onClick = { onEvent(SongDetailEvent.TransposeUpClicked) }) {
-                    Text("+", style = MaterialTheme.typography.titleLarge)
+                    contentAlignment = Alignment.Center,
+                    label = "key",
+                    modifier = Modifier.widthIn(min = 96.dp).clipToBounds(),
+                ) { (_, keyLabel) ->
+                    Text(
+                        keyLabel,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.semantics {
+                            contentDescription = "Tonalité $keyLabel"
+                        },
+                    )
+                }
+                IconButton(
+                    onClick = { onEvent(SongDetailEvent.TransposeUpClicked) },
+                    modifier = Modifier.semantics { contentDescription = "Monter d’un demi-ton" },
+                ) {
+                    Text("+", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
                 }
             }
         }
         state.originalKeyLabel?.let {
-            TextButton(onClick = { onEvent(SongDetailEvent.TransposeResetClicked) }) {
+            TextButton(onClick = { onEvent(SongDetailEvent.TransposeResetClicked) }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(Res.string.song_original_key, it) + " · " + stringResource(Res.string.song_transpose_reset))
             }
         }
@@ -365,18 +403,25 @@ private fun NotationSwitch(selected: Notation, onSelect: (Notation) -> Unit, mod
     ) {
         notations.forEach { (notation, label) ->
             val isSelected = notation == selected
+            // The gradient fades from the old choice to the new one rather than jumping.
+            val highlight by animateFloatAsState(if (isSelected) 1f else 0f, tween(220), label = "notation-highlight")
+            val textColor by animateColorAsState(
+                if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                tween(220),
+                label = "notation-text",
+            )
             Box(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .then(if (isSelected) Modifier.background(BrandColors.horizontalGradient, shape) else Modifier)
+                    .background(BrandColors.horizontalGradient, shape, alpha = highlight)
                     .selectable(selected = isSelected, onClick = { onSelect(notation) }, role = Role.Tab),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     stringResource(label),
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = textColor,
                     maxLines = 1,
                 )
             }
@@ -506,6 +551,7 @@ private fun SongDetailScreenPreview() {
                 title = "À toi la gloire",
                 artist = "E. Budry",
                 keyLabel = "Mi majeur",
+                keyHeading = "Mi majeur",
                 originalKeyLabel = "Ré majeur",
                 notation = Notation.SOLFEGE,
                 chart = listOf(

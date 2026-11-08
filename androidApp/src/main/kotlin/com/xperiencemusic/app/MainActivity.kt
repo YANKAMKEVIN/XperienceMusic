@@ -6,8 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.xperiencemusic.shared.di.initKoin
-import org.koin.android.ext.koin.androidContext
 import com.xperiencemusic.shared.navigation.XperienceMusicApp
 import com.xperiencemusic.shared.openDeepLink
 
@@ -19,7 +17,6 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
-        initKoin { androidContext(applicationContext) }
         // Only a fresh launch: a recreated activity, or one reopened from the recent apps, would
         // replay the link it was first started with (an old address and code).
         val fromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0

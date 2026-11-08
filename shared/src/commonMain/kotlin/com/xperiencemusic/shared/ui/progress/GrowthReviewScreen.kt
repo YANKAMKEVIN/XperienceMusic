@@ -1,5 +1,16 @@
 package com.xperiencemusic.shared.ui.progress
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.TextButton
+import com.xperiencemusic.shared.presentation.progress.RequestObjectiveUi
+import com.xperiencemusic.shared.resources.growth_review_hide_objectives
+import com.xperiencemusic.shared.resources.growth_review_level_done
+import com.xperiencemusic.shared.resources.growth_review_objective_done
+import com.xperiencemusic.shared.resources.growth_review_objective_mic
+import com.xperiencemusic.shared.resources.growth_review_sent_back
+import com.xperiencemusic.shared.resources.growth_review_show_objectives
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +27,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -72,6 +82,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 @Composable
 fun GrowthReviewScreen(onBack: () -> Unit, viewModel: GrowthReviewViewModel = koinViewModel()) {
@@ -87,6 +98,20 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
         if (state.hasError) {
             snackbar.showSnackbar(getString(Res.string.error_generic))
             onEvent(GrowthReviewEvent.ErrorShown)
+        }
+    }
+    state.lastAnswer?.let { answer ->
+        val message = stringResource(
+            when {
+                !answer.validated -> Res.string.growth_review_sent_back
+                answer.isLevel -> Res.string.growth_review_level_done
+                else -> Res.string.growth_review_objective_done
+            },
+            answer.memberName,
+        )
+        LaunchedEffect(answer) {
+            snackbar.showSnackbar(message)
+            onEvent(GrowthReviewEvent.AnswerShown)
         }
     }
     Scaffold(
@@ -106,7 +131,7 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         LazyColumn(
@@ -135,6 +160,7 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
                         confirmLabel = stringResource(Res.string.growth_review_confirm),
                         state = state,
                         onEvent = onEvent,
+                        takes = { RequestObjectives(request.objectives) },
                     )
                 }
             }
@@ -212,6 +238,37 @@ private fun ReviewCard(
                 enabled = !isSaving,
                 modifier = Modifier.weight(1f),
             ) { Text(confirmLabel) }
+        }
+    }
+}
+
+/** Folded by default: the list is long, but the reviewer must be able to check it before confirming. */
+@Composable
+private fun RequestObjectives(objectives: List<RequestObjectiveUi>) {
+    if (objectives.isEmpty()) return
+    var isOpen by rememberSaveable { mutableStateOf(false) }
+    val reached = objectives.count { it.reached != false }
+    TextButton(onClick = { isOpen = !isOpen }, contentPadding = PaddingValues(0.dp)) {
+        Text(
+            if (isOpen) {
+                stringResource(Res.string.growth_review_hide_objectives)
+            } else {
+                stringResource(Res.string.growth_review_show_objectives, reached, objectives.size)
+            },
+        )
+    }
+    if (isOpen) {
+        val mic = stringResource(Res.string.growth_review_objective_mic)
+        objectives.forEach { objective ->
+            Text(
+                when (objective.reached) {
+                    true -> "✓ ${objective.title}"
+                    false -> "○ ${objective.title}"
+                    null -> "✓ ${objective.title} · $mic"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = if (objective.reached == false) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 }

@@ -13,4 +13,8 @@ data class SingingProgress(
     val stepIndex: Int = 0,
     /** Notes already validated. */
     val completedSteps: Int = 0,
+    /** How loud the microphone input is, 0 (silence) to 1 (very loud), for a level meter. */
+    val level: Float = 0f,
+    /** For how long no voice has been heard, in seconds; back to 0 as soon as a pitch comes in. */
+    val silentSeconds: Double = 0.0,
 )

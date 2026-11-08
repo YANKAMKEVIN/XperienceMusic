@@ -30,11 +30,14 @@ class PlanningViewModel(
     private val today = getToday()
     private val selectedMonth = MutableStateFlow(today.monthStart())
     private val action = MutableStateFlow(ActionState())
+    private val isConfirmingValidation = MutableStateFlow(false)
     private var shownMonths: List<LocalDate> = emptyList()
 
-    val state: StateFlow<PlanningUiState> = combine(observePlanning(), selectedMonth, action) { planning, month, act ->
+    val state: StateFlow<PlanningUiState> = combine(observePlanning(), selectedMonth, action, isConfirmingValidation) { planning, month, act, confirming ->
         shownMonths = planningMonths(today, planning.months, planning.me?.role?.can(Permission.PLAN_SERVICES) == true)
-        derivePlanningState(planning, month, today).copy(isWorking = act.isWorking, error = act.error)
+        derivePlanningState(planning, month, today).let {
+            it.copy(isWorking = act.isWorking, error = act.error, isConfirmingValidation = confirming && it.validation != null)
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlanningUiState())
 
     fun onEvent(event: PlanningEvent) {
@@ -47,7 +50,12 @@ class PlanningViewModel(
                 val answerBy = month.minus(DatePeriod(days = 7)).takeIf { it > today }
                 openMonth(month, answerBy)
             }
-            PlanningEvent.ValidateMonthClicked -> run { validateMonth(selectedMonth.value) }
+            PlanningEvent.ValidateMonthClicked -> isConfirmingValidation.value = true
+            PlanningEvent.ValidateMonthDismissed -> isConfirmingValidation.value = false
+            PlanningEvent.ValidateMonthConfirmed -> {
+                isConfirmingValidation.value = false
+                run { validateMonth(selectedMonth.value) }
+            }
             PlanningEvent.ErrorShown -> action.update { it.copy(error = null) }
         }
     }

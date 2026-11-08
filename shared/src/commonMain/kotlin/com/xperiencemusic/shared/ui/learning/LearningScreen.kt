@@ -1,13 +1,16 @@
 package com.xperiencemusic.shared.ui.learning
 
+import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -17,11 +20,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.*
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,13 +36,22 @@ import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.presentation.learning.*
 import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.brand.XmIcons
+import com.xperiencemusic.shared.ui.exercise.TunerNeedle
+import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
+import com.xperiencemusic.shared.ui.components.SystemBackHandler
+import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.appSwitchColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
+import com.xperiencemusic.shared.ui.theme.Palette
 
 @Composable
 fun LearningScreen(onBack:()->Unit,moduleId:String=LearningCatalog.DEFAULT,onModule:(String)->Unit={},onRecord:()->Unit={},onScaleCoach:()->Unit={},
@@ -54,6 +68,8 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
     LaunchedEffect(state.successSerial) {
         if(state.successSerial>0 && state.preferences.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
+    // The system back gesture does what the arrow does: from an activity or the summary, back to the module.
+    SystemBackHandler(enabled=state.mode!=LearningMode.HOME) { onEvent(LearningEvent.Home) }
     CompositionLocalProvider(LocalDensity provides Density(density.density,density.fontScale*if(state.preferences.largeText)1.2f else 1f)) {
         Scaffold(topBar={ TopAppBar(title={Text(state.module.title,style=MaterialTheme.typography.titleLarge)},navigationIcon={
             IconButton(onClick={ if(state.mode==LearningMode.HOME)onBack() else onEvent(LearningEvent.Home) }) { Icon(Icons.AutoMirrored.Filled.ArrowBack,"Retour") }
@@ -61,14 +77,14 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
             // The main action stays on screen however long the hints and corrections above it grow.
             bottomBar={ if(!state.loading && state.allowed && state.mode==LearningMode.ACTIVITY) ActivityAction(state,onEvent) },
             contentWindowInsets=WindowInsets(0)) { padding ->
-            if(state.loading) Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.Center){CircularProgressIndicator()}
+            if(state.loading) LoadingIndicator(Modifier.padding(padding))
             else if(!state.allowed)Text(if(state.module.instrument==Instrument.SINGER)"Ces modules sont proposés au parcours chantre." else "Ces modules sont proposés au parcours piano.",Modifier.padding(padding).padding(Spacing.l))
             else key(state.mode,state.index,state.module.id) {
                 Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.l),verticalArrangement=Arrangement.spacedBy(Spacing.m)) {
                     when(state.mode) {
                         LearningMode.HOME -> HomeContent(state,onEvent,onModule,onRecord,audioReview,onScaleCoach)
                         LearningMode.ACTIVITY -> {
-                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
                                 Text("Étape ${state.index+1} / ${state.module.activities.size}",style=MaterialTheme.typography.labelLarge)
                                 TextButton(onClick={onEvent(LearningEvent.Steps)}){Text("Voir les étapes")}
                             }
@@ -78,17 +94,17 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                         LearningMode.SUMMARY -> {
                             AppCard {
                                 Text("Une séance de plus !",style=MaterialTheme.typography.headlineMedium)
-                                Text("${state.sessionDone.size} activité(s) travaillée(s)",Modifier.padding(top=Spacing.m))
+                                Text(frenchCount(state.sessionDone.size,"activité travaillée"),Modifier.padding(top=Spacing.m))
                                 state.sessionDone.forEach { id -> Text("✓ ${state.sessionTitles[id] ?: LearningCatalog.findActivity(id)?.title.orEmpty()}",Modifier.padding(top=Spacing.s)) }
                                 if(state.sessionDifficult.isNotEmpty()) {
                                     Text("À reprendre tranquillement",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=Spacing.m))
                                     state.sessionDifficult.forEach { id ->Text(state.sessionTitles[id] ?: LearningCatalog.findActivity(id)?.title.orEmpty()) }
                                 }
                                 Text(if(state.sessionDifficult.isEmpty()) "Tu as travaillé sans difficulté signalée. La prochaine séance t’aidera à entretenir ces repères." else "Les prochaines révisions tiendront compte de tes difficultés. Tu peux aussi les reprendre depuis les étapes.",Modifier.padding(top=Spacing.m))
-                                Text("Prochaine étape : ${state.module.activities[state.progress.nextIn(state.module)].title}",Modifier.padding(top=Spacing.s))
+                                Text("Prochaine étape : ${state.module.activities[state.reached].title}",Modifier.padding(top=Spacing.s))
                             }
                             GradientButton(onClick={onEvent(LearningEvent.Home)}){Text("Terminer ma séance")}
-                            OutlinedButton(onClick={onEvent(LearningEvent.Open(state.progress.nextIn(state.module)))}){Text("Continuer librement")}
+                            OutlinedButton(onClick={onEvent(LearningEvent.Open(state.reached))}){Text("Continuer librement")}
                         }
                     }
                     state.error?.let {Text(it,color=MaterialTheme.colorScheme.error)}
@@ -98,11 +114,16 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         if(state.showSteps) AlertDialog(onDismissRequest={onEvent(LearningEvent.Steps)},title={Text("Les étapes")},text={
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 state.module.activities.forEachIndexed { i,a ->
-                    val unlocked=state.complete || i<=state.progress.nextIn(state.module)
-                    TextButton(onClick={onEvent(LearningEvent.Open(i))},enabled=unlocked) {
-                        Text("${if(a.id in state.completed)"✓" else "${i+1}."} ${a.title}${if(!unlocked)" · à découvrir ensuite" else ""}")
-                    }
+                    val unlocked=state.complete || i<=state.reached
+                    val later=a.id in state.postponed && a.id !in state.completed
+                    val label="${if(a.id in state.completed)"✓" else "${i+1}."} ${a.title}${if(later)" · à reprendre" else ""}"
+                    // A step still closed is plain text, read as such: no button that does nothing.
+                    if(unlocked) TextButton(onClick={onEvent(LearningEvent.Open(i))}) { Text(label) }
+                    else Text("$label · à découvrir ensuite",color=MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier=Modifier.fillMaxWidth().heightIn(min=40.dp).padding(horizontal=12.dp,vertical=10.dp).semantics{stateDescription="pas encore ouverte"})
                 }
+                if(!state.complete && state.reached<state.module.activities.lastIndex)
+                    Text("Les étapes suivantes s’ouvrent une à une : réussis celle en cours, ou, pour une activité chantée, choisis « Je le ferai plus tard ».",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=Spacing.s))
             }
         },confirmButton={TextButton(onClick={onEvent(LearningEvent.Steps)}){Text("Fermer")}})
         if(state.showSettings) AlertDialog(onDismissRequest={onEvent(LearningEvent.Settings)},title={Text("Ton confort")},text={
@@ -117,26 +138,28 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
         },confirmButton={TextButton(onClick={onEvent(LearningEvent.Settings)}){Text("C’est réglé")}})
     }
 }
+/** The whole row is the switch: TalkBack reads its label and state, and a tap on the label toggles it. */
 @Composable private fun Setting(label:String,value:Boolean,onChange:(Boolean)->Unit) {
-    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(value,onChange)}
+    Row(Modifier.fillMaxWidth().heightIn(min=48.dp).toggleable(value,role=Role.Switch,onValueChange=onChange),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(value,onCheckedChange=null,colors=appSwitchColors())}
 }
 
 @Composable private fun HomeContent(s:LearningUiState,event:(LearningEvent)->Unit,onModule:(String)->Unit,onRecord:()->Unit,audioReview:@Composable (String,String)->Unit,onScaleCoach:()->Unit) {
     AppCard {
         Text("TA SÉANCE DU JOUR",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
         Text("Un petit pas, à ton rythme",style=MaterialTheme.typography.headlineSmall,modifier=Modifier.padding(top=Spacing.s))
-        val plan=s.progress.dailyPlan(s.module,s.today).let { if(s.progress.returning(s.today))it.take(1) else it }
-        Text("Environ ${plan.size*2} minutes · ${plan.size} activité(s)",Modifier.padding(top=Spacing.s))
+        val plan=s.progress.dailyPlan(s.module,s.today,s.postponed).let { if(s.progress.returning(s.today))it.take(1) else it }
+        Text("Environ ${plan.size*2} minutes · ${frenchCount(plan.size,"activité")} aujourd’hui · ${s.module.activities.size} dans le module",Modifier.padding(top=Spacing.s))
         Text("Objectif : ${s.module.activities[plan.first()].title}",Modifier.padding(top=Spacing.s))
         if(s.progress.returning(s.today)) Text("Heureux de te retrouver. Reprends doucement avec une courte révision : tes progrès sont conservés.",Modifier.padding(top=Spacing.s))
         Text("${s.completed.size} / ${s.module.activities.size} activités terminées",Modifier.padding(top=Spacing.m))
         LinearProgressIndicator(progress={s.completed.size.toFloat()/s.module.activities.size},modifier=Modifier.fillMaxWidth().padding(top=Spacing.s))
         GradientButton(onClick={event(LearningEvent.Begin)},modifier=Modifier.padding(top=Spacing.m)){Text(if(s.completed.isNotEmpty())"Continuer ma séance" else "Commencer ma séance")}
-        TextButton(onClick={event(LearningEvent.Resume)}){Text("Reprendre · ${s.module.activities[s.progress.nextIn(s.module)].title}")}
+        // Only a spot really left behind competes with the main button: never at 0 / 6 on a first visit.
+        if(s.canResume) s.resumeIndex?.let { TextButton(onClick={event(LearningEvent.Resume)}){Text("Reprendre · ${s.module.activities[it.coerceAtMost(s.reached)].title}")} }
         TextButton(onClick={event(LearningEvent.Steps)}){Text("Explorer les étapes")}
     }
     if(s.progress.pending>0) AppCard {
-        Text("${s.progress.pending} essai(s) conservé(s) sur ce téléphone, en attente d’envoi.")
+        Text("${frenchCount(s.progress.pending,"essai conservé")} sur ce téléphone, en attente d’envoi.")
         TextButton(onClick={event(LearningEvent.Sync)}){Text("Synchroniser")}
     }
     AppCard {
@@ -206,10 +229,36 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
 
 @Composable private fun ActivityAction(s:LearningUiState,event:(LearningEvent)->Unit) {
     val a=s.activity
-    Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(start=Spacing.l,end=Spacing.l,top=Spacing.s)) {
+    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(start=Spacing.l,end=Spacing.l,top=Spacing.s),verticalArrangement=Arrangement.spacedBy(Spacing.s)) {
+        // The answer to "Vérifier" sits right above it: never under the fold, and read out by TalkBack.
+        s.feedbackText?.let { feedback -> CheckFeedback(feedback,s.result==true,s.keptNotes) }
         if(s.result==true) GradientButton(onClick={event(LearningEvent.Next)},modifier=Modifier.fillMaxWidth()){Text("Continuer")}
         else GradientButton(onClick={event(LearningEvent.Check)},enabled=s.canCheck,modifier=Modifier.fillMaxWidth()){Text(when {s.saving->"Sauvegarde…";a.kind==LearningKind.LESSON->"J’ai compris";a.kind==LearningKind.PRACTICE->"J’ai effectué cet entraînement";a.kind==LearningKind.SING && !s.sung->"Chante d’abord l’exercice";else->"Vérifier"})}
+        // A sung activity never locks the session: no earphones, a noisy room or a shy microphone can wait.
+        if(s.canPostpone && !s.sung) TextButton(onClick={event(LearningEvent.Postpone)},modifier=Modifier.fillMaxWidth()){Text("Je le ferai plus tard")}
     }
+}
+
+@Composable private fun CheckFeedback(feedback:String,passed:Boolean,kept:Set<Int>?) {
+    Column(Modifier.fillMaxWidth().heightIn(max=160.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        .verticalScroll(rememberScrollState()).padding(Spacing.m).semantics(mergeDescendants=true){liveRegion=LiveRegionMode.Polite},
+        verticalArrangement=Arrangement.spacedBy(Spacing.xs)) {
+        Text(feedback,style=MaterialTheme.typography.bodyMedium,color=if(passed)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+        kept?.let { Text("À conserver : ${it.sorted().joinToString(" · "){note->noteLabel(note)}.ifEmpty{"cherche d’abord la fondamentale"}}",style=MaterialTheme.typography.bodySmall) }
+    }
+}
+
+/** Big answer buttons: two side by side ("Majeur" / "Mineur"), longer lists one per line. */
+@Composable private fun ChoiceButtons(choices:List<String>,selected:String?,enabled:Boolean,onPick:(String)->Unit) {
+    val button:@Composable (String,Modifier)->Unit = { choice,modifier ->
+        val isSelected=selected==choice
+        OutlinedButton(onClick={onPick(choice)},enabled=enabled,
+            colors=ButtonDefaults.outlinedButtonColors(containerColor=if(isSelected)MaterialTheme.colorScheme.primaryContainer else Color.Transparent),
+            border=BorderStroke(if(isSelected)2.dp else 1.dp,if(isSelected)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline),
+            modifier=modifier.heightIn(min=56.dp).semantics{this.selected=isSelected}) { Text(choice,textAlign=TextAlign.Center) }
+    }
+    if(choices.size<=2) Row(Modifier.fillMaxWidth().selectableGroup(),horizontalArrangement=Arrangement.spacedBy(Spacing.s)) { choices.forEach { button(it,Modifier.weight(1f)) } }
+    else Column(Modifier.fillMaxWidth().selectableGroup(),verticalArrangement=Arrangement.spacedBy(Spacing.s)) { choices.forEach { button(it,Modifier.fillMaxWidth()) } }
 }
 
 @Composable private fun ActivityCard(s:LearningUiState,event:(LearningEvent)->Unit) {
@@ -225,58 +274,75 @@ fun LearningScreenContent(state:LearningUiState,onEvent:(LearningEvent)->Unit,on
                 TextButton(onClick={event(LearningEvent.ListenBroken)},enabled=!s.saving){Text("Écouter note par note")}
             }
             if(a.kind in listOf(LearningKind.EAR,LearningKind.CHOICE)) {
-                Column {
-                    val choices=if(a.kind==LearningKind.EAR && a.choices.isEmpty())listOf("Majeur","Mineur") else a.choices
-                    choices.forEach { c -> FilterChip(selected=s.answer==c,onClick={event(LearningEvent.Answer(c))},label={Text(c)},enabled=!s.saving) }
-                }
+                ChoiceButtons(s.choiceOptions,s.answer,enabled=!s.saving){event(LearningEvent.Answer(it))}
                 if(a.kind==LearningKind.EAR && !s.listened)Text("Écoute avant de choisir.",style=MaterialTheme.typography.bodySmall)
             }
             if(a.kind==LearningKind.KEYBOARD) {
                 PianoKeyboard(s){event(LearningEvent.Key(it))}
                 Text("Ta sélection : ${s.notes.sorted().joinToString(" · "){noteLabel(it)}.ifEmpty{"aucune"}}",style=MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick={event(LearningEvent.ListenSelection)},enabled=s.notes.isNotEmpty()){Text("Écouter ma sélection")}
-                if(s.result==false) {
-                    val correct=s.notes.intersect(a.expectedNotes)
-                    Text("À conserver : ${correct.sorted().joinToString(" · "){noteLabel(it)}.ifEmpty{"cherche d’abord la fondamentale"}}",style=MaterialTheme.typography.bodySmall)
-                }
             }
-            if(a.kind==LearningKind.SING) SingPanel(s,event)
+            if(a.kind==LearningKind.SING) SingPanel(s,event) { HintBlock(s,event) }
             if(a.kind==LearningKind.RHYTHM) {
                 OutlinedButton(onClick={event(LearningEvent.Metronome)}){Text("Écouter 8 clics · ${a.bpm} BPM")}
                 Button(onClick={event(LearningEvent.Tap)},modifier=Modifier.fillMaxWidth().heightIn(min=100.dp)){Text("Frapper la pulsation · ${s.taps.size}/8")}
                 TextButton(onClick={event(LearningEvent.ResetTaps)}){Text("Recommencer les appuis")}
             }
-            if(a.kind !in listOf(LearningKind.LESSON,LearningKind.PRACTICE) && s.result!=true) {
-                TextButton(onClick={event(LearningEvent.Hint)},enabled=s.hints<3){Text(if(s.hints==0)"Un indice" else if(s.hints<3)"Un peu plus d’aide" else "Les aides sont affichées")}
-                if(s.hints>0) Text(when(s.hints) {
-                    1->when(a.kind){LearningKind.KEYBOARD->"Cherche la fondamentale, puis compte les demi-tons. Majeur : 4 puis 3 ; mineur : 3 puis 4.";LearningKind.EAR->"Réécoute note par note et concentre-toi sur la distance entre les deux premières notes.";LearningKind.RHYTHM->"Relâche la main et garde un mouvement régulier. Le premier appui fixe le départ.";LearningKind.SING->"Écoute d’abord tes notes, respire, puis chante sans pousser : la note doit être stable avant de compter.";else->"Reprends la règle dans la leçon précédente."}
-                    2->if(a.kind==LearningKind.KEYBOARD)"Les notes manquantes sont maintenant repérées sur le clavier. Tu gardes ta sélection." else a.explanation
-                    else->a.explanation
-                },style=MaterialTheme.typography.bodyMedium)
-                if(s.hints>=3 && a.expectedNotes.isNotEmpty())OutlinedButton(onClick={event(LearningEvent.ListenBroken)}){Text("Écouter la démonstration")}
-            }
-            s.feedbackText?.let {Text(it,color=if(s.result==true)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})}
+            if(a.kind!=LearningKind.SING) HintBlock(s,event)
             if(a.kind==LearningKind.PRACTICE)Text(if(s.module.instrument==Instrument.SINGER)"Cette étape est déclarative. Seul le responsable peut valider la compétence en situation." else "Cette étape est déclarative. Seul le responsable peut valider la compétence sur ton instrument.",style=MaterialTheme.typography.bodySmall)
         }
     }
 }
 
+/** "Un indice", then more help on each tap; shown until the activity is passed. */
+@Composable private fun HintBlock(s:LearningUiState,event:(LearningEvent)->Unit) {
+    val a=s.activity
+    if(a.kind in listOf(LearningKind.LESSON,LearningKind.PRACTICE) || s.result==true)return
+    TextButton(onClick={event(LearningEvent.Hint)},enabled=s.hints<3){Text(if(s.hints==0)"Un indice" else if(s.hints<3)"Un peu plus d’aide" else "Les aides sont affichées")}
+    if(s.hints>0) Text(when(s.hints) {
+        1->when(a.kind){LearningKind.KEYBOARD->"Cherche la fondamentale, puis compte les demi-tons. Majeur : 4 puis 3 ; mineur : 3 puis 4.";LearningKind.EAR->"Réécoute note par note et concentre-toi sur la distance entre les deux premières notes.";LearningKind.RHYTHM->"Relâche la main et garde un mouvement régulier. Le premier appui fixe le départ.";LearningKind.SING->"Écoute d’abord tes notes, respire, puis chante sans pousser : la note doit être stable avant de compter.";else->"Reprends la règle dans la leçon précédente."}
+        2->if(a.kind==LearningKind.KEYBOARD)"Les notes manquantes sont maintenant repérées sur le clavier. Tu gardes ta sélection." else a.explanation
+        else->a.explanation
+    },style=MaterialTheme.typography.bodyMedium)
+    if(s.hints>=3 && a.expectedNotes.isNotEmpty())OutlinedButton(onClick={event(LearningEvent.ListenBroken)}){Text("Écouter la démonstration")}
+}
+
 /** Sung activity: the notes to sing from the singer's comfort note, the microphone, and the live pitch. */
-@Composable private fun SingPanel(s:LearningUiState,event:(LearningEvent)->Unit) {
+@Composable private fun SingPanel(s:LearningUiState,event:(LearningEvent)->Unit,hints:@Composable ()->Unit) {
     val target=s.activity.sing?:return
-    val permission=rememberMicrophonePermission()
+    val permission=rememberMicrophonePermission(MicrophoneUse.LISTEN_VOICE)
     val notes=s.singTargets
-    Text("À chanter : ${notes.joinToString(" · "){noteLabel(it)}} · ${formatSeconds(target.secondsEach)} chacune",style=MaterialTheme.typography.titleMedium)
+    Text("À chanter : ${notes.joinToString(" · "){noteLabel(it)}} · ${formatSeconds(target.secondsEach)}${if(notes.size>1)" chacune" else ""}",style=MaterialTheme.typography.titleMedium)
     OutlinedButton(onClick={event(LearningEvent.ListenBroken)},enabled=!s.singing && !s.saving){Text(if(notes.size>1)"Écouter mes notes" else "Écouter ma note")}
     if(target.accompanimentSemitones!=null) Text("Mets des écouteurs : l’autre voix joue pendant que tu chantes, et le micro ne doit entendre que toi.",style=MaterialTheme.typography.bodySmall)
+    // High in the card: under the fixed button at the bottom, "Un indice" used to be out of sight.
+    hints()
     if(s.singing) {
         OutlinedButton(onClick={event(LearningEvent.StopSinging)},modifier=Modifier.fillMaxWidth()){Text("Arrêter l’écoute")}
-        Text("J’entends : ${s.heardMidi?.let{noteLabel(it)}?:"…"}",style=MaterialTheme.typography.bodyLarge,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})
+        MicLevel(s.micLevel)
+        Text(if(s.hearsNothing)"Je ne t’entends pas encore… Approche le téléphone et chante un peu plus fort." else "J’entends : ${s.heardMidi?.let{noteLabel(it)}?:"…"}",
+            style=MaterialTheme.typography.bodyLarge,color=if(s.hearsNothing)MaterialTheme.colorScheme.tertiary else Color.Unspecified,modifier=Modifier.semantics{liveRegion=LiveRegionMode.Polite})
+        TunerNeedle(s.heardCents?.let{(it/100).toFloat().coerceIn(-1f,1f)},
+            when { s.heardCents==null->"Aucune note entendue";s.heardCents< -50->"Un peu bas";s.heardCents>50->"Un peu haut";else->"Juste" })
         if(notes.size>1) Text("Note ${(s.singStep+1).coerceAtMost(notes.size)} / ${notes.size}",style=MaterialTheme.typography.bodySmall)
         LinearProgressIndicator(progress={(s.singStep+(s.holdSeconds/target.secondsEach).coerceIn(0.0,1.0)).toFloat()/notes.size},modifier=Modifier.fillMaxWidth())
     } else if(s.sung) Text("Bien tenu ! Tu peux vérifier l’activité.",color=MaterialTheme.colorScheme.primary)
-    else Button(onClick={permission.request { if(it)event(LearningEvent.StartSinging) else event(LearningEvent.MicrophoneDenied) }},enabled=!s.saving && s.result!=true,modifier=Modifier.fillMaxWidth().heightIn(min=64.dp)){Text("Chanter maintenant")}
-    s.micError?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+    else {
+        // After a refusal, "Ouvrir les réglages" comes first: below the button it fell under the fold on small phones.
+        if(s.micDenied) s.micError?.let { MicrophoneDeniedNotice(it,permission.openSettings) }
+        GradientButton(onClick={permission.request { if(it)event(LearningEvent.StartSinging) else event(LearningEvent.MicrophoneDenied) }},enabled=!s.saving && s.result!=true,modifier=Modifier.fillMaxWidth().heightIn(min=64.dp)){Text("Chanter maintenant",style=MaterialTheme.typography.titleMedium)}
+    }
+    if(!s.micDenied) s.micError?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+    if(s.canPostpone && !s.sung) Text("Pas d’écouteurs ou trop de bruit autour de toi ? « Je le ferai plus tard » ouvre l’étape suivante. Cette activité restera à reprendre : elle ne compte pas comme réussie.",style=MaterialTheme.typography.bodySmall)
+}
+/** What reaches the microphone, live: a bar that moves as soon as there is sound, even without a note. */
+@Composable private fun MicLevel(level:Float) {
+    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(Spacing.s),modifier=Modifier.clearAndSetSemantics{}) {
+        Icon(XmIcons.Mic,contentDescription=null,tint=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.size(18.dp))
+        Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            Box(Modifier.fillMaxWidth(level.coerceIn(0f,1f)).height(8.dp).clip(RoundedCornerShape(4.dp)).background(BrandColors.horizontalGradient))
+        }
+    }
 }
 private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble())"${seconds.toInt()} s" else "${seconds.toString().replace('.',',')} s"
 
@@ -311,13 +377,13 @@ private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble()
     val selected=midi in s.notes
     val wrong=s.result==false && selected && midi !in s.activity.expectedNotes
     val missing=s.hints>=2 && midi in s.activity.expectedNotes && !selected
-    val color=when {wrong->MaterialTheme.colorScheme.error;s.result==true && selected->Color(0xFF6FD3A0);selected->MaterialTheme.colorScheme.primary;missing->MaterialTheme.colorScheme.tertiary;black->Color(0xFF161320);else->Color(0xFFF4F3FA)}
+    val color=when {wrong->MaterialTheme.colorScheme.error;s.result==true && selected->Palette.Success;selected->MaterialTheme.colorScheme.primary;missing->MaterialTheme.colorScheme.tertiary;black->Palette.Ebony;else->Palette.Snow}
     val label=noteLabel(midi)
     val keyColor by animateColorAsState(color, tween(if(s.preferences.reduceMotion)0 else 140), label="key-color")
-    Box(modifier.background(keyColor,RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp)).border(1.dp,Color(0xFF555164),RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp))
+    Box(modifier.background(keyColor,RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp)).border(1.dp,Palette.KeyEdge,RoundedCornerShape(bottomStart=6.dp,bottomEnd=6.dp))
         .toggleable(selected,enabled=!s.saving,role=Role.Checkbox,onValueChange={onClick()})
         .semantics {contentDescription=label;stateDescription=when{wrong->"sélectionnée, à corriger";selected->"sélectionnée";missing->"indice : note à ajouter";else->"non sélectionnée"}},contentAlignment=Alignment.BottomCenter) {
-        Text(label,color=if(black && !selected && !missing)Color.White else Color(0xFF161320),style=MaterialTheme.typography.labelSmall,modifier=Modifier.padding(bottom=10.dp))
+        Text(label,color=if(black && !selected && !missing)Color.White else Palette.Ebony,style=MaterialTheme.typography.labelSmall,modifier=Modifier.padding(bottom=10.dp))
     }
 }
 @Preview @Composable private fun LearningPreview()=AppTheme {
@@ -327,10 +393,10 @@ private fun formatSeconds(seconds:Double)=if(seconds==seconds.toInt().toDouble()
 @Composable private fun JourneyGoal(s:LearningUiState,event:(LearningEvent)->Unit) {
     AppCard {
         Text("Mon rythme",style=MaterialTheme.typography.titleMedium)
-        Text("${s.progress.weeklyDays(s.today)} jour(s) de pratique ces 7 derniers jours · objectif ${s.preferences.weeklyTarget}")
+        Text("${frenchCount(s.progress.weeklyDays(s.today),"jour")} de pratique ces 7 derniers jours · objectif ${s.preferences.weeklyTarget}")
         Text("Une journée compte dès qu’un exercice est enregistré. Plusieurs séances le même jour comptent une fois.",style=MaterialTheme.typography.bodySmall)
         Row(horizontalArrangement=Arrangement.spacedBy(Spacing.s)) {
-            listOf(1,2,3).forEach { target -> FilterChip(selected=s.preferences.weeklyTarget==target,onClick={event(LearningEvent.Preferences(s.preferences.copy(weeklyTarget=target)))},label={Text("$target j / sem.")}) }
+            listOf(1,2,3).forEach { target -> FilterChip(selected=s.preferences.weeklyTarget==target,onClick={event(LearningEvent.Preferences(s.preferences.copy(weeklyTarget=target)))},label={Text("$target j / sem.")},modifier=Modifier.choiceState(s.preferences.weeklyTarget==target)) }
         }
         Text("Un repère personnel, à ajuster librement. Tu peux reprendre à tout moment.",style=MaterialTheme.typography.bodySmall)
     }

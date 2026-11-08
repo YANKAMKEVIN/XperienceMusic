@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.presentation.progress
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.repository.VoiceSubmissionRepository
@@ -12,6 +13,7 @@ import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestLevelUseCase
 import com.xperiencemusic.shared.domain.usecase.TickObjectiveUseCase
+import com.xperiencemusic.shared.presentation.learning.LearningPreferences
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +38,7 @@ class ProgressViewModel(
     private val requestLevel: RequestLevelUseCase,
     private val tickObjective: TickObjectiveUseCase,
     learningRepository: com.xperiencemusic.shared.domain.learning.LearningRepository,
+    snapshots: SnapshotStore,
 ) : ViewModel() {
     private val action = MutableStateFlow(ActionState())
 
@@ -71,8 +74,13 @@ class ProgressViewModel(
         } else flowOf(null)
     }
 
-    val state: StateFlow<ProgressUiState> = combine(base, action, learning) { state, act, course ->
-        state.copy(isWorking = act.isWorking, hasError = act.hasError, learning = course)
+    // The comfort settings live with the guided path; read again each time the screen comes back.
+    private val reduceMotion = observeCurrentMember().map { member ->
+        member != null && snapshots.load("learning-settings-${member.id}", LearningPreferences.serializer())?.reduceMotion == true
+    }
+
+    val state: StateFlow<ProgressUiState> = combine(base, action, learning, reduceMotion) { state, act, course, calm ->
+        state.copy(isWorking = act.isWorking, hasError = act.hasError, learning = course, reduceMotion = calm)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
 
     fun onEvent(event: ProgressEvent) {

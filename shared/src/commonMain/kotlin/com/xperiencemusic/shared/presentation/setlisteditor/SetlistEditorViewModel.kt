@@ -43,6 +43,20 @@ data class SetlistDraft(
     val publishedDates: Set<LocalDate> = emptySet(),
     val isDeleting: Boolean = false,
     val isDeleted: Boolean = false,
+    /** The choices once loaded, before any edit; null while loading. */
+    val original: SetlistChoices? = null,
+    val isConfirmingDiscard: Boolean = false,
+    val isLeaving: Boolean = false,
+) {
+    val choices: SetlistChoices get() = SetlistChoices(rehearsalDate, serviceDate, message, selectedIds)
+}
+
+/** What publishing would send; the search is left out. */
+data class SetlistChoices(
+    val rehearsalDate: LocalDate,
+    val serviceDate: LocalDate,
+    val message: String,
+    val selectedIds: List<String>,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -81,7 +95,7 @@ class SetlistEditorViewModel(
                     var week = BandWeek(current.rehearsalDate, current.serviceDate)
                     while (week.serviceDate in dates) week = week.next()
                     current.copy(rehearsalDate = week.rehearsalDate, serviceDate = week.serviceDate, publishedDates = dates)
-                }
+                }.let { loaded -> loaded.copy(original = loaded.choices) }
             }
         }
     }
@@ -108,6 +122,11 @@ class SetlistEditorViewModel(
             is SetlistEditorEvent.ServiceDatePicked -> draft.update { it.copy(serviceDate = event.date, error = null) }
             SetlistEditorEvent.PublishClicked -> publish()
             SetlistEditorEvent.DeleteConfirmed -> delete()
+            SetlistEditorEvent.BackClicked -> draft.update {
+                if (it.hasUnsavedChanges) it.copy(isConfirmingDiscard = true) else it.copy(isLeaving = true)
+            }
+            SetlistEditorEvent.DiscardConfirmed -> draft.update { it.copy(isConfirmingDiscard = false, isLeaving = true) }
+            SetlistEditorEvent.DiscardDismissed -> draft.update { it.copy(isConfirmingDiscard = false) }
         }
     }
 
@@ -167,8 +186,15 @@ fun deriveSetlistEditorState(draft: SetlistDraft, library: List<Song>, matches: 
         replacesExisting = draft.serviceDate in draft.publishedDates && draft.serviceDate != draft.editedServiceDate,
         isDeleting = draft.isDeleting,
         isDeleted = draft.isDeleted,
+        hasUnsavedChanges = draft.hasUnsavedChanges,
+        isConfirmingDiscard = draft.isConfirmingDiscard,
+        isLeaving = draft.isLeaving,
     )
 }
+
+/** Not once published or deleted: the week then left the editor on purpose. */
+val SetlistDraft.hasUnsavedChanges: Boolean
+    get() = original != null && !isLeaving && !isPublished && !isDeleted && choices != original
 
 private fun Song.toSetlistSongUi() = SetlistSongUi(id, title, key.label(Notation.SOLFEGE))
 

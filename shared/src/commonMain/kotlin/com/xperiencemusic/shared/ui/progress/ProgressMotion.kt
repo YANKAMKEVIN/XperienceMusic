@@ -2,6 +2,8 @@ package com.xperiencemusic.shared.ui.progress
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -58,12 +60,19 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.runtime.staticCompositionLocalOf
+import com.xperiencemusic.shared.ui.theme.Radius
 
-/** Fades and lifts an element in once, [order] steps after the screen opened. */
+/** "Réduire les animations", provided by the progress screen and read by its moving parts. */
+internal val LocalCalmMotion = staticCompositionLocalOf { false }
+
+/** Fades and lifts an element in once, [order] steps after the screen opened; shown at once when calm. */
 @Composable
 internal fun Modifier.enter(order: Int): Modifier {
-    val shown = remember { Animatable(0f) }
+    val calm = LocalCalmMotion.current
+    val shown = remember { Animatable(if (calm) 1f else 0f) }
     LaunchedEffect(Unit) {
+        if (calm) return@LaunchedEffect
         delay(order * 70L)
         shown.animateTo(1f, tween(500, easing = FastOutSlowInEasing))
     }
@@ -74,27 +83,32 @@ internal fun Modifier.enter(order: Int): Modifier {
 }
 
 /** How one objective colours its segment of the level ring. */
-enum class RingSegment { VALIDATED, WAITING, REWORK, TODO }
+enum class RingSegment { VALIDATED, WAITING, REWORK, STARTED, TODO }
 
 /**
  * The way to the next level as a ring of one segment per objective. Segments sweep in one after
- * the other; the first one still to reach glows in the brand gradient, and a small dot orbits.
+ * the other; an objective under way glows in the brand gradient, and a small dot orbits. With
+ * [calm] ("Réduire les animations") nothing moves: the segments are drawn whole and the dot rests.
  */
 @Composable
-internal fun LevelRing(segments: List<RingSegment>, description: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+internal fun LevelRing(segments: List<RingSegment>, description: String, modifier: Modifier = Modifier, calm: Boolean = false, content: @Composable () -> Unit) {
     val sweeps = remember(segments.size) { List(segments.size) { Animatable(0f) } }
-    LaunchedEffect(segments.size) {
+    LaunchedEffect(segments.size, calm) {
         sweeps.forEachIndexed { i, sweep ->
             launch {
+                if (calm) return@launch sweep.snapTo(1f)
                 delay(200L + i * 90L)
                 sweep.animateTo(1f, tween(550, easing = FastOutSlowInEasing))
             }
         }
     }
-    val motion = rememberInfiniteTransition(label = "ring")
-    val orbit by motion.animateFloat(0f, 360f, infiniteRepeatable(tween(14_000, easing = LinearEasing)), label = "orbit")
-    val glow by motion.animateFloat(0.55f, 1f, infiniteRepeatable(tween(1_400), RepeatMode.Reverse), label = "glow")
-    val focus = segments.indexOfFirst { it != RingSegment.VALIDATED }
+    var orbit = 0f
+    var glow = 1f
+    if (!calm) {
+        val motion = rememberInfiniteTransition(label = "ring")
+        orbit = motion.animateFloat(0f, 360f, infiniteRepeatable(tween(14_000, easing = LinearEasing)), label = "orbit").value
+        glow = motion.animateFloat(0.55f, 1f, infiniteRepeatable(tween(1_400), RepeatMode.Reverse), label = "glow").value
+    }
     Box(modifier.size(200.dp).semantics { contentDescription = description }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(200.dp)) {
             val stroke = 12.dp.toPx()
@@ -110,10 +124,12 @@ internal fun LevelRing(segments: List<RingSegment>, description: String, modifie
                 drawArc(Palette.NightHigh, start, sweep, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
                 val drawn = sweep * sweeps[i].value
                 if (drawn <= 0f) return@forEachIndexed
-                when {
-                    i == focus && segment == RingSegment.TODO ->
+                when (segment) {
+                    // An untouched objective stays plain: at 0/7 the ring must not look under way.
+                    RingSegment.TODO -> Unit
+                    RingSegment.STARTED ->
                         drawArc(BrandColors.gradient, start, drawn, false, topLeft, arcSize, alpha = glow, style = Stroke(stroke, cap = StrokeCap.Round))
-                    segment != RingSegment.TODO ->
+                    else ->
                         drawArc(segment.color(), start, drawn, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
                 }
             }
@@ -129,14 +145,20 @@ private fun RingSegment.color(): Color = when (this) {
     RingSegment.VALIDATED -> Palette.Success
     RingSegment.WAITING -> Palette.Blue
     RingSegment.REWORK -> BrandColors.Amber
+    RingSegment.STARTED -> Palette.Violet
     RingSegment.TODO -> Palette.NightHigh
 }
 
-/** A number that counts up from zero the first time it shows. */
+/** A number that counts up from zero the first time it shows; written straight away when calm. */
 @Composable
 internal fun CountUp(target: Int, style: androidx.compose.ui.text.TextStyle, modifier: Modifier = Modifier) {
-    var shown by remember { mutableIntStateOf(0) }
-    LaunchedEffect(target) {
+    val calm = LocalCalmMotion.current
+    var shown by remember { mutableIntStateOf(if (calm) target else 0) }
+    LaunchedEffect(target, calm) {
+        if (calm) {
+            shown = target
+            return@LaunchedEffect
+        }
         delay(450)
         while (shown != target) {
             shown += if (target > shown) 1 else -1
@@ -146,10 +168,13 @@ internal fun CountUp(target: Int, style: androidx.compose.ui.text.TextStyle, mod
     Text("$shown", style = style, modifier = modifier)
 }
 
-/** A small equalizer that dances while the focus card waits for a tap. */
+/** A small equalizer that dances while the focus card waits for a tap; it holds still when calm. */
 @Composable
 internal fun Equalizer(modifier: Modifier = Modifier, color: Color = Palette.Violet) {
-    val time by rememberInfiniteTransition(label = "eq").animateFloat(0f, 1f, infiniteRepeatable(tween(1_100, easing = LinearEasing)), label = "t")
+    var time = 0.3f
+    if (!LocalCalmMotion.current) {
+        time = rememberInfiniteTransition(label = "eq").animateFloat(0f, 1f, infiniteRepeatable(tween(1_100, easing = LinearEasing)), label = "t").value
+    }
     val phases = remember { listOf(0f, .15f, .3f, .1f, .45f, .2f, .35f, .05f, .25f) }
     Canvas(modifier.width(64.dp).height(36.dp)) {
         val bar = 4.dp.toPx()
@@ -181,8 +206,9 @@ internal fun SectionTabs(labels: List<String>, selected: Int, onSelect: (Int) ->
     ) {
         labels.forEachIndexed { i, label ->
             val isOn = i == selected
-            val background by animateColorAsState(if (isOn) Palette.Snow else Color.Transparent, tween(250), label = "tab-bg")
-            val content by animateColorAsState(if (isOn) Palette.Night else Palette.Mist, tween(250), label = "tab-fg")
+            val fade: AnimationSpec<Color> = if (LocalCalmMotion.current) snap() else tween(250)
+            val background by animateColorAsState(if (isOn) Palette.Snow else Color.Transparent, fade, label = "tab-bg")
+            val content by animateColorAsState(if (isOn) Palette.Night else Palette.Mist, fade, label = "tab-fg")
             Box(
                 Modifier
                     .weight(1f)
@@ -202,7 +228,7 @@ internal fun SectionTabs(labels: List<String>, selected: Int, onSelect: (Int) ->
     }
 }
 
-/** The "Aujourd'hui" card: one action, a gradient night background and the dancing equalizer. */
+/** The "Aujourd’hui" card: one action, a gradient night background and the dancing equalizer. */
 @Composable
 internal fun FocusCard(
     eyebrow: String,
@@ -211,20 +237,20 @@ internal fun FocusCard(
     modifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
 ) {
-    val shape = RoundedCornerShape(28.dp)
+    val shape = RoundedCornerShape(Radius.hero)
     Box(
         modifier
             .fillMaxWidth()
             .clip(shape)
             .background(Brush.linearGradient(listOf(Palette.VioletDeep, Palette.NightRaised, Palette.BlueDeep)))
-            .border(1.dp, Color(0xFF3A3260), shape)
+            .border(1.dp, Palette.VioletEdge, shape)
             .padding(20.dp),
     ) {
         Equalizer(Modifier.align(Alignment.TopEnd))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = Color(0xFFB9A2FF), modifier = Modifier.padding(end = 72.dp))
+            Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = Palette.VioletLight, modifier = Modifier.padding(end = 72.dp))
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(end = 56.dp))
-            text?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFC9C6DA)) }
+            text?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Palette.MistLight) }
             if (action != null) Box(Modifier.padding(top = 10.dp)) { action() }
         }
     }

@@ -65,6 +65,27 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   chant de la semaine, échauffement : voir `presentation/progress/ProgressFocus.kt`), puis onglets Objectifs /
   Parcours / Ma voix. Fiche d'objectif en bas d'écran ; outils admin dans le menu ⋮ et une bande « À traiter ».
 - **Vidéo TikTok de présentation** (30 s, avec la musique du groupe) dans `video/`. Rendu : `npm run render`.
+- **QA UI/UX sur le S24** (30 octobre 2026, build démo) : 40 constats (1 bloquant, 14 majeurs, 17 mineurs,
+  8 suggestions) dans `docs/qa/2026-10-30-qa-s24.md`. Les captures sont restées hors git, dans
+  `~/dev/XperienceMusic/docs/qa/2026-10-30-captures/`.
+  - **Lot 1 (QA-01 à QA-09) corrigé** sur `fix/qa-s24-lot1`, partie de `feat/guided-piano-learning` : ViewModels
+    effacés à chaque changement d'écran racine, Koin démarré dans `XperienceMusicApplication`, retour système
+    dans l'accueil, confirmations (déconnexion, abandon des modifications, « Valider le mois » déplacé en haut du
+    mois pour les admins), fiche d'objectif, retours d'exercice et « Arrêter » toujours visibles. Choix validés
+    par Kevin le 30 octobre. Vérifié sur le S24 et l'A17 le 30 octobre : 9/9 OK, sans régression
+    (`docs/qa/2026-10-30-verif-lot1.md`).
+  - **Lot 2 (QA-10 à QA-15) corrigé** sur `fix/qa-s24-lot2`, partie de `fix/qa-s24-lot1` : « Je le ferai plus
+    tard » sur les activités chantées, bouton « Ouvrir les réglages » après un refus du micro, grille coupée
+    entre les mots, mode scène paysage avec commandes en colonne, noms et états pour TalkBack, semaine du
+    dimanche le plus proche (`BandWeek`). Vérifié sur l'A17 le 30 octobre : 6/6 OK (`docs/qa/2026-10-30-verif-lot2.md`).
+  - **Lot 3 (QA-16 à QA-40) corrigé** le 30 octobre, à la suite sur la même branche `fix/qa-s24-lot2`, **pas encore
+    poussé** (en attente de la validation de Kevin) : un commit par constat, plus les deux défauts vus pendant la
+    vérification du lot 1 (compteurs du Planning, total de l'accueil), la jauge du micro, l'écran d'explication
+    avant la première demande du micro et le geste retour de `LearningScreen`. Détail : lignes « Corrigé (lot 3) »
+    de `docs/qa/2026-10-30-qa-s24.md`. Choix de Kevin : barre d'onglets latérale en paysage, « le responsable »
+    côté membres, onglet « Progrès », barre de progression sans total dans l'accueil. **Pas encore vérifié sur
+    téléphone** (l'A17 a été débranché avant l'essai). Restent ouverts : pochette média sur iOS, champs en pilule
+    dans l'éditeur de chant, pas d'annulation d'un passage de niveau confirmé.
 
 ## Reste à faire
 
@@ -80,8 +101,9 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
    - Le micro plante sur simulateur : teste-le sur mon S24.
 3. ~~**Moi (Supabase)** : migrations planning et parcours.~~ Faites le 16 octobre 2026.
 4. **Tests sur téléphone : Galaxy A17** (`adb -s adb-R5GYB2R7W2Y-HaeuqW._adb-tls-connect._tcp`).
-   Ne touche **ni** au S21 (`RFCR40827ZZ`) **ni** au S24 (`RFCX80Y0FVX`), réservés à d'autres projets, et ne
-   désinstalle pas `dev.kevin.kanto2026` sur l'A17. Ne laisse rien tourner en continu : une autre session en a
+   Ne touche pas au S21 (`RFCR40827ZZ`), et ne désinstalle pas `dev.kevin.kanto2026` sur l'A17. Le S24
+   (`RFCX80Y0FVX`) sert aussi à MEMOVERSE : on peut y faire la QA, mais seulement après avoir vérifié qu'aucune
+   autre session ne l'utilise. Ne laisse rien tourner en continu : une autre session en a
    besoin. C'est Kevin qui se connecte. À tester : micro (« Ma voix »), import accords.app, collage avec accords
    au-dessus, planning et rappels, parcours de croissance.
 5. **Plus tard.**
@@ -102,3 +124,39 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   les fonctions `derive` sont pures ; il y a des tests à chaque couche.
   Les tests de la base se lancent avec Docker (voir `docs/supabase-setup.md`).
 - La chaîne d'outils : Kotlin 2.3.21, CMP 1.11, AGP 9, démon Gradle sur JDK 21, supabase-kt figé en 3.6.0.
+
+## Polish UX (branche feat/ux-polish)
+
+Vingt finitions cosmétiques, une par commit (`61390b4` à `ffd2846`), sans changement de comportement ni de
+données. QA sur le S24 le 31 octobre (`docs/qa/2026-10-31-qa-ux-polish.md`) : 13 OK, 4 non testables en
+démo (4, 12, 17 pour le message en bas d'écran, 18), 4 défauts corrigés ensuite (`0aeef2e` à `768039a`) :
+le Planning fait glisser tout le mois, la partie basse de l'éditeur de setlist suit le retrait, niveau et rôle
+des membres ont le même style, l'onglet de Ma progression change sans fondu en mouvement réduit. Ces quatre
+corrections sont vérifiées sur l'A17 (build démo, 31 octobre au soir) ; le fondu des cartes du Planning a été
+décalé ensuite pour que l'ancien et le nouveau mois ne se superposent plus, également vérifié sur l'A17.
+Les six défauts « vus en passant » du compte rendu sont corrigés le 3 novembre (un commit chacun, détail sous
+chaque point du compte rendu) : trait d'union au lieu d'un blanc dans un mot coupé par un accord, fondu en haut
+des paroles du mode scène, double point du Planning, titre de l'en-tête sur une ligne, espace insécable dans
+les dates, place de la coche réservée dans les cartes de choix, libellé du bouton lecture/pause porté par le
+bouton. **Pas encore vérifiés sur téléphone** (A17 à réserver auprès de la session coordinatrice).
+
+1. Les boutons en dégradé réagissent à l'appui (léger rétrécissement et assombrissement) — `BrandControls.kt`.
+2. Lecture, chargement et pause passent de l'un à l'autre en fondu — `PlayPauseButton.kt`, `PlayerSheet.kt`.
+3. Le mini-lecteur glisse en entrant et en sortant au lieu d'apparaître d'un coup — `MiniPlayer.kt`.
+4. Le rond de chargement n'apparaît qu'après 300 ms, en fondu ; Chants l'affiche au premier chargement — `LoadingIndicator.kt`.
+5. Dans Chants, les lignes glissent en place quand la recherche ou la tonalité filtre la liste — `LibraryScreen.kt`.
+6. Éditeur de setlist : les chants déplacés, ajoutés ou retirés glissent — `SetlistEditorScreen.kt`.
+7. Éditeur de setlist : tonalités en pastille comme ailleurs, titres longs coupés par « … » — `SetlistEditorScreen.kt`.
+8. Planning : le mois glisse dans le sens des flèches — `PlanningScreen.kt`.
+9. Pastilles de tonalité, « Aujourd’hui », réponse et personnes toujours sur une ligne — `BrandControls.kt`, `PlanningScreen.kt`.
+10. Détail du chant : la tonalité monte ou descend en défilant quand on transpose — `SongDetailScreen.kt`.
+11. Détail du chant : le choix de notation passe en fondu d'une option à l'autre — `SongDetailScreen.kt`.
+12. Chant supprimé : vrai état vide (icône, titre, explication) au lieu d'une ligne seule — `SongDetailScreen.kt`.
+13. Membres : le choix du niveau a une zone d'appui de 48 dp — `MembersScreen.kt`.
+14. Ma progression respecte « Réduire les animations » (entrée, compteur, égaliseur, onglets) — `ProgressMotion.kt`.
+15. Carte « Aujourd’hui » : couleurs et rayon tirés de la palette (`Palette`, `Radius.hero`) — `ProgressMotion.kt`.
+16. Touches du piano de l'atelier : couleurs tirées de la palette — `LearningScreen.kt`.
+17. Champs de texte, menus et messages arrondis à 12 dp, assortis aux cartes — `AppTheme.kt`.
+18. Semaine passée : les titres s'estompent avec leur tonalité — `WeekScreen.kt`.
+19. Mode scène : les boutons de vitesse se déplient au lieu d'apparaître d'un coup — `StageScreen.kt`.
+20. Accueil et « Mon profil » : la teinte et la coche des cartes de choix arrivent en douceur — `ChoiceCards.kt`.

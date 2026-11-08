@@ -34,6 +34,13 @@ fun ProgressUiState.learningModules(): List<ModuleProgressUi> {
 }
 
 /**
+ * The objectives under way: not ticked yet, but with at least one activity of their guided module
+ * done. Only those light up as "en cours" in the ring; an untouched objective stays plain.
+ */
+fun startedObjectives(objectives: List<ObjectiveUi>, modules: List<ModuleProgressUi>): Set<String> =
+    objectives.filter { o -> o.status == null && modules.any { it.objectiveId == o.id && it.done > 0 } }.map { it.id }.toSet()
+
+/**
  * What to do next, most pressing first: a voice to rework, the open microphone step, the guided
  * module of an objective still to reach, a song of the week to sing, then the daily warm-up.
  */

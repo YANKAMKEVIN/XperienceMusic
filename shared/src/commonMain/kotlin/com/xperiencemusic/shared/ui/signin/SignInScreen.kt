@@ -1,13 +1,18 @@
 package com.xperiencemusic.shared.ui.signin
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,15 +20,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.presentation.signin.SignInError
 import com.xperiencemusic.shared.presentation.signin.SignInEvent
@@ -34,19 +42,24 @@ import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.signin_change_email
 import com.xperiencemusic.shared.resources.signin_checking
 import com.xperiencemusic.shared.resources.signin_code_label
+import com.xperiencemusic.shared.resources.signin_code_resent
 import com.xperiencemusic.shared.resources.signin_code_subtitle
 import com.xperiencemusic.shared.resources.signin_demo_hint
 import com.xperiencemusic.shared.resources.signin_email_label
 import com.xperiencemusic.shared.resources.signin_email_subtitle
 import com.xperiencemusic.shared.resources.signin_error_code
 import com.xperiencemusic.shared.resources.signin_error_email
+import com.xperiencemusic.shared.resources.signin_error_empty
 import com.xperiencemusic.shared.resources.signin_error_network
 import com.xperiencemusic.shared.resources.signin_error_not_sent
 import com.xperiencemusic.shared.resources.signin_error_too_many
+import com.xperiencemusic.shared.resources.signin_resend
+import com.xperiencemusic.shared.resources.signin_resend_in
 import com.xperiencemusic.shared.resources.signin_send_code
 import com.xperiencemusic.shared.resources.signin_title
 import com.xperiencemusic.shared.ui.brand.BrandBackground
 import com.xperiencemusic.shared.ui.brand.BrandHeader
+import com.xperiencemusic.shared.ui.brand.BrandWordmark
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -61,6 +74,8 @@ fun SignInScreen(viewModel: SignInViewModel = koinViewModel()) {
 @Composable
 fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
     val submit = { onEvent(SignInEvent.SubmitClicked) }
+    // With the keyboard open, the full brand block would push the field off the screen.
+    val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     BrandBackground {
         Column(
             modifier = Modifier
@@ -70,7 +85,11 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                 .padding(top = Spacing.xl, start = Spacing.xl, end = Spacing.xl),
             verticalArrangement = Arrangement.spacedBy(Spacing.l),
         ) {
-            BrandHeader()
+            if (keyboardOpen) {
+                BrandWordmark(fontSize = 22.sp, showTagline = false, modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                BrandHeader()
+            }
             Text(stringResource(Res.string.signin_title), style = MaterialTheme.typography.headlineSmall)
             when (state.step) {
                 SignInStep.EMAIL -> {
@@ -78,7 +97,7 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                         stringResource(Res.string.signin_email_subtitle),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    val isEmailError = state.error == SignInError.INVALID_EMAIL
+                    val isEmailError = state.error == SignInError.INVALID_EMAIL || state.error == SignInError.EMPTY_EMAIL
                     EmailFieldPill(
                         state.email,
                         onValueChange = { onEvent(SignInEvent.EmailChanged(it)) },
@@ -89,6 +108,7 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                         isSending = state.isSubmitting,
                         onSend = submit,
                     )
+                    SignInErrorText(state.error)
                 }
 
                 SignInStep.CODE -> {
@@ -104,6 +124,14 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                         enabled = !state.isSubmitting,
                         description = stringResource(Res.string.signin_code_label),
                     )
+                    SignInErrorText(state.error)
+                    if (state.codeResent) {
+                        Text(
+                            stringResource(Res.string.signin_code_resent),
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        )
+                    }
                     if (state.isSubmitting) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -127,32 +155,53 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                     color = MaterialTheme.colorScheme.secondary,
                 )
             }
-            state.error?.let { error ->
-                Text(
-                    stringResource(
-                        when (error) {
-                            SignInError.INVALID_EMAIL -> Res.string.signin_error_email
-                            SignInError.INVALID_CODE -> Res.string.signin_error_code
-                            SignInError.CODE_NOT_SENT -> Res.string.signin_error_not_sent
-                            SignInError.TOO_MANY_ATTEMPTS -> Res.string.signin_error_too_many
-                            SignInError.NETWORK -> Res.string.signin_error_network
-                        },
-                    ),
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-                )
-            }
             if (state.step == SignInStep.CODE) {
-                TextButton(
-                    onClick = { onEvent(SignInEvent.ChangeEmailClicked) },
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(stringResource(Res.string.signin_change_email))
+                    TextButton(onClick = { onEvent(SignInEvent.ResendCodeClicked) }, enabled = state.canResend) {
+                        Text(
+                            if (state.resendInSeconds > 0) {
+                                stringResource(Res.string.signin_resend_in, state.resendInSeconds)
+                            } else {
+                                stringResource(Res.string.signin_resend)
+                            },
+                        )
+                    }
+                    TextButton(onClick = { onEvent(SignInEvent.ChangeEmailClicked) }) {
+                        Text(stringResource(Res.string.signin_change_email))
+                    }
                 }
             }
         }
     }
+}
+
+/** Right under the field it is about, and scrolled into view: the keyboard must not hide it. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun SignInErrorText(error: SignInError?) {
+    val requester = remember { BringIntoViewRequester() }
+    LaunchedEffect(error) { if (error != null) requester.bringIntoView() }
+    error ?: return
+    Text(
+        stringResource(
+            when (error) {
+                SignInError.EMPTY_EMAIL -> Res.string.signin_error_empty
+                SignInError.INVALID_EMAIL -> Res.string.signin_error_email
+                SignInError.INVALID_CODE -> Res.string.signin_error_code
+                SignInError.CODE_NOT_SENT -> Res.string.signin_error_not_sent
+                SignInError.TOO_MANY_ATTEMPTS -> Res.string.signin_error_too_many
+                SignInError.NETWORK -> Res.string.signin_error_network
+            },
+        ),
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(requester)
+            .semantics { liveRegion = LiveRegionMode.Polite },
+    )
 }
 
 @Preview

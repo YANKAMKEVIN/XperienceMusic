@@ -37,7 +37,7 @@ class ServiceRemindersTest {
             listOf("validated-2026-11-01", "rehearsal-2026-11-08", "eve-2026-11-08", "eve-2026-11-13"),
             reminders.map { it.id },
         )
-        assertEquals("Tu sers : dim. 8 nov., ven. 13 nov.", reminders.first().body)
+        assertEquals("Tu sers : dim. 8\u00A0nov., ven. 13\u00A0nov.", reminders.first().body)
         assertEquals(LocalDateTime(2026, 11, 2, 19, 0), reminders[1].at, "the Monday before Tuesday's rehearsal")
         assertTrue("À toi la gloire" in reminders[1].body)
 

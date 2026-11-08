@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,7 +19,7 @@ import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.chart.ChartSegment
 import com.xperiencemusic.shared.ui.theme.Spacing
 
-/** Lyrics with each chord printed above the syllable it falls on. */
+/** Lyrics with each chord printed above the syllable it falls on; lines wrap between words. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale: Float = 1f) {
@@ -37,7 +38,10 @@ fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale:
                     if (line.segments.isEmpty()) {
                         Spacer(Modifier.height(Spacing.s))
                     } else {
-                        FlowRow { line.segments.forEach { ChartSegmentView(it, body) } }
+                        // Wraps between words only: "Ressus-" never ends a line with "cité" on the next.
+                        FlowRow {
+                            line.words().forEach { word -> Row { word.forEach { ChartSegmentView(it, body) } } }
+                        }
                     }
             }
         }
@@ -45,12 +49,14 @@ fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale:
 }
 
 /**
- * Chord over lyric. The segment is as wide as the wider of the two; when the chord is wider and the
- * word carries on in the next segment, a hyphen fills the gap so the word still reads as one.
+ * Chord over lyric. The segment is as wide as the wider of the two, the chord keeping a gap before the
+ * next one. Inside a word that carries on in the next segment ("Ressus[5]ci[1]té") that gap is the
+ * narrowest that keeps two chords apart, and when the chord still overhangs the syllable a hyphen
+ * fills the gap so the word reads as one instead of "Ressusci té".
  */
 @Composable
 private fun ChartSegmentView(segment: ChartSegment, style: TextStyle) {
-    val chordGap = Spacing.s
+    val chordGap = if (segment.continuesWord) Spacing.xs else Spacing.s
     Layout(
         content = {
             Text(
@@ -68,6 +74,7 @@ private fun ChartSegmentView(segment: ChartSegment, style: TextStyle) {
         val lyric = measurables[1].measure(loose)
         val hyphen = measurables[2].measure(loose)
         val chordWidth = if (segment.chord != null) chord.width + chordGap.roundToPx() else 0
+        // Any room left after the syllable would split the word on screen, so a hyphen bridges it.
         val showHyphen = segment.continuesWord && chordWidth > lyric.width
         val width = if (showHyphen) maxOf(chordWidth, lyric.width + hyphen.width) else maxOf(chordWidth, lyric.width)
         layout(width, chord.height + lyric.height) {

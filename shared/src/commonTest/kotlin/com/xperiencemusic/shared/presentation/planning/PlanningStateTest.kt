@@ -28,10 +28,13 @@ class PlanningStateTest {
         Planning(months, signups, band, member(role))
 
     @Test
-    fun `un membre voit ce mois et les mois ouverts, un admin aussi le suivant`() {
+    fun `un membre voit ce mois et les mois ouverts, un admin aussi les deux suivants`() {
         val months = listOf(PlanningMonth(october, null, true))
         assertEquals(listOf(october), planningMonths(today, months, canPlan = false))
-        assertEquals(listOf(october, november), planningMonths(today, months, canPlan = true))
+        assertEquals(listOf(october, november, LocalDate(2026, 12, 1)), planningMonths(today, months, canPlan = true))
+        // A month already open further ahead stays reachable for everyone.
+        val march = LocalDate(2027, 3, 1)
+        assertEquals(listOf(october, march), planningMonths(today, months + PlanningMonth(march, null, false), canPlan = false))
     }
 
     @Test
@@ -51,6 +54,59 @@ class PlanningStateTest {
 
         val validated = derivePlanningState(planning(months = listOf(PlanningMonth(october, null, true))), october, today)
         assertTrue(validated.services.none { it.showsAnswer }, "nothing left to answer once validated")
+    }
+
+    @Test
+    fun `valider un mois rappelle les réponses manquantes et les parties non couvertes`() {
+        val months = listOf(PlanningMonth(october, null, false))
+        val signups = listOf(
+            ServiceSignup(LocalDate(2026, 10, 16), "me", true),
+            ServiceSignup(LocalDate(2026, 10, 16), "d", true),
+            ServiceSignup(LocalDate(2026, 10, 18), "d", false),
+            // A past service: no longer counted.
+            ServiceSignup(LocalDate(2026, 10, 2), "me", true),
+        )
+        val validation = derivePlanningState(planning(Role.CONTENT_ADMIN, months, signups), october, today).validation
+        // From the 15th: Fridays 16, 23, 30 and Sundays 18, 25, for two members; three answers given.
+        assertEquals(5 * 2 - 3, validation?.missingAnswers)
+        // Answers and people are two different counts: both members still owe at least one date.
+        assertEquals(2, validation?.missingMembers)
+        val allMine = listOf(16, 18, 23, 25, 30).map { ServiceSignup(LocalDate(2026, 10, it), "me", true) }
+        val onlyDaniel = derivePlanningState(planning(Role.CONTENT_ADMIN, months, allMine), october, today).validation
+        assertEquals(5, onlyDaniel?.missingAnswers)
+        assertEquals(1, onlyDaniel?.missingMembers)
+        // Nobody plays bass or drums, on any of the five; the 16th has its singer and pianist.
+        assertEquals(5, validation?.incompleteServices)
+        assertEquals(listOf(Instrument.SINGER, Instrument.PIANO, Instrument.BASS, Instrument.DRUMS), validation?.uncoveredParts)
+
+        assertEquals(null, derivePlanningState(planning(months = months, signups = signups), october, today).validation, "members cannot validate")
+        val validated = listOf(PlanningMonth(october, null, true))
+        assertEquals(null, derivePlanningState(planning(Role.CONTENT_ADMIN, validated), october, today).validation)
+    }
+
+    @Test
+    fun `une échéance dépassée se dit, le jour même est signalé`() {
+        // A Friday with a service, six days after the deadline.
+        val friday = LocalDate(2026, 10, 16)
+        val late = listOf(PlanningMonth(october, LocalDate(2026, 10, 10), false))
+        val state = derivePlanningState(planning(months = late), october, friday)
+        assertTrue(state.isPastDeadline)
+        assertEquals("10\u00A0oct.", state.answerByLabel)
+        assertTrue(state.services.single { it.day == 16 }.isToday)
+        assertEquals(1, state.services.count { it.isToday })
+        assertTrue(deriveAvailabilityState(planning(months = late), october, friday).isPastDeadline)
+
+        val onTime = listOf(PlanningMonth(october, LocalDate(2026, 10, 20), false))
+        assertFalse(derivePlanningState(planning(months = onTime), october, friday).isPastDeadline)
+    }
+
+    @Test
+    fun `un mois validé mais incomplet le dit dans le bandeau`() {
+        val validated = listOf(PlanningMonth(october, LocalDate(2026, 10, 10), true))
+        val state = derivePlanningState(planning(months = validated), october, today)
+        assertFalse(state.isPastDeadline, "a validated month has no deadline left")
+        // Nobody answered: the five services still to come all lack a part.
+        assertEquals(5, state.incompleteAfterValidation)
     }
 
     @Test

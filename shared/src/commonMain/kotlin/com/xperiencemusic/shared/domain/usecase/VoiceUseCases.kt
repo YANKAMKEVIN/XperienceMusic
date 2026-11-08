@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.domain.usecase
 
+import kotlinx.coroutines.flow.first
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
@@ -61,11 +62,22 @@ class ReviewVoiceUseCase(
     suspend operator fun invoke(submissionId: String, validated: Boolean, feedback: String): DomainResult<Unit> {
         val member = sessions.currentMember() ?: return DomainResult.Failure(DomainError.NOT_SIGNED_IN)
         if (!member.role.can(Permission.REVIEW_TRAINING)) return DomainResult.Failure(DomainError.FORBIDDEN)
+        // Nobody signs off their own singing: another Admin++ listens to it.
+        if (submissions.observeAll().first().any { it.id == submissionId && it.memberId == member.id }) {
+            return DomainResult.Failure(DomainError.FORBIDDEN)
+        }
         val comment = feedback.trim().ifEmpty { null }
         // Sending work back without saying why helps no one.
         if (!validated && comment == null) return DomainResult.Failure(DomainError.INVALID_INPUT)
         return runRemote {
             submissions.review(submissionId, if (validated) ExerciseStatus.VALIDATED else ExerciseStatus.TO_REWORK, comment)
         }
+    }
+
+    /** Takes an answer back, right after it was given: the part waits for a review again. */
+    suspend fun undo(submissionId: String): DomainResult<Unit> {
+        val member = sessions.currentMember() ?: return DomainResult.Failure(DomainError.NOT_SIGNED_IN)
+        if (!member.role.can(Permission.REVIEW_TRAINING)) return DomainResult.Failure(DomainError.FORBIDDEN)
+        return runRemote { submissions.review(submissionId, ExerciseStatus.SUBMITTED, null) }
     }
 }

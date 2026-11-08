@@ -24,6 +24,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -50,6 +53,8 @@ import com.xperiencemusic.shared.resources.editor_delete_title
 import com.xperiencemusic.shared.resources.editor_edit_title
 import com.xperiencemusic.shared.resources.editor_error_title
 import com.xperiencemusic.shared.resources.editor_import_button
+import com.xperiencemusic.shared.resources.editor_import_again
+import com.xperiencemusic.shared.resources.editor_import_done
 import com.xperiencemusic.shared.resources.editor_import_help
 import com.xperiencemusic.shared.resources.editor_import_link
 import com.xperiencemusic.shared.resources.editor_import_network
@@ -69,7 +74,9 @@ import com.xperiencemusic.shared.resources.song_delete_confirm_cancel
 import com.xperiencemusic.shared.resources.song_delete_confirm_ok
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.components.DiscardChangesDialog
 import com.xperiencemusic.shared.ui.components.EditorTopBar
+import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.components.KeyPicker
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.song.ChordChartView
@@ -78,6 +85,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
 /** [songId] null creates a new song. */
 @Composable
@@ -91,15 +99,17 @@ fun SongEditorScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.savedSongId) { state.savedSongId?.let(onSaved) }
     LaunchedEffect(state.isDeleted) { if (state.isDeleted) onDeleted() }
-    SongEditorScreenContent(state = state, onEvent = viewModel::onEvent, onBack = onBack)
+    LaunchedEffect(state.isLeaving) { if (state.isLeaving) onBack() }
+    SongEditorScreenContent(state = state, onEvent = viewModel::onEvent)
 }
 
 @Composable
 fun SongEditorScreenContent(
     state: SongEditorUiState,
     onEvent: (SongEditorEvent) -> Unit,
-    onBack: () -> Unit,
 ) {
+    // Without changes the system back closes the editor as usual (with its predictive animation).
+    SystemBackHandler(enabled = state.hasUnsavedChanges) { onEvent(SongEditorEvent.BackClicked) }
     Scaffold(
         topBar = {
             EditorTopBar(
@@ -107,14 +117,14 @@ fun SongEditorScreenContent(
                 actionLabel = stringResource(Res.string.editor_save),
                 isActionEnabled = state.canSave,
                 isWorking = state.isSaving,
-                onBack = onBack,
+                onBack = { onEvent(SongEditorEvent.BackClicked) },
                 onAction = { onEvent(SongEditorEvent.SaveClicked) },
             )
         },
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
         Column(
@@ -206,6 +216,13 @@ fun SongEditorScreenContent(
         }
     }
 
+    if (state.isConfirmingDiscard) {
+        DiscardChangesDialog(
+            onDiscard = { onEvent(SongEditorEvent.DiscardConfirmed) },
+            onKeepEditing = { onEvent(SongEditorEvent.DiscardDismissed) },
+        )
+    }
+
     if (state.isConfirmingDeletion) {
         AlertDialog(
             onDismissRequest = { onEvent(SongEditorEvent.DeleteDismissed) },
@@ -228,6 +245,20 @@ fun SongEditorScreenContent(
 /** Fills the new song from one accords.app page. */
 @Composable
 private fun ImportFromLink(state: SongEditorUiState, onEvent: (SongEditorEvent) -> Unit) {
+    // After a success the card folds into a confirmation: the filled fields are below, out of sight.
+    state.importedTitle?.let { title ->
+        AppCard {
+            Text(
+                stringResource(Res.string.editor_import_done, title),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+            TextButton(onClick = { onEvent(SongEditorEvent.ImportAgainClicked) }) {
+                Text(stringResource(Res.string.editor_import_again))
+            }
+        }
+        return
+    }
     AppCard {
         SectionTitle(stringResource(Res.string.editor_import_title))
         Text(
@@ -289,7 +320,6 @@ private fun SongEditorScreenPreview() {
                 unknownChords = listOf("Dp"),
             ),
             onEvent = {},
-            onBack = {},
         )
     }
 }

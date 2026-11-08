@@ -2,6 +2,8 @@ package com.xperiencemusic.shared.platform
 
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 
 /**
  * ExoPlayer-backed output, shared with [PlaybackService] which shows it to the system. Must be
@@ -62,6 +65,18 @@ class AndroidAudioPlayer(
         }
     }
 
+    /** The XM monogram (the app icon) as the cover of the media notification and lock screen. */
+    private val artwork: ByteArray? by lazy {
+        runCatching {
+            val size = ARTWORK_SIZE_PX
+            val icon = context.packageManager.getApplicationIcon(context.packageName)
+            val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            icon.setBounds(0, 0, size, size)
+            icon.draw(Canvas(bitmap))
+            ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        }.getOrNull()
+    }
+
     /** Connecting a controller binds [PlaybackService]; it is kept for the app's lifetime. */
     private var serviceConnection: ListenableFuture<MediaController>? = null
 
@@ -72,7 +87,8 @@ class AndroidAudioPlayer(
     override fun play(url: String, nowPlaying: NowPlaying) {
         connectToService()
         _state.value = AudioPlayerState(isBuffering = true)
-        val metadata = MediaMetadata.Builder().setTitle(nowPlaying.title).setArtist(nowPlaying.subtitle).build()
+        val metadata = MediaMetadata.Builder().setTitle(nowPlaying.title).setArtist(nowPlaying.subtitle)
+            .setArtworkData(artwork, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()
         player.setMediaItem(MediaItem.Builder().setUri(url).setMediaMetadata(metadata).build())
         player.prepare()
         player.playWhenReady = true
@@ -123,6 +139,7 @@ class AndroidAudioPlayer(
 
     companion object {
         private const val TICK_MS = 250L
+        private const val ARTWORK_SIZE_PX = 256
 
         fun buildExoPlayer(context: Context): ExoPlayer =
             ExoPlayer.Builder(context)

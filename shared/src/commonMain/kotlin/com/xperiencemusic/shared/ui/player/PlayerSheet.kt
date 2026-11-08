@@ -55,6 +55,9 @@ import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import com.xperiencemusic.shared.presentation.common.PlaybackStatus
 
 /** The full player: the recording, the brand waves, and the controls to learn a part. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -154,10 +157,17 @@ private fun BigPlayButton(state: MiniPlayerUiState, onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier.size(80.dp).clip(CircleShape).background(BrandColors.gradient),
     ) {
-        when {
-            state.isLoading -> CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
-            state.isPlaying -> Icon(PauseIcon, contentDescription = label, tint = Color.White, modifier = Modifier.size(36.dp))
-            else -> Icon(Icons.Filled.PlayArrow, contentDescription = label, tint = Color.White, modifier = Modifier.size(40.dp))
+        val shown = when {
+            state.isLoading -> PlaybackStatus.LOADING
+            state.isPlaying -> PlaybackStatus.PLAYING
+            else -> PlaybackStatus.PAUSED
+        }
+        Crossfade(targetState = shown, animationSpec = tween(180), label = "big-play") { visual ->
+            when (visual) {
+                PlaybackStatus.LOADING -> CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
+                PlaybackStatus.PLAYING -> Icon(PauseIcon, contentDescription = label, tint = Color.White, modifier = Modifier.size(36.dp))
+                else -> Icon(Icons.Filled.PlayArrow, contentDescription = label, tint = Color.White, modifier = Modifier.size(40.dp))
+            }
         }
     }
 }

@@ -1,6 +1,9 @@
 package com.xperiencemusic.shared.ui.learning
 
+import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,7 +22,9 @@ import com.xperiencemusic.shared.domain.learning.noteLabel
 import com.xperiencemusic.shared.presentation.learning.*
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
+import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
@@ -28,7 +33,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun PianoScaleScreen(onBack: () -> Unit, vm: PianoScaleViewModel = koinViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     val playback by vm.playback.collectAsStateWithLifecycle()
-    val permission = rememberMicrophonePermission()
+    val permission = rememberMicrophonePermission(MicrophoneUse.LISTEN_PIANO)
     if (state.phase in listOf(PianoScalePhase.PREPARING, PianoScalePhase.COUNTDOWN, PianoScalePhase.RECORDING))
         com.xperiencemusic.shared.ui.platform.KeepScreenOn()
     LifecycleEventEffect(Lifecycle.Event.ON_START) { vm.activate() }
@@ -40,13 +45,13 @@ fun PianoScaleScreen(onBack: () -> Unit, vm: PianoScaleViewModel = koinViewModel
             stop = vm::stop, countdown = vm::beginCountdown, cancel = { vm.cancelPreparation() },
             example = vm::listenExample, listen = vm::listenTake, stopAudio = vm::stopPlayback,
             configure = vm::configure, select = vm::selectStep, passage = vm::listenPassage,
-            expected = vm::listenExpected, focus = vm::focusStep))
+            expected = vm::listenExpected, focus = vm::focusStep, openSettings = permission.openSettings))
 }
 class PianoScaleActions(
     val start: () -> Unit = {}, val stop: () -> Unit = {}, val countdown: () -> Unit = {}, val cancel: () -> Unit = {},
     val example: () -> Unit = {}, val listen: () -> Unit = {}, val stopAudio: () -> Unit = {},
     val configure: (PianoScalePractice) -> Unit = {}, val select: (Int) -> Unit = {}, val passage: (Int) -> Unit = {},
-    val expected: (Int) -> Unit = {}, val focus: (Int) -> Unit = {},
+    val expected: (Int) -> Unit = {}, val focus: (Int) -> Unit = {}, val openSettings: () -> Unit = {},
 )
 private fun PianoScaleKey.label() = when (this) { PianoScaleKey.C -> "Do majeur"; PianoScaleKey.G -> "Sol majeur"; PianoScaleKey.F -> "Fa majeur" }
 
@@ -54,6 +59,15 @@ private fun PianoScaleKey.label() = when (this) { PianoScaleKey.C -> "Do majeur"
 @Composable
 fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, onBack: () -> Unit,
     actions: PianoScaleActions = PianoScaleActions()) {
+    // The report appears below the settings that come back after the take: scroll down to it
+    // instead of leaving the page at the top.
+    val reportRequester = remember { BringIntoViewRequester() }
+    LaunchedEffect(state.report) {
+        if (state.report != null) {
+            withFrameNanos { }
+            reportRequester.bringIntoView()
+        }
+    }
     Scaffold(topBar = { TopAppBar(title = { Text("Mon atelier piano") }, navigationIcon = {
         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") }
     }, windowInsets = WindowInsets(0)) }, contentWindowInsets = WindowInsets(0)) { padding ->
@@ -65,7 +79,6 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                 Text(state.practice.key.label(), style = MaterialTheme.typography.headlineSmall)
                 Text("${if (state.practice.descending) "Descente" else "Montée"} · ${state.practice.bpm} BPM · une note par pulsation", Modifier.padding(top = Spacing.s))
                 Text("Relâche chaque touche avant la suivante. Joue une seule fois, sans pédale ni accompagnement. Do4 est le Do central.", Modifier.padding(top = Spacing.s))
-                Text("Correction expérimentale de notes isolées : les accords, la pédale et le bruit peuvent tromper l’analyse. Le responsable garde la validation finale.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Spacing.s))
             }
             if (!state.allowed) Text("Connecte-toi avec ton profil piano pour utiliser cet exercice.")
             else {
@@ -78,11 +91,11 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                         LinearProgressIndicator(progress = { state.level }, modifier = Modifier.fillMaxWidth().padding(top = Spacing.m))
                         Text(when {
                             state.signal == PianoInputSignal.LOUD -> "Le son sature : éloigne un peu le téléphone ou baisse le volume."
-                            state.signalSeen -> "Le micro reçoit du son. Attends qu’il s’éteigne avant de commencer."
+                            state.signalSeen -> "Le micro reçoit du son. Laisse la note s’éteindre avant de commencer."
                             else -> "J’attends un son. Rapproche le téléphone du piano si nécessaire."
                         }, Modifier.padding(top = Spacing.s).semantics { liveRegion = LiveRegionMode.Polite })
                         GradientButton(onClick = actions.countdown, enabled = state.signalSeen && state.signal != PianoInputSignal.LOUD,
-                            modifier = Modifier.padding(top = Spacing.m)) { Text("Je suis prêt · démarrer dans 3 secondes") }
+                            modifier = Modifier.padding(top = Spacing.m)) { Text("C’est parti · départ dans 3 s") }
                         TextButton(onClick = actions.cancel) { Text("Annuler le test micro") }
                     }
                     PianoScalePhase.COUNTDOWN -> AppCard {
@@ -106,7 +119,7 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                         Text("Je prépare ton retour sur ce téléphone…", Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                     }
                     else -> {
-                        state.report?.let { ScaleReport(state, it, actions) }
+                        state.report?.let { Box(Modifier.bringIntoViewRequester(reportRequester)) { ScaleReport(state, it, actions) } }
                         OutlinedButton(onClick = actions.example) { Text("Écouter l’exemple · ${state.practice.bpm} BPM") }
                         if (state.phase == PianoScalePhase.RESULT && state.seconds > 0)
                             OutlinedButton(onClick = actions.listen) { Text("Réécouter toute ma prise") }
@@ -115,8 +128,11 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                 }
             }
             if (playing) OutlinedButton(onClick = actions.stopAudio) { Text("Arrêter l’écoute") }
-            state.message?.let { Text(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
-            Text("Essai local, sans envoi au serveur. L’audio est effacé au nouvel essai ou au changement d’exercice, à la sortie ou en arrière-plan. Seul le bilan précédent reste temporairement pour comparer deux essais identiques ; il est aussi effacé à la sortie. Aucun niveau n’est validé automatiquement.", style = MaterialTheme.typography.bodySmall)
+            state.message?.let {
+                if (state.microphoneDenied) MicrophoneDeniedNotice(it, actions.openSettings)
+                else Text(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+            }
+            GoodToKnow()
         }
     }
 }
@@ -127,21 +143,37 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
         Text("Mon exercice", style = MaterialTheme.typography.titleMedium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
             PianoScaleKey.entries.forEach { key -> FilterChip(selected = s.practice.key == key,
-                onClick = { actions.configure(s.practice.copy(key = key, focusStart = null)) }, label = { Text(key.label()) }) }
+                onClick = { actions.configure(s.practice.copy(key = key, focusStart = null)) }, label = { Text(key.label()) }, modifier = Modifier.choiceState(s.practice.key == key)) }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
             listOf(false, true).forEach { down -> FilterChip(selected = s.practice.descending == down,
-                onClick = { actions.configure(s.practice.copy(descending = down, focusStart = null)) }, label = { Text(if (down) "Descente" else "Montée") }) }
+                onClick = { actions.configure(s.practice.copy(descending = down, focusStart = null)) }, label = { Text(if (down) "Descente" else "Montée") }, modifier = Modifier.choiceState(s.practice.descending == down)) }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
             listOf(40, 60, 80).forEach { bpm -> FilterChip(selected = s.practice.bpm == bpm,
-                onClick = { actions.configure(s.practice.copy(bpm = bpm)) }, label = { Text("$bpm BPM") }) }
+                onClick = { actions.configure(s.practice.copy(bpm = bpm)) }, label = { Text("$bpm BPM") }, modifier = Modifier.choiceState(s.practice.bpm == bpm)) }
         }
-        Text("Le tempo règle l’exemple et le guide visuel. La correction évalue les notes, sans imposer une synchronisation exacte.", style = MaterialTheme.typography.bodySmall)
         if (s.practice.focusStart != null) TextButton(onClick = { actions.configure(s.practice.copy(focusStart = null)) }) { Text("Revenir à la gamme complète") }
-        if (s.report != null) Text("Changer d’exercice efface la prise et sa comparaison.", style = MaterialTheme.typography.bodySmall)
     }
 }
+/** The small print of the workshop, folded: said once instead of under every block. */
+@Composable private fun GoodToKnow() {
+    var open by remember { mutableStateOf(false) }
+    val notes = listOf(
+        "Correction expérimentale de notes isolées : les accords, la pédale et le bruit peuvent tromper l’analyse. Le responsable garde la validation finale.",
+        "Essai local, sans envoi au serveur. L’audio est effacé au nouvel essai ou au changement d’exercice, à la sortie ou en arrière-plan. Seul le bilan précédent reste temporairement pour comparer deux essais identiques ; il est aussi effacé à la sortie. Aucun niveau n’est validé automatiquement.",
+        "Le tempo règle l’exemple et le guide visuel. La correction évalue les notes, sans imposer une synchronisation exacte.",
+        "Changer d’exercice efface la prise et sa comparaison.",
+    )
+    AppCard {
+        TextButton(onClick = { open = !open }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+            .semantics { stateDescription = if (open) "déplié" else "replié" }) {
+            Text(if (open) "À savoir ▴" else "À savoir ▾", style = MaterialTheme.typography.titleMedium)
+        }
+        if (open) notes.forEach { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Spacing.s)) }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable private fun TargetNotes(s: PianoScaleUiState) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
@@ -165,10 +197,11 @@ fun PianoScaleScreenContent(state: PianoScaleUiState, playing: Boolean = false, 
                 PianoScaleQuality.TOO_QUIET -> "Le son est trop faible pour conclure. Rapproche le téléphone du piano."
                 PianoScaleQuality.CLIPPED -> "Le son sature. Éloigne un peu le téléphone ou baisse le volume du piano."
                 else -> "Je ne distingue pas assez clairement les notes. Recommence lentement, sans pédale, avec une seule main."
-            }, modifier = Modifier.padding(top = Spacing.s))
+            }, modifier = Modifier.padding(top = Spacing.s).semantics { liveRegion = LiveRegionMode.Polite })
             Text("Aucun verdict sur les notes et aucune comparaison pour cette prise.", style = MaterialTheme.typography.bodySmall)
         } else {
-            Text("${report.matched} / ${report.expectedNotes.size} notes attendues retrouvées", Modifier.padding(top = Spacing.s))
+            Text("${report.matched} / ${report.expectedNotes.size} notes attendues retrouvées",
+                Modifier.padding(top = Spacing.s).semantics { liveRegion = LiveRegionMode.Polite })
             Text("Touche une note pour réécouter son passage. Les repères et la détection restent approximatifs.", style = MaterialTheme.typography.bodySmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
                 report.steps.forEachIndexed { index, step ->

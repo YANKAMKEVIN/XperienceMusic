@@ -30,8 +30,8 @@ internal object SampleSongs {
                 [1]À toi la [5]gloire, [1]Ô Ressus[5]ci[1]té !
             """.trimIndent(),
             recordings = listOf(
-                recording("atlg-1", "Répétition du mardi", today.minus(DatePeriod(months = 5)), 212, isReference = true),
-                recording("atlg-2", "Version acoustique", today.minus(DatePeriod(months = 2)), 198),
+                recording("atlg-1", "Répétition du mardi", today.minus(DatePeriod(months = 5)), DEMO_CLIP_SECONDS, isReference = true),
+                recording("atlg-2", "Version acoustique", today.minus(DatePeriod(months = 2)), DEMO_CLIP_SECONDS),
             ),
             voiceTracks = listOf(
                 VoiceTrack("atlg-s", VoicePart.SOPRANO, "demo://a-toi-la-gloire/soprano"),
@@ -53,7 +53,7 @@ internal object SampleSongs {
                 Was [6m]blind but [5]now I [1]see
             """.trimIndent(),
             recordings = listOf(
-                recording("ag-1", "Prestation du dimanche", today.minus(DatePeriod(months = 10)), 245, isReference = true),
+                recording("ag-1", "Prestation du dimanche", today.minus(DatePeriod(months = 10)), DEMO_CLIP_SECONDS, isReference = true),
             ),
             voiceTracks = emptyList(),
             links = listOf(SongLink("Partition (IMSLP)", "https://imslp.org/wiki/Amazing_Grace")),
@@ -76,7 +76,7 @@ internal object SampleSongs {
         ),
         Song(
             id = "exemple-grille",
-            title = "Grille d'exemple (4 accords)",
+            title = "Grille d’exemple (4 accords)",
             artist = null,
             key = Key(9), // La
             chart = """
@@ -91,6 +91,9 @@ internal object SampleSongs {
             links = emptyList(),
         ),
     )
+
+    /** Every demo recording plays the same bundled clip (files/demo-recording.m4a, 7.5 s), so they all show its length. */
+    private const val DEMO_CLIP_SECONDS = 7
 
     private fun recording(
         id: String,
