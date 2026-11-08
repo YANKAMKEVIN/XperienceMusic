@@ -9,6 +9,7 @@ import com.xperiencemusic.shared.domain.model.VoicePart
 data class ProgressUiState(
     val isLoading: Boolean = true,
     val name: String = "",
+    val learning: com.xperiencemusic.shared.domain.learning.LearningProgress? = null,
     val instrument: Instrument? = null,
     val level: Level? = null,
     val voicePart: VoicePart? = null,

@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.ui.progress
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -75,12 +76,12 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun GrowthReviewScreen(onBack: () -> Unit, viewModel: GrowthReviewViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    GrowthReviewScreenContent(state, viewModel::onEvent, onBack)
+    GrowthReviewScreenContent(state, viewModel::onEvent, onBack, objectiveAudio = { member, objective -> com.xperiencemusic.shared.ui.learning.ObjectiveAudioReview(member, objective) })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReviewEvent) -> Unit, onBack: () -> Unit) {
+fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReviewEvent) -> Unit, onBack: () -> Unit, objectiveAudio: @Composable (String, String) -> Unit = { _, _ -> }) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.hasError) {
         if (state.hasError) {
@@ -149,6 +150,7 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
                         confirmLabel = stringResource(Res.string.review_validate),
                         state = state,
                         onEvent = onEvent,
+                        takes = { objectiveAudio(objective.memberId, objective.objectiveId) },
                     )
                 }
             }
@@ -172,6 +174,8 @@ private fun ReviewCard(
     confirmLabel: String,
     state: GrowthReviewUiState,
     onEvent: (GrowthReviewEvent) -> Unit,
+    /** The member's recorded takes, heard before deciding. */
+    takes: @Composable () -> Unit = {},
 ) {
     val isSaving = state.savingKey == key
     AppCard {
@@ -180,6 +184,7 @@ private fun ReviewCard(
         description?.takeIf { it.isNotEmpty() }?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.padding(top = Spacing.s)) { takes() }
         OutlinedTextField(
             value = state.comments[key].orEmpty(),
             onValueChange = { onEvent(GrowthReviewEvent.CommentChanged(key, it)) },
@@ -190,6 +195,7 @@ private fun ReviewCard(
             } else {
                 null
             },
+            placeholder = { Text("Une réussite observée, un point précis à travailler et le prochain essai attendu.") },
             minLines = 2,
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),

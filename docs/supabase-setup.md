@@ -30,6 +30,10 @@ seuls les nouveaux fichiers sont à exécuter :
 | `20261015000000_service_planning.sql` | le planning des vendredis et dimanches : mois ouverts par les admins, réponses de chacun |
 | `20261016000000_growth_path.sql` | le parcours Débutant → Confirmé → Pro : demandes de passage, objectifs des musiciens, et seul l'Admin++ change un niveau après l'accueil |
 | `20261018000000_recording_integrity_and_private_audio.sql` | protège les prises personnelles contre les écritures des admins contenu et impose une référence unique même lors des écritures directes |
+| `20261018010000_learning_attempts.sql` | essais privés et immuables du parcours guidé piano |
+| `20261018020000_learning_feedback_and_recordings.sql` | variantes, indices et prises audio privées rattachées aux compétences |
+| `20261018030000_objective_recording_history.sql` | garde l'historique de toutes les prises envoyées ; un membre ne peut plus les effacer |
+| `20261019000000_objective_recordings_any_objective.sql` | les prises peuvent appuyer n'importe quel objectif du programme (pas seulement piano-c1 à c5), et renvoyer la même prise ne plante plus |
 
 ## 3. T'inviter comme Admin++
 
