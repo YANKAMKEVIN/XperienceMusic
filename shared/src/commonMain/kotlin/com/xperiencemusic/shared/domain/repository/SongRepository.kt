@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.domain.repository
 
+import com.xperiencemusic.shared.domain.model.VoiceTrack
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
@@ -38,4 +39,7 @@ interface SongRepository {
     suspend fun deleteRecording(songId: String, recordingId: String, newReferenceId: String?)
 
     suspend fun setReference(songId: String, recordingId: String)
+
+    /** Stores [track] as the song's track for its voice, in place of the previous one. */
+    suspend fun setVoiceTrack(songId: String, track: VoiceTrack)
 }

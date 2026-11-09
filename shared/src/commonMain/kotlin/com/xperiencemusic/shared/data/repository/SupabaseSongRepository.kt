@@ -1,5 +1,7 @@
 package com.xperiencemusic.shared.data.repository
 
+import com.xperiencemusic.shared.data.remote.dto.VoiceTrackWriteDto
+import com.xperiencemusic.shared.domain.model.VoiceTrack
 import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.mapper.toWriteDto
@@ -134,6 +136,15 @@ class SupabaseSongRepository(
         reload()
     }
 
+    override suspend fun setVoiceTrack(songId: String, track: VoiceTrack) {
+        accountCall {
+            client.from(VOICE_TRACKS).upsert(
+                VoiceTrackWriteDto(track.id, songId, track.voicePart.name, track.audioPath),
+            ) { onConflict = "song_id,voice_part" }
+        }
+        reload()
+    }
+
     private suspend fun loadIfNeeded() {
         if (songs.value == null) showSnapshot()
         if (songs.value == null) reload()
@@ -164,6 +175,7 @@ class SupabaseSongRepository(
 
     private companion object {
         const val SONGS = "songs"
+        const val VOICE_TRACKS = "voice_tracks"
         const val SNAPSHOT = "songs"
     }
     /** Discard responses started under a previous account, including snapshot writes. */

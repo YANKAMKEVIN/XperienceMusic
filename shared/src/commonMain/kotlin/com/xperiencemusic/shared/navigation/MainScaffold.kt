@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.navigation
 
+import com.xperiencemusic.shared.ui.rehearsal.RehearsalUploadScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -162,6 +163,7 @@ private fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit, 
             WeekScreen(
                 onSongClick = openSong,
                 onEditWeek = { date -> navController.navigate(SetlistEditorRoute(date?.toString())) },
+                onUploadRehearsal = { date -> navController.navigate(RehearsalUploadRoute(date.toString())) },
             )
         }
         composable<SetlistEditorRoute> { entry ->
@@ -270,9 +272,17 @@ private fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit, 
                 },
             )
         }
+        composable<RehearsalUploadRoute> { entry ->
+            RehearsalUploadScreen(
+                serviceDate = LocalDate.parse(entry.toRoute<RehearsalUploadRoute>().serviceDate),
+                onBack = { navController.popBackStack() },
+                onAddTake = { songId, date -> navController.navigate(RecordingFormRoute(songId, date.toString())) },
+            )
+        }
         composable<RecordingFormRoute> { entry ->
             RecordingFormScreen(
                 songId = entry.toRoute<RecordingFormRoute>().songId,
+                rehearsalDate = entry.toRoute<RecordingFormRoute>().rehearsalDate?.let(LocalDate::parse),
                 onBack = { navController.popBackStack() },
                 onSaved = { navController.popBackStack() },
             )
