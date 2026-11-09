@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.library
 
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material3.IconButton
 import com.xperiencemusic.shared.ui.brand.TabHeader
 import androidx.compose.foundation.background
@@ -96,21 +97,24 @@ private fun LibraryList(
     onSongClick: (String) -> Unit,
     onAddSong: () -> Unit,
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(start = Spacing.l, top = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
-        verticalArrangement = Arrangement.spacedBy(Spacing.m),
-    ) {
-        item {
-            TabHeader(stringResource(Res.string.library_title)) {
-                if (state.canAddSong) {
-                    IconButton(onClick = onAddSong) {
-                        Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.action_add_song))
-                    }
-                }
+    // In landscape the tab rail already names the screen: the height goes to the songs.
+    BoxWithConstraints {
+    val isShort = maxHeight < SHORT_SCREEN_HEIGHT
+    val addButton: @Composable () -> Unit = {
+        if (state.canAddSong) {
+            IconButton(onClick = onAddSong) {
+                Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.action_add_song))
             }
         }
+    }
+    LazyColumn(
+        contentPadding = PaddingValues(start = Spacing.l, top = if (isShort) Spacing.s else Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
+        verticalArrangement = Arrangement.spacedBy(if (isShort) Spacing.s else Spacing.m),
+    ) {
+        if (!isShort) item { TabHeader(stringResource(Res.string.library_title)) { addButton() } }
         if (state.isOffline) item { OfflineBanner() }
         item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = state.query,
                 onValueChange = { onEvent(LibraryEvent.QueryChanged(it)) },
@@ -120,8 +124,10 @@ private fun LibraryList(
                     { ClearSearchButton { onEvent(LibraryEvent.QueryChanged("")) } }
                 },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
             )
+            if (isShort) addButton()
+            }
         }
         if (state.keys.isNotEmpty()) {
             item {
@@ -163,7 +169,10 @@ private fun LibraryList(
             LibrarySongRow(song, onClick = { onSongClick(song.id) }, modifier = Modifier.animateItem())
         }
     }
+    }
 }
+
+private val SHORT_SCREEN_HEIGHT = 480.dp
 
 @Composable
 private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit, modifier: Modifier = Modifier) {

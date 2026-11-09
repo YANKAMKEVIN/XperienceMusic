@@ -16,18 +16,24 @@ import org.jetbrains.compose.resources.stringResource
 
 /** Asked when leaving a form with unsaved changes, from the back arrow or the system back. */
 @Composable
-fun DiscardChangesDialog(onDiscard: () -> Unit, onKeepEditing: () -> Unit) {
+fun DiscardChangesDialog(
+    onDiscard: () -> Unit,
+    onKeepEditing: () -> Unit,
+    title: String = stringResource(Res.string.discard_title),
+    text: String = stringResource(Res.string.discard_text),
+    keepLabel: String = stringResource(Res.string.discard_keep),
+) {
     AlertDialog(
         onDismissRequest = onKeepEditing,
-        title = { Text(stringResource(Res.string.discard_title)) },
-        text = { Text(stringResource(Res.string.discard_text)) },
+        title = { Text(title) },
+        text = { Text(text) },
         confirmButton = {
             TextButton(onClick = onDiscard) {
                 Text(stringResource(Res.string.discard_confirm), color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
-            TextButton(onClick = onKeepEditing) { Text(stringResource(Res.string.discard_keep)) }
+            TextButton(onClick = onKeepEditing) { Text(keepLabel) }
         },
     )
 }

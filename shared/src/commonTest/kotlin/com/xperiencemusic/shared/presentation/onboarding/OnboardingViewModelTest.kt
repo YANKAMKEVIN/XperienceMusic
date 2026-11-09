@@ -34,6 +34,12 @@ class OnboardingViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
+    fun `le prénom saisi à l'accueil est limité`() {
+        viewModel.onEvent(OnboardingEvent.NameChanged("a".repeat(88)))
+        assertEquals(40, viewModel.state.value.name.length)
+    }
+
+    @Test
     fun `un chantre doit choisir sa voix avant de pouvoir valider`() = runTest {
         viewModel.state.test {
             assertFalse(awaitItem().canSubmit)

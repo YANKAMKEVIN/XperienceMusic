@@ -63,6 +63,7 @@ fun deriveServiceDetail(planning: Planning, schedule: SetlistSchedule, date: Loc
     return ServiceDetailUiState(
         isLoading = false,
         date = date,
+        isPast = date < today,
         kind = date.serviceKind() ?: card.kind,
         title = Formatting.dayAndDate(date),
         serving = card.serving,

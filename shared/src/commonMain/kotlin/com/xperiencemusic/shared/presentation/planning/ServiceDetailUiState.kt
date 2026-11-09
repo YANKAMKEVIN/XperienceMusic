@@ -7,6 +7,7 @@ import kotlinx.datetime.LocalDate
 data class ServiceDetailUiState(
     val isLoading: Boolean = true,
     val date: LocalDate? = null,
+    val isPast: Boolean = false,
     val kind: ServiceKind = ServiceKind.SUNDAY,
     /** "dimanche 1 nov." */
     val title: String = "",

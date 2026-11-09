@@ -1,5 +1,9 @@
 package com.xperiencemusic.shared.ui.planning
 
+import com.xperiencemusic.shared.resources.availability_past_unanswered
+import com.xperiencemusic.shared.resources.availability_past_unavailable
+import com.xperiencemusic.shared.resources.availability_past_served
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -144,9 +148,14 @@ private fun Intro(state: AvailabilityUiState) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AnswerRow(row: AvailabilityRowUi, enabled: Boolean, onEvent: (AvailabilityEvent) -> Unit) {
-    AppCard(modifier = Modifier.alpha(if (row.isPast) 0.55f else 1f)) {
+    AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(row.label.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            Text(
+                row.label.replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.titleSmall,
+                color = if (row.isPast) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified,
+                modifier = Modifier.weight(1f),
+            )
             if (row.kind == ServiceKind.FRIDAY) {
                 Text(
                     stringResource(Res.string.planning_friday_hint),
@@ -154,6 +163,22 @@ private fun AnswerRow(row: AvailabilityRowUi, enabled: Boolean, onEvent: (Availa
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        // A date gone by can no longer be answered: say so and what was answered, instead of dead buttons.
+        if (row.isPast) {
+            Text(
+                stringResource(
+                    when (row.answer) {
+                        MyAnswer.SERVES -> Res.string.availability_past_served
+                        MyAnswer.NOT_AVAILABLE -> Res.string.availability_past_unavailable
+                        MyAnswer.UNANSWERED -> Res.string.availability_past_unanswered
+                    },
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = Spacing.s),
+            )
+            return@AppCard
         }
         val options = listOf(true to Res.string.availability_serve, false to Res.string.availability_unavailable)
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = Spacing.s)) {

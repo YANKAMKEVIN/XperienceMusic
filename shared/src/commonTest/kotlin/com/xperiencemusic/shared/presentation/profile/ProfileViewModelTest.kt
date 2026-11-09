@@ -27,6 +27,14 @@ class ProfileViewModelTest {
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
     @Test
+    fun `le prénom est limité à une longueur raisonnable`() = runTest {
+        val sessions = FakeSessionRepository(member())
+        val vm = ProfileViewModel(ObserveCurrentMemberUseCase(sessions), UpdateMyProfileUseCase(sessions))
+        vm.onEvent(ProfileEvent.NameChanged("a".repeat(88)))
+        assertEquals(40, vm.state.value.name.length)
+    }
+
+    @Test
     fun `le profil s'ouvre sur les réponses actuelles et ne s'enregistre qu'après un changement`() = runTest {
         val sessions = FakeSessionRepository(member(level = Level.CONFIRMED))
         val vm = ProfileViewModel(ObserveCurrentMemberUseCase(sessions), UpdateMyProfileUseCase(sessions))

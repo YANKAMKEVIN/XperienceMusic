@@ -1,5 +1,16 @@
 package com.xperiencemusic.shared.ui.voice
 
+import com.xperiencemusic.shared.resources.voice_error_interrupted
+import com.xperiencemusic.shared.resources.voice_discard_keep
+import com.xperiencemusic.shared.resources.voice_discard_text
+import com.xperiencemusic.shared.resources.voice_discard_title
+import com.xperiencemusic.shared.ui.components.DiscardChangesDialog
+import com.xperiencemusic.shared.ui.components.SystemBackHandler
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
 import com.xperiencemusic.shared.ui.components.choiceState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -114,6 +125,7 @@ fun VoiceRecordScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val microphone = rememberMicrophonePermission(MicrophoneUse.RECORD)
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.onEvent(VoiceRecordEvent.AppLeft) }
     VoiceRecordScreenContent(
         state = state,
         onEvent = { event ->
@@ -138,12 +150,23 @@ fun VoiceRecordScreenContent(
     onBack: () -> Unit,
     onOpenSettings: () -> Unit = {},
 ) {
+    var isConfirmingLeave by remember { mutableStateOf(false) }
+    SystemBackHandler(enabled = state.hasUnsentTake) { isConfirmingLeave = true }
+    if (isConfirmingLeave) {
+        DiscardChangesDialog(
+            onDiscard = { isConfirmingLeave = false; onBack() },
+            onKeepEditing = { isConfirmingLeave = false },
+            title = stringResource(Res.string.voice_discard_title),
+            text = stringResource(Res.string.voice_discard_text),
+            keepLabel = stringResource(Res.string.voice_discard_keep),
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.voice_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { if (state.hasUnsentTake) isConfirmingLeave = true else onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.action_back))
                     }
                 },
@@ -164,6 +187,10 @@ fun VoiceRecordScreenContent(
         ) {
             SongHeader(state)
             state.previous?.let { PreviousCard(it) }
+            // Above the recorder: under it, "Ouvrir les réglages" fell off the screen with a long title.
+            if (state.error == VoiceError.MICROPHONE) {
+                MicrophoneDeniedNotice(stringResource(Res.string.voice_error_mic), onOpenSettings, textAlign = TextAlign.Center)
+            }
             if (state.phase == VoicePhase.SENT) {
                 SentCard()
             } else {
@@ -173,15 +200,14 @@ fun VoiceRecordScreenContent(
                 }
                 Recorder(state, onEvent)
             }
-            if (state.error == VoiceError.MICROPHONE) {
-                MicrophoneDeniedNotice(stringResource(Res.string.voice_error_mic), onOpenSettings, textAlign = TextAlign.Center)
-            } else state.error?.let { error ->
+            state.error?.takeIf { it != VoiceError.MICROPHONE }?.let { error ->
                 Text(
                     stringResource(
                         when (error) {
                             VoiceError.MICROPHONE -> Res.string.voice_error_mic
                             VoiceError.TOO_SHORT -> Res.string.voice_error_short
                             VoiceError.SEND_FAILED -> Res.string.voice_error_send
+                            VoiceError.INTERRUPTED -> Res.string.voice_error_interrupted
                         },
                     ),
                     color = MaterialTheme.colorScheme.error,

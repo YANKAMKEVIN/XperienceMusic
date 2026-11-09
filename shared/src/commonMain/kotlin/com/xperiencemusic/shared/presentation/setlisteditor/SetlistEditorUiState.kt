@@ -27,10 +27,14 @@ data class SetlistEditorUiState(
     val isConfirmingDiscard: Boolean = false,
     /** Set when the editor may close without publishing; the screen then navigates away. */
     val isLeaving: Boolean = false,
+    /** Unusual dates: publishing stays possible, the admin is only asked to check. */
+    val dateWarning: SetlistDateWarning? = null,
 ) {
     val canPublish: Boolean get() = !isPublishing && selected.isNotEmpty() && serviceDate >= rehearsalDate
     val hasDateConflict: Boolean get() = serviceDate < rehearsalDate
 }
+
+enum class SetlistDateWarning { PAST_REHEARSAL, LONG_GAP }
 
 data class SetlistSongUi(val id: String, val title: String, val keyLabel: String)
 

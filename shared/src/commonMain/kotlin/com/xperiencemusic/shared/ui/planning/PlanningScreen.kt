@@ -370,7 +370,7 @@ private fun ServiceCard(card: ServiceCardUi, onClick: () -> Unit, modifier: Modi
                         modifier = Modifier.padding(top = Spacing.s),
                     ) { card.serving.forEach { PersonPill(it) } }
                 }
-                MissingLine(card.missing, Modifier.padding(top = Spacing.s))
+                if (!card.isPast) MissingLine(card.missing, Modifier.padding(top = Spacing.s))
             }
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,

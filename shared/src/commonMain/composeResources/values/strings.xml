@@ -148,12 +148,16 @@
     <string name="availability_answer_by">Date limite : %1$s</string>
     <string name="availability_late">Les réponses étaient attendues le %1$s : réponds vite, le mois n’est pas encore validé.</string>
     <string name="availability_serve">Je sers</string>
+    <string name="availability_past_served">Date passée · tu servais</string>
+    <string name="availability_past_unavailable">Date passée · pas dispo</string>
+    <string name="availability_past_unanswered">Date passée · sans réponse</string>
     <string name="availability_unavailable">Pas dispo</string>
     <string name="availability_locked">Le mois est validé : tes réponses ne peuvent plus changer.</string>
     <string name="availability_saved_hint">Chaque réponse est enregistrée tout de suite.</string>
     <string name="service_team">L’équipe</string>
     <string name="service_setlist">Setlist</string>
     <string name="service_setlist_none">Pas encore de setlist pour ce dimanche.</string>
+    <string name="service_setlist_none_past">Pas de setlist pour ce dimanche.</string>
     <string name="service_friday_free">Le vendredi, pas de setlist : louange libre.</string>
     <string name="service_roster">Ajuster l’équipe</string>
     <string name="service_roster_hint">Coche qui sert ce jour-là, même après la validation.</string>
@@ -271,6 +275,8 @@
     <string name="setlist_service_label">Prestation</string>
     <string name="setlist_change_date">Changer</string>
     <string name="setlist_date_conflict">La prestation doit avoir lieu après la répétition.</string>
+    <string name="setlist_date_past">Cette répétition est déjà passée. Vérifie la date avant de publier.</string>
+    <string name="setlist_date_long_gap">Plus de 3 semaines séparent la répétition de la prestation. Vérifie les dates.</string>
     <string name="setlist_message_label">Message pour le groupe (facultatif)</string>
     <string name="setlist_selected_title">Chants de la semaine (%1$d)</string>
     <string name="setlist_selected_empty">Ajoute au moins un chant ci-dessous.</string>
@@ -405,6 +411,10 @@
     <string name="voice_sent_text">Le responsable va l’écouter. Sa réponse s’affichera ici et dans ta progression.</string>
     <string name="voice_error_mic">Le micro n’est pas disponible. Autorise-le dans les réglages du téléphone, puis réessaie.</string>
     <string name="voice_error_short">Trop court : chante au moins quelques secondes avant d’arrêter.</string>
+    <string name="voice_error_interrupted">Enregistrement interrompu : l’app a quitté l’écran. Vérifie ta prise ou recommence.</string>
+    <string name="voice_discard_title">Abandonner cette prise ?</string>
+    <string name="voice_discard_text">Elle n’a pas été envoyée. Elle sera perdue si tu quittes cet écran.</string>
+    <string name="voice_discard_keep">Garder ma prise</string>
     <string name="voice_error_send">L’envoi n’a pas abouti. Vérifie ta connexion, puis renvoie.</string>
     <string name="voice_record_cta">Enregistrer ma voix</string>
     <string name="voice_week_title">Ta voix sur les chants de la semaine</string>

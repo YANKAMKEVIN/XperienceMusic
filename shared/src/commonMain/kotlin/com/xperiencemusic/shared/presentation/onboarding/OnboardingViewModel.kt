@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.presentation.onboarding
 
+import com.xperiencemusic.shared.domain.model.MAX_DISPLAY_NAME_LENGTH
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.DomainResult
@@ -21,7 +22,7 @@ class OnboardingViewModel(
 
     fun onEvent(event: OnboardingEvent) {
         when (event) {
-            is OnboardingEvent.NameChanged -> _state.update { it.copy(name = event.name) }
+            is OnboardingEvent.NameChanged -> _state.update { it.copy(name = event.name.take(MAX_DISPLAY_NAME_LENGTH)) }
             is OnboardingEvent.InstrumentSelected -> _state.update {
                 // A musician has no voice part; keep none from an earlier choice.
                 it.copy(instrument = event.instrument, voicePart = it.voicePart.takeIf { event.instrument == Instrument.SINGER })
