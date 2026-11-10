@@ -1,6 +1,7 @@
 package com.xperiencemusic.shared.data.repository
 
 import com.xperiencemusic.shared.data.remote.AUDIO_BUCKET
+import com.xperiencemusic.shared.data.session.SessionGuard
 import com.xperiencemusic.shared.domain.repository.AudioCache
 import com.xperiencemusic.shared.domain.repository.FileStore
 import io.github.jan.supabase.SupabaseClient
@@ -15,22 +16,20 @@ class FileAudioCache(
     private val client: SupabaseClient,
     private val files: FileStore,
 ) : AudioCache {
-    private var generation = 0
+    private val session = SessionGuard()
     private val _cachedPaths = MutableStateFlow(files.list(DIRECTORY).map(::audioPathOf).toSet())
     override val cachedPaths: StateFlow<Set<String>> = _cachedPaths.asStateFlow()
 
     override fun localUrl(audioPath: String): String? = files.fileUrl(fileOf(audioPath))
 
     override suspend fun download(audioPath: String) {
-        val started = generation
-        val bytes = client.storage.from(AUDIO_BUCKET).downloadAuthenticated(audioPath)
-        if (started != generation) throw kotlin.coroutines.cancellation.CancellationException("Session ended")
+        val bytes = session.call { client.storage.from(AUDIO_BUCKET).downloadAuthenticated(audioPath) }
         files.write(fileOf(audioPath), bytes)
         _cachedPaths.update { it + audioPath }
     }
 
     override suspend fun clear() {
-        generation++
+        session.reset()
         files.delete(DIRECTORY)
         _cachedPaths.value = emptySet()
     }

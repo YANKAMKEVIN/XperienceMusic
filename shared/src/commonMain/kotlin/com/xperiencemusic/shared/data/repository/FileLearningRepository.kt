@@ -4,6 +4,7 @@ import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.local.StoredAttemptDto
 import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.mapper.toStored
+import com.xperiencemusic.shared.data.session.SessionGuard
 import com.xperiencemusic.shared.domain.model.LearningAttempt
 import com.xperiencemusic.shared.domain.model.LearningProgress
 import com.xperiencemusic.shared.domain.repository.LearningRepository
@@ -24,10 +25,10 @@ class FileLearningRepository(
 ) : LearningRepository, SessionResettable {
     private val stored = MutableStateFlow<Map<String, List<StoredAttemptDto>>>(emptyMap())
     private val lock = Mutex()
-    private var generation = 0
+    private val session = SessionGuard()
 
     override fun resetSession() {
-        generation++
+        session.reset()
         stored.value = emptyMap()
     }
 
@@ -51,9 +52,9 @@ class FileLearningRepository(
         }
 
     override suspend fun record(attempt: LearningAttempt) {
-        val started = generation
+        val started = session.stamp()
         lock.withLock {
-            if (started != generation) throw CancellationException("Session ended")
+            session.ensureCurrent(started)
             load(attempt.memberId)
             val rows = stored.value[attempt.memberId].orEmpty()
             save(attempt.memberId, rows + StoredAttemptDto(attempt.toStored()))
@@ -61,12 +62,12 @@ class FileLearningRepository(
     }
 
     override suspend fun sync(memberId: String) {
-        val started = generation
+        val started = session.stamp()
         try {
             // Network calls never hold the local write lock: training remains usable offline.
             val fetched = remote.fetch(memberId)
             lock.withLock {
-                if (started != generation) return
+                if (!session.isCurrent(started)) return
                 load(memberId)
                 val local = stored.value[memberId].orEmpty()
                 val merged = fetched.map { StoredAttemptDto(it.toStored(), synced = true) }.associateBy { it.attempt.id }.toMutableMap()
@@ -75,10 +76,10 @@ class FileLearningRepository(
             }
             val pending = stored.value[memberId].orEmpty().filter { !it.synced }
             pending.forEach { item ->
-                if (started != generation) return
+                if (!session.isCurrent(started)) return
                 remote.send(item.attempt.toDomain())
                 lock.withLock {
-                    if (started != generation) return
+                    if (!session.isCurrent(started)) return
                     save(memberId, stored.value[memberId].orEmpty().map {
                         if (it.attempt.id == item.attempt.id) it.copy(synced = true) else it
                     })
