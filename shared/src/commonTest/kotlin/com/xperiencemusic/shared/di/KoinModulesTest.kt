@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.di
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.data.remote.RemoteLoadMonitor
 import com.xperiencemusic.shared.domain.repository.AudioPlayer
+import com.xperiencemusic.shared.domain.repository.AvatarStorage
 import com.xperiencemusic.shared.domain.repository.ExerciseRepository
 import com.xperiencemusic.shared.domain.repository.FileStore
 import com.xperiencemusic.shared.domain.repository.GrowthRepository
@@ -172,6 +173,7 @@ class KoinModulesTest {
             remote.get<VoiceSubmissionRepository>(),
             remote.get<LearningRepository>(),
             remote.get<ObjectiveRecordingRepository>(),
+            remote.get<AvatarStorage>(),
         )
         repositories.forEach { repository ->
             assertTrue(repository is SessionResettable, "${repository::class.simpleName} keeps account data")

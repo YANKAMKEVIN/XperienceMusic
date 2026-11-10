@@ -49,7 +49,7 @@ val remoteDataModule = module {
     single { SupabaseGrowthRepository(get(), get()) }.resetAtSignOut() bind GrowthRepository::class
     single { SupabaseObjectiveRecordingRepository(get(), get(), get()) }.resetAtSignOut() bind ObjectiveRecordingRepository::class
     single<AudioStorage> { SupabaseAudioStorage(get()) }
-    single<AvatarStorage> { SupabaseAvatarStorage(get()) }
+    single { SupabaseAvatarStorage(get()) }.resetAtSignOut() bind AvatarStorage::class
     single<AudioCache> { FileAudioCache(get(), get()) }
     single<AudioUrlProvider> { OfflineFirstAudioUrlProvider(get(), SupabaseAudioUrlProvider(get())) }
     single<LearningRemote> { SupabaseLearningRemote(get()) }
