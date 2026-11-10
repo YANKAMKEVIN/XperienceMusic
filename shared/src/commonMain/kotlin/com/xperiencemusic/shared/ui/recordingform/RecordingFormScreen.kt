@@ -157,36 +157,8 @@ fun RecordingFormScreenContent(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        stringResource(Res.string.recording_form_date_label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(state.dateLabel, style = MaterialTheme.typography.titleMedium)
-                }
-                TextButton(onClick = { isPickingDate = true }) { Text(stringResource(Res.string.setlist_change_date)) }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.toggleable(
-                    value = state.makeReference,
-                    role = Role.Switch,
-                    onValueChange = { onEvent(RecordingFormEvent.MakeReferenceChanged(it)) },
-                ),
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(Res.string.recording_form_reference), style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        stringResource(Res.string.recording_form_reference_help),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(checked = state.makeReference, onCheckedChange = null, colors = appSwitchColors())
-            }
+            DateRow(state.dateLabel, onChange = { isPickingDate = true })
+            ReferenceSwitch(state.makeReference, onChange = { onEvent(RecordingFormEvent.MakeReferenceChanged(it)) })
 
             if (state.isFull) ReplaceChooser(state, onEvent)
         }
@@ -198,6 +170,40 @@ fun RecordingFormScreenContent(
             onDatePicked = { onEvent(RecordingFormEvent.DatePicked(it)) },
             onDismiss = { isPickingDate = false },
         )
+    }
+}
+
+@Composable
+private fun DateRow(dateLabel: String, onChange: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                stringResource(Res.string.recording_form_date_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(dateLabel, style = MaterialTheme.typography.titleMedium)
+        }
+        TextButton(onClick = onChange) { Text(stringResource(Res.string.setlist_change_date)) }
+    }
+}
+
+/** "Make it the reference": the whole row toggles. */
+@Composable
+private fun ReferenceSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onChange),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(Res.string.recording_form_reference), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(Res.string.recording_form_reference_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = null, colors = appSwitchColors())
     }
 }
 

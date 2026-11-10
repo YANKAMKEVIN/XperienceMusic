@@ -16,9 +16,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.action_back
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 
@@ -42,7 +42,7 @@ fun EditorTopBar(
         },
         actions = {
             if (isWorking) {
-                CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.padding(end = Spacing.l).size(20.dp))
+                CircularProgressIndicator(strokeWidth = Sizes.stroke, modifier = Modifier.padding(end = Spacing.l).size(Sizes.iconM))
             } else {
                 TextButton(onClick = onAction, enabled = isActionEnabled) { Text(actionLabel) }
             }

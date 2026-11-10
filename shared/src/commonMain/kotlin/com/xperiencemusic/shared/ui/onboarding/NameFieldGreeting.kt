@@ -101,10 +101,9 @@ fun NameFieldGreeting(
 }
 
 /** Big for a short name, smaller as it grows, so a long first name stays whole on one line. */
-internal fun nameFontSize(length: Int): TextUnit = when {
-    length <= 10 -> 34.sp
-    length <= 14 -> 28.sp
-    length <= 18 -> 24.sp
-    length <= 24 -> 20.sp
-    else -> 16.sp
-}
+internal fun nameFontSize(length: Int): TextUnit =
+    NAME_FONT_SIZES.firstOrNull { (maxLength, _) -> length <= maxLength }?.second ?: NAME_FONT_SIZE_LONGEST
+
+/** Up to so many letters, this size. Local to the field: no other text adapts its size this way. */
+private val NAME_FONT_SIZES = listOf(10 to 34.sp, 14 to 28.sp, 18 to 24.sp, 24 to 20.sp)
+private val NAME_FONT_SIZE_LONGEST = 16.sp

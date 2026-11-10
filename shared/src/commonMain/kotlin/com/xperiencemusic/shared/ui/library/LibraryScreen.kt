@@ -57,6 +57,8 @@ import com.xperiencemusic.shared.ui.components.ChoiceChips
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -179,10 +181,10 @@ private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit, modifier: M
     AppCard(onClick = onClick, modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(44.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp)),
+                Modifier.size(Sizes.iconTile).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(Radius.field)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(XmIcons.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                Icon(XmIcons.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Sizes.iconL))
             }
             Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
                 Text(song.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)

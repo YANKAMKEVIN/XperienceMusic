@@ -1,23 +1,6 @@
 package com.xperiencemusic.shared.ui.song
 
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -25,46 +8,28 @@ import androidx.compose.ui.text.style.TextAlign
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.resources.voice_record_cta
-import com.xperiencemusic.shared.ui.components.PauseIcon
-import com.xperiencemusic.shared.ui.theme.BrandColors
-import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -74,19 +39,15 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.chart.ChartSegment
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.VoicePart
-import com.xperiencemusic.shared.presentation.song.LinkUi
 import com.xperiencemusic.shared.presentation.song.RecordingUi
 import com.xperiencemusic.shared.presentation.song.SongDetailEvent
 import com.xperiencemusic.shared.presentation.song.SongDetailUiState
@@ -100,37 +61,20 @@ import com.xperiencemusic.shared.resources.action_back
 import com.xperiencemusic.shared.resources.action_edit_song
 import com.xperiencemusic.shared.resources.error_forbidden
 import com.xperiencemusic.shared.resources.error_generic
-import com.xperiencemusic.shared.resources.notation_letters
-import com.xperiencemusic.shared.resources.notation_nashville
-import com.xperiencemusic.shared.resources.notation_solfege
 import com.xperiencemusic.shared.resources.song_chart_title
 import com.xperiencemusic.shared.resources.song_delete_confirm_cancel
 import com.xperiencemusic.shared.resources.song_delete_confirm_ok
 import com.xperiencemusic.shared.resources.song_delete_confirm_text
 import com.xperiencemusic.shared.resources.song_delete_confirm_title
-import com.xperiencemusic.shared.resources.song_key
-import com.xperiencemusic.shared.resources.song_links_title
 import com.xperiencemusic.shared.resources.song_not_found
-import com.xperiencemusic.shared.resources.song_original_key
-import com.xperiencemusic.shared.resources.song_recording_actions
-import com.xperiencemusic.shared.resources.song_recording_delete
-import com.xperiencemusic.shared.resources.song_recording_meta
-import com.xperiencemusic.shared.resources.song_recording_offline
-import com.xperiencemusic.shared.resources.song_recording_reference
-import com.xperiencemusic.shared.resources.song_recording_set_reference
 import com.xperiencemusic.shared.resources.song_recordings_empty
 import com.xperiencemusic.shared.resources.song_recordings_title
-import com.xperiencemusic.shared.resources.song_transpose_down
-import com.xperiencemusic.shared.resources.song_transpose_reset
-import com.xperiencemusic.shared.resources.song_transpose_up
-import com.xperiencemusic.shared.resources.song_voice_tracks_title
 import com.xperiencemusic.shared.resources.stage_open
 import com.xperiencemusic.shared.ui.components.AppCard
-import com.xperiencemusic.shared.ui.components.PlayPauseButton
 import com.xperiencemusic.shared.ui.components.StageIcons
 import com.xperiencemusic.shared.ui.components.SectionTitle
-import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -138,16 +82,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.resources.song_not_found_text
 
@@ -273,7 +207,7 @@ private fun SongDetailBody(
         if (state.canRecordVoice) {
             item {
                 OutlinedButton(onClick = onRecordVoice, modifier = Modifier.fillMaxWidth()) {
-                    Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(20.dp))
+                    Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(Sizes.iconM))
                     Text(stringResource(Res.string.voice_record_cta))
                 }
             }
@@ -327,217 +261,6 @@ private fun SongHero(state: SongDetailUiState) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-    }
-}
-
-/** The transposer pill (− key +) over the notation switch, as in the brand mockups. */
-@Composable
-private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) -> Unit) {
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            shape = RoundedCornerShape(Radius.card),
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = { onEvent(SongDetailEvent.TransposeDownClicked) },
-                    modifier = Modifier.semantics { contentDescription = "Baisser d’un demi-ton" },
-                ) {
-                    Text("−", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
-                }
-                // The key rolls up when it goes higher and down when it goes lower.
-                AnimatedContent(
-                    targetState = state.transposeSemitones to state.keyLabel,
-                    transitionSpec = {
-                        val direction = if (targetState.first < initialState.first) -1 else 1
-                        (slideInVertically { it * direction } + fadeIn())
-                            .togetherWith(slideOutVertically { -it * direction } + fadeOut())
-                    },
-                    contentAlignment = Alignment.Center,
-                    label = "key",
-                    modifier = Modifier.widthIn(min = 96.dp).clipToBounds(),
-                ) { (_, keyLabel) ->
-                    Text(
-                        keyLabel,
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Tonalité $keyLabel"
-                        },
-                    )
-                }
-                IconButton(
-                    onClick = { onEvent(SongDetailEvent.TransposeUpClicked) },
-                    modifier = Modifier.semantics { contentDescription = "Monter d’un demi-ton" },
-                ) {
-                    Text("+", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
-                }
-            }
-        }
-        state.originalKeyLabel?.let {
-            TextButton(onClick = { onEvent(SongDetailEvent.TransposeResetClicked) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(Res.string.song_original_key, it) + " · " + stringResource(Res.string.song_transpose_reset))
-            }
-        }
-        NotationSwitch(state.notation, onSelect = { onEvent(SongDetailEvent.NotationSelected(it)) }, Modifier.padding(top = Spacing.m))
-    }
-}
-
-@Composable
-private fun NotationSwitch(selected: Notation, onSelect: (Notation) -> Unit, modifier: Modifier = Modifier) {
-    val notations = listOf(
-        Notation.NASHVILLE to Res.string.notation_nashville,
-        Notation.SOLFEGE to Res.string.notation_solfege,
-        Notation.LETTERS to Res.string.notation_letters,
-    )
-    val shape = RoundedCornerShape(Radius.card)
-    Row(
-        modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-            .selectableGroup(),
-    ) {
-        notations.forEach { (notation, label) ->
-            val isSelected = notation == selected
-            // The gradient fades from the old choice to the new one rather than jumping.
-            val highlight by animateFloatAsState(if (isSelected) 1f else 0f, tween(220), label = "notation-highlight")
-            val textColor by animateColorAsState(
-                if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-                tween(220),
-                label = "notation-text",
-            )
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(BrandColors.horizontalGradient, shape, alpha = highlight)
-                    .selectable(selected = isSelected, onClick = { onSelect(notation) }, role = Role.Tab),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    stringResource(label),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = textColor,
-                    maxLines = 1,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecordingRow(recording: RecordingUi, canManage: Boolean, onEvent: (SongDetailEvent) -> Unit) {
-    AppCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            PlayPauseButton(
-                status = recording.playback,
-                itemLabel = recording.title,
-                onClick = { onEvent(SongDetailEvent.PlayRecordingClicked(recording.id)) },
-            )
-            Spacer(Modifier.width(Spacing.m))
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (recording.isReference) {
-                        Icon(
-                            Icons.Filled.Star,
-                            contentDescription = stringResource(Res.string.song_recording_reference),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = Spacing.xs).size(16.dp),
-                        )
-                    }
-                    Text(recording.title, style = MaterialTheme.typography.titleSmall)
-                }
-                val meta = stringResource(Res.string.song_recording_meta, recording.date, recording.duration)
-                val offlineLabel = stringResource(Res.string.song_recording_offline)
-                Text(
-                    if (recording.isAvailableOffline) "$meta · $offlineLabel" else meta,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (canManage) RecordingMenu(recording, onEvent)
-        }
-    }
-}
-
-@Composable
-private fun RecordingMenu(recording: RecordingUi, onEvent: (SongDetailEvent) -> Unit) {
-    var isExpanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { isExpanded = true }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(Res.string.song_recording_actions))
-        }
-        DropdownMenu(expanded = isExpanded, onDismissRequest = { isExpanded = false }) {
-            if (!recording.isReference) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.song_recording_set_reference)) },
-                    onClick = {
-                        isExpanded = false
-                        onEvent(SongDetailEvent.SetReferenceClicked(recording.id))
-                    },
-                )
-            }
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.song_recording_delete), color = MaterialTheme.colorScheme.error) },
-                onClick = {
-                    isExpanded = false
-                    onEvent(SongDetailEvent.DeleteClicked(recording.id))
-                },
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun VoiceTracks(voiceTracks: List<VoiceTrackUi>, onEvent: (SongDetailEvent) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
-        SectionTitle(stringResource(Res.string.song_voice_tracks_title))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(Spacing.s),
-            verticalArrangement = Arrangement.spacedBy(Spacing.s),
-        ) {
-            voiceTracks.forEach { track ->
-                val label = track.voicePart.label()
-                val isActive = track.playback == PlaybackStatus.PLAYING || track.playback == PlaybackStatus.LOADING
-                FilterChip(
-                    selected = isActive,
-                    onClick = { onEvent(SongDetailEvent.PlayVoiceTrackClicked(track.id, label)) },
-                    label = { Text(label) },
-                    leadingIcon = {
-                        Icon(
-                            if (track.playback == PlaybackStatus.PLAYING) PauseIcon else Icons.Filled.PlayArrow,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        iconColor = MaterialTheme.colorScheme.primary,
-                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor = MaterialTheme.colorScheme.onSurface,
-                        selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    modifier = Modifier.semantics {
-                        contentDescription = if (track.playback == PlaybackStatus.PLAYING) "Pause $label" else "Écouter $label"
-                    },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun Links(links: List<LinkUi>) {
-    val uriHandler = LocalUriHandler.current
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
-        SectionTitle(stringResource(Res.string.song_links_title))
-        links.forEach { link ->
-            TextButton(onClick = { uriHandler.openUri(link.url) }) { Text(link.label) }
-        }
     }
 }
 

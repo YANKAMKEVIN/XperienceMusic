@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.presentation.week.WeekOfflineUi
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.week_offline_done
@@ -29,6 +28,7 @@ import com.xperiencemusic.shared.resources.week_offline_partial
 import com.xperiencemusic.shared.resources.week_offline_retry
 import com.xperiencemusic.shared.resources.week_offline_text
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 
@@ -44,7 +44,7 @@ fun OfflineCard(offline: WeekOfflineUi, onDownload: () -> Unit, modifier: Modifi
                 Icons.Filled.CheckCircle,
                 contentDescription = null,
                 tint = if (offline.isComplete) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(Sizes.iconM),
             )
             Column(Modifier.weight(1f).padding(horizontal = Spacing.m).semantics { liveRegion = LiveRegionMode.Polite }) {
                 Text(

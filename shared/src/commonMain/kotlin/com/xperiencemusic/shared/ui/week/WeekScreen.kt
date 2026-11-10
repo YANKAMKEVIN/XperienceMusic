@@ -92,11 +92,17 @@ import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.components.choiceState
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
+
+private val WAVES_HEIGHT = 44.dp
+/** The column of a song's number: two digits wide. */
+private val POSITION_WIDTH = 28.dp
+private val PLAY_BUTTON_SIZE = 40.dp
 
 /** [onEditWeek] opens the editor on a week's service date, or on the next free week when null. */
 @Composable
@@ -162,7 +168,7 @@ private fun WeekList(
                     )
                 }
             } else {
-                item { BrandWaves(Modifier.fillMaxWidth().height(44.dp)) }
+                item { BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT)) }
             }
             item {
                 Text(
@@ -223,12 +229,12 @@ private fun WeekHeader(rangeLabel: String?, me: MemberAvatarUi?, onAccount: () -
             val label = stringResource(Res.string.account_open, me.name)
             // 48 dp to touch, 40 dp to see, like an icon button.
             Box(
-                Modifier.size(48.dp).clip(CircleShape)
+                Modifier.size(Sizes.touchTarget).clip(CircleShape)
                     .clickable(role = Role.Button, onClick = onAccount)
                     .semantics { contentDescription = label },
                 contentAlignment = Alignment.Center,
             ) {
-                MemberAvatar(me, size = 40.dp)
+                MemberAvatar(me, size = Sizes.avatarS)
             }
         }
     }
@@ -309,7 +315,7 @@ private fun WeekSongRow(song: WeekSongUi, dimmed: Boolean, onClick: () -> Unit, 
                 "${song.position}",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(28.dp),
+                modifier = Modifier.width(POSITION_WIDTH),
             )
             // A past week reads as history: the title fades with its key, not the key alone.
             Text(
@@ -325,12 +331,12 @@ private fun WeekSongRow(song: WeekSongUi, dimmed: Boolean, onClick: () -> Unit, 
                 // The label sits on the button itself, so a screen reader hears "pause" as soon as the icon shows it.
                 val label = if (song.isPlaying) stringResource(Res.string.week_pause_reference, song.title)
                 else stringResource(Res.string.week_play_reference, song.title)
-                FilledTonalIconButton(onClick = onPlay, modifier = Modifier.size(40.dp).semantics { contentDescription = label }) {
+                FilledTonalIconButton(onClick = onPlay, modifier = Modifier.size(PLAY_BUTTON_SIZE).semantics { contentDescription = label }) {
                     Icon(if (song.isPlaying) PauseIcon else Icons.Filled.PlayArrow, contentDescription = null)
                 }
             } else {
                 // Keeps titles and keys aligned with the rows that have a play button.
-                Box(Modifier.size(40.dp))
+                Box(Modifier.size(PLAY_BUTTON_SIZE))
             }
         }
     }
@@ -343,15 +349,15 @@ private fun AdminActions(state: WeekUiState, onEditWeek: (LocalDate?) -> Unit) {
         if (state.canEditSelected && setlist != null) {
             OutlinedButton(
                 onClick = { onEditWeek(setlist.serviceDate) },
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outline),
+                modifier = Modifier.fillMaxWidth().height(Sizes.actionHeight),
             ) {
-                Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(Sizes.iconS))
                 Text(stringResource(Res.string.action_edit_setlist), modifier = Modifier.padding(start = Spacing.s))
             }
         }
         TextButton(onClick = { onEditWeek(null) }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(Sizes.iconS))
             Text(
                 stringResource(if (setlist == null) Res.string.action_publish_setlist else Res.string.week_prepare_next),
                 modifier = Modifier.padding(start = Spacing.s),

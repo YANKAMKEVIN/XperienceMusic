@@ -27,15 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.xperiencemusic.shared.ui.theme.AppTypography
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 
 private val emailKeyboard = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Send)
@@ -65,7 +63,7 @@ fun EmailFieldPill(
         interactionSource = interaction,
         keyboardOptions = emailKeyboard,
         keyboardActions = KeyboardActions(onSend = { onSend() }),
-        textStyle = TextStyle(color = if (isSending) colors.onSurfaceVariant else colors.onSurface, fontSize = 17.sp),
+        textStyle = AppTypography.fieldInput.copy(color = if (isSending) colors.onSurfaceVariant else colors.onSurface),
         cursorBrush = BrandColors.gradient,
         modifier = modifier.fillMaxWidth(),
         decorationBox = { field ->
@@ -75,7 +73,7 @@ fun EmailFieldPill(
                     .alpha(if (isSending) 0.6f else 1f)
                     .background(colors.surfaceContainerHigh, CircleShape)
                     .border(
-                        1.dp,
+                        Sizes.hairline,
                         when {
                             isError -> SolidColor(colors.error)
                             isFocused && !isSending -> BrandColors.gradient
@@ -83,27 +81,27 @@ fun EmailFieldPill(
                         },
                         CircleShape,
                     )
-                    .padding(start = Spacing.l, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                    .padding(start = Spacing.l, end = Spacing.xsm, top = Spacing.xsm, bottom = Spacing.xsm),
             ) {
                 Box(Modifier.weight(1f)) {
-                    if (value.isEmpty()) Text(placeholder, fontSize = 17.sp, color = colors.onSurfaceVariant)
+                    if (value.isEmpty()) Text(placeholder, style = AppTypography.fieldPlaceholder, color = colors.onSurfaceVariant)
                     field()
                 }
                 Box(
                     Modifier
-                        .size(44.dp)
+                        .size(Sizes.compactTarget)
                         .clip(CircleShape)
                         .background(if (canSend || isSending) BrandColors.gradient else SolidColor(colors.surfaceContainer))
                         .clickable(enabled = canSend, onClickLabel = sendLabel, role = Role.Button, onClick = onSend),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (isSending) {
-                        CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                        CircularProgressIndicator(color = BrandColors.onGradient, strokeWidth = Sizes.stroke, modifier = Modifier.size(Sizes.iconM))
                     } else {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = sendLabel,
-                            tint = if (canSend) Color.White else colors.onSurfaceVariant,
+                            tint = if (canSend) BrandColors.onGradient else colors.onSurfaceVariant,
                         )
                     }
                 }

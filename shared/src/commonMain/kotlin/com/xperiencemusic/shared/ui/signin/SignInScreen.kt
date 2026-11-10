@@ -31,8 +31,6 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.presentation.signin.SignInError
 import com.xperiencemusic.shared.presentation.signin.SignInEvent
@@ -62,7 +60,9 @@ import com.xperiencemusic.shared.ui.brand.BrandBackground
 import com.xperiencemusic.shared.ui.brand.BrandHeader
 import com.xperiencemusic.shared.ui.brand.BrandWordmark
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
+import com.xperiencemusic.shared.ui.theme.WordmarkSize
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -87,67 +87,14 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(Spacing.l),
         ) {
             if (keyboardOpen) {
-                BrandWordmark(fontSize = 22.sp, showTagline = false, modifier = Modifier.align(Alignment.CenterHorizontally))
+                BrandWordmark(size = WordmarkSize.Small, showTagline = false, modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
                 BrandHeader()
             }
             Text(stringResource(Res.string.signin_title), style = MaterialTheme.typography.headlineSmall)
             when (state.step) {
-                SignInStep.EMAIL -> {
-                    Text(
-                        stringResource(Res.string.signin_email_subtitle),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    val isEmailError = state.error == SignInError.INVALID_EMAIL || state.error == SignInError.EMPTY_EMAIL
-                    EmailFieldPill(
-                        state.email,
-                        onValueChange = { onEvent(SignInEvent.EmailChanged(it)) },
-                        placeholder = stringResource(Res.string.signin_email_label),
-                        sendLabel = stringResource(Res.string.signin_send_code),
-                        isError = isEmailError,
-                        canSend = state.canSubmit,
-                        isSending = state.isSubmitting,
-                        onSend = submit,
-                    )
-                    SignInErrorText(state.error)
-                }
-
-                SignInStep.CODE -> {
-                    Text(
-                        stringResource(Res.string.signin_code_subtitle, state.email),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    CodeBoxes(
-                        code = state.code,
-                        length = SignInUiState.CODE_LENGTH,
-                        onCodeChange = { onEvent(SignInEvent.CodeChanged(it)) },
-                        isError = state.error == SignInError.INVALID_CODE,
-                        enabled = !state.isSubmitting,
-                        description = stringResource(Res.string.signin_code_label),
-                    )
-                    SignInErrorText(state.error)
-                    if (state.codeResent) {
-                        Text(
-                            stringResource(Res.string.signin_code_resent),
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                        )
-                    }
-                    if (state.isSubmitting) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-                        ) {
-                            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-                            Text(
-                                stringResource(Res.string.signin_checking),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(start = Spacing.m),
-                            )
-                        }
-                    }
-                }
+                SignInStep.EMAIL -> EmailStep(state, onEvent, onSend = submit)
+                SignInStep.CODE -> CodeStep(state, onEvent)
             }
             state.demoCode?.let {
                 Text(
@@ -156,26 +103,90 @@ fun SignInScreenContent(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
                     color = MaterialTheme.colorScheme.secondary,
                 )
             }
-            if (state.step == SignInStep.CODE) {
-                // Two lines of buttons rather than a label broken in two on a narrow phone.
-                FlowRow(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    TextButton(onClick = { onEvent(SignInEvent.ResendCodeClicked) }, enabled = state.canResend) {
-                        Text(
-                            if (state.resendInSeconds > 0) {
-                                stringResource(Res.string.signin_resend_in, state.resendInSeconds)
-                            } else {
-                                stringResource(Res.string.signin_resend)
-                            },
-                        )
-                    }
-                    TextButton(onClick = { onEvent(SignInEvent.ChangeEmailClicked) }) {
-                        Text(stringResource(Res.string.signin_change_email), softWrap = false, maxLines = 1)
-                    }
-                }
-            }
+            if (state.step == SignInStep.CODE) CodeActions(state, onEvent)
+        }
+    }
+}
+
+/** The e-mail step: what to type and the field that sends the code. Emits into the screen's column. */
+@Composable
+private fun EmailStep(state: SignInUiState, onEvent: (SignInEvent) -> Unit, onSend: () -> Unit) {
+    Text(
+        stringResource(Res.string.signin_email_subtitle),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    val isEmailError = state.error == SignInError.INVALID_EMAIL || state.error == SignInError.EMPTY_EMAIL
+    EmailFieldPill(
+        state.email,
+        onValueChange = { onEvent(SignInEvent.EmailChanged(it)) },
+        placeholder = stringResource(Res.string.signin_email_label),
+        sendLabel = stringResource(Res.string.signin_send_code),
+        isError = isEmailError,
+        canSend = state.canSubmit,
+        isSending = state.isSubmitting,
+        onSend = onSend,
+    )
+    SignInErrorText(state.error)
+}
+
+/** The code step: where the code went, the boxes, and the check in progress. Emits into the screen's column. */
+@Composable
+private fun CodeStep(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
+    Text(
+        stringResource(Res.string.signin_code_subtitle, state.email),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    CodeBoxes(
+        code = state.code,
+        length = SignInUiState.CODE_LENGTH,
+        onCodeChange = { onEvent(SignInEvent.CodeChanged(it)) },
+        isError = state.error == SignInError.INVALID_CODE,
+        enabled = !state.isSubmitting,
+        description = stringResource(Res.string.signin_code_label),
+    )
+    SignInErrorText(state.error)
+    if (state.codeResent) {
+        Text(
+            stringResource(Res.string.signin_code_resent),
+            color = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        )
+    }
+    if (state.isSubmitting) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+        ) {
+            CircularProgressIndicator(strokeWidth = Sizes.stroke, modifier = Modifier.size(Sizes.iconM))
+            Text(
+                stringResource(Res.string.signin_checking),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = Spacing.m),
+            )
+        }
+    }
+}
+
+/** Resend the code, or go back to the e-mail. */
+@Composable
+private fun CodeActions(state: SignInUiState, onEvent: (SignInEvent) -> Unit) {
+    // Two lines of buttons rather than a label broken in two on a narrow phone.
+    FlowRow(
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        TextButton(onClick = { onEvent(SignInEvent.ResendCodeClicked) }, enabled = state.canResend) {
+            Text(
+                if (state.resendInSeconds > 0) {
+                    stringResource(Res.string.signin_resend_in, state.resendInSeconds)
+                } else {
+                    stringResource(Res.string.signin_resend)
+                },
+            )
+        }
+        TextButton(onClick = { onEvent(SignInEvent.ChangeEmailClicked) }) {
+            Text(stringResource(Res.string.signin_change_email), softWrap = false, maxLines = 1)
         }
     }
 }
