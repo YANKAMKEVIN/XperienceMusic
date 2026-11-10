@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.domain.repository
 
+import com.xperiencemusic.shared.domain.model.Avatar
 import com.xperiencemusic.shared.domain.model.Member
 import com.xperiencemusic.shared.domain.model.MemberProfile
 import com.xperiencemusic.shared.domain.model.SessionState
@@ -18,6 +19,9 @@ interface SessionRepository {
     suspend fun verifyCode(email: String, code: String)
 
     suspend fun saveProfile(profile: MemberProfile): Member
+
+    /** Null removes it: the member's initials are shown again. */
+    suspend fun saveAvatar(avatar: Avatar?): Member
 
     suspend fun signOut()
 

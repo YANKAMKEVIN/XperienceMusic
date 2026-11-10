@@ -27,10 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -85,8 +82,6 @@ import com.xperiencemusic.shared.resources.growth_rework
 import com.xperiencemusic.shared.resources.growth_top
 import com.xperiencemusic.shared.resources.growth_validate_open
 import com.xperiencemusic.shared.resources.growth_waiting
-import com.xperiencemusic.shared.resources.members_open
-import com.xperiencemusic.shared.resources.profile_open
 import com.xperiencemusic.shared.resources.progress_focus_continue
 import com.xperiencemusic.shared.resources.progress_focus_done_eyebrow
 import com.xperiencemusic.shared.resources.progress_focus_done_text
@@ -103,7 +98,6 @@ import com.xperiencemusic.shared.resources.progress_focus_voice_eyebrow
 import com.xperiencemusic.shared.resources.progress_focus_voice_text
 import com.xperiencemusic.shared.resources.progress_focus_warmup_eyebrow
 import com.xperiencemusic.shared.resources.progress_focus_warmup_text
-import com.xperiencemusic.shared.resources.progress_menu
 import com.xperiencemusic.shared.resources.progress_modules_title
 import com.xperiencemusic.shared.resources.progress_musicians_soon_text
 import com.xperiencemusic.shared.resources.progress_musicians_soon_title
@@ -124,7 +118,6 @@ import com.xperiencemusic.shared.resources.progress_warmup_done
 import com.xperiencemusic.shared.resources.progress_warmup_hint
 import com.xperiencemusic.shared.resources.progress_warmup_title
 import com.xperiencemusic.shared.resources.review_open
-import com.xperiencemusic.shared.resources.session_sign_out
 import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.voice_week_none
 import com.xperiencemusic.shared.resources.voice_week_title
@@ -151,13 +144,10 @@ import androidx.compose.animation.ExitTransition
 @Composable
 fun ProgressScreen(
     onExerciseClick: (String) -> Unit,
-    onManageMembers: () -> Unit,
-    onSignOut: () -> Unit,
     onRecordVoice: (String) -> Unit = {},
     onReview: () -> Unit = {},
     onValidate: () -> Unit = {},
     onOpenLearning: (String) -> Unit = {},
-    onProfile: () -> Unit = {},
     viewModel: ProgressViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -167,11 +157,8 @@ fun ProgressScreen(
         onValidate = onValidate,
         onOpenLearning = onOpenLearning,
         onExerciseClick = onExerciseClick,
-        onManageMembers = onManageMembers,
-        onSignOut = onSignOut,
         onRecordVoice = onRecordVoice,
         onReview = onReview,
-        onProfile = onProfile,
     )
 }
 
@@ -188,20 +175,17 @@ private enum class Section { OBJECTIVES, PATH, VOICE }
 
 /**
  * One thing at a time: who you are and your streak, the ring of the next level, today's single
- * action, then the details behind three tabs. Admin tools live in the menu and a small strip.
+ * action, then the details behind three tabs. Admin tools live in "Mon compte" and a small strip.
  */
 @Composable
 fun ProgressScreenContent(
     state: ProgressUiState,
     onExerciseClick: (String) -> Unit,
-    onManageMembers: () -> Unit,
-    onSignOut: () -> Unit,
     onRecordVoice: (String) -> Unit = {},
     onReview: () -> Unit = {},
     onEvent: (ProgressEvent) -> Unit = {},
     onValidate: () -> Unit = {},
     onOpenLearning: (String) -> Unit = {},
-    onProfile: () -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.hasError) {
@@ -234,7 +218,7 @@ fun ProgressScreenContent(
                     .background(Brush.radialGradient(listOf(BrandColors.Indigo.copy(alpha = 0.22f), Palette.Night.copy(alpha = 0f)))),
             )
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = Spacing.l)) {
-                Header(state, onReview, onValidate, onManageMembers, onProfile, onSignOut, Modifier.padding(horizontal = Spacing.l).enter(0))
+                Header(state, Modifier.padding(horizontal = Spacing.l).enter(0))
                 if (state.canReview && (state.toReviewCount > 0 || state.toValidateCount > 0)) {
                     AdminStrip(state, onReview, onValidate, Modifier.padding(start = Spacing.l, end = Spacing.l, top = Spacing.m).enter(1))
                 }
@@ -306,16 +290,7 @@ private fun Section.label(): StringResource = when (this) {
 }
 
 @Composable
-private fun Header(
-    state: ProgressUiState,
-    onReview: () -> Unit,
-    onValidate: () -> Unit,
-    onManageMembers: () -> Unit,
-    onProfile: () -> Unit,
-    onSignOut: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var menu by remember { mutableStateOf(false) }
+private fun Header(state: ProgressUiState, modifier: Modifier = Modifier) {
     TabHeader(
         title = stringResource(Res.string.tab_progress),
         subtitle = listOfNotNull(state.name.takeIf { it.isNotBlank() }, state.voicePart?.label() ?: state.instrument?.label(), state.level?.label()).joinToString(" · "),
@@ -332,22 +307,6 @@ private fun Header(
             ) {
                 Icon(XmIcons.Flame, contentDescription = null, tint = if (state.streakDays > 0) BrandColors.Amber else Palette.Mist, modifier = Modifier.size(16.dp))
                 Text(pluralStringResource(Res.plurals.progress_streak, state.streakDays, state.streakDays), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
-            }
-        }
-        Box {
-            IconButton(onClick = { menu = true }) {
-                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(Res.string.progress_menu))
-            }
-            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                DropdownMenuItem(text = { Text(stringResource(Res.string.profile_open)) }, onClick = { menu = false; onProfile() })
-                if (state.canReview) {
-                    DropdownMenuItem(text = { Text(stringResource(Res.string.review_open, state.toReviewCount)) }, onClick = { menu = false; onReview() })
-                    DropdownMenuItem(text = { Text(stringResource(Res.string.growth_validate_open, state.toValidateCount)) }, onClick = { menu = false; onValidate() })
-                }
-                if (state.canManageMembers) {
-                    DropdownMenuItem(text = { Text(stringResource(Res.string.members_open)) }, onClick = { menu = false; onManageMembers() })
-                }
-                DropdownMenuItem(text = { Text(stringResource(Res.string.session_sign_out)) }, onClick = { menu = false; onSignOut() })
             }
         }
     }
@@ -624,8 +583,6 @@ private fun ProgressScreenSingerPreview() {
                 ),
             ),
             onExerciseClick = {},
-            onManageMembers = {},
-            onSignOut = {},
         )
     }
 }
@@ -637,8 +594,6 @@ private fun ProgressScreenMusicianPreview() {
         ProgressScreenContent(
             ProgressUiState(isLoading = false, name = "Daniel", instrument = Instrument.PIANO, level = Level.PRO),
             onExerciseClick = {},
-            onManageMembers = {},
-            onSignOut = {},
         )
     }
 }

@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import com.xperiencemusic.shared.presentation.common.Formatting
+import com.xperiencemusic.shared.presentation.common.MemberAvatarUi
 
 class WeekViewModel(
     private val observeSchedule: ObserveSetlistScheduleUseCase,
@@ -60,6 +61,7 @@ class WeekViewModel(
     ) { week, member, offline, download, (syncStatus, refreshing) ->
         week.copy(
             canPublish = member?.role?.can(Permission.PUBLISH_SETLIST) == true,
+            me = member?.let { MemberAvatarUi(it.profile.displayName, it.avatar) },
             nextRehearsal = getToday().let { today ->
                 val rehearsal = BandWeek.nextRehearsal(today)
                 RehearsalCountdownUi(today.daysUntil(rehearsal), Formatting.dayAndDate(rehearsal))

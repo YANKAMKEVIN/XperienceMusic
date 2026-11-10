@@ -1,6 +1,9 @@
 package com.xperiencemusic.shared.data.repository
 
+import com.xperiencemusic.shared.domain.model.Avatar
 import com.xperiencemusic.shared.domain.model.DomainError
+import com.xperiencemusic.shared.domain.model.decodeAvatar
+import com.xperiencemusic.shared.domain.model.encode
 import com.xperiencemusic.shared.domain.model.DomainException
 import com.xperiencemusic.shared.domain.model.Member
 import com.xperiencemusic.shared.domain.model.MemberProfile
@@ -43,8 +46,15 @@ class InMemorySessionRepository(
     }
 
     override suspend fun saveProfile(profile: MemberProfile): Member {
-        val role = currentMember()?.role ?: defaultRole
-        val member = Member(id = LOCAL_MEMBER_ID, profile = profile, role = role)
+        val current = currentMember()
+        val member = Member(id = LOCAL_MEMBER_ID, profile = profile, role = current?.role ?: defaultRole, avatar = current?.avatar)
+        state.value = SessionState.Ready(member)
+        persist()
+        return member
+    }
+
+    override suspend fun saveAvatar(avatar: Avatar?): Member {
+        val member = (currentMember() ?: throw DomainException(DomainError.NOT_SIGNED_IN)).copy(avatar = avatar)
         state.value = SessionState.Ready(member)
         persist()
         return member
@@ -62,7 +72,9 @@ class InMemorySessionRepository(
             is SessionState.NeedsProfile -> SavedSession(email = current.email)
             is SessionState.Ready -> with(current.member) {
                 SavedSession(id = id, displayName = profile.displayName, instrument = profile.instrument,
-                    voicePart = profile.voicePart, level = profile.level, role = role)
+                    voicePart = profile.voicePart, level = profile.level, role = role,
+                    // A demo photo lives in memory only: it would point at nothing after a restart.
+                    avatar = (avatar as? Avatar.Preset)?.encode())
             }
             else -> null
         } ?: return
@@ -81,7 +93,7 @@ class InMemorySessionRepository(
             voicePart = saved.voicePart,
             level = saved.level ?: return SessionState.SignedOut,
         )
-        return SessionState.Ready(Member(saved.id ?: LOCAL_MEMBER_ID, profile, saved.role ?: defaultRole))
+        return SessionState.Ready(Member(saved.id ?: LOCAL_MEMBER_ID, profile, saved.role ?: defaultRole, decodeAvatar(saved.avatar)))
     }
 
     @Serializable
@@ -93,6 +105,7 @@ class InMemorySessionRepository(
         val voicePart: VoicePart? = null,
         val level: Level? = null,
         val role: Role? = null,
+        val avatar: String? = null,
     )
 
     companion object {

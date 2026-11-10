@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -74,6 +78,9 @@ import com.xperiencemusic.shared.resources.week_published_by
 import com.xperiencemusic.shared.resources.week_setlist_count
 import com.xperiencemusic.shared.resources.week_this_week
 import com.xperiencemusic.shared.resources.week_title
+import com.xperiencemusic.shared.resources.account_open
+import com.xperiencemusic.shared.presentation.common.MemberAvatarUi
+import com.xperiencemusic.shared.ui.components.MemberAvatar
 import com.xperiencemusic.shared.ui.brand.BrandWaves
 import com.xperiencemusic.shared.ui.brand.KeyPill
 import com.xperiencemusic.shared.ui.brand.TabHeader
@@ -96,10 +103,11 @@ import com.xperiencemusic.shared.ui.components.LoadingIndicator
 fun WeekScreen(
     onSongClick: (String) -> Unit,
     onEditWeek: (LocalDate?) -> Unit,
+    onAccount: () -> Unit,
     viewModel: WeekViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    WeekScreenContent(state = state, onEvent = viewModel::onEvent, onSongClick = onSongClick, onEditWeek = onEditWeek)
+    WeekScreenContent(state = state, onEvent = viewModel::onEvent, onSongClick = onSongClick, onEditWeek = onEditWeek, onAccount = onAccount)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,6 +117,7 @@ fun WeekScreenContent(
     onEvent: (WeekEvent) -> Unit,
     onSongClick: (String) -> Unit,
     onEditWeek: (LocalDate?) -> Unit,
+    onAccount: () -> Unit = {},
 ) {
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
@@ -118,7 +127,7 @@ fun WeekScreenContent(
         if (state.isLoading) {
             LoadingIndicator()
         } else {
-            WeekList(state, onEvent, onSongClick, onEditWeek)
+            WeekList(state, onEvent, onSongClick, onEditWeek, onAccount)
         }
     }
 }
@@ -129,6 +138,7 @@ private fun WeekList(
     onEvent: (WeekEvent) -> Unit,
     onSongClick: (String) -> Unit,
     onEditWeek: (LocalDate?) -> Unit,
+    onAccount: () -> Unit,
 ) {
     val setlist = state.setlist
     LazyColumn(
@@ -136,7 +146,7 @@ private fun WeekList(
         verticalArrangement = Arrangement.spacedBy(Spacing.m),
         modifier = Modifier.fillMaxSize(),
     ) {
-        item { WeekHeader(setlist?.rangeLabel) }
+        item { WeekHeader(setlist?.rangeLabel, state.me, onAccount) }
         if (state.weeks.size > 1) item { WeekTabs(state.weeks, onSelect = { onEvent(WeekEvent.WeekSelected(it)) }) }
         if (state.isOffline) item { OfflineBanner() }
         if (setlist == null) {
@@ -207,8 +217,21 @@ private fun EmptyWeek(state: WeekUiState, onPublish: () -> Unit) {
 }
 
 @Composable
-private fun WeekHeader(rangeLabel: String?) {
-    TabHeader(stringResource(Res.string.week_title), subtitle = rangeLabel)
+private fun WeekHeader(rangeLabel: String?, me: MemberAvatarUi?, onAccount: () -> Unit) {
+    TabHeader(stringResource(Res.string.week_title), subtitle = rangeLabel) {
+        if (me != null) {
+            val label = stringResource(Res.string.account_open, me.name)
+            // 48 dp to touch, 40 dp to see, like an icon button.
+            Box(
+                Modifier.size(48.dp).clip(CircleShape)
+                    .clickable(role = Role.Button, onClick = onAccount)
+                    .semantics { contentDescription = label },
+                contentAlignment = Alignment.Center,
+            ) {
+                MemberAvatar(me, size = 40.dp)
+            }
+        }
+    }
 }
 
 /** The kept weeks, opened on the selected one: past weeks stay readable, coming ones are ready. */

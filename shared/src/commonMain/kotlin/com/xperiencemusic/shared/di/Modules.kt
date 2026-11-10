@@ -25,6 +25,11 @@ import com.xperiencemusic.shared.data.repository.OfflineFirstAudioUrlProvider
 import com.xperiencemusic.shared.data.repository.InMemoryAudioStorage
 import com.xperiencemusic.shared.data.repository.SupabaseAudioUrlProvider
 import com.xperiencemusic.shared.data.repository.SupabaseAudioStorage
+import com.xperiencemusic.shared.data.repository.SupabaseAvatarStorage
+import com.xperiencemusic.shared.data.repository.InMemoryAvatarStorage
+import com.xperiencemusic.shared.domain.repository.AvatarStorage
+import com.xperiencemusic.shared.domain.usecase.ChangeAvatarUseCase
+import com.xperiencemusic.shared.presentation.account.AccountViewModel
 import com.xperiencemusic.shared.data.repository.SupabaseExerciseRepository
 import com.xperiencemusic.shared.data.repository.SupabaseSessionRepository
 import com.xperiencemusic.shared.data.repository.SupabaseSetlistRepository
@@ -186,6 +191,7 @@ val dataModule = module {
         single<SetlistRepository> { SupabaseSetlistRepository(get(), get()) }
         single<ExerciseRepository> { SupabaseExerciseRepository(get(), SingerExercises.all, get()) }
         single<AudioStorage> { SupabaseAudioStorage(get()) }
+        single<AvatarStorage> { SupabaseAvatarStorage(get()) }
         single<AudioCache> { FileAudioCache(get(), get()) }
         single<MembersRepository> { SupabaseMembersRepository(get(), get()) }
         single<AudioUrlProvider> { OfflineFirstAudioUrlProvider(get(), SupabaseAudioUrlProvider(get())) }
@@ -208,6 +214,7 @@ val dataModule = module {
         single<ExerciseRepository> { InMemoryExerciseRepository(SingerExercises.all) }
         single { InMemoryAudioStorage() }
         single<AudioStorage> { get<InMemoryAudioStorage>() }
+        single<AvatarStorage> { InMemoryAvatarStorage() }
         single<AudioCache> { DemoAudioCache() }
         single<MembersRepository> { InMemoryMembersRepository(get()) }
         single<AudioUrlProvider> { DemoAudioUrlProvider(get(), get()) }
@@ -220,6 +227,7 @@ val dataModule = module {
 val domainModule = module {
     factoryOf(::CompleteOnboardingUseCase)
     factoryOf(::UpdateMyProfileUseCase)
+    factoryOf(::ChangeAvatarUseCase)
     factoryOf(::ObserveCurrentMemberUseCase)
     factoryOf(::SearchSongsUseCase)
     factoryOf(::ObserveSongUseCase)
@@ -290,6 +298,7 @@ val presentationModule = module {
     viewModelOf(::AppViewModel)
     viewModelOf(::OnboardingViewModel)
     viewModelOf(::ProfileViewModel)
+    viewModelOf(::AccountViewModel)
     viewModelOf(::WeekViewModel)
     viewModelOf(::LibraryViewModel)
     viewModelOf(::ProgressViewModel)

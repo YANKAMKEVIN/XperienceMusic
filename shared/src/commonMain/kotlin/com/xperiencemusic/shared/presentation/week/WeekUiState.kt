@@ -2,6 +2,8 @@ package com.xperiencemusic.shared.presentation.week
 
 import kotlinx.datetime.LocalDate
 
+import com.xperiencemusic.shared.presentation.common.MemberAvatarUi
+
 data class WeekUiState(
     val isLoading: Boolean = true,
     /** Every kept week, in date order; empty when nothing was ever published. */
@@ -17,6 +19,8 @@ data class WeekUiState(
     val offline: WeekOfflineUi? = null,
     /** The next rehearsal, counted down while no setlist is published. */
     val nextRehearsal: RehearsalCountdownUi? = null,
+    /** The signed-in member, shown top right as the way into their account. */
+    val me: MemberAvatarUi? = null,
 ) {
     /** Admins edit a week whose service is still ahead; past weeks stay as they were. */
     val canEditSelected: Boolean get() = canPublish && setlist != null && setlist.timing != WeekTiming.PAST
