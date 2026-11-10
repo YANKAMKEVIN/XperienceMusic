@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.xperiencemusic.shared.domain.model.Avatar
 import com.xperiencemusic.shared.domain.model.AvatarPreset
-import com.xperiencemusic.shared.domain.repository.AvatarStorage
 import com.xperiencemusic.shared.presentation.common.MemberAvatarUi
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.avatar_bass_boy_1
@@ -46,7 +46,6 @@ import com.xperiencemusic.shared.ui.theme.BrandColors
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.decodeToImageBitmap
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.koinInject
 
 /**
  * A member in a circle: their photo, the avatar they picked, or their initials on the brand
@@ -75,11 +74,22 @@ fun PresetImage(preset: AvatarPreset, modifier: Modifier = Modifier) {
     Image(painterResource(preset.drawable()), contentDescription = null, contentScale = ContentScale.Crop, modifier = modifier)
 }
 
+/** Fetches members' photos as JPEG bytes; null when one cannot be had. */
+fun interface AvatarPhotoLoader {
+    suspend fun load(path: String): ByteArray?
+}
+
+/**
+ * Provided once at the root of the app (see `XperienceMusicApp`); without it (previews) every
+ * photo falls back to the initials.
+ */
+val LocalAvatarPhotoLoader = staticCompositionLocalOf { AvatarPhotoLoader { null } }
+
 @Composable
 private fun rememberAvatarPhoto(path: String): ImageBitmap? {
-    val storage = koinInject<AvatarStorage>()
-    val photo by produceState<ImageBitmap?>(null, path) {
-        value = storage.download(path)?.let { bytes -> runCatching { bytes.decodeToImageBitmap() }.getOrNull() }
+    val loader = LocalAvatarPhotoLoader.current
+    val photo by produceState<ImageBitmap?>(null, path, loader) {
+        value = loader.load(path)?.let { bytes -> runCatching { bytes.decodeToImageBitmap() }.getOrNull() }
     }
     return photo
 }

@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.di
 
 import com.xperiencemusic.shared.domain.usecase.ChangeAvatarUseCase
 import com.xperiencemusic.shared.domain.usecase.CompleteOnboardingUseCase
+import com.xperiencemusic.shared.domain.usecase.LoadAvatarPhotoUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveRemoteLoadFailureUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
@@ -35,6 +36,7 @@ val sessionModule = module {
     factoryOf(::CompleteOnboardingUseCase)
     factoryOf(::UpdateMyProfileUseCase)
     factoryOf(::ChangeAvatarUseCase)
+    factoryOf(::LoadAvatarPhotoUseCase)
     viewModelOf(::AppViewModel)
     viewModelOf(::SignInViewModel)
     viewModelOf(::OnboardingViewModel)
