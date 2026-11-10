@@ -66,7 +66,7 @@ internal val tierTitles: List<StringResource> = listOf(
 @Composable
 internal fun PathSection(
     state: ProgressUiState,
-    modules: List<com.xperiencemusic.shared.presentation.progress.ModuleProgressUi>,
+    modules: List<ModuleProgressUi>,
     onExerciseClick: (String) -> Unit,
     onOpenLearning: (String) -> Unit,
 ) {
