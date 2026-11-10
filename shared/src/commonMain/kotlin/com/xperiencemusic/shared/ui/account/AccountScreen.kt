@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.ripple
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -211,8 +212,14 @@ private fun BigAvatar(state: AccountUiState, onClick: () -> Unit) {
     Box(
         Modifier
             .padding(top = Spacing.s)
-            .clip(CircleShape)
-            .clickable(enabled = !state.isSaving, role = Role.Button, onClick = onClick)
+            // Not clipped: the edit badge sits on the corner, outside the circle. The ripple stays round.
+            .clickable(
+                interactionSource = null,
+                indication = ripple(bounded = false, radius = 64.dp),
+                enabled = !state.isSaving,
+                role = Role.Button,
+                onClick = onClick,
+            )
             .semantics { contentDescription = label },
     ) {
         Box(Modifier.border(BorderStroke(3.dp, BrandColors.gradient), CircleShape).padding(5.dp)) {
