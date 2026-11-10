@@ -57,6 +57,7 @@ import com.xperiencemusic.shared.resources.progress_sheet_criterion
 import com.xperiencemusic.shared.resources.progress_sheet_learn
 import com.xperiencemusic.shared.resources.progress_sheet_reached
 import com.xperiencemusic.shared.resources.progress_sheet_reached_hint
+import com.xperiencemusic.shared.resources.quoted_feedback
 import com.xperiencemusic.shared.resources.status_submitted
 import com.xperiencemusic.shared.resources.status_to_rework
 import com.xperiencemusic.shared.resources.status_validated
@@ -201,7 +202,7 @@ internal fun ObjectiveSheet(
                 Text(objective.criterion, style = MaterialTheme.typography.bodyLarge)
             }
             if (objective.status == ExerciseStatus.TO_REWORK && objective.feedback != null) {
-                Text("« ${objective.feedback} »", style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.warning)
+                Text(stringResource(Res.string.quoted_feedback, objective.feedback), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.warning)
             }
             if (moduleId != null && objective.status != ExerciseStatus.VALIDATED) {
                 GradientButton(onClick = { onLearn(moduleId) }, modifier = Modifier.fillMaxWidth()) {

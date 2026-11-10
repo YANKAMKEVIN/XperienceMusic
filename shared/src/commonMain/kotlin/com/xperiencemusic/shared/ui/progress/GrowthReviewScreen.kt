@@ -5,6 +5,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.TextButton
 import com.xperiencemusic.shared.presentation.progress.RequestObjectiveUi
+import com.xperiencemusic.shared.resources.growth_review_comment_placeholder
 import com.xperiencemusic.shared.resources.growth_review_hide_objectives
 import com.xperiencemusic.shared.resources.growth_review_level_done
 import com.xperiencemusic.shared.resources.growth_review_objective_done
@@ -220,7 +221,7 @@ private fun ReviewCard(
             } else {
                 null
             },
-            placeholder = { Text("Une réussite observée, un point précis à travailler et le prochain essai attendu.") },
+            placeholder = { Text(stringResource(Res.string.growth_review_comment_placeholder)) },
             minLines = 2,
             shape = RoundedCornerShape(Radius.chip),
             modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),

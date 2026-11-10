@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.voice
 
+import com.xperiencemusic.shared.resources.quoted_feedback
 import com.xperiencemusic.shared.resources.voice_error_interrupted
 import com.xperiencemusic.shared.resources.voice_discard_keep
 import com.xperiencemusic.shared.resources.voice_discard_text
@@ -257,7 +258,7 @@ private fun PreviousCard(previous: PreviousSubmissionUi) {
             ExerciseStatusBadge(previous.status)
         }
         previous.feedback?.let {
-            Text("« $it »", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.s))
+            Text(stringResource(Res.string.quoted_feedback, it), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.s))
         }
     }
 }

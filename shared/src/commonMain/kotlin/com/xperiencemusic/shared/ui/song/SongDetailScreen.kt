@@ -21,6 +21,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import com.xperiencemusic.shared.resources.cd_key
+import com.xperiencemusic.shared.resources.cd_transpose_down
+import com.xperiencemusic.shared.resources.cd_transpose_up
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.resources.voice_record_cta
@@ -327,6 +330,8 @@ private fun SongHero(state: SongDetailUiState) {
 /** The transposer pill (− key +) over the notation switch, as in the brand mockups. */
 @Composable
 private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) -> Unit) {
+    val transposeDown = stringResource(Res.string.cd_transpose_down)
+    val transposeUp = stringResource(Res.string.cd_transpose_up)
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(
             shape = RoundedCornerShape(Radius.card),
@@ -336,7 +341,7 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = { onEvent(SongDetailEvent.TransposeDownClicked) },
-                    modifier = Modifier.semantics { contentDescription = "Baisser d’un demi-ton" },
+                    modifier = Modifier.semantics { contentDescription = transposeDown },
                 ) {
                     Text("−", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
                 }
@@ -352,18 +357,19 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
                     label = "key",
                     modifier = Modifier.widthIn(min = KEY_LABEL_MIN_WIDTH).clipToBounds(),
                 ) { (_, keyLabel) ->
+                    val keyDescription = stringResource(Res.string.cd_key, keyLabel)
                     Text(
                         keyLabel,
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.semantics {
-                            contentDescription = "Tonalité $keyLabel"
+                            contentDescription = keyDescription
                         },
                     )
                 }
                 IconButton(
                     onClick = { onEvent(SongDetailEvent.TransposeUpClicked) },
-                    modifier = Modifier.semantics { contentDescription = "Monter d’un demi-ton" },
+                    modifier = Modifier.semantics { contentDescription = transposeUp },
                 ) {
                     Text("+", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
                 }

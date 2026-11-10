@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.resources.members_legend_content
+import com.xperiencemusic.shared.resources.members_legend_line
 import com.xperiencemusic.shared.resources.members_legend_member
 import com.xperiencemusic.shared.resources.members_legend_super
 import com.xperiencemusic.shared.ui.brand.GradientButton
@@ -417,7 +418,7 @@ private fun RolesLegend(modifier: Modifier = Modifier) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = Spacing.xs)) {
                 Box(Modifier.size(LEGEND_DOT_SIZE).background(roleColor(role), CircleShape))
                 Text(
-                    role.label() + " : " + stringResource(text),
+                    stringResource(Res.string.members_legend_line, role.label(), stringResource(text)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = Spacing.m),

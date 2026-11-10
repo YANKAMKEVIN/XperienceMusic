@@ -115,6 +115,7 @@ import com.xperiencemusic.shared.resources.progress_voice_empty
 import com.xperiencemusic.shared.resources.progress_warmup_done
 import com.xperiencemusic.shared.resources.progress_warmup_hint
 import com.xperiencemusic.shared.resources.progress_warmup_title
+import com.xperiencemusic.shared.resources.quoted_feedback
 import com.xperiencemusic.shared.resources.review_open
 import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.voice_week_none
@@ -536,7 +537,7 @@ private fun WeekVoicesCard(voices: List<WeekVoiceUi>, onRecordVoice: (String) ->
                 Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
                     Text(voice.title, style = MaterialTheme.typography.titleSmall)
                     voice.feedback?.let {
-                        Text("« $it »", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(Res.string.quoted_feedback, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 if (voice.status != null) {

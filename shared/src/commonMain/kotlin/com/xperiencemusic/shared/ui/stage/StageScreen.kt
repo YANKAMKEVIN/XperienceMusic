@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import com.xperiencemusic.shared.resources.stage_text_bigger
+import com.xperiencemusic.shared.resources.stage_text_smaller
 import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -150,6 +152,8 @@ private fun StageBody(state: StageUiState, modifier: Modifier) {
 /** Landscape: every control in a column of compact buttons beside the lyrics. */
 @Composable
 private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpenSong: (String) -> Unit) {
+    val textSmaller = stringResource(Res.string.stage_text_smaller)
+    val textBigger = stringResource(Res.string.stage_text_bigger)
     Column(
         verticalArrangement = Arrangement.spacedBy(Spacing.s, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -157,14 +161,10 @@ private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpen
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             StageButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }, modifier = Modifier.weight(1f), compact = true) {
-                Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
-                    contentDescription = "Réduire le texte"
-                })
+                Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = textSmaller })
             }
             StageButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }, modifier = Modifier.weight(1f), compact = true) {
-                Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
-                    contentDescription = "Agrandir le texte"
-                })
+                Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = textBigger })
             }
         }
         StageButton(onClick = { onEvent(StageEvent.AutoScrollToggled) }, modifier = Modifier.fillMaxWidth(), compact = true) {
@@ -239,15 +239,15 @@ private fun StageToolbar(state: StageUiState, onEvent: (StageEvent) -> Unit, onC
 /** Text size and auto-scroll, big enough to hit on a music stand. */
 @Composable
 private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
+    val textSmaller = stringResource(Res.string.stage_text_smaller)
+    val textBigger = stringResource(Res.string.stage_text_bigger)
     Row(
         horizontalArrangement = Arrangement.spacedBy(Spacing.s),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.l, vertical = Spacing.s),
     ) {
         StageButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }, modifier = Modifier.width(STAGE_BUTTON_WIDTH)) {
-            Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
-                contentDescription = "Réduire le texte"
-            })
+            Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = textSmaller })
         }
         StageButton(onClick = { onEvent(StageEvent.AutoScrollToggled) }, modifier = Modifier.weight(1f)) {
             Icon(
@@ -271,9 +271,7 @@ private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
             }
         }
         StageButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }, modifier = Modifier.width(STAGE_BUTTON_WIDTH)) {
-            Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
-                contentDescription = "Agrandir le texte"
-            })
+            Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = textBigger })
         }
     }
     // The speed buttons unfold under the controls rather than shoving the lyrics down at once.

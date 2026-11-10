@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import com.xperiencemusic.shared.resources.cd_exercise_target
 import com.xperiencemusic.shared.resources.exercise_accompaniment
 import com.xperiencemusic.shared.resources.exercise_locked
 import com.xperiencemusic.shared.resources.exercise_step
@@ -22,6 +23,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.resources.exercise_mic_on
+import com.xperiencemusic.shared.resources.exercise_target_frequency
 import com.xperiencemusic.shared.resources.exercise_target_label
 import com.xperiencemusic.shared.ui.brand.BrandWaves
 import com.xperiencemusic.shared.ui.brand.GradientButton
@@ -202,15 +204,16 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            val targetDescription = stringResource(Res.string.cd_exercise_target, check.targetNoteLabel, check.requiredSeconds)
             Text(
                 check.targetNoteLabel,
                 style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.semantics {
-                    contentDescription = "${check.targetNoteLabel}, ${check.requiredSeconds} s"
+                    contentDescription = targetDescription
                 },
             )
             Text(
-                "${frequencyOf(check.targetMidi)} Hz · ${check.requiredSeconds} s",
+                stringResource(Res.string.exercise_target_frequency, frequencyOf(check.targetMidi), check.requiredSeconds),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
