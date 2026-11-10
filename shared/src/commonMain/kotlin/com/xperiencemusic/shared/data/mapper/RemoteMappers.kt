@@ -28,6 +28,7 @@ import com.xperiencemusic.shared.domain.model.VoiceSubmission
 import kotlinx.datetime.LocalDate
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
+import com.xperiencemusic.shared.domain.model.decodeAvatar
 import com.xperiencemusic.shared.domain.model.SongLink
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.model.VoiceTrack
@@ -42,6 +43,7 @@ fun ProfileDto.toDomain(): Member? {
         profile = MemberProfile(name, instrument, enumOrNull<VoicePart>(voicePart), level),
         // An unknown role from a newer server must never grant more than reading.
         role = enumOrNull<Role>(role) ?: Role.MEMBER,
+        avatar = decodeAvatar(avatar),
     )
 }
 

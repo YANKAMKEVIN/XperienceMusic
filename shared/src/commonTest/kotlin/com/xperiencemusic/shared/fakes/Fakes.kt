@@ -45,7 +45,13 @@ class FakeSessionRepository(member: Member? = null) : SessionRepository {
 
     override suspend fun saveProfile(profile: MemberProfile): Member {
         failure?.let { throw it }
-        return Member("me", profile, currentMember()?.role ?: Role.MEMBER).also { state.value = SessionState.Ready(it) }
+        return Member("me", profile, currentMember()?.role ?: Role.MEMBER, currentMember()?.avatar).also { state.value = SessionState.Ready(it) }
+    }
+
+    override suspend fun saveAvatar(avatar: com.xperiencemusic.shared.domain.model.Avatar?): Member {
+        failure?.let { throw it }
+        val current = currentMember() ?: error("signed out")
+        return current.copy(avatar = avatar).also { state.value = SessionState.Ready(it) }
     }
 
     override suspend fun signOut() {

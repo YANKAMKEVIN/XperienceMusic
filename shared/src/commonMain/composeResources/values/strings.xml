@@ -369,9 +369,25 @@
 
     <!-- Members -->
     <string name="members_title">Membres du groupe</string>
-    <string name="members_open">Gérer les membres</string>
-    <string name="profile_open">Mon profil</string>
     <string name="profile_title">Mon profil</string>
+    <string name="account_title">Mon compte</string>
+    <string name="account_open">Mon compte, %1$s</string>
+    <string name="account_edit_profile">Modifier le profil</string>
+    <string name="account_change_avatar">Changer d’avatar</string>
+    <string name="account_avatar_label">Ton avatar. Touche pour le changer</string>
+    <string name="account_tools">Responsable</string>
+    <string name="account_review">Voix à écouter</string>
+    <string name="account_validate">Objectifs à valider</string>
+    <string name="account_members">Membres du groupe</string>
+    <string name="account_role_line">%1$s · %2$s</string>
+    <string name="avatar_sheet_title">Ton avatar</string>
+    <string name="avatar_import_photo">Importer une photo</string>
+    <string name="avatar_presets_title">Ou choisis un avatar</string>
+    <string name="avatar_remove">Retirer mon avatar</string>
+    <string name="avatar_preset_label">avatar %1$d</string>
+    <string name="avatar_saving">Envoi de ton avatar…</string>
+    <string name="avatar_error_save">Ton avatar n’a pas pu être enregistré. Vérifie ta connexion et réessaie.</string>
+    <string name="avatar_error_photo">Cette photo n’a pas pu être lue. Essaie avec une autre.</string>
     <string name="profile_level_note">C’est le responsable qui fait évoluer ton niveau, quand tu as atteint les objectifs.</string>
     <string name="profile_role_change_note">Changer de rôle change aussi ton parcours et tes objectifs.</string>
     <string name="profile_save">Enregistrer</string>
@@ -479,7 +495,6 @@
     <string name="growth_validate_open">À valider (%1$d)</string>
     <string name="growth_level_to_confirmed">Confirmé</string>
     <string name="growth_level_to_pro">Pro</string>
-    <string name="progress_menu">Plus d’options</string>
     <string name="progress_ring_towards">vers %1$s</string>
     <string name="progress_ring_top">Niveau Pro</string>
     <string name="progress_tab_objectives">Objectifs</string>

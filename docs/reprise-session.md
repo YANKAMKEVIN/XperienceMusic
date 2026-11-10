@@ -107,12 +107,17 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
    besoin. C'est Kevin qui se connecte. À tester : micro (« Ma voix »), import accords.app, collage avec accords
    au-dessus, planning et rappels, parcours de croissance.
 5. **Plus tard.**
-   - Passer l'envoi des mails de Gmail à **Brevo** (ou Resend) avant d'inviter le groupe.
+   - ~~Passer l'envoi des mails de Gmail à **Brevo**.~~ Fait le 10 novembre 2026 (voir
+     `docs/supabase-setup.md`, étape 4).
    - Notifications quand une setlist est publiée (Firebase).
    - Test sur un vrai iPhone (il faut un compte Apple Developer pour TestFlight).
    - Version Android release signée et numéro de version, pour diffuser l'APK au groupe.
    - Pages d'aide : une pour les membres, une pour le responsable des chants.
    - Ligne « Cette semaine tu sers… › » en haut de Semaine.
+6. **Avatars et « Mon compte »** (PR 7, branche `feat/member-avatar`). La migration
+   `20261110000000_member_avatars.sql` est appliquée sur Supabase le 10 novembre 2026. Testé sur le S24 :
+   avatar dans Semaine, Mon compte, avatar dessiné, import de photo, retrait. Reste à faire : fusionner, en
+   réglant les petits conflits avec la PR 5 (`feat/rehearsal-upload`). Tester sur iPhone (sélecteur PHPicker).
 
 ## Règles à respecter
 
