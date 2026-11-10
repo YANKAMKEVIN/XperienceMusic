@@ -47,7 +47,7 @@ class SessionGuard {
 }
 
 /** The session some work started under; see [SessionGuard.stamp]. */
-data class SessionStamp internal constructor(internal val generation: Int)
+class SessionStamp internal constructor(internal val generation: Int)
 
 /** A database call of the current account: errors become domain errors, see [postgrestCall]. */
 internal suspend fun <T> SessionGuard.accountCall(block: suspend () -> T): T = call { postgrestCall(block) }
