@@ -7,7 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -50,8 +50,8 @@ private val QUIZ = listOf(
 /** Three optional questions that suggest a piano module to start from; nothing is validated or skipped. */
 @Composable
 internal fun StartingPoint(state: LearningUiState, onEvent: (LearningEvent) -> Unit) {
-    var stage by remember { mutableStateOf(0) }
-    var score by remember { mutableStateOf(0) }
+    var stage by remember { mutableIntStateOf(0) }
+    var score by remember { mutableIntStateOf(0) }
     AppCard {
         Text(stringResource(Res.string.learning_quiz_title), style = MaterialTheme.typography.titleMedium)
         Text(stringResource(Res.string.learning_quiz_note), style = MaterialTheme.typography.bodySmall)

@@ -281,7 +281,7 @@ private fun DatesRow(setlist: WeekSetlistUi) {
 }
 
 @Composable
-private fun DateCard(label: String, date: String, modifier: Modifier) {
+private fun DateCard(label: String, date: String, modifier: Modifier = Modifier) {
     AppCard(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary)

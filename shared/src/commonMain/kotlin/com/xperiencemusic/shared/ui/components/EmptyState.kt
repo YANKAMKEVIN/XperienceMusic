@@ -124,7 +124,7 @@ fun CountdownEmptyState(
 private fun EmptyStateLayout(
     title: String,
     text: String,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     actionLabel: String?,
     onAction: () -> Unit,
     actionIsGradient: Boolean = true,

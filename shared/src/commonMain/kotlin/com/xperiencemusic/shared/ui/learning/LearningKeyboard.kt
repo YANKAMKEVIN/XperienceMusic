@@ -88,7 +88,7 @@ internal fun PianoKeyboard(state: LearningUiState, onKey: (Int) -> Unit) {
 }
 
 @Composable
-private fun PianoKey(midi: Int, state: LearningUiState, modifier: Modifier, black: Boolean, onClick: () -> Unit) {
+private fun PianoKey(midi: Int, state: LearningUiState, modifier: Modifier = Modifier, black: Boolean, onClick: () -> Unit) {
     val selected = midi in state.notes
     val wrong = state.result == false && selected && midi !in state.activity.expectedNotes
     val missing = state.hints >= 2 && midi in state.activity.expectedNotes && !selected

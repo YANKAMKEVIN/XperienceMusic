@@ -95,7 +95,7 @@ private fun rememberAvatarPhoto(path: String): ImageBitmap? {
 }
 
 @Composable
-private fun Initials(initials: String, size: Dp, modifier: Modifier) {
+private fun Initials(initials: String, size: Dp, modifier: Modifier = Modifier) {
     Box(modifier.background(BrandColors.gradient), contentAlignment = Alignment.Center) {
         Text(
             initials,

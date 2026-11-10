@@ -112,7 +112,7 @@ fun CodeBoxes(
 }
 
 @Composable
-private fun DigitBox(digit: Char?, isCurrent: Boolean, isError: Boolean, modifier: Modifier) {
+private fun DigitBox(digit: Char?, isCurrent: Boolean, isError: Boolean, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(Radius.card)
     val colors = MaterialTheme.colorScheme
     val border: Brush = when {

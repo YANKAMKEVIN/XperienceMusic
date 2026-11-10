@@ -151,7 +151,7 @@ fun TierPath(
 }
 
 @Composable
-private fun StepNode(step: StepUi, onClick: () -> Unit, modifier: Modifier) {
+private fun StepNode(step: StepUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val pulse = if (step.state == StepState.CURRENT) {
         val transition = rememberInfiniteTransition()
@@ -206,7 +206,7 @@ private fun StepNode(step: StepUi, onClick: () -> Unit, modifier: Modifier) {
 }
 
 @Composable
-private fun StepLabel(step: StepUi, labelOpen: String, alignEnd: Boolean, modifier: Modifier) {
+private fun StepLabel(step: StepUi, labelOpen: String, alignEnd: Boolean, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val isLocked = step.state == StepState.LOCKED
     Column(modifier, horizontalAlignment = if (alignEnd) Alignment.End else Alignment.Start) {

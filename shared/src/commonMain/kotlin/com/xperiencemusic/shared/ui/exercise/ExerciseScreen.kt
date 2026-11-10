@@ -242,7 +242,7 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
 
     when (phase) {
         ExercisePhase.SUCCEEDED -> SucceededCard(state, onEvent)
-        ExercisePhase.LISTENING -> Live(check, onEvent)
+        ExercisePhase.LISTENING -> Live(check)
         ExercisePhase.READY -> if (state.isLocked) {
             Text(
                 stringResource(Res.string.exercise_locked),
@@ -311,7 +311,7 @@ private fun SucceededCard(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Un
 }
 
 @Composable
-private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
+private fun Live(check: AutomaticCheckUi) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
         // The waves say the microphone hears something; the gauge above gives the measure.
         BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT).alpha(if (check.tuning == Tuning.SILENT) 0.35f else 1f))

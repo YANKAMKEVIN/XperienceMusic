@@ -123,14 +123,14 @@ fun StageScreenContent(
             if (maxWidth > maxHeight) {
                 Row(Modifier.fillMaxSize()) {
                     Column(Modifier.weight(1f)) {
-                        StageToolbar(state, onEvent, onClose)
+                        StageToolbar(state, onClose)
                         StageBody(state, Modifier.weight(1f))
                     }
                     StageRail(state, onEvent, onOpenSong)
                 }
             } else {
                 Column(Modifier.fillMaxSize()) {
-                    StageToolbar(state, onEvent, onClose)
+                    StageToolbar(state, onClose)
                     StageBody(state, Modifier.weight(1f))
                     StageControls(state, onEvent)
                     if (state.setlistPosition != null) SetlistNavigation(state, onOpenSong)
@@ -141,7 +141,7 @@ fun StageScreenContent(
 }
 
 @Composable
-private fun StageBody(state: StageUiState, modifier: Modifier) {
+private fun StageBody(state: StageUiState, modifier: Modifier = Modifier) {
     if (state.isLoading) {
         Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
     } else {
@@ -216,7 +216,7 @@ private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpen
 }
 
 @Composable
-private fun StageToolbar(state: StageUiState, onEvent: (StageEvent) -> Unit, onClose: () -> Unit) {
+private fun StageToolbar(state: StageUiState, onClose: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = Spacing.s)) {
         IconButton(onClick = onClose) {
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.stage_close))
@@ -317,7 +317,7 @@ private fun StageButton(
 }
 
 @Composable
-private fun StageLyrics(state: StageUiState, modifier: Modifier) {
+private fun StageLyrics(state: StageUiState, modifier: Modifier = Modifier) {
     val scroll = rememberScrollState()
     val density = LocalDensity.current
     LaunchedEffect(state.isAutoScrolling, state.scrollSpeed) {
