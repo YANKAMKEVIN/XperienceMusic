@@ -3,8 +3,10 @@ package com.xperiencemusic.shared.di
 import com.xperiencemusic.shared.domain.usecase.ChangeAvatarUseCase
 import com.xperiencemusic.shared.domain.usecase.CompleteOnboardingUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveRemoteLoadFailureUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestSignInCodeUseCase
+import com.xperiencemusic.shared.domain.usecase.RetryRemoteLoadsUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
 import com.xperiencemusic.shared.domain.usecase.UpdateMyProfileUseCase
@@ -28,6 +30,8 @@ val sessionModule = module {
     factoryOf(::VerifySignInCodeUseCase)
     factoryOf(::RetrySessionUseCase)
     factoryOf(::SignOutUseCase)
+    factoryOf(::ObserveRemoteLoadFailureUseCase)
+    factoryOf(::RetryRemoteLoadsUseCase)
     factoryOf(::CompleteOnboardingUseCase)
     factoryOf(::UpdateMyProfileUseCase)
     factoryOf(::ChangeAvatarUseCase)

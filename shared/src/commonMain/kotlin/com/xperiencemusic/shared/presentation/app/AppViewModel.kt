@@ -3,7 +3,9 @@ package com.xperiencemusic.shared.presentation.app
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.SessionState
+import com.xperiencemusic.shared.domain.usecase.ObserveRemoteLoadFailureUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
+import com.xperiencemusic.shared.domain.usecase.RetryRemoteLoadsUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,12 +30,17 @@ sealed interface AppEvent {
     data object SignOutClicked : AppEvent
     data object SignOutConfirmed : AppEvent
     data object SignOutDismissed : AppEvent
+
+    /** "Réessayer" on the banner shown when some data could not be fetched. */
+    data object RetryLoadsClicked : AppEvent
 }
 
 class AppViewModel(
     observeSession: ObserveSessionUseCase,
     private val retrySession: RetrySessionUseCase,
     private val signOut: SignOutUseCase,
+    observeLoadFailure: ObserveRemoteLoadFailureUseCase,
+    private val retryLoads: RetryRemoteLoadsUseCase,
 ) : ViewModel() {
     val state: StateFlow<AppUiState> = observeSession()
         .map { it.toUiState() }
@@ -44,6 +51,10 @@ class AppViewModel(
     /** "Se déconnecter ?" is on screen: signing out wipes what the phone has not synced yet. */
     val isConfirmingSignOut: StateFlow<Boolean> = _isConfirmingSignOut.asStateFlow()
 
+    /** Some data could not be fetched: the signed-in shell says screens may be incomplete. */
+    val hasLoadFailure: StateFlow<Boolean> = observeLoadFailure()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     fun onEvent(event: AppEvent) {
         when (event) {
             AppEvent.RetryClicked -> viewModelScope.launch { retrySession() }
@@ -51,6 +62,7 @@ class AppViewModel(
                 if (state.value.confirmsSignOut) _isConfirmingSignOut.value = true else signOutNow()
             AppEvent.SignOutConfirmed -> signOutNow()
             AppEvent.SignOutDismissed -> _isConfirmingSignOut.value = false
+            AppEvent.RetryLoadsClicked -> viewModelScope.launch { retryLoads() }
         }
     }
 

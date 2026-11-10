@@ -2,9 +2,12 @@ package com.xperiencemusic.shared.presentation.app
 
 import com.xperiencemusic.shared.domain.model.SessionState
 import com.xperiencemusic.shared.domain.repository.LocalDataStore
+import com.xperiencemusic.shared.domain.usecase.ObserveRemoteLoadFailureUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
+import com.xperiencemusic.shared.domain.usecase.RetryRemoteLoadsUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
+import com.xperiencemusic.shared.fakes.FakeRemoteLoadStatus
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
 import com.xperiencemusic.shared.fakes.member
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +29,7 @@ import kotlin.test.assertTrue
 class AppViewModelTest {
     private val sessions = FakeSessionRepository(member())
     private var wipes = 0
+    private val loads = FakeRemoteLoadStatus()
     private lateinit var viewModel: AppViewModel
 
     @BeforeTest
@@ -35,6 +39,8 @@ class AppViewModelTest {
             ObserveSessionUseCase(sessions),
             RetrySessionUseCase(sessions),
             SignOutUseCase(sessions, LocalDataStore { wipes++ }),
+            ObserveRemoteLoadFailureUseCase(loads),
+            RetryRemoteLoadsUseCase(loads),
         )
     }
 
@@ -58,6 +64,19 @@ class AppViewModelTest {
         assertFalse(viewModel.isConfirmingSignOut.value)
         assertEquals(AppUiState.SignIn, viewModel.state.value)
         assertEquals(1, wipes)
+    }
+
+    @Test
+    fun `un chargement raté affiche le bandeau jusqu'à ce que réessayer réussisse`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.hasLoadFailure.collect {} }
+        assertFalse(viewModel.hasLoadFailure.value)
+
+        loads.hasFailure.value = true
+        assertTrue(viewModel.hasLoadFailure.value)
+
+        viewModel.onEvent(AppEvent.RetryLoadsClicked)
+        assertEquals(1, loads.retries)
+        assertFalse(viewModel.hasLoadFailure.value)
     }
 
     @Test

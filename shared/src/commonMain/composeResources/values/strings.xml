@@ -89,6 +89,8 @@
     <string name="tab_progress">Ma progression</string>
     <string name="tab_progress_short">Progrès</string>
     <string name="tab_planning">Planning</string>
+    <string name="remote_load_failed">Actualisation impossible. Les données peuvent être incomplètes ou anciennes.</string>
+    <string name="remote_load_retry">Réessayer</string>
 
     <!-- Planning -->
     <string name="planning_title">Planning</string>

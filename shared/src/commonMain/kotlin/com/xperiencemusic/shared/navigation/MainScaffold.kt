@@ -21,12 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -39,9 +37,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.ui.components.SystemBackHandler
-import com.xperiencemusic.shared.data.remote.RemoteLoadMonitor
 import com.xperiencemusic.shared.presentation.reminders.RemindersViewModel
 import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.remote_load_failed
+import com.xperiencemusic.shared.resources.remote_load_retry
 import com.xperiencemusic.shared.resources.tab_library
 import com.xperiencemusic.shared.resources.tab_planning
 import com.xperiencemusic.shared.resources.tab_progress
@@ -71,11 +70,9 @@ import com.xperiencemusic.shared.ui.voice.VoiceRecordScreen
 import com.xperiencemusic.shared.ui.voice.VoiceReviewScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
 import kotlin.reflect.KClass
-import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 /** [shortLabel] is what fits in the tab capsule; [label] is the full name read aloud. */
@@ -94,9 +91,12 @@ private val tabs = listOf(
     Tab(ProgressRoute, ProgressRoute::class, Res.string.tab_progress, XmIcons.Bars, Res.string.tab_progress_short),
 )
 
-/** The signed-in shell: four tabs, with the song detail pushed on top of them. */
+/**
+ * The signed-in shell: four tabs, with the song detail pushed on top of them. [hasLoadFailure]
+ * shows a banner above every screen, whose button calls [onRetryLoads].
+ */
 @Composable
-fun MainScaffold(onSignOut: () -> Unit) {
+fun MainScaffold(onSignOut: () -> Unit, hasLoadFailure: Boolean, onRetryLoads: () -> Unit) {
     val navController = rememberNavController()
     // Keeps the phone's planning reminders in step for as long as someone is signed in.
     koinViewModel<RemindersViewModel>()
@@ -109,18 +109,12 @@ fun MainScaffold(onSignOut: () -> Unit) {
     // Recording a voice: the guide plays in the earphones, a player card would only be in the way.
     val isRecordingVoice = destination?.hasRoute(VoiceRecordRoute::class) == true
 
-    val loads = koinInject<RemoteLoadMonitor>()
-    val loadFailed by loads.hasFailure.collectAsStateWithLifecycle()
-    val retryScope = rememberCoroutineScope()
     // Landscape keeps the content's height: the tabs move to a rail on the left, the player slims down.
     BoxWithConstraints {
         val isLandscape = maxWidth > maxHeight
         Scaffold(
             topBar = {
-                if (loadFailed) Column(Modifier.padding(Spacing.m)) {
-                    Text("Actualisation impossible. Les données peuvent être incomplètes ou anciennes.")
-                    TextButton(onClick = { retryScope.launch { loads.retry() } }) { Text("Réessayer") }
-                }
+                if (hasLoadFailure) RemoteLoadBanner(onRetry = onRetryLoads)
             },
             bottomBar = {
                 // Floating: the player card (while something plays) stacked over the tab pill, both
@@ -303,6 +297,15 @@ private fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit, 
                 onDeleted = { navController.popBackStack<SongRoute>(inclusive = true) },
             )
         }
+    }
+}
+
+/** Some data could not be fetched: the screens may be incomplete or out of date. */
+@Composable
+private fun RemoteLoadBanner(onRetry: () -> Unit) {
+    Column(Modifier.padding(Spacing.m)) {
+        Text(stringResource(Res.string.remote_load_failed))
+        TextButton(onClick = onRetry) { Text(stringResource(Res.string.remote_load_retry)) }
     }
 }
 

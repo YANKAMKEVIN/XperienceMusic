@@ -50,6 +50,7 @@ fun XperienceMusicApp() {
 private fun AppRoot(viewModel: AppViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val isConfirmingSignOut by viewModel.isConfirmingSignOut.collectAsStateWithLifecycle()
+    val hasLoadFailure by viewModel.hasLoadFailure.collectAsStateWithLifecycle()
     val signOut = { viewModel.onEvent(AppEvent.SignOutClicked) }
     DestinationViewModelScope(state.destination) {
         when (val current = state) {
@@ -72,7 +73,11 @@ private fun AppRoot(viewModel: AppViewModel = koinViewModel()) {
                 onSignOut = signOut,
             )
             AppUiState.Onboarding -> OnboardingScreen(onSignOut = signOut)
-            AppUiState.Ready -> MainScaffold(onSignOut = signOut)
+            AppUiState.Ready -> MainScaffold(
+                onSignOut = signOut,
+                hasLoadFailure = hasLoadFailure,
+                onRetryLoads = { viewModel.onEvent(AppEvent.RetryLoadsClicked) },
+            )
         }
     }
     if (isConfirmingSignOut) {
