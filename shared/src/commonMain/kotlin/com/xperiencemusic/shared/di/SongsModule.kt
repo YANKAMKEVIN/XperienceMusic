@@ -13,8 +13,10 @@ import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SetReferenceRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.UploadRecordingUseCase
+import com.xperiencemusic.shared.domain.usecase.UploadVoiceTrackUseCase
 import com.xperiencemusic.shared.presentation.library.LibraryViewModel
 import com.xperiencemusic.shared.presentation.recordingform.RecordingFormViewModel
+import com.xperiencemusic.shared.presentation.rehearsal.RehearsalUploadViewModel
 import com.xperiencemusic.shared.presentation.song.SongDetailViewModel
 import com.xperiencemusic.shared.presentation.songeditor.SongEditorViewModel
 import com.xperiencemusic.shared.presentation.stage.StageSettingsStore
@@ -34,13 +36,16 @@ val songsModule = module {
     factoryOf(::DeleteSongUseCase)
     factoryOf(::AddRecordingUseCase)
     factoryOf(::UploadRecordingUseCase)
+    factoryOf(::UploadVoiceTrackUseCase)
     factoryOf(::DeleteRecordingUseCase)
     factoryOf(::SetReferenceRecordingUseCase)
     factoryOf(::ObserveOfflineAudioUseCase)
     single { StageSettingsStore() }
     viewModelOf(::LibraryViewModel)
     viewModelOf(::SongDetailViewModel)
-    viewModelOf(::RecordingFormViewModel)
+    // The rehearsal date is optional (null = a take added from the song), which the constructor DSL cannot resolve.
+    viewModel { params -> RecordingFormViewModel(params.get(), get(), get(), get(), get(), params.getOrNull()) }
+    viewModel { params -> RehearsalUploadViewModel(params.get(), get()) }
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
     viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get(), get(), get()) }
     viewModel { (songId: String, transpose: Int, notation: Notation) ->

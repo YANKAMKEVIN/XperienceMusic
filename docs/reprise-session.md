@@ -130,8 +130,8 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
      textes, dp, couleurs et `koinInject` de dépôts dans `ui/`.
    - **Reste à faire** :
      - tester sur téléphone : aucun changement visible n'est voulu, à vérifier ;
-     - régler les conflits avec la PR 5 : ses liaisons Koin vont dans les modules de `di/`, ses routes dans
-       `AppNavGraph.kt` ;
+     - la PR 5 (dépôt de la répétition) est intégrée : ses liaisons sont dans `di/SongsModule.kt`, ses routes
+       dans `AppNavGraph.kt`, et le nom « Répétition du … » est composé par l'écran à partir de `strings.xml` ;
      - choix gardé : `SongRepository` n'est pas découpé et `SyncStatus` n'est pas fusionné avec le bandeau réseau,
        pour ne pas gêner la PR 5.
 

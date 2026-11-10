@@ -1,5 +1,7 @@
 package com.xperiencemusic.shared.presentation.recordingform
 
+import com.xperiencemusic.shared.domain.model.VoicePart
+import com.xperiencemusic.shared.domain.usecase.UploadVoiceTrackUseCase
 import com.xperiencemusic.shared.data.repository.InMemoryAudioStorage
 import com.xperiencemusic.shared.domain.model.AudioFile
 import com.xperiencemusic.shared.domain.model.Role
@@ -41,12 +43,57 @@ class RecordingFormViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel(songId: String) = RecordingFormViewModel(
+    private fun viewModel(songId: String, rehearsalDate: LocalDate? = null) = RecordingFormViewModel(
         songId,
         ObserveSongUseCase(songs),
         UploadRecordingUseCase(sessions, songs, InMemoryAudioStorage(), AddRecordingUseCase(sessions, songs)),
         GetTodayUseCase { LocalDate(2026, 10, 13) },
+        UploadVoiceTrackUseCase(sessions, songs, InMemoryAudioStorage()),
+        rehearsalDate,
     )
+
+    @Test
+    fun `une prise de répétition est préremplie et devient la référence`() = runTest {
+        val vm = viewModel("full", LocalDate(2026, 10, 6))
+        assertEquals(LocalDate(2026, 10, 6), vm.state.value.rehearsalDate)
+        vm.onEvent(RecordingFormEvent.DefaultTitleResolved("Répétition du mar. 6 oct."))
+        assertEquals("Répétition du mar. 6 oct.", vm.state.value.title)
+        assertEquals(LocalDate(2026, 10, 6), vm.state.value.recordedOn)
+        assertTrue(vm.state.value.makeReference)
+    }
+
+    @Test
+    fun `le nom par défaut ne remplace pas un nom déjà tapé`() = runTest {
+        val vm = viewModel("full", LocalDate(2026, 10, 6))
+        vm.onEvent(RecordingFormEvent.TitleChanged("Ma prise"))
+        vm.onEvent(RecordingFormEvent.DefaultTitleResolved("Répétition du mar. 6 oct."))
+        assertEquals("Ma prise", vm.state.value.title)
+    }
+
+    @Test
+    fun `une répétition à venir n'est pas datée dans le futur`() = runTest {
+        assertEquals(LocalDate(2026, 10, 13), viewModel("empty", LocalDate(2026, 10, 20)).state.value.recordedOn)
+    }
+
+    @Test
+    fun `hors répétition une nouvelle version ne prend pas la place de la référence`() = runTest {
+        assertFalse(viewModel("full").state.value.makeReference)
+    }
+
+    @Test
+    fun `une piste par voix s'envoie sans nom ni remplacement et ne compte pas dans les versions`() = runTest {
+        val vm = viewModel("full")
+        vm.onEvent(RecordingFormEvent.VoicePartSelected(VoicePart.ALTO))
+        vm.onEvent(RecordingFormEvent.FilePicked(audio))
+        assertTrue(vm.state.value.canSave)
+
+        vm.onEvent(RecordingFormEvent.SaveClicked)
+
+        assertTrue(vm.state.value.isSaved)
+        val saved = songs.song("full")!!
+        assertEquals(listOf(VoicePart.ALTO), saved.voiceTracks.map { it.voicePart })
+        assertEquals(3, saved.recordings.size)
+    }
 
     @Test
     fun `la première version est proposée comme référence`() = runTest {

@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.data.repository
 
+import com.xperiencemusic.shared.domain.model.VoiceTrack
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
@@ -57,6 +58,13 @@ class InMemorySongRepository(initialSongs: List<Song>) : SongRepository {
 
     override suspend fun setReference(songId: String, recordingId: String) =
         updateRecordings(songId) { recordings -> recordings.map { it.copy(isReference = it.id == recordingId) } }
+
+    override suspend fun setVoiceTrack(songId: String, track: VoiceTrack) {
+        songs.update { all ->
+            val song = all[songId] ?: return@update all
+            all + (songId to song.copy(voiceTracks = song.voiceTracks.filterNot { it.voicePart == track.voicePart } + track))
+        }
+    }
 
     private fun updateRecordings(songId: String, transform: (List<Recording>) -> List<Recording>) {
         songs.update { all ->

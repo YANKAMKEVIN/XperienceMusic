@@ -1,5 +1,13 @@
 package com.xperiencemusic.shared.ui.recordingform
 
+import com.xperiencemusic.shared.resources.recording_form_reference_keeps
+import com.xperiencemusic.shared.resources.recording_form_rehearsal_title
+import com.xperiencemusic.shared.resources.recording_form_voice_replaces
+import com.xperiencemusic.shared.resources.recording_form_target_all
+import com.xperiencemusic.shared.resources.recording_form_target_title
+import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.components.ChoiceChips
+import com.xperiencemusic.shared.domain.model.VoicePart
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,10 +95,18 @@ fun RecordingFormScreen(
     songId: String,
     onBack: () -> Unit,
     onSaved: () -> Unit,
-    viewModel: RecordingFormViewModel = koinViewModel(key = "recording-$songId") { parametersOf(songId) },
+    rehearsalDate: LocalDate? = null,
+    viewModel: RecordingFormViewModel = koinViewModel(key = "recording-$songId-$rehearsalDate") { parametersOf(songId, rehearsalDate) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.isSaved) { if (state.isSaved) onSaved() }
+    val words = rememberFormattingWords()
+    val rehearsalTitle = state.rehearsalDate?.let {
+        stringResource(Res.string.recording_form_rehearsal_title, words.shortDayAndDate(it))
+    }
+    LaunchedEffect(rehearsalTitle) {
+        rehearsalTitle?.let { viewModel.onEvent(RecordingFormEvent.DefaultTitleResolved(it)) }
+    }
     val pickFile = rememberAudioFilePicker { viewModel.onEvent(RecordingFormEvent.FilePicked(it)) }
     RecordingFormScreenContent(state = state, onEvent = viewModel::onEvent, onPickFile = pickFile, onBack = onBack)
 }
@@ -138,6 +154,15 @@ fun RecordingFormScreenContent(
             }
             state.error?.let { ErrorText(it) }
 
+            SectionTitle(stringResource(Res.string.recording_form_target_title))
+            val wholeBand = stringResource(Res.string.recording_form_target_all)
+            ChoiceChips(
+                options = listOf<VoicePart?>(null) + VoicePart.entries,
+                selected = state.voicePart,
+                label = { it?.label() ?: wholeBand },
+                onSelect = { onEvent(RecordingFormEvent.VoicePartSelected(it)) },
+            )
+
             SectionTitle(stringResource(Res.string.recording_form_file_title))
             state.file?.let { FileCard(it) }
             OutlinedButton(onClick = onPickFile, enabled = !state.isSaving, modifier = Modifier.fillMaxWidth()) {
@@ -148,20 +173,40 @@ fun RecordingFormScreenContent(
                 )
             }
 
-            OutlinedTextField(
-                value = state.title,
-                onValueChange = { onEvent(RecordingFormEvent.TitleChanged(it)) },
-                label = { Text(stringResource(Res.string.recording_form_name_label)) },
-                placeholder = { Text(stringResource(Res.string.recording_form_name_hint)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            if (state.voicePart != null) {
+                if (state.replacesVoice) {
+                    Text(
+                        stringResource(Res.string.recording_form_voice_replaces, state.voicePart.label()),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = { onEvent(RecordingFormEvent.TitleChanged(it)) },
+                    label = { Text(stringResource(Res.string.recording_form_name_label)) },
+                    placeholder = { Text(stringResource(Res.string.recording_form_name_hint)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    modifier = Modifier.fillMaxWidth(),
+                )
 
-            DateRow(rememberFormattingWords().shortDate(state.recordedOn), onChange = { isPickingDate = true })
-            ReferenceSwitch(state.makeReference, onChange = { onEvent(RecordingFormEvent.MakeReferenceChanged(it)) })
+                DateRow(rememberFormattingWords().shortDate(state.recordedOn), onChange = { isPickingDate = true })
+                ReferenceSwitch(state.makeReference, onChange = { onEvent(RecordingFormEvent.MakeReferenceChanged(it)) })
 
-            if (state.isFull) ReplaceChooser(state, onEvent)
+                if (state.makeReference && !state.isFull) {
+                    state.currentReferenceTitle?.let {
+                        Text(
+                            stringResource(Res.string.recording_form_reference_keeps, it),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                if (state.isFull) ReplaceChooser(state, onEvent)
+            }
         }
     }
 

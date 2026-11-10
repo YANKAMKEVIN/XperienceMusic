@@ -24,6 +24,7 @@ import com.xperiencemusic.shared.ui.profile.ProfileScreen
 import com.xperiencemusic.shared.ui.progress.GrowthReviewScreen
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
 import com.xperiencemusic.shared.ui.recordingform.RecordingFormScreen
+import com.xperiencemusic.shared.ui.rehearsal.RehearsalUploadScreen
 import com.xperiencemusic.shared.ui.setlisteditor.SetlistEditorScreen
 import com.xperiencemusic.shared.ui.song.SongDetailScreen
 import com.xperiencemusic.shared.ui.songeditor.SongEditorScreen
@@ -54,6 +55,7 @@ private fun NavGraphBuilder.weekGraph(navController: NavHostController) {
         WeekScreen(
             onSongClick = navController::openSong,
             onEditWeek = { date -> navController.navigate(SetlistEditorRoute(date?.toString())) },
+            onUploadRehearsal = { date -> navController.navigate(RehearsalUploadRoute(date.toString())) },
             onAccount = { navController.navigate(AccountRoute) },
         )
     }
@@ -85,9 +87,17 @@ private fun NavGraphBuilder.songsGraph(navController: NavHostController) {
         )
     }
     stageGraph(navController)
+    composable<RehearsalUploadRoute> { entry ->
+        RehearsalUploadScreen(
+            serviceDate = LocalDate.parse(entry.toRoute<RehearsalUploadRoute>().serviceDate),
+            onBack = { navController.popBackStack() },
+            onAddTake = { songId, date -> navController.navigate(RecordingFormRoute(songId, date.toString())) },
+        )
+    }
     composable<RecordingFormRoute> { entry ->
         RecordingFormScreen(
             songId = entry.toRoute<RecordingFormRoute>().songId,
+            rehearsalDate = entry.toRoute<RecordingFormRoute>().rehearsalDate?.let(LocalDate::parse),
             onBack = { navController.popBackStack() },
             onSaved = { navController.popBackStack() },
         )
