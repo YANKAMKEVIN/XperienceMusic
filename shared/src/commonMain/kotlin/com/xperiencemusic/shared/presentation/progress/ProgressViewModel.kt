@@ -5,13 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.learning.LearningCatalog
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.LearningProgress
-import com.xperiencemusic.shared.domain.model.Permission
-import com.xperiencemusic.shared.domain.repository.VoiceSubmissionRepository
 import com.xperiencemusic.shared.domain.usecase.GetLearningPreferencesUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
-import com.xperiencemusic.shared.domain.usecase.ObserveGrowthReviewUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveLearningProgressUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveMyGrowthUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveMySubmissionsUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveReviewQueueUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestLevelUseCase
@@ -35,9 +34,9 @@ class ProgressViewModel(
     observeCurrentMember: ObserveCurrentMemberUseCase,
     observeSingerPath: ObserveSingerPathUseCase,
     observeSchedule: ObserveSetlistScheduleUseCase,
-    submissions: VoiceSubmissionRepository,
+    observeMySubmissions: ObserveMySubmissionsUseCase,
+    observeReviewQueue: ObserveReviewQueueUseCase,
     observeMyGrowth: ObserveMyGrowthUseCase,
-    observeGrowthReview: ObserveGrowthReviewUseCase,
     private val requestLevel: RequestLevelUseCase,
     private val tickObjective: TickObjectiveUseCase,
     observeLearningProgress: ObserveLearningProgressUseCase,
@@ -51,20 +50,17 @@ class ProgressViewModel(
             if (member == null) {
                 flowOf(deriveProgressState(null, null))
             } else {
-                // Only the super admin may read everyone's submissions and growth.
-                val isReviewer = member.role.can(Permission.REVIEW_TRAINING)
-                val all = if (isReviewer) submissions.observeAll() else flowOf(emptyList())
-                val review = if (isReviewer) observeGrowthReview() else flowOf(null)
+                // The queue stays empty for whoever may not read the others' work.
                 combine(
                     combine(observeSingerPath(member.id), observeSchedule(), ::Pair),
-                    submissions.observeMine(member.id),
-                    all,
+                    observeMySubmissions(),
+                    observeReviewQueue(),
                     observeMyGrowth(),
-                    review,
-                ) { (path, schedule), mine, everyone, growth, queue ->
+                ) { (path, schedule), mine, queue, growth ->
                     deriveProgressState(member, path)
-                        .withVoices(schedule.current?.songs.orEmpty(), mine, everyone)
-                        .withGrowth(growth, queue)
+                        .withVoices(schedule.current?.songs.orEmpty(), mine)
+                        .withGrowth(growth)
+                        .withReviewQueue(queue)
                 }.onStart { emit(deriveProgressState(member, null)) }
             }
         }
