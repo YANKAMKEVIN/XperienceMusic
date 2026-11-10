@@ -1,9 +1,9 @@
 package com.xperiencemusic.shared.presentation.progress
 
 import com.xperiencemusic.shared.domain.learning.LearningCatalog
-import com.xperiencemusic.shared.domain.learning.complete
-import com.xperiencemusic.shared.domain.learning.completedIn
-import com.xperiencemusic.shared.domain.learning.nextIn
+import com.xperiencemusic.shared.domain.model.complete
+import com.xperiencemusic.shared.domain.model.completedIn
+import com.xperiencemusic.shared.domain.model.nextIn
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.StepState
 

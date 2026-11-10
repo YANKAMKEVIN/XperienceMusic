@@ -2,18 +2,21 @@ package com.xperiencemusic.shared.presentation.progress
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.xperiencemusic.shared.data.local.SnapshotStore
+import com.xperiencemusic.shared.domain.learning.LearningCatalog
 import com.xperiencemusic.shared.domain.model.DomainResult
+import com.xperiencemusic.shared.domain.model.LearningProgress
 import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.repository.VoiceSubmissionRepository
+import com.xperiencemusic.shared.domain.usecase.GetLearningPreferencesUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveGrowthReviewUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveLearningProgressUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveMyGrowthUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestLevelUseCase
+import com.xperiencemusic.shared.domain.usecase.SyncLearningUseCase
 import com.xperiencemusic.shared.domain.usecase.TickObjectiveUseCase
-import com.xperiencemusic.shared.presentation.learning.LearningPreferences
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,8 +40,9 @@ class ProgressViewModel(
     observeGrowthReview: ObserveGrowthReviewUseCase,
     private val requestLevel: RequestLevelUseCase,
     private val tickObjective: TickObjectiveUseCase,
-    learningRepository: com.xperiencemusic.shared.domain.learning.LearningRepository,
-    snapshots: SnapshotStore,
+    observeLearningProgress: ObserveLearningProgressUseCase,
+    syncLearning: SyncLearningUseCase,
+    getLearningPreferences: GetLearningPreferencesUseCase,
 ) : ViewModel() {
     private val action = MutableStateFlow(ActionState())
 
@@ -66,17 +70,19 @@ class ProgressViewModel(
         }
 
     private val learning = observeCurrentMember().flatMapLatest { member ->
-        if (member != null && com.xperiencemusic.shared.domain.learning.LearningCatalog.modulesFor(member.profile.instrument).isNotEmpty()) {
+        if (member != null && LearningCatalog.modulesFor(member.profile.instrument).isNotEmpty()) {
             // Fetches the history kept on the server too: a fresh phone would otherwise show 0 done.
-            learningRepository.observe(member.id)
-                .onStart { viewModelScope.launch { learningRepository.sync(member.id) } }
-                .map { it as com.xperiencemusic.shared.domain.learning.LearningProgress? }
-        } else flowOf(null)
+            observeLearningProgress(member.id)
+                .onStart { viewModelScope.launch { syncLearning(member.id) } }
+                .map<LearningProgress, LearningProgress?> { it }
+        } else {
+            flowOf(null)
+        }
     }
 
     // The comfort settings live with the guided path; read again each time the screen comes back.
     private val reduceMotion = observeCurrentMember().map { member ->
-        member != null && snapshots.load("learning-settings-${member.id}", LearningPreferences.serializer())?.reduceMotion == true
+        member != null && getLearningPreferences(member.id).reduceMotion
     }
 
     val state: StateFlow<ProgressUiState> = combine(base, action, learning, reduceMotion) { state, act, course, calm ->

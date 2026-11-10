@@ -1,17 +1,19 @@
 package com.xperiencemusic.shared.presentation.learning
 
 import com.xperiencemusic.shared.domain.learning.LearningCatalog
-import com.xperiencemusic.shared.domain.learning.LearningKind
+import com.xperiencemusic.shared.domain.model.LearningKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class LearningFeedbackTest {
     private fun stateOn(kind: LearningKind, withChoices: Boolean? = null): LearningUiState {
-        val module = LearningCatalog.modules.first { m ->
-            m.activities.any { it.kind == kind && (withChoices == null || it.choices.isNotEmpty() == withChoices) }
-        }
-        val index = module.activities.indexOfFirst { it.kind == kind && (withChoices == null || it.choices.isNotEmpty() == withChoices) }
+        fun matches(activity: com.xperiencemusic.shared.domain.model.LearningActivity) =
+            activity.kind == kind && (withChoices == null || activity.choices.isNotEmpty() == withChoices)
+        val module = LearningCatalog.modules.first { m -> m.activities.any(::matches) }
+        val index = module.activities.indexOfFirst(::matches)
         return LearningUiState(loading = false, allowed = true, module = module, index = index, mode = LearningMode.ACTIVITY)
     }
 
@@ -32,5 +34,14 @@ class LearningFeedbackTest {
         assertEquals(listOf("Majeur", "Mineur"), stateOn(LearningKind.EAR, withChoices = false).choiceOptions)
         val choice = stateOn(LearningKind.CHOICE, withChoices = true)
         assertEquals(choice.activity.choices, choice.choiceOptions)
+    }
+
+    @Test
+    fun `vérifier attend une réponse, et jamais pendant une sauvegarde`() {
+        val keyboard = stateOn(LearningKind.KEYBOARD)
+        assertFalse(keyboard.canCheck)
+        assertTrue(keyboard.copy(notes = setOf(60)).canCheck)
+        assertFalse(keyboard.copy(notes = setOf(60), saving = true).canCheck)
+        assertFalse(keyboard.copy(notes = setOf(60), allowed = false).canCheck)
     }
 }
