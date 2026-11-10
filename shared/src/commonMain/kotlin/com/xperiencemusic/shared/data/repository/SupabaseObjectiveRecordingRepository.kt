@@ -1,61 +1,76 @@
-package com.xperiencemusic.shared.data.learning
+package com.xperiencemusic.shared.data.repository
 
-import com.xperiencemusic.shared.domain.learning.*
-import com.xperiencemusic.shared.domain.repository.AudioStorage
-import com.xperiencemusic.shared.domain.repository.SessionResettable
+import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.remote.RemoteLoadMonitor
+import com.xperiencemusic.shared.data.remote.dto.ObjectiveRecordingDto
+import com.xperiencemusic.shared.data.remote.dto.ObjectiveRecordingWriteDto
+import com.xperiencemusic.shared.domain.model.ObjectiveRecording
+import com.xperiencemusic.shared.domain.repository.AudioStorage
+import com.xperiencemusic.shared.domain.repository.ObjectiveRecordingRepository
+import com.xperiencemusic.shared.domain.repository.SessionResettable
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
-import kotlinx.coroutines.flow.*
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-@Serializable
-private data class RecordingWrite(@SerialName("member_id") val memberId:String,@SerialName("objective_id") val objectiveId:String,
-    @SerialName("audio_path") val audioPath:String,@SerialName("duration_seconds") val seconds:Int)
+class SupabaseObjectiveRecordingRepository(
+    private val storage: AudioStorage,
+    private val client: SupabaseClient,
+    private val loads: RemoteLoadMonitor,
+) : ObjectiveRecordingRepository, SessionResettable {
+    private val rows = MutableStateFlow<Map<String, List<ObjectiveRecording>>>(emptyMap())
+    private var generation = 0
 
-@Serializable
-private data class RecordingDto(@SerialName("member_id") val memberId:String,@SerialName("objective_id") val objectiveId:String,
-    @SerialName("audio_path") val audioPath:String,@SerialName("duration_seconds") val seconds:Int,@SerialName("submitted_at") val submittedAt:String?=null) {
-    fun domain()=ObjectiveRecording(memberId,objectiveId,audioPath,seconds,submittedAt.orEmpty())
-}
+    override fun resetSession() {
+        generation++
+        rows.value = emptyMap()
+    }
 
-class ObjectiveRecordingsStore(private val storage:AudioStorage,private val client:SupabaseClient?,private val loads:RemoteLoadMonitor):ObjectiveRecordings,SessionResettable {
-    private val rows=MutableStateFlow<Map<String,List<ObjectiveRecording>>>(emptyMap())
-    private var generation=0
-    override fun resetSession() { generation++; rows.value=emptyMap() }
-    override fun observe(memberId:String):Flow<List<ObjectiveRecording>> = rows.onStart {
-        val started=generation
-        if(client!=null) loads.load("objective-audio-$memberId") {
-            val fetched=client.from("objective_recording_history").select { filter { eq("member_id",memberId) } }.decodeList<RecordingDto>()
-            if(started!=generation) throw CancellationException("Session ended")
-            rows.value=rows.value+(memberId to fetched.map { it.domain() })
+    override fun observe(memberId: String): Flow<List<ObjectiveRecording>> = rows
+        .onStart {
+            val started = generation
+            loads.load("objective-audio-$memberId") {
+                val fetched = client.from(HISTORY)
+                    .select { filter { eq("member_id", memberId) } }
+                    .decodeList<ObjectiveRecordingDto>()
+                if (started != generation) throw CancellationException("Session ended")
+                rows.value = rows.value + (memberId to fetched.map { it.toDomain() })
+            }
         }
-    }.map { it[memberId].orEmpty() }
+        .map { it[memberId].orEmpty() }
 
-    @OptIn(ExperimentalUuidApi::class,ExperimentalTime::class)
-    override suspend fun send(memberId:String,objectiveId:String,wav:ByteArray,seconds:Int) {
+    @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+    override suspend fun send(memberId: String, objectiveId: String, wav: ByteArray, seconds: Int) {
         require(seconds in 3..300 && wav.isNotEmpty())
-        val started=generation
-        val path="submissions/$memberId/objectives/${Uuid.random()}.wav"
-        storage.upload(path,"audio/wav",wav)
+        val started = generation
+        val path = "submissions/$memberId/objectives/${Uuid.random()}.wav"
+        storage.upload(path, "audio/wav", wav)
         try {
-            if(started!=generation) throw CancellationException("Session ended")
-            client?.from("objective_recordings")?.upsert(RecordingWrite(memberId,objectiveId,path,seconds)) { onConflict="member_id,objective_id" }
-        } catch(e:Exception) {
+            if (started != generation) throw CancellationException("Session ended")
+            client.from(LATEST).upsert(ObjectiveRecordingWriteDto(memberId, objectiveId, path, seconds)) {
+                onConflict = "member_id,objective_id"
+            }
+        } catch (e: Exception) {
             // A lost response may follow a committed row. Only delete on a definite server refusal.
             if (e is PostgrestRestException) runCatching { storage.delete(path) }
             throw e
         }
-        if(started!=generation) throw CancellationException("Session ended")
-        val value=ObjectiveRecording(memberId,objectiveId,path,seconds,Clock.System.now().toString())
-        rows.value=rows.value+(memberId to (rows.value[memberId].orEmpty()+value))
+        if (started != generation) throw CancellationException("Session ended")
         // Previous submitted takes remain available for listening to progress over time.
+        val value = ObjectiveRecording(memberId, objectiveId, path, seconds, Clock.System.now().toString())
+        rows.value = rows.value + (memberId to (rows.value[memberId].orEmpty() + value))
+    }
+
+    private companion object {
+        const val LATEST = "objective_recordings"
+        const val HISTORY = "objective_recording_history"
     }
 }

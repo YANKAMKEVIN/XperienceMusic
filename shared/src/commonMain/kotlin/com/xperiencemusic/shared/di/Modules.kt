@@ -1,6 +1,37 @@
 package com.xperiencemusic.shared.di
 
 import com.xperiencemusic.shared.domain.usecase.PlayLocalAudioUseCase
+import com.xperiencemusic.shared.data.local.FileLearningSessionStore
+import com.xperiencemusic.shared.data.repository.FileLearningRepository
+import com.xperiencemusic.shared.data.repository.InMemoryLearningRemote
+import com.xperiencemusic.shared.data.repository.InMemoryObjectiveRecordingRepository
+import com.xperiencemusic.shared.data.repository.LearningRemote
+import com.xperiencemusic.shared.data.repository.SupabaseLearningRemote
+import com.xperiencemusic.shared.data.repository.SupabaseObjectiveRecordingRepository
+import com.xperiencemusic.shared.domain.learning.LearningCatalog
+import com.xperiencemusic.shared.domain.repository.LearningRepository
+import com.xperiencemusic.shared.domain.repository.LearningSessionStore
+import com.xperiencemusic.shared.domain.repository.ObjectiveRecordingRepository
+import com.xperiencemusic.shared.domain.usecase.AnalyzePianoScaleUseCase
+import com.xperiencemusic.shared.domain.usecase.GetLearningPreferencesUseCase
+import com.xperiencemusic.shared.domain.usecase.GradeActivityUseCase
+import com.xperiencemusic.shared.domain.usecase.LoadLearningSessionUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveLearningProgressUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveObjectiveChecksUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveObjectiveRecordingsUseCase
+import com.xperiencemusic.shared.domain.usecase.PcmRecorder
+import com.xperiencemusic.shared.domain.usecase.PlayLearningExampleUseCase
+import com.xperiencemusic.shared.domain.usecase.RecordLearningAttemptUseCase
+import com.xperiencemusic.shared.domain.usecase.SaveLearningPreferencesUseCase
+import com.xperiencemusic.shared.domain.usecase.SaveLearningResumeUseCase
+import com.xperiencemusic.shared.domain.usecase.SavePostponedActivitiesUseCase
+import com.xperiencemusic.shared.domain.usecase.SubmitObjectiveRecordingUseCase
+import com.xperiencemusic.shared.domain.usecase.SyncLearningUseCase
+import com.xperiencemusic.shared.presentation.learning.AssessmentViewModel
+import com.xperiencemusic.shared.presentation.learning.LearningDependencies
+import com.xperiencemusic.shared.presentation.learning.LearningViewModel
+import com.xperiencemusic.shared.presentation.learning.PianoScaleViewModel
+import com.xperiencemusic.shared.presentation.learning.SingingSessionController
 import com.xperiencemusic.shared.presentation.voice.VoiceRecordViewModel
 import com.xperiencemusic.shared.presentation.voice.VoiceReviewViewModel
 import com.xperiencemusic.shared.data.repository.InMemoryVoiceSubmissionRepository
@@ -161,21 +192,15 @@ val dataModule = module {
     // Drives the platform players, which expect the main thread.
     single { PlaybackController(get(), get(), CoroutineScope(SupervisorJob() + Dispatchers.Main)) }
     single { SnapshotStore(get()) }
-    single<com.xperiencemusic.shared.domain.learning.LearningRepository> {
-        com.xperiencemusic.shared.data.learning.FileLearningRepository(
-            get(), if (SupabaseConfig.isConfigured) com.xperiencemusic.shared.data.learning.SupabaseLearningRemote(get()) else null,
-        )
-    }
+    single<LearningRepository> { FileLearningRepository(get(), get()) }
+    single<LearningSessionStore> { FileLearningSessionStore(get()) }
     single { com.xperiencemusic.shared.data.remote.RemoteLoadMonitor() }
-    single<com.xperiencemusic.shared.domain.learning.ObjectiveRecordings> {
-        com.xperiencemusic.shared.data.learning.ObjectiveRecordingsStore(get(), if (SupabaseConfig.isConfigured) get() else null, get())
-    }
     single<LocalDataStore> {
         DeviceDataStore(get(), get(), get(), get()) {
             get<PlaybackController>().stop()
             listOf(get<SongRepository>(), get<SetlistRepository>(), get<ExerciseRepository>(),
                 get<MembersRepository>(), get<PlanningRepository>(), get<GrowthRepository>(),
-                get<VoiceSubmissionRepository>(), get<com.xperiencemusic.shared.domain.learning.LearningRepository>(), get<com.xperiencemusic.shared.domain.learning.ObjectiveRecordings>()).forEach {
+                get<VoiceSubmissionRepository>(), get<LearningRepository>(), get<ObjectiveRecordingRepository>()).forEach {
                 (it as? com.xperiencemusic.shared.domain.repository.SessionResettable)?.resetSession()
             }
             get<com.xperiencemusic.shared.data.remote.RemoteLoadMonitor>().clear()
@@ -198,6 +223,8 @@ val dataModule = module {
         single<VoiceSubmissionRepository> { SupabaseVoiceSubmissionRepository(get(), get()) }
         single<PlanningRepository> { SupabasePlanningRepository(get(), get()) }
         single<GrowthRepository> { SupabaseGrowthRepository(get(), get()) }
+        single<LearningRemote> { SupabaseLearningRemote(get()) }
+        single<ObjectiveRecordingRepository> { SupabaseObjectiveRecordingRepository(get(), get(), get()) }
     } else {
         single { AppEnvironment(isDemo = true, demoCode = InMemorySessionRepository.DEMO_CODE) }
         single<SessionRepository> { InMemorySessionRepository(files = get()) }
@@ -221,6 +248,8 @@ val dataModule = module {
         single<VoiceSubmissionRepository> {
             InMemoryVoiceSubmissionRepository(get(), get(), get(), SampleSubmissions.around(get<DateProvider>().today()))
         }
+        single<LearningRemote> { InMemoryLearningRemote() }
+        single<ObjectiveRecordingRepository> { InMemoryObjectiveRecordingRepository(get()) }
     }
 }
 
@@ -279,22 +308,35 @@ val domainModule = module {
     factoryOf(::TrackSingingUseCase)
     factoryOf(::CompleteExerciseUseCase)
     factoryOf(::PlayReferenceNoteUseCase)
+    factoryOf(::PlayLearningExampleUseCase)
+    factoryOf(::PcmRecorder)
+    factory { AnalyzePianoScaleUseCase() }
+    factoryOf(::ObserveLearningProgressUseCase)
+    factoryOf(::SyncLearningUseCase)
+    factoryOf(::RecordLearningAttemptUseCase)
+    factoryOf(::GradeActivityUseCase)
+    factoryOf(::ObserveObjectiveChecksUseCase)
+    factoryOf(::ObserveObjectiveRecordingsUseCase)
+    factoryOf(::SubmitObjectiveRecordingUseCase)
+    factoryOf(::GetLearningPreferencesUseCase)
+    factoryOf(::SaveLearningPreferencesUseCase)
+    factoryOf(::LoadLearningSessionUseCase)
+    factoryOf(::SaveLearningResumeUseCase)
+    factoryOf(::SavePostponedActivitiesUseCase)
 }
 
 val presentationModule = module {
-    viewModel {
-        com.xperiencemusic.shared.presentation.learning.PianoScaleViewModel(get(), get(),
-            com.xperiencemusic.shared.domain.learning.PlayLearningExample(get(), get(), get()),
-            PlayLocalAudioUseCase(get(), get(), get()), get())
-    }
+    factoryOf(::SingingSessionController)
+    factoryOf(::LearningDependencies)
+    viewModelOf(::PianoScaleViewModel)
     viewModel { params ->
-        com.xperiencemusic.shared.presentation.learning.LearningViewModel(
-            get(), get(), get(), get(), get(), com.xperiencemusic.shared.domain.learning.PlayLearningExample(get(), get(), get()), get(), params.getOrNull<String>() ?: "piano-chords", get(), get(),
+        LearningViewModel(
+            moduleId = params.getOrNull<String>() ?: LearningCatalog.DEFAULT,
+            observeMember = get(),
+            dependencies = get(),
         )
     }
-    viewModel { params ->
-        com.xperiencemusic.shared.presentation.learning.AssessmentViewModel(params.get(), get(), get(), get(), VoiceRecorder(get()), PlayLocalAudioUseCase(get(), get(), get()), get())
-    }
+    viewModel { params -> AssessmentViewModel(params.get(), get(), get(), get()) }
     viewModelOf(::AppViewModel)
     viewModelOf(::OnboardingViewModel)
     viewModelOf(::ProfileViewModel)
@@ -302,7 +344,7 @@ val presentationModule = module {
     viewModelOf(::WeekViewModel)
     viewModelOf(::LibraryViewModel)
     viewModelOf(::ProgressViewModel)
-    viewModel { GrowthReviewViewModel(get(), GrowthObjectives.all, get(), get()) }
+    viewModel { GrowthReviewViewModel(get(), GrowthObjectives.all, get(), get(), get(), get()) }
     viewModel { params -> VoiceRecordViewModel(params.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModelOf(::VoiceReviewViewModel)
     viewModelOf(::SongDetailViewModel)
