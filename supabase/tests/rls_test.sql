@@ -393,5 +393,38 @@ do $$ begin
     assert exists(select 1 from storage.objects where name='submissions/00000000-0000-0000-0000-00000000000d/objectives/test.wav'), 'validated files cannot be deleted by their owner';
 end $$;
 
+-- Avatars: each member writes their own, in their own folder; the band sees them all.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin
+    update public.profiles set avatar = 'photo:00000000-0000-0000-0000-00000000000d/me.jpg'
+    where id = '00000000-0000-0000-0000-00000000000d';
+    assert (select avatar from public.profiles where id = '00000000-0000-0000-0000-00000000000d')
+        = 'photo:00000000-0000-0000-0000-00000000000d/me.jpg', 'a member sets their avatar';
+    begin
+        update public.profiles set avatar = 'selfie.jpg' where id = '00000000-0000-0000-0000-00000000000d';
+        assert false, 'an avatar is a preset or a photo';
+    exception when check_violation then null;
+    end;
+    update public.profiles set avatar = 'preset:PIANO_BOY_1' where id = '00000000-0000-0000-0000-00000000000c';
+    assert (select avatar from public.profiles where id = '00000000-0000-0000-0000-00000000000c') is null,
+        'nor anyone else''s';
+    insert into storage.objects (bucket_id, name) values ('avatars', '00000000-0000-0000-0000-00000000000d/me.jpg');
+    begin
+        insert into storage.objects (bucket_id, name) values ('avatars', '00000000-0000-0000-0000-00000000000c/me.jpg');
+        assert false, 'members upload only into their own folder';
+    exception when insufficient_privilege then null;
+    end;
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$ begin
+    assert (select count(*) from storage.objects where bucket_id = 'avatars') = 1, 'the band sees the photos';
+    delete from storage.objects where bucket_id = 'avatars';
+    assert (select count(*) from storage.objects where bucket_id = 'avatars') = 1, 'nobody deletes another''s photo';
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000f');
+do $$ begin
+    assert (select count(*) from storage.objects where bucket_id = 'avatars') = 0, 'uninvited accounts see no photo';
+end $$;
+
 reset role;
 \echo 'ALL RLS CHECKS PASSED'

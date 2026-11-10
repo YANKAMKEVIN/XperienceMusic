@@ -12,7 +12,12 @@ data class ProfileDto(
     val instrument: String? = null,
     @SerialName("voice_part") val voicePart: String? = null,
     val level: String? = null,
+    /** `preset:…` or `photo:…`, see [com.xperiencemusic.shared.domain.model.decodeAvatar]. */
+    val avatar: String? = null,
 )
+
+@Serializable
+data class AvatarUpdateDto(val avatar: String?)
 
 @Serializable
 data class ProfileUpdateDto(

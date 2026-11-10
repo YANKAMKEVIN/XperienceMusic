@@ -7,6 +7,8 @@ data class Member(
     val id: String,
     val profile: MemberProfile,
     val role: Role,
+    /** Null until the member picks one: their initials are shown. */
+    val avatar: Avatar? = null,
 )
 
 data class MemberProfile(

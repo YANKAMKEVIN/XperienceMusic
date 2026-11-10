@@ -57,6 +57,7 @@ import com.xperiencemusic.shared.ui.planning.ServiceDetailScreen
 import com.xperiencemusic.shared.ui.platform.AskNotificationPermission
 import com.xperiencemusic.shared.ui.player.MiniPlayer
 import com.xperiencemusic.shared.ui.profile.ProfileScreen
+import com.xperiencemusic.shared.ui.account.AccountScreen
 import com.xperiencemusic.shared.ui.progress.GrowthReviewScreen
 import com.xperiencemusic.shared.ui.progress.ProgressScreen
 import com.xperiencemusic.shared.ui.recordingform.RecordingFormScreen
@@ -162,6 +163,7 @@ private fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit, 
             WeekScreen(
                 onSongClick = openSong,
                 onEditWeek = { date -> navController.navigate(SetlistEditorRoute(date?.toString())) },
+                onAccount = { navController.navigate(AccountRoute) },
             )
         }
         composable<SetlistEditorRoute> { entry ->
@@ -193,12 +195,19 @@ private fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit, 
             ProgressScreen(
                 onOpenLearning = { moduleId -> navController.navigate(PianoLearningRoute(moduleId)) },
                 onExerciseClick = { navController.navigate(ExerciseRoute(it)) },
-                onManageMembers = { navController.navigate(MembersRoute) },
                 onRecordVoice = { navController.navigate(VoiceRecordRoute(it)) },
                 onReview = { navController.navigate(VoiceReviewRoute) },
                 onValidate = { navController.navigate(GrowthReviewRoute) },
+            )
+        }
+        composable<AccountRoute> {
+            AccountScreen(
+                onBack = { navController.popBackStack() },
+                onEditProfile = { navController.navigate(ProfileRoute) },
+                onReview = { navController.navigate(VoiceReviewRoute) },
+                onValidate = { navController.navigate(GrowthReviewRoute) },
+                onManageMembers = { navController.navigate(MembersRoute) },
                 onSignOut = onSignOut,
-                onProfile = { navController.navigate(ProfileRoute) },
             )
         }
         composable<ProfileRoute> { ProfileScreen(onBack = { navController.popBackStack() }) }

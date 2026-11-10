@@ -14,3 +14,4 @@ internal fun createXperienceSupabaseClient(): SupabaseClient =
     }
 
 internal const val AUDIO_BUCKET = "audio"
+internal const val AVATARS_BUCKET = "avatars"

@@ -3,7 +3,10 @@ package com.xperiencemusic.shared.data.repository
 import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.mapper.toUpdateDto
+import com.xperiencemusic.shared.data.remote.dto.AvatarUpdateDto
 import com.xperiencemusic.shared.data.remote.dto.ProfileDto
+import com.xperiencemusic.shared.domain.model.Avatar
+import com.xperiencemusic.shared.domain.model.encode
 import com.xperiencemusic.shared.data.remote.postgrestCall
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainException
@@ -93,14 +96,24 @@ class SupabaseSessionRepository(
         }
     }
 
-    override suspend fun saveProfile(profile: MemberProfile): Member {
+    override suspend fun saveProfile(profile: MemberProfile): Member = update { userId ->
+        client.from(PROFILES).update(profile.toUpdateDto()) {
+            select()
+            filter { eq("id", userId) }
+        }.decodeSingle<ProfileDto>()
+    }
+
+    override suspend fun saveAvatar(avatar: Avatar?): Member = update { userId ->
+        client.from(PROFILES).update(AvatarUpdateDto(avatar?.encode())) {
+            select()
+            filter { eq("id", userId) }
+        }.decodeSingle<ProfileDto>()
+    }
+
+    /** Writes the member's own row, then keeps the result for offline use and reloads the session. */
+    private suspend fun update(write: suspend (userId: String) -> ProfileDto): Member {
         val userId = client.auth.currentUserOrNull()?.id ?: throw DomainException(DomainError.NOT_SIGNED_IN)
-        val saved = postgrestCall {
-            client.from(PROFILES).update(profile.toUpdateDto()) {
-                select()
-                filter { eq("id", userId) }
-            }.decodeSingle<ProfileDto>()
-        }
+        val saved = postgrestCall { write(userId) }
         snapshots.save(PROFILE_SNAPSHOT, ProfileDto.serializer(), saved)
         profileVersion.update { it + 1 }
         return saved.toDomain() ?: throw DomainException(DomainError.INVALID_INPUT)
