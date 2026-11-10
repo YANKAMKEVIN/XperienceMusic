@@ -1,7 +1,9 @@
 package com.xperiencemusic.app
 
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -17,6 +19,11 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        // Test builds only: the screen stays on while the app is in front, so the phone does not lock
+        // in the middle of a QA session. Release builds keep the normal screen timeout.
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
         // Only a fresh launch: a recreated activity, or one reopened from the recent apps, would
         // replay the link it was first started with (an old address and code).
         val fromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
