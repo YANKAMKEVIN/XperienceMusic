@@ -31,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -53,11 +52,19 @@ import com.xperiencemusic.shared.ui.brand.BrandWaves
 import com.xperiencemusic.shared.ui.brand.XmMonogram
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import com.xperiencemusic.shared.presentation.common.PlaybackStatus
+
+private val MONOGRAM_SIZE = 140.dp
+private val WAVES_HEIGHT = 96.dp
+private val PLAY_BUTTON_SIZE = 80.dp
+private val PLAY_LOADER_SIZE = 28.dp
+/** Material's play arrow has more air in its box than the pause glyph: drawn larger to match. */
+private val PLAY_GLYPH_SIZE = 40.dp
 
 /** The full player: the recording, the brand waves, and the controls to learn a part. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,8 +102,8 @@ fun PlayerContent(state: MiniPlayerUiState, onEvent: (MiniPlayerEvent) -> Unit) 
             modifier = Modifier.padding(top = Spacing.s).semantics { heading() },
         )
         Spacer(Modifier.height(Spacing.xxl))
-        XmMonogram(size = 140.dp)
-        BrandWaves(Modifier.fillMaxWidth().height(96.dp))
+        XmMonogram(size = MONOGRAM_SIZE)
+        BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT))
         if (state.hasError) {
             Text(stringResource(Res.string.player_error), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
         }
@@ -129,14 +136,14 @@ fun PlayerContent(state: MiniPlayerUiState, onEvent: (MiniPlayerEvent) -> Unit) 
             val forward = stringResource(Res.string.player_forward)
             IconButton(
                 onClick = { onEvent(MiniPlayerEvent.RewindClicked) },
-                modifier = Modifier.size(56.dp).semantics { contentDescription = rewind },
+                modifier = Modifier.size(Sizes.rowMin).semantics { contentDescription = rewind },
             ) {
                 Text("−10", style = MaterialTheme.typography.titleMedium)
             }
             BigPlayButton(state, onClick = { onEvent(MiniPlayerEvent.PlayPauseClicked) })
             IconButton(
                 onClick = { onEvent(MiniPlayerEvent.ForwardClicked) },
-                modifier = Modifier.size(56.dp).semantics { contentDescription = forward },
+                modifier = Modifier.size(Sizes.rowMin).semantics { contentDescription = forward },
             ) {
                 Text("+10", style = MaterialTheme.typography.titleMedium)
             }
@@ -155,7 +162,7 @@ private fun BigPlayButton(state: MiniPlayerUiState, onClick: () -> Unit) {
     val label = stringResource(if (state.isPlaying) Res.string.player_pause else Res.string.player_play, state.subtitle)
     IconButton(
         onClick = onClick,
-        modifier = Modifier.size(80.dp).clip(CircleShape).background(BrandColors.gradient),
+        modifier = Modifier.size(PLAY_BUTTON_SIZE).clip(CircleShape).background(BrandColors.gradient),
     ) {
         val shown = when {
             state.isLoading -> PlaybackStatus.LOADING
@@ -164,9 +171,9 @@ private fun BigPlayButton(state: MiniPlayerUiState, onClick: () -> Unit) {
         }
         Crossfade(targetState = shown, animationSpec = tween(180), label = "big-play") { visual ->
             when (visual) {
-                PlaybackStatus.LOADING -> CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
-                PlaybackStatus.PLAYING -> Icon(PauseIcon, contentDescription = label, tint = Color.White, modifier = Modifier.size(36.dp))
-                else -> Icon(Icons.Filled.PlayArrow, contentDescription = label, tint = Color.White, modifier = Modifier.size(40.dp))
+                PlaybackStatus.LOADING -> CircularProgressIndicator(color = BrandColors.onGradient, strokeWidth = Sizes.stroke, modifier = Modifier.size(PLAY_LOADER_SIZE))
+                PlaybackStatus.PLAYING -> Icon(PauseIcon, contentDescription = label, tint = BrandColors.onGradient, modifier = Modifier.size(Sizes.iconXxl))
+                else -> Icon(Icons.Filled.PlayArrow, contentDescription = label, tint = BrandColors.onGradient, modifier = Modifier.size(PLAY_GLYPH_SIZE))
             }
         }
     }

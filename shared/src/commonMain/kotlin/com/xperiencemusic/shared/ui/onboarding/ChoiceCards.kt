@@ -35,7 +35,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
+
+/** The square tile at the start of a choice card (an icon or the level bars). */
+private val TILE_SIZE = 52.dp
+/** The level bars rise from [LEVEL_BAR_BASE] by [LEVEL_BAR_STEP] each. */
+private val LEVEL_BAR_WIDTH = 7.dp
+private val LEVEL_BAR_BASE = 10.dp
+private val LEVEL_BAR_STEP = 8.dp
+private val VOICE_COLUMN_MAX_HEIGHT = 160.dp
+private val VOICE_DOT_SIZE = 10.dp
 
 /** A big tappable answer: icon tile, title, one line of explanation; the gradient marks the choice. */
 @Composable
@@ -48,7 +59,7 @@ fun ChoiceCard(
     leading: @Composable () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(Radius.cardLarge)
     // The tint and the check ease in, so a choice is felt rather than flashed.
     val background by animateColorAsState(
         if (isSelected) colors.primaryContainer.copy(alpha = 0.35f) else colors.surfaceContainer,
@@ -60,7 +71,7 @@ fun ChoiceCard(
             .fillMaxWidth()
             .clip(shape)
             .background(background)
-            .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) BrandColors.gradient else SolidColor(colors.outlineVariant), shape)
+            .border(if (isSelected) Sizes.strokeMedium else Sizes.hairline, if (isSelected) BrandColors.gradient else SolidColor(colors.outlineVariant), shape)
             .selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton)
             .padding(Spacing.m),
     ) {
@@ -75,7 +86,7 @@ fun ChoiceCard(
             Icons.Filled.CheckCircle,
             contentDescription = null,
             tint = colors.primary,
-            modifier = Modifier.size(24.dp).graphicsLayer { alpha = check; scaleX = check; scaleY = check },
+            modifier = Modifier.size(Sizes.icon).graphicsLayer { alpha = check; scaleX = check; scaleY = check },
         )
     }
 }
@@ -85,12 +96,12 @@ fun IconTile(icon: ImageVector, isSelected: Boolean) {
     val colors = MaterialTheme.colorScheme
     Box(
         Modifier
-            .size(52.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .size(TILE_SIZE)
+            .clip(RoundedCornerShape(Radius.card))
             .background(if (isSelected) BrandColors.gradient else SolidColor(colors.surfaceContainerHigh)),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = if (isSelected) colors.onPrimary else colors.primary, modifier = Modifier.size(26.dp))
+        Icon(icon, contentDescription = null, tint = if (isSelected) colors.onPrimary else colors.primary, modifier = Modifier.size(Sizes.iconXl))
     }
 }
 
@@ -99,16 +110,16 @@ fun IconTile(icon: ImageVector, isSelected: Boolean) {
 fun LevelBars(filled: Int, total: Int, isSelected: Boolean) {
     val colors = MaterialTheme.colorScheme
     Box(
-        Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(colors.surfaceContainerHigh),
+        Modifier.size(TILE_SIZE).clip(RoundedCornerShape(Radius.card)).background(colors.surfaceContainerHigh),
         contentAlignment = Alignment.Center,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.Bottom) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalAlignment = Alignment.Bottom) {
             repeat(total) { index ->
                 Box(
                     Modifier
-                        .width(7.dp)
-                        .height(10.dp + 8.dp * index)
-                        .clip(RoundedCornerShape(3.dp))
+                        .width(LEVEL_BAR_WIDTH)
+                        .height(LEVEL_BAR_BASE + LEVEL_BAR_STEP * index)
+                        .clip(RoundedCornerShape(Radius.bar))
                         .background(
                             when {
                                 index >= filled -> SolidColor(colors.outline)
@@ -133,7 +144,7 @@ fun VoiceColumn(
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    maxHeight: Dp = 160.dp,
+    maxHeight: Dp = VOICE_COLUMN_MAX_HEIGHT,
 ) {
     val colors = MaterialTheme.colorScheme
     val height by animateDpAsState(maxHeight * heightFraction * (if (isSelected) 1f else 0.92f), label = "voice")
@@ -147,13 +158,13 @@ fun VoiceColumn(
                 Modifier
                     .fillMaxWidth()
                     .height(height)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(Radius.card))
                     .background(if (isSelected) BrandColors.gradient else SolidColor(colors.surfaceContainerHigh))
-                    .border(1.dp, if (isSelected) SolidColor(colors.primary) else SolidColor(colors.outlineVariant), RoundedCornerShape(16.dp)),
+                    .border(Sizes.hairline, if (isSelected) SolidColor(colors.primary) else SolidColor(colors.outlineVariant), RoundedCornerShape(Radius.card)),
             )
             if (isSelected) {
                 Box(
-                    Modifier.padding(bottom = 10.dp).size(10.dp).clip(CircleShape).background(colors.onPrimary),
+                    Modifier.padding(bottom = Spacing.sm).size(VOICE_DOT_SIZE).clip(CircleShape).background(colors.onPrimary),
                 )
             }
         }

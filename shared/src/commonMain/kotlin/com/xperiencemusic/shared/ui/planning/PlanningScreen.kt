@@ -36,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -100,6 +99,7 @@ import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.PillPadding
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
@@ -115,6 +115,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.text.style.TextOverflow
+
+private val DATE_COLUMN_WIDTH = 48.dp
 
 @Composable
 fun PlanningScreen(
@@ -192,7 +194,7 @@ private fun ValidateMonthDialog(monthLabel: String, validation: MonthValidationU
                     } else {
                         stringResource(Res.string.planning_validate_all_answered)
                     },
-                    color = if (validation.missingAnswers > 0) BrandColors.Amber else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (validation.missingAnswers > 0) AppTheme.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
                     if (validation.incompleteServices > 0) {
@@ -205,7 +207,7 @@ private fun ValidateMonthDialog(monthLabel: String, validation: MonthValidationU
                     } else {
                         stringResource(Res.string.planning_validate_all_covered)
                     },
-                    color = if (validation.incompleteServices > 0) BrandColors.Amber else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (validation.incompleteServices > 0) AppTheme.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
@@ -278,7 +280,7 @@ private fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit
                     Text(
                         stringResource(if (late) Res.string.planning_late_title else Res.string.planning_open_title),
                         style = MaterialTheme.typography.titleMedium,
-                        color = if (late) BrandColors.Amber else Color.Unspecified,
+                        color = if (late) AppTheme.colors.warning else Color.Unspecified,
                     )
                     Text(
                         when {
@@ -293,7 +295,7 @@ private fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit
                         Text(
                             pluralStringResource(Res.plurals.planning_unanswered, state.unansweredCount, state.unansweredCount),
                             style = MaterialTheme.typography.labelMedium,
-                            color = BrandColors.Amber,
+                            color = AppTheme.colors.warning,
                             modifier = Modifier.padding(top = Spacing.xs),
                         )
                     }
@@ -341,7 +343,7 @@ private fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit
 private fun ServiceCard(card: ServiceCardUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
     AppCard(onClick = onClick, modifier = modifier.alpha(if (card.isPast) 0.55f else 1f)) {
         Row(verticalAlignment = Alignment.Top) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(48.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(DATE_COLUMN_WIDTH)) {
                 Text(card.weekday, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(card.day.toString(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
             }
@@ -390,7 +392,7 @@ internal fun MissingLine(missing: List<Instrument>, modifier: Modifier = Modifie
         Text(
             stringResource(Res.string.planning_missing, missing.map { it.label().lowercase() }.joinToString(", ")),
             style = MaterialTheme.typography.labelMedium,
-            color = BrandColors.Amber,
+            color = AppTheme.colors.warning,
             modifier = modifier,
         )
     }
@@ -402,10 +404,10 @@ private fun TodayPill(modifier: Modifier = Modifier) {
         stringResource(Res.string.planning_today),
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Bold,
-        color = Color.White,
+        color = BrandColors.onGradient,
         maxLines = 1,
         softWrap = false,
-        modifier = modifier.background(BrandColors.horizontalGradient, CircleShape).padding(horizontal = 10.dp, vertical = 3.dp),
+        modifier = modifier.background(BrandColors.horizontalGradient, CircleShape).padding(PillPadding.tag),
     )
 }
 
@@ -424,7 +426,7 @@ private fun AnswerBadge(answer: MyAnswer) {
         softWrap = false,
         modifier = Modifier
             .background(color.copy(alpha = 0.14f), CircleShape)
-            .padding(horizontal = 10.dp, vertical = 3.dp),
+            .padding(PillPadding.tag),
     )
 }
 
@@ -444,7 +446,7 @@ internal fun PersonPill(person: ServingUi) {
                 if (person.isMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
                 CircleShape,
             )
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(PillPadding.badge),
     )
 }
 

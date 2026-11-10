@@ -26,6 +26,8 @@ import com.xperiencemusic.shared.resources.exercise_target_label
 import com.xperiencemusic.shared.ui.brand.BrandWaves
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.PillPadding
+import com.xperiencemusic.shared.ui.theme.Sizes
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +35,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -42,11 +43,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -88,7 +87,6 @@ import com.xperiencemusic.shared.resources.exercise_start
 import com.xperiencemusic.shared.resources.exercise_stop
 import com.xperiencemusic.shared.resources.exercise_success_text
 import com.xperiencemusic.shared.resources.exercise_success_title
-import com.xperiencemusic.shared.resources.exercise_target
 import com.xperiencemusic.shared.resources.exercise_too_high
 import com.xperiencemusic.shared.resources.exercise_too_low
 import com.xperiencemusic.shared.resources.exercise_tuner
@@ -103,6 +101,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
+
+private val WAVES_HEIGHT = 72.dp
+private val HOLD_BAR_HEIGHT = 10.dp
+private val MIC_DOT_SIZE = 8.dp
 
 @Composable
 fun ExerciseScreen(
@@ -298,7 +300,7 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
 private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
         // The waves say the microphone hears something; the gauge above gives the measure.
-        BrandWaves(Modifier.fillMaxWidth().height(72.dp).alpha(if (check.tuning == Tuning.SILENT) 0.35f else 1f))
+        BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT).alpha(if (check.tuning == Tuning.SILENT) 0.35f else 1f))
         Text(
             check.heardNoteLabel?.let { stringResource(Res.string.exercise_heard, it) } ?: "",
             style = MaterialTheme.typography.titleMedium,
@@ -325,7 +327,7 @@ private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
             style = MaterialTheme.typography.titleLarge,
         )
         Box(
-            Modifier.fillMaxWidth().height(10.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            Modifier.fillMaxWidth().height(HOLD_BAR_HEIGHT).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
         ) {
             Box(
                 Modifier.fillMaxWidth(check.holdProgress).fillMaxHeight().clip(CircleShape).background(BrandColors.horizontalGradient),
@@ -346,7 +348,7 @@ private fun ListeningAction(onEvent: (ExerciseEvent) -> Unit) {
             .padding(start = Spacing.l, end = Spacing.l, top = Spacing.s),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
+            Box(Modifier.size(MIC_DOT_SIZE).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
             Text(
                 stringResource(Res.string.exercise_mic_on),
                 style = MaterialTheme.typography.labelLarge,
@@ -366,8 +368,8 @@ private fun ListeningAction(onEvent: (ExerciseEvent) -> Unit) {
 private fun NoteSteps(check: AutomaticCheckUi, isListening: Boolean) {
     val colors = MaterialTheme.colorScheme
     FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.xsm, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xsm),
         modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),
     ) {
         check.noteLabels.forEachIndexed { index, label ->
@@ -377,15 +379,15 @@ private fun NoteSteps(check: AutomaticCheckUi, isListening: Boolean) {
                 label,
                 style = MaterialTheme.typography.labelLarge,
                 color = when {
-                    isDone -> Color.White
+                    isDone -> BrandColors.onGradient
                     isCurrent -> colors.onSurface
                     else -> colors.onSurfaceVariant
                 },
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(if (isDone) BrandColors.gradient else SolidColor(colors.surfaceContainerHigh))
-                    .border(if (isCurrent) 2.dp else 0.dp, if (isCurrent) colors.primary else Color.Transparent, CircleShape)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .border(if (isCurrent) Sizes.stroke else 0.dp, if (isCurrent) colors.primary else Color.Transparent, CircleShape)
+                    .padding(PillPadding.badge),
             )
         }
     }

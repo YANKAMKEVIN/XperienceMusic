@@ -56,12 +56,19 @@ import com.xperiencemusic.shared.presentation.progress.StepUi
 import com.xperiencemusic.shared.presentation.progress.TierUi
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 
 /** Horizontal positions the path snakes through, as fractions of the width. */
 private val lanes = listOf(0.5f, 0.74f, 0.5f, 0.26f)
 private val rowHeight = 104.dp
 private val nodeSize = 60.dp
+private val PATH_WIDTH = 5.dp
+/** The gap between two dashes of a path still locked. */
+private val PATH_DASH_GAP = 14.dp
+/** Lifts a step's label so that its first line sits level with the node. */
+private val LABEL_LIFT = 20.dp
 
 /**
  * One tier of the path: its title, then its steps on a winding line. Done steps are filled with
@@ -88,7 +95,7 @@ fun TierPath(
                 modifier = Modifier.weight(1f).semantics { heading() },
             )
             if (tier.isComplete) {
-                Icon(XmIcons.Medal, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                Icon(XmIcons.Medal, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Sizes.iconM))
             }
         }
         BoxWithConstraints(Modifier.fillMaxWidth().height(rowHeight * tier.steps.size)) {
@@ -112,9 +119,9 @@ fun TierPath(
                         path,
                         color = if (done) doneColor else lockedColor,
                         style = Stroke(
-                            width = 5.dp.toPx(),
+                            width = PATH_WIDTH.toPx(),
                             cap = StrokeCap.Round,
-                            pathEffect = if (done) null else PathEffect.dashPathEffect(floatArrayOf(2f, 14.dp.toPx())),
+                            pathEffect = if (done) null else PathEffect.dashPathEffect(floatArrayOf(2f, PATH_DASH_GAP.toPx())),
                         ),
                     )
                 }
@@ -135,7 +142,7 @@ fun TierPath(
                         .width(width / 2 - nodeSize / 2 - Spacing.m)
                         .offset(
                             x = if (isRight) x - nodeSize / 2 - Spacing.m - (width / 2 - nodeSize / 2 - Spacing.m) else x + nodeSize / 2 + Spacing.m,
-                            y = y - 20.dp,
+                            y = y - LABEL_LIFT,
                         ),
                 )
             }
@@ -175,7 +182,7 @@ private fun StepNode(step: StepUi, onClick: () -> Unit, modifier: Modifier) {
                     },
                 )
                 .border(
-                    width = if (step.state == StepState.CURRENT) 3.dp else 1.dp,
+                    width = if (step.state == StepState.CURRENT) Sizes.strokeBold else Sizes.hairline,
                     color = when (step.state) {
                         StepState.CURRENT -> colors.primary
                         StepState.LOCKED -> colors.outlineVariant
@@ -188,12 +195,12 @@ private fun StepNode(step: StepUi, onClick: () -> Unit, modifier: Modifier) {
             contentAlignment = Alignment.Center,
         ) {
             val (icon, tint) = when {
-                step.state == StepState.DONE -> Icons.Filled.Check to Color.White
+                step.state == StepState.DONE -> Icons.Filled.Check to BrandColors.onGradient
                 step.state == StepState.CURRENT -> Icons.Filled.PlayArrow to colors.onSurface
                 step.isChallenge -> XmIcons.Trophy to colors.outline
                 else -> XmIcons.Lock to colors.outline
             }
-            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(26.dp))
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(Sizes.iconXl))
         }
     }
 }
@@ -207,11 +214,11 @@ private fun StepLabel(step: StepUi, labelOpen: String, alignEnd: Boolean, modifi
             Text(
                 labelOpen,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White,
+                color = BrandColors.onGradient,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(RoundedCornerShape(Radius.small))
                     .background(BrandColors.horizontalGradient)
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                    .padding(horizontal = Spacing.xsm, vertical = Spacing.xxs),
             )
         }
         Text(

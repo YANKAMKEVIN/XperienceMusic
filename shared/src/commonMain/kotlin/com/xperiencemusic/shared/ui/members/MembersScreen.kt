@@ -1,6 +1,5 @@
 package com.xperiencemusic.shared.ui.members
 
-import com.xperiencemusic.shared.ui.theme.Palette
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.text.style.TextOverflow
 import com.xperiencemusic.shared.resources.members_change_level
@@ -23,7 +22,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -100,6 +98,7 @@ import com.xperiencemusic.shared.ui.components.ChoiceChips
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -109,6 +108,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.xperiencemusic.shared.ui.theme.Radius
+
+private val INITIAL_SIZE = 44.dp
+/** The space between the role ring and the tinted disc of the initial. */
+private val INITIAL_RING_GAP = 3.dp
+private val LEGEND_DOT_SIZE = 10.dp
 
 @Composable
 fun MembersScreen(onBack: () -> Unit, viewModel: MembersViewModel = koinViewModel()) {
@@ -327,7 +331,7 @@ private fun MenuTrigger(label: String, description: String, enabled: Boolean = t
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .heightIn(min = 48.dp)
+            .heightIn(min = Sizes.touchTarget)
             .clip(RoundedCornerShape(Radius.card))
             .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(end = Spacing.s),
@@ -383,9 +387,9 @@ private fun Initial(name: String, role: Role) {
     val ring = roleColor(role)
     Box(
         Modifier
-            .size(44.dp)
-            .border(2.dp, ring, CircleShape)
-            .padding(3.dp)
+            .size(INITIAL_SIZE)
+            .border(Sizes.stroke, ring, CircleShape)
+            .padding(INITIAL_RING_GAP)
             .background(ring.copy(alpha = 0.18f), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
@@ -399,7 +403,7 @@ private fun roleColor(role: Role): Color = when (role) {
     Role.CONTENT_ADMIN -> BrandColors.Blue
     // White, not a third violet: the three roles must be told apart at a glance (amber already
     // means "missing" in the planning).
-    Role.SUPER_ADMIN -> Palette.Snow
+    Role.SUPER_ADMIN -> MaterialTheme.colorScheme.onSurface
 }
 
 @Composable
@@ -411,7 +415,7 @@ private fun RolesLegend(modifier: Modifier = Modifier) {
             Role.SUPER_ADMIN to Res.string.members_legend_super,
         ).forEach { (role, text) ->
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = Spacing.xs)) {
-                Box(Modifier.size(10.dp).background(roleColor(role), CircleShape))
+                Box(Modifier.size(LEGEND_DOT_SIZE).background(roleColor(role), CircleShape))
                 Text(
                     role.label() + " : " + stringResource(text),
                     style = MaterialTheme.typography.bodySmall,

@@ -16,7 +16,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -48,10 +47,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -62,9 +58,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -108,7 +101,6 @@ import com.xperiencemusic.shared.resources.song_delete_confirm_cancel
 import com.xperiencemusic.shared.resources.song_delete_confirm_ok
 import com.xperiencemusic.shared.resources.song_delete_confirm_text
 import com.xperiencemusic.shared.resources.song_delete_confirm_title
-import com.xperiencemusic.shared.resources.song_key
 import com.xperiencemusic.shared.resources.song_links_title
 import com.xperiencemusic.shared.resources.song_not_found
 import com.xperiencemusic.shared.resources.song_original_key
@@ -120,9 +112,7 @@ import com.xperiencemusic.shared.resources.song_recording_reference
 import com.xperiencemusic.shared.resources.song_recording_set_reference
 import com.xperiencemusic.shared.resources.song_recordings_empty
 import com.xperiencemusic.shared.resources.song_recordings_title
-import com.xperiencemusic.shared.resources.song_transpose_down
 import com.xperiencemusic.shared.resources.song_transpose_reset
-import com.xperiencemusic.shared.resources.song_transpose_up
 import com.xperiencemusic.shared.resources.song_voice_tracks_title
 import com.xperiencemusic.shared.resources.stage_open
 import com.xperiencemusic.shared.ui.components.AppCard
@@ -131,6 +121,7 @@ import com.xperiencemusic.shared.ui.components.StageIcons
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -150,6 +141,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.resources.song_not_found_text
+
+/** The key between − and + keeps its width as it changes ("Do" to "Fa#m"). */
+private val KEY_LABEL_MIN_WIDTH = 96.dp
 
 @Composable
 fun SongDetailScreen(
@@ -273,7 +267,7 @@ private fun SongDetailBody(
         if (state.canRecordVoice) {
             item {
                 OutlinedButton(onClick = onRecordVoice, modifier = Modifier.fillMaxWidth()) {
-                    Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(20.dp))
+                    Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.padding(end = Spacing.s).size(Sizes.iconM))
                     Text(stringResource(Res.string.voice_record_cta))
                 }
             }
@@ -337,7 +331,7 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
         Surface(
             shape = RoundedCornerShape(Radius.card),
             color = MaterialTheme.colorScheme.surfaceContainer,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outlineVariant),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
@@ -356,7 +350,7 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
                     },
                     contentAlignment = Alignment.Center,
                     label = "key",
-                    modifier = Modifier.widthIn(min = 96.dp).clipToBounds(),
+                    modifier = Modifier.widthIn(min = KEY_LABEL_MIN_WIDTH).clipToBounds(),
                 ) { (_, keyLabel) ->
                     Text(
                         keyLabel,
@@ -376,7 +370,7 @@ private fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) 
             }
         }
         state.originalKeyLabel?.let {
-            TextButton(onClick = { onEvent(SongDetailEvent.TransposeResetClicked) }, modifier = Modifier.heightIn(min = 48.dp)) {
+            TextButton(onClick = { onEvent(SongDetailEvent.TransposeResetClicked) }, modifier = Modifier.heightIn(min = Sizes.touchTarget)) {
                 Text(stringResource(Res.string.song_original_key, it) + " · " + stringResource(Res.string.song_transpose_reset))
             }
         }
@@ -395,10 +389,10 @@ private fun NotationSwitch(selected: Notation, onSelect: (Notation) -> Unit, mod
     Row(
         modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(Sizes.touchTarget)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+            .border(Sizes.hairline, MaterialTheme.colorScheme.outlineVariant, shape)
             .selectableGroup(),
     ) {
         notations.forEach { (notation, label) ->
@@ -406,7 +400,7 @@ private fun NotationSwitch(selected: Notation, onSelect: (Notation) -> Unit, mod
             // The gradient fades from the old choice to the new one rather than jumping.
             val highlight by animateFloatAsState(if (isSelected) 1f else 0f, tween(220), label = "notation-highlight")
             val textColor by animateColorAsState(
-                if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (isSelected) BrandColors.onGradient else MaterialTheme.colorScheme.onSurfaceVariant,
                 tween(220),
                 label = "notation-text",
             )
@@ -446,7 +440,7 @@ private fun RecordingRow(recording: RecordingUi, canManage: Boolean, onEvent: (S
                             Icons.Filled.Star,
                             contentDescription = stringResource(Res.string.song_recording_reference),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = Spacing.xs).size(16.dp),
+                            modifier = Modifier.padding(end = Spacing.xs).size(Sizes.iconXs),
                         )
                     }
                     Text(recording.title, style = MaterialTheme.typography.titleSmall)
@@ -512,7 +506,7 @@ private fun VoiceTracks(voiceTracks: List<VoiceTrackUi>, onEvent: (SongDetailEve
                         Icon(
                             if (track.playback == PlaybackStatus.PLAYING) PauseIcon else Icons.Filled.PlayArrow,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(Sizes.iconS),
                         )
                     },
                     colors = FilterChipDefaults.filterChipColors(

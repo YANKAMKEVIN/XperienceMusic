@@ -1,11 +1,9 @@
 package com.xperiencemusic.shared.ui.songeditor
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -22,7 +20,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -30,7 +27,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,6 +77,7 @@ import com.xperiencemusic.shared.ui.components.KeyPicker
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.song.ChordChartView
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -297,7 +294,7 @@ private fun ImportFromLink(state: SongEditorUiState, onEvent: (SongEditorEvent) 
             modifier = Modifier.fillMaxWidth().padding(top = Spacing.s),
         ) {
             if (state.isImporting) {
-                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(Modifier.size(Sizes.iconM), strokeWidth = Sizes.stroke)
             } else {
                 Text(stringResource(Res.string.editor_import_button), style = MaterialTheme.typography.titleMedium)
             }

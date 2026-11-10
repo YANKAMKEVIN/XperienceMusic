@@ -5,11 +5,9 @@ import com.xperiencemusic.shared.resources.availability_past_unavailable
 import com.xperiencemusic.shared.resources.availability_past_served
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -65,7 +63,6 @@ import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.choiceState
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
-import com.xperiencemusic.shared.ui.theme.Palette
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
@@ -185,12 +182,12 @@ private fun AnswerRow(row: AvailabilityRowUi, enabled: Boolean, onEvent: (Availa
             options.forEachIndexed { index, (serves, label) ->
                 val selected = (row.answer == MyAnswer.SERVES) == serves && row.answer != MyAnswer.UNANSWERED
                 // "Je sers" turns green and "Pas dispo" grey: the two answers no longer share one blue.
-                val tint = if (serves) Palette.Success else Palette.Mist
+                val tint = if (serves) AppTheme.colors.success else MaterialTheme.colorScheme.onSurfaceVariant
                 SegmentedButton(
                     selected = selected,
                     colors = SegmentedButtonDefaults.colors(
                         activeContainerColor = tint.copy(alpha = 0.22f),
-                        activeContentColor = if (serves) Palette.Success else Palette.Snow,
+                        activeContentColor = if (serves) AppTheme.colors.success else MaterialTheme.colorScheme.onSurface,
                         activeBorderColor = tint,
                     ),
                     onClick = { onEvent(AvailabilityEvent.Answered(row.date, serves)) },

@@ -41,7 +41,14 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
+
+/** The bar's height: a 48 dp tab and 10 dp of air above and below. */
+private val BAR_HEIGHT = 68.dp
+private val RAIL_WIDTH = 64.dp
+/** The selected capsule's sides: a touch wider than the icon-only tabs, around its label. */
+private val SELECTED_TAB_PADDING = 18.dp
 
 /**
  * One tab of the floating bar. [label] is the short name shown in the capsule; screen readers say
@@ -67,10 +74,10 @@ fun FloatingTabBar(tabs: List<FloatingTab>, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .height(68.dp)
+            .height(BAR_HEIGHT)
             .clip(CircleShape)
             .background(colors.surfaceContainerHigh)
-            .border(1.dp, colors.outlineVariant, CircleShape)
+            .border(Sizes.hairline, colors.outlineVariant, CircleShape)
             .padding(horizontal = Spacing.s)
             .selectableGroup(),
     ) {
@@ -89,10 +96,10 @@ fun FloatingTabRail(tabs: List<FloatingTab>, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(Spacing.s, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .width(64.dp)
+            .width(RAIL_WIDTH)
             .clip(CircleShape)
             .background(colors.surfaceContainerHigh)
-            .border(1.dp, colors.outlineVariant, CircleShape)
+            .border(Sizes.hairline, colors.outlineVariant, CircleShape)
             .padding(vertical = Spacing.m)
             .selectableGroup(),
     ) {
@@ -103,11 +110,11 @@ fun FloatingTabRail(tabs: List<FloatingTab>, modifier: Modifier = Modifier) {
 @Composable
 private fun TabItem(tab: FloatingTab, showsLabel: Boolean = true) {
     val colors = MaterialTheme.colorScheme
-    val content by animateColorAsState(if (tab.isSelected) Color.White else colors.onSurfaceVariant, label = "tabContent")
+    val content by animateColorAsState(if (tab.isSelected) BrandColors.onGradient else colors.onSurfaceVariant, label = "tabContent")
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .height(48.dp)
+            .height(Sizes.touchTarget)
             .clip(CircleShape)
             .background(if (tab.isSelected) BrandColors.horizontalGradient else SolidColor(Color.Transparent))
             .selectable(selected = tab.isSelected, onClick = tab.onClick, role = Role.Tab)
@@ -116,9 +123,9 @@ private fun TabItem(tab: FloatingTab, showsLabel: Boolean = true) {
                 selected = tab.isSelected
                 role = Role.Tab
             }
-            .padding(horizontal = if (tab.isSelected) 18.dp else 16.dp),
+            .padding(horizontal = if (tab.isSelected) SELECTED_TAB_PADDING else Spacing.l),
     ) {
-        Icon(tab.icon, contentDescription = null, tint = content, modifier = Modifier.size(22.dp))
+        Icon(tab.icon, contentDescription = null, tint = content, modifier = Modifier.size(Sizes.iconL))
         AnimatedVisibility(
             visible = tab.isSelected && showsLabel,
             enter = expandHorizontally(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(),

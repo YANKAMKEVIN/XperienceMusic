@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,7 +30,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -48,11 +48,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
@@ -128,8 +126,10 @@ import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.AppTypography
 import com.xperiencemusic.shared.ui.theme.BrandColors
-import com.xperiencemusic.shared.ui.theme.Palette
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
@@ -140,6 +140,11 @@ import com.xperiencemusic.shared.ui.components.LoadingIndicator
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+
+/** The violet glow behind the top of the screen, lifted so that it fades out under the ring. */
+private val GLOW_SIZE = 520.dp
+private val GLOW_LIFT = 160.dp
+private val STREAK_PILL_PADDING = PaddingValues(horizontal = Spacing.m, vertical = 7.dp)
 
 @Composable
 fun ProgressScreen(
@@ -213,9 +218,9 @@ fun ProgressScreenContent(
             Box(
                 Modifier
                     .align(Alignment.TopCenter)
-                    .size(520.dp)
-                    .padding(bottom = 160.dp)
-                    .background(Brush.radialGradient(listOf(BrandColors.Indigo.copy(alpha = 0.22f), Palette.Night.copy(alpha = 0f)))),
+                    .size(GLOW_SIZE)
+                    .padding(bottom = GLOW_LIFT)
+                    .background(Brush.radialGradient(listOf(BrandColors.Indigo.copy(alpha = 0.22f), MaterialTheme.colorScheme.background.copy(alpha = 0f)))),
             )
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = Spacing.l)) {
                 Header(state, Modifier.padding(horizontal = Spacing.l).enter(0))
@@ -301,12 +306,12 @@ private fun Header(state: ProgressUiState, modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(Palette.NightRaised)
-                    .border(1.dp, Palette.Outline, CircleShape)
-                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .border(Sizes.hairline, MaterialTheme.colorScheme.outline, CircleShape)
+                    .padding(STREAK_PILL_PADDING),
             ) {
-                Icon(XmIcons.Flame, contentDescription = null, tint = if (state.streakDays > 0) BrandColors.Amber else Palette.Mist, modifier = Modifier.size(16.dp))
-                Text(pluralStringResource(Res.plurals.progress_streak, state.streakDays, state.streakDays), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+                Icon(XmIcons.Flame, contentDescription = null, tint = if (state.streakDays > 0) AppTheme.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(Sizes.iconXs))
+                Text(pluralStringResource(Res.plurals.progress_streak, state.streakDays, state.streakDays), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = Spacing.xsm))
             }
         }
     }
@@ -325,11 +330,11 @@ private fun AdminStrip(state: ProgressUiState, onReview: () -> Unit, onValidate:
 private fun AdminPill(text: String, onClick: () -> Unit) {
     Box(
         Modifier
-            .heightIn(min = 44.dp)
+            .heightIn(min = Sizes.compactTarget)
             .clip(CircleShape)
-            .border(1.dp, BrandColors.gradient, CircleShape)
+            .border(Sizes.hairline, BrandColors.gradient, CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = Spacing.ml),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, style = MaterialTheme.typography.labelLarge)
@@ -353,7 +358,7 @@ private fun LevelHero(
             LevelRing(List(objectives.size.coerceAtLeast(1)) { RingSegment.VALIDATED }, stringResource(Res.string.growth_top), calm = calm) {
                 Text(stringResource(Res.string.progress_ring_top), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
             }
-            Text(stringResource(Res.string.growth_top), style = MaterialTheme.typography.bodyMedium, color = Palette.Success)
+            Text(stringResource(Res.string.growth_top), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.success)
             return@Column
         }
         val started = startedObjectives(objectives, modules)
@@ -362,16 +367,16 @@ private fun LevelHero(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     CountUp(card.done, MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.ExtraBold))
-                    Text("/${card.required}", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Palette.Mist, modifier = Modifier.padding(bottom = 8.dp))
+                    Text("/${card.required}", style = AppTypography.numberSuffix, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = Spacing.s))
                 }
-                Text(stringResource(Res.string.progress_ring_towards, next.target()), style = MaterialTheme.typography.labelLarge, color = Palette.Mist)
+                Text(stringResource(Res.string.progress_ring_towards, next.target()), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         when {
             card.requestStatus == ExerciseStatus.SUBMITTED ->
-                Text(stringResource(Res.string.growth_waiting), style = MaterialTheme.typography.bodyMedium, color = Palette.Blue, modifier = Modifier.padding(horizontal = Spacing.l))
+                Text(stringResource(Res.string.growth_waiting), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.info, modifier = Modifier.padding(horizontal = Spacing.l))
             card.requestStatus == ExerciseStatus.TO_REWORK && card.feedback != null ->
-                Text(stringResource(Res.string.growth_rework, card.feedback), style = MaterialTheme.typography.bodyMedium, color = BrandColors.Amber, modifier = Modifier.padding(horizontal = Spacing.l))
+                Text(stringResource(Res.string.growth_rework, card.feedback), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.warning, modifier = Modifier.padding(horizontal = Spacing.l))
         }
         if (card.canAsk) {
             GradientButton(onClick = onAsk, enabled = !isWorking, modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.l, vertical = Spacing.s)) {
@@ -468,7 +473,7 @@ private fun PathSection(
 private fun VoiceSection(voices: List<WeekVoiceUi>, onRecordVoice: (String) -> Unit) {
     Column(Modifier.padding(horizontal = Spacing.l)) {
         if (voices.isEmpty()) {
-            Text(stringResource(Res.string.progress_voice_empty), style = MaterialTheme.typography.bodyMedium, color = Palette.Mist)
+            Text(stringResource(Res.string.progress_voice_empty), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
             WeekVoicesCard(voices, onRecordVoice)
         }
@@ -479,22 +484,22 @@ private fun VoiceSection(voices: List<WeekVoiceUi>, onRecordVoice: (String) -> U
 @Composable
 private fun WarmUpCard(warmUp: WarmUpUi, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(Radius.cardLarge)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
             .background(colors.surfaceContainer)
-            .border(1.5.dp, if (warmUp.isDoneToday) SolidColor(colors.outlineVariant) else BrandColors.gradient, shape)
+            .border(Sizes.strokeMedium, if (warmUp.isDoneToday) SolidColor(colors.outlineVariant) else BrandColors.gradient, shape)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(Spacing.m),
     ) {
         Box(
-            Modifier.size(44.dp).background(colors.primaryContainer, RoundedCornerShape(14.dp)),
+            Modifier.size(Sizes.iconTile).background(colors.primaryContainer, RoundedCornerShape(Radius.chip)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(XmIcons.Mic, contentDescription = null, tint = BrandColors.Purple, modifier = Modifier.size(24.dp))
+            Icon(XmIcons.Mic, contentDescription = null, tint = BrandColors.Purple, modifier = Modifier.size(Sizes.icon))
         }
         Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
             Text(stringResource(Res.string.progress_warmup_title), style = MaterialTheme.typography.titleMedium)
@@ -523,11 +528,11 @@ private fun WeekVoicesCard(voices: List<WeekVoiceUi>, onRecordVoice: (String) ->
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = Spacing.s)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(Radius.field))
                     .clickable(role = Role.Button) { onRecordVoice(voice.songId) }
                     .padding(vertical = Spacing.s),
             ) {
-                Icon(XmIcons.Mic, contentDescription = null, tint = BrandColors.Purple, modifier = Modifier.size(20.dp))
+                Icon(XmIcons.Mic, contentDescription = null, tint = BrandColors.Purple, modifier = Modifier.size(Sizes.iconM))
                 Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
                     Text(voice.title, style = MaterialTheme.typography.titleSmall)
                     voice.feedback?.let {
