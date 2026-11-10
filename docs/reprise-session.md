@@ -118,6 +118,22 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
    `20261110000000_member_avatars.sql` est appliquée sur Supabase le 10 novembre 2026. Testé sur le S24 :
    avatar dans Semaine, Mon compte, avatar dessiné, import de photo, retrait. Reste à faire : fusionner, en
    réglant les petits conflits avec la PR 5 (`feat/rehearsal-upload`). Tester sur iPhone (sélecteur PHPicker).
+7. **Refonte qualité du code** (branche `refactor/code-quality`, partie de `main`, 10 novembre 2026), après un
+   audit architecture / SOLID / code mort / valeurs en dur :
+   - **Apprentissage remis en couches** : use cases, `ActivityGrader`, `LearningSessionStore`, `PcmRecorder`
+     commun avec `VoiceRecorder`, ViewModels découpés, textes dans `strings.xml`.
+   - **Tokens d'interface** : `Sizes`, `Radius`, `AppTypography`, `AppTheme.colors`. Les gros écrans sont
+     découpés par section.
+   - **Couche data** : un seul `SessionGuard`, remise à zéro par `resetAtSignOut()`, `Modules.kt` découpé par
+     fonctionnalité dans `di/`, rappels planifiés dans le domaine, `MainScaffold` découpé (`AppNavGraph`, `AppTabBar`).
+   - **Garde-fous** : detekt avec les règles Compose (avec baselines) et `checkUiLiterals`, qui refuse les
+     textes, dp, couleurs et `koinInject` de dépôts dans `ui/`.
+   - **Reste à faire** :
+     - tester sur téléphone : aucun changement visible n'est voulu, à vérifier ;
+     - régler les conflits avec la PR 5 : ses liaisons Koin vont dans les modules de `di/`, ses routes dans
+       `AppNavGraph.kt` ;
+     - choix gardé : `SongRepository` n'est pas découpé et `SyncStatus` n'est pas fusionné avec le bandeau réseau,
+       pour ne pas gêner la PR 5.
 
 ## Règles à respecter
 
@@ -126,7 +142,9 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   Les clés restent dans `local.properties` (non versionné).
 - Pour une version démo sans Supabase, compile avec `ORG_GRADLE_PROJECT_xmDemo=true`. Le code démo est 123456.
 - Architecture : Clean Architecture + MVVM ; chaque écran a son trio Screen / ScreenContent / Preview ;
-  les fonctions `derive` sont pures ; il y a des tests à chaque couche.
+  les fonctions `derive` sont pures ; il y a des tests à chaque couche. Aucun ViewModel ne reçoit de dépôt,
+  aucun composable n'injecte de dépôt ; textes dans `strings.xml`, tailles et couleurs par les tokens de
+  `ui/theme`. `./gradlew detekt checkUiLiterals` le vérifie.
   Les tests de la base se lancent avec Docker (voir `docs/supabase-setup.md`).
 - La chaîne d'outils : Kotlin 2.3.21, CMP 1.11, AGP 9, démon Gradle sur JDK 21, supabase-kt figé en 3.6.0.
 
