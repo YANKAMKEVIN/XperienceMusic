@@ -1,6 +1,5 @@
 package com.xperiencemusic.shared.domain.usecase
 
-import com.xperiencemusic.music.pitch.WavEncoder
 import com.xperiencemusic.shared.domain.repository.MicrophoneInput
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -10,7 +9,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlin.math.sqrt
 
 /** What the microphone has recorded so far. */
 data class RecordingLevel(
@@ -33,26 +31,22 @@ class RecordedVoice(val wav: ByteArray, val durationSeconds: Int, val isNearlySi
  * Records the singer's voice in memory, up to [MAX_SECONDS]. Unlike the exercises, the audio is
  * kept: it is what gets sent for review.
  */
-class VoiceRecorder(private val microphone: MicrophoneInput) {
+class VoiceRecorder(microphone: MicrophoneInput) {
     private val _level = MutableStateFlow(RecordingLevel())
     val level: StateFlow<RecordingLevel> = _level.asStateFlow()
 
-    private val chunks = mutableListOf<FloatArray>()
-    private var sampleRate = 0
+    private val recorder = PcmRecorder(microphone)
     private var job: Job? = null
 
     fun start(scope: CoroutineScope) {
         if (job?.isActive == true) return
-        chunks.clear()
-        sampleRate = 0
+        recorder.clear()
         _level.value = RecordingLevel(isRecording = true)
-        job = microphone.frames(FRAME_SIZE)
+        job = recorder.frames(FRAME_SIZE)
             .onEach { frame ->
-                sampleRate = frame.sampleRate
-                chunks += frame.samples.copyOf()
-                val seconds = chunks.size.toDouble() * FRAME_SIZE / frame.sampleRate
-                val loudness = sqrt(frame.samples.sumOf { it.toDouble() * it } / frame.samples.size)
-                _level.value = RecordingLevel(seconds, (loudness * LEVEL_GAIN).toFloat().coerceIn(0f, 1f), isRecording = true)
+                recorder.keep(frame)
+                val seconds = recorder.frameCount.toDouble() * FRAME_SIZE / frame.sampleRate
+                _level.value = RecordingLevel(seconds, frame.level, isRecording = true)
                 if (seconds >= MAX_SECONDS) {
                     _level.value = _level.value.copy(isRecording = false, reachedLimit = true)
                     job?.cancel()
@@ -66,30 +60,26 @@ class VoiceRecorder(private val microphone: MicrophoneInput) {
     fun stop(): RecordedVoice? {
         job?.cancel()
         _level.value = _level.value.copy(isRecording = false, level = 0f)
-        if (chunks.isEmpty() || sampleRate == 0) return null
-        val samples = FloatArray(chunks.sumOf { it.size })
-        var offset = 0
-        chunks.forEach { it.copyInto(samples, offset); offset += it.size }
-        val loudness = sqrt(samples.sumOf { it.toDouble() * it } / samples.size)
+        val sampleRate = recorder.sampleRate
+        if (recorder.frameCount == 0 || sampleRate == 0) return null
+        val samples = recorder.samples()
         return RecordedVoice(
-            WavEncoder.encode(samples, sampleRate, maxSampleRate = VOICE_SAMPLE_RATE),
+            PcmRecorder.wav(samples, sampleRate),
             durationSeconds = (samples.size / sampleRate).coerceAtLeast(1),
-            isNearlySilent = loudness < SILENCE_LOUDNESS,
+            isNearlySilent = PcmRecorder.loudness(samples) < SILENCE_LOUDNESS,
         )
     }
 
     fun discard() {
         job?.cancel()
-        chunks.clear()
+        recorder.clear()
         _level.value = RecordingLevel()
     }
 
     companion object {
         const val MAX_SECONDS = 300.0
-        private const val FRAME_SIZE = 4096
-        /** Enough for a voice; halves the file. */
-        private const val VOICE_SAMPLE_RATE = 24_000
-        private const val LEVEL_GAIN = 6.0
+        private const val FRAME_SIZE = PcmRecorder.FRAME_SIZE
+
         /** Average loudness (RMS) under which a take is mostly silence: about -46 dBFS. */
         internal const val SILENCE_LOUDNESS = 0.005
     }

@@ -4,7 +4,7 @@ import com.xperiencemusic.shared.domain.repository.AudioPlayer
 import com.xperiencemusic.shared.domain.repository.FileStore
 import com.xperiencemusic.shared.domain.repository.NowPlaying
 
-/** Plays audio that only exists on the phone, like a recording not sent yet. */
+/** Plays audio that only exists on the phone, like a recording not sent yet or a synthesized tone. */
 class PlayLocalAudioUseCase(
     private val files: FileStore,
     private val player: AudioPlayer,
@@ -17,6 +17,12 @@ class PlayLocalAudioUseCase(
         player.play(files.write(path, bytes), nowPlaying)
     }
 
+    /** Plays the file at [path], rendering it with [render] only the first time. */
+    fun playCached(path: String, nowPlaying: NowPlaying, render: () -> ByteArray) {
+        playback.stop()
+        player.play(files.fileUrl(path) ?: files.write(path, render()), nowPlaying)
+    }
+
     fun pause() = player.pause()
 
     fun resume() {
@@ -25,4 +31,7 @@ class PlayLocalAudioUseCase(
     }
 
     fun stop() = player.stop()
+
+    /** Erases private takes from the phone once they are no longer offered. */
+    fun discard(vararg paths: String) = paths.forEach(files::delete)
 }

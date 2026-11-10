@@ -1,63 +1,9 @@
 package com.xperiencemusic.shared.domain.learning
 
-import kotlinx.datetime.DatePeriod
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.plus
-import kotlinx.serialization.Serializable
+import com.xperiencemusic.shared.domain.model.LearningActivity
+import com.xperiencemusic.shared.domain.model.LearningKind
 
-/** Versioned activities train skills; only a responsible person validates the objective. */
-enum class LearningKind { LESSON, EAR, KEYBOARD, PRACTICE, CHOICE, RHYTHM, SING }
-
-/**
- * What a SING activity asks: the notes to sing, in semitones from the singer's comfort note (so each
- * voice gets its own), each held [secondsEach]. [accompanimentSemitones] plays another voice's note
- * meanwhile, to hold one's part against it.
- */
-data class SingTarget(
-    val semitones: List<Int>,
-    val secondsEach: Double,
-    val accompanimentSemitones: Int? = null,
-)
-
-data class LearningActivity(
-    val id: String,
-    val title: String,
-    val kind: LearningKind,
-    val instruction: String,
-    val explanation: String,
-    val example: List<Int> = emptyList(),
-    val expectedNotes: Set<Int> = emptySet(),
-    val answer: String? = null,
-    val choices: List<String> = emptyList(),
-    val bpm: Int = 72,
-    val sing: SingTarget? = null,
-)
-
-@Serializable
-data class LearningAttempt(
-    val id: String,
-    val memberId: String,
-    val activityId: String,
-    val version: Int,
-    val passed: Boolean,
-    val day: LocalDate,
-    val variant: String = "original",
-    val hints: Int = 0,
-)
-
-data class LearningProgress(val attempts: List<LearningAttempt> = emptyList(), val pending: Int = 0) {
-    val completed: Set<String> get() = attempts.filter { it.passed && it.version == PianoBasics.VERSION && PianoBasics.activities.any { activity -> activity.id == it.activityId } }
-        .map { it.activityId }.toSet()
-    val nextIndex: Int get() = PianoBasics.activities.indexOfFirst { it.id !in completed }
-        .let { if (it < 0) PianoBasics.activities.lastIndex else it }
-    val isComplete: Boolean get() = PianoBasics.activities.all { it.id in completed }
-    fun reviewDue(today: LocalDate): Boolean {
-        val last = attempts.filter { it.passed && it.activityId == PianoBasics.REVIEW_ID && it.version == PianoBasics.VERSION }
-            .maxOfOrNull { it.day } ?: return false
-        return today >= last.plus(DatePeriod(days = 3))
-    }
-}
-
+/** The first piano module, "Accords de base", and the version every attempt is counted against. */
 object PianoBasics {
     const val VERSION = 1
     const val OBJECTIVE_ID = "piano-c2"
@@ -94,12 +40,4 @@ object PianoBasics {
             "Sans revoir les explications, construis Fa majeur avec Do4 en bas. Tu réutilises les renversements.",
             "Fa majeur contient Fa, La et Do. Ici : Do4–Fa4–La4. Après ce défi, tu peux demander une évaluation sur ton instrument ; cela ne valide pas automatiquement la compétence.", expectedNotes = setOf(60, 65, 69)),
     )
-
-    fun check(activity: LearningActivity, notes: Set<Int>, answer: String?): Boolean = when (activity.kind) {
-        LearningKind.KEYBOARD -> notes == activity.expectedNotes
-        LearningKind.EAR, LearningKind.CHOICE -> answer == activity.answer
-        LearningKind.RHYTHM -> false // Timing is evaluated from the tap intervals, never a checkbox.
-        LearningKind.SING -> false // Only the microphone, through the view model, passes a sung activity.
-        LearningKind.LESSON, LearningKind.PRACTICE -> true
-    }
 }
