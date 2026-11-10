@@ -40,6 +40,14 @@ data class VoiceTrackDto(
 )
 
 @Serializable
+data class VoiceTrackWriteDto(
+    val id: String,
+    @SerialName("song_id") val songId: String,
+    @SerialName("voice_part") val voicePart: String,
+    @SerialName("storage_path") val storagePath: String,
+)
+
+@Serializable
 data class SongLinkDto(
     val label: String,
     val url: String,

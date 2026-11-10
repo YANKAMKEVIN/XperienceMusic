@@ -37,8 +37,13 @@ data class SongEditorRoute(val songId: String? = null)
 @Serializable
 data class SetlistEditorRoute(val serviceDate: String? = null)
 
+/** [rehearsalDate] (ISO) when the take comes from a week's rehearsal. */
 @Serializable
-data class RecordingFormRoute(val songId: String)
+data class RecordingFormRoute(val songId: String, val rehearsalDate: String? = null)
+
+/** [serviceDate] (ISO) names the week. */
+@Serializable
+data class RehearsalUploadRoute(val serviceDate: String)
 
 @Serializable
 data class ExerciseRoute(val exerciseId: String)

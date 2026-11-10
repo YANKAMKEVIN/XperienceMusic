@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -55,7 +56,11 @@ class SupabaseSessionRepository(
         combine(client.auth.sessionStatus, profileVersion) { status, _ -> status }
             .mapLatest { status ->
                 when (status) {
-                    SessionStatus.Initializing -> SessionState.Loading
+                    // On Android, supabase-kt goes back to Initializing each time the app leaves the
+                    // screen (file picker, WhatsApp, lock), then reloads the session on return. Showing
+                    // the splash then would drop the whole navigation and any form being filled in:
+                    // keep the current state instead. The first Initializing is the initial Loading.
+                    SessionStatus.Initializing -> null
                     is SessionStatus.NotAuthenticated -> SessionState.SignedOut
                     // The stored session could not be refreshed: most likely offline.
                     is SessionStatus.RefreshFailure -> offlineState()
@@ -63,6 +68,7 @@ class SupabaseSessionRepository(
                         status.session.user?.let { loadState(it) } ?: offlineState()
                 }
             }
+            .filterNotNull()
             .stateIn(scope, SharingStarted.Eagerly, SessionState.Loading)
 
     override fun observeSession(): Flow<SessionState> = state

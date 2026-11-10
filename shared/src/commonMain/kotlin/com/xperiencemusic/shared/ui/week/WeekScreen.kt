@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.week
 
+import com.xperiencemusic.shared.resources.action_upload_rehearsal
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.BorderStroke
@@ -103,11 +104,19 @@ import com.xperiencemusic.shared.ui.components.LoadingIndicator
 fun WeekScreen(
     onSongClick: (String) -> Unit,
     onEditWeek: (LocalDate?) -> Unit,
+    onUploadRehearsal: (LocalDate) -> Unit = {},
     onAccount: () -> Unit,
     viewModel: WeekViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    WeekScreenContent(state = state, onEvent = viewModel::onEvent, onSongClick = onSongClick, onEditWeek = onEditWeek, onAccount = onAccount)
+    WeekScreenContent(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onSongClick = onSongClick,
+        onEditWeek = onEditWeek,
+        onUploadRehearsal = onUploadRehearsal,
+        onAccount = onAccount,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,6 +126,7 @@ fun WeekScreenContent(
     onEvent: (WeekEvent) -> Unit,
     onSongClick: (String) -> Unit,
     onEditWeek: (LocalDate?) -> Unit,
+    onUploadRehearsal: (LocalDate) -> Unit = {},
     onAccount: () -> Unit = {},
 ) {
     PullToRefreshBox(
@@ -127,7 +137,7 @@ fun WeekScreenContent(
         if (state.isLoading) {
             LoadingIndicator()
         } else {
-            WeekList(state, onEvent, onSongClick, onEditWeek, onAccount)
+            WeekList(state, onEvent, onSongClick, onEditWeek, onUploadRehearsal, onAccount)
         }
     }
 }
@@ -138,6 +148,7 @@ private fun WeekList(
     onEvent: (WeekEvent) -> Unit,
     onSongClick: (String) -> Unit,
     onEditWeek: (LocalDate?) -> Unit,
+    onUploadRehearsal: (LocalDate) -> Unit = {},
     onAccount: () -> Unit,
 ) {
     val setlist = state.setlist
@@ -186,7 +197,7 @@ private fun WeekList(
         }
         // With no setlist, the empty state carries the publish button.
         if (state.canPublish && setlist != null) {
-            item { AdminActions(state, onEditWeek) }
+            item { AdminActions(state, onEditWeek, onUploadRehearsal) }
         }
     }
 }
@@ -337,9 +348,19 @@ private fun WeekSongRow(song: WeekSongUi, dimmed: Boolean, onClick: () -> Unit, 
 }
 
 @Composable
-private fun AdminActions(state: WeekUiState, onEditWeek: (LocalDate?) -> Unit) {
+private fun AdminActions(state: WeekUiState, onEditWeek: (LocalDate?) -> Unit, onUploadRehearsal: (LocalDate) -> Unit) {
     val setlist = state.setlist
     Column(Modifier.padding(top = Spacing.s), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        if (setlist != null) {
+            OutlinedButton(
+                onClick = { onUploadRehearsal(setlist.serviceDate) },
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(stringResource(Res.string.action_upload_rehearsal), modifier = Modifier.padding(start = Spacing.s))
+            }
+        }
         if (state.canEditSelected && setlist != null) {
             OutlinedButton(
                 onClick = { onEditWeek(setlist.serviceDate) },

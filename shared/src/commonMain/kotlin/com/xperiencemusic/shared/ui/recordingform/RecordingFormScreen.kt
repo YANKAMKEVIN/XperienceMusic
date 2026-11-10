@@ -1,5 +1,12 @@
 package com.xperiencemusic.shared.ui.recordingform
 
+import com.xperiencemusic.shared.resources.recording_form_reference_keeps
+import com.xperiencemusic.shared.resources.recording_form_voice_replaces
+import com.xperiencemusic.shared.resources.recording_form_target_all
+import com.xperiencemusic.shared.resources.recording_form_target_title
+import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.components.ChoiceChips
+import com.xperiencemusic.shared.domain.model.VoicePart
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -86,7 +93,8 @@ fun RecordingFormScreen(
     songId: String,
     onBack: () -> Unit,
     onSaved: () -> Unit,
-    viewModel: RecordingFormViewModel = koinViewModel(key = "recording-$songId") { parametersOf(songId) },
+    rehearsalDate: LocalDate? = null,
+    viewModel: RecordingFormViewModel = koinViewModel(key = "recording-$songId-$rehearsalDate") { parametersOf(songId, rehearsalDate) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.isSaved) { if (state.isSaved) onSaved() }
@@ -137,6 +145,15 @@ fun RecordingFormScreenContent(
             }
             state.error?.let { ErrorText(it) }
 
+            SectionTitle(stringResource(Res.string.recording_form_target_title))
+            val wholeBand = stringResource(Res.string.recording_form_target_all)
+            ChoiceChips(
+                options = listOf<VoicePart?>(null) + VoicePart.entries,
+                selected = state.voicePart,
+                label = { it?.label() ?: wholeBand },
+                onSelect = { onEvent(RecordingFormEvent.VoicePartSelected(it)) },
+            )
+
             SectionTitle(stringResource(Res.string.recording_form_file_title))
             state.file?.let { FileCard(it) }
             OutlinedButton(onClick = onPickFile, enabled = !state.isSaving, modifier = Modifier.fillMaxWidth()) {
@@ -147,48 +164,68 @@ fun RecordingFormScreenContent(
                 )
             }
 
-            OutlinedTextField(
-                value = state.title,
-                onValueChange = { onEvent(RecordingFormEvent.TitleChanged(it)) },
-                label = { Text(stringResource(Res.string.recording_form_name_label)) },
-                placeholder = { Text(stringResource(Res.string.recording_form_name_hint)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
+            if (state.voicePart != null) {
+                if (state.replacesVoice) {
                     Text(
-                        stringResource(Res.string.recording_form_date_label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(state.dateLabel, style = MaterialTheme.typography.titleMedium)
-                }
-                TextButton(onClick = { isPickingDate = true }) { Text(stringResource(Res.string.setlist_change_date)) }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.toggleable(
-                    value = state.makeReference,
-                    role = Role.Switch,
-                    onValueChange = { onEvent(RecordingFormEvent.MakeReferenceChanged(it)) },
-                ),
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(Res.string.recording_form_reference), style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        stringResource(Res.string.recording_form_reference_help),
+                        stringResource(Res.string.recording_form_voice_replaces, state.voicePart.label()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Switch(checked = state.makeReference, onCheckedChange = null, colors = appSwitchColors())
-            }
+            } else {
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = { onEvent(RecordingFormEvent.TitleChanged(it)) },
+                    label = { Text(stringResource(Res.string.recording_form_name_label)) },
+                    placeholder = { Text(stringResource(Res.string.recording_form_name_hint)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    modifier = Modifier.fillMaxWidth(),
+                )
 
-            if (state.isFull) ReplaceChooser(state, onEvent)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            stringResource(Res.string.recording_form_date_label),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(state.dateLabel, style = MaterialTheme.typography.titleMedium)
+                    }
+                    TextButton(onClick = { isPickingDate = true }) { Text(stringResource(Res.string.setlist_change_date)) }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.toggleable(
+                        value = state.makeReference,
+                        role = Role.Switch,
+                        onValueChange = { onEvent(RecordingFormEvent.MakeReferenceChanged(it)) },
+                    ),
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(Res.string.recording_form_reference), style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            stringResource(Res.string.recording_form_reference_help),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = state.makeReference, onCheckedChange = null, colors = appSwitchColors())
+                }
+
+                if (state.makeReference && !state.isFull) {
+                    state.currentReferenceTitle?.let {
+                        Text(
+                            stringResource(Res.string.recording_form_reference_keeps, it),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                if (state.isFull) ReplaceChooser(state, onEvent)
+            }
         }
     }
 

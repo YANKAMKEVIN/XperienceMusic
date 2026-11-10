@@ -1,5 +1,7 @@
 package com.xperiencemusic.shared.di
 
+import com.xperiencemusic.shared.presentation.rehearsal.RehearsalUploadViewModel
+import com.xperiencemusic.shared.domain.usecase.UploadVoiceTrackUseCase
 import com.xperiencemusic.shared.domain.usecase.PlayLocalAudioUseCase
 import com.xperiencemusic.shared.presentation.voice.VoiceRecordViewModel
 import com.xperiencemusic.shared.presentation.voice.VoiceReviewViewModel
@@ -272,6 +274,7 @@ val domainModule = module {
     factoryOf(::CancelInvitationUseCase)
     factoryOf(::SuggestBandWeekUseCase)
     factoryOf(::UploadRecordingUseCase)
+    factoryOf(::UploadVoiceTrackUseCase)
     factoryOf(::GetTodayUseCase)
     factoryOf(::ObserveSetlistOfflineUseCase)
     factoryOf(::DownloadSetlistUseCase)
@@ -308,7 +311,8 @@ val presentationModule = module {
     viewModelOf(::SongDetailViewModel)
     viewModelOf(::SignInViewModel)
     viewModel { params -> SetlistEditorViewModel(get(), get(), get(), get(), get(), params.getOrNull()) }
-    viewModelOf(::RecordingFormViewModel)
+    viewModel { params -> RecordingFormViewModel(params.get(), get(), get(), get(), get(), params.getOrNull()) }
+    viewModel { params -> RehearsalUploadViewModel(params.get(), get()) }
     viewModelOf(::MiniPlayerViewModel)
     viewModelOf(::ExerciseViewModel)
     viewModelOf(::MembersViewModel)
