@@ -1,4 +1,4 @@
-package com.xperiencemusic.shared.presentation.reminders
+package com.xperiencemusic.shared.domain.usecase
 
 import com.xperiencemusic.shared.domain.model.Reminder
 import com.xperiencemusic.shared.domain.model.ServiceKind
@@ -6,8 +6,6 @@ import com.xperiencemusic.shared.domain.model.SetlistSchedule
 import com.xperiencemusic.shared.domain.model.monthStart
 import com.xperiencemusic.shared.domain.model.serviceKind
 import com.xperiencemusic.shared.domain.model.servicesOf
-import com.xperiencemusic.shared.domain.usecase.Planning
-import com.xperiencemusic.shared.presentation.common.FormattingWords
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -22,6 +20,7 @@ data class ReminderContext(
 )
 
 private val EVENING = LocalTime(19, 0)
+private val ANSWERS_DUE_TIME = LocalTime(18, 0)
 
 /**
  * The member's reminders:
@@ -31,7 +30,7 @@ private val EVENING = LocalTime(19, 0)
  * - the day before the answers are due, while some of their answers are missing.
  * Anything already past is dropped.
  */
-fun planServiceReminders(planning: Planning, schedule: SetlistSchedule, context: ReminderContext, words: FormattingWords): List<Reminder> {
+fun planServiceReminders(planning: Planning, schedule: SetlistSchedule, context: ReminderContext): List<Reminder> {
     val me = planning.me ?: return emptyList()
     val today = context.now.date
     val myServices = planning.signups
@@ -43,38 +42,16 @@ fun planServiceReminders(planning: Planning, schedule: SetlistSchedule, context:
 
     val announcements = confirmed.groupBy { it.monthStart() }
         .filterKeys { it !in context.announcedMonths }
-        .map { (month, dates) ->
-            Reminder(
-                id = "validated-$month",
-                at = context.now,
-                title = "Planning de ${words.month(month)} validé",
-                body = "Tu sers : ${dates.joinToString(", ") { words.shortDayAndDate(it) }}",
-            )
-        }
+        .map { (month, dates) -> Reminder.MonthValidated(month, dates, at = context.now) }
 
     val rehearsals = confirmed.filter { it.serviceKind() == ServiceKind.SUNDAY }.map { sunday ->
         val songs = schedule.weeks.firstOrNull { it.setlist.serviceDate == sunday }?.songs?.map { it.title }.orEmpty()
-        Reminder(
-            id = "rehearsal-$sunday",
-            // Rehearsal is on Tuesday: the reminder comes on Monday evening.
-            at = LocalDateTime(sunday.minus(DatePeriod(days = 6)), EVENING),
-            title = "Répétition demain",
-            body = if (songs.isEmpty()) {
-                "Travaille tes chants avant de venir : la répétition sert à mettre en commun."
-            } else {
-                "Travaille ${songs.joinToString(", ")} avant de venir : la répétition sert à mettre en commun."
-            },
-        )
+        // Rehearsal is on Tuesday: the reminder comes on Monday evening.
+        Reminder.RehearsalEve(sunday, songs, at = LocalDateTime(sunday.minus(DatePeriod(days = 6)), EVENING))
     }
 
     val eves = confirmed.map { date ->
-        val isFriday = date.serviceKind() == ServiceKind.FRIDAY
-        Reminder(
-            id = "eve-$date",
-            at = LocalDateTime(date.minus(DatePeriod(days = 1)), EVENING),
-            title = "Demain tu es de service",
-            body = if (isFriday) "Vendredi : louange libre, pas de setlist." else "Dimanche : relis la setlist une dernière fois.",
-        )
+        Reminder.ServiceEve(date, date.serviceKind() ?: ServiceKind.SUNDAY, at = LocalDateTime(date.minus(DatePeriod(days = 1)), EVENING))
     }
 
     val nudges = planning.months.filter { !it.isValidated && it.answerBy != null }.mapNotNull { month ->
@@ -83,12 +60,7 @@ fun planServiceReminders(planning: Planning, schedule: SetlistSchedule, context:
         }
         if (missing == 0) return@mapNotNull null
         val answerBy = month.answerBy!!
-        Reminder(
-            id = "answers-${month.monthStart}",
-            at = LocalDateTime(answerBy.minus(DatePeriod(days = 1)), LocalTime(18, 0)),
-            title = "Tes dispos de ${words.month(month.monthStart)}",
-            body = "$missing services sans réponse. Réponds avant le ${words.dayAndMonth(answerBy)} dans Planning.",
-        )
+        Reminder.AnswersDue(month.monthStart, missing, answerBy, at = LocalDateTime(answerBy.minus(DatePeriod(days = 1)), ANSWERS_DUE_TIME))
     }
 
     return (announcements + (rehearsals + eves + nudges).filter { it.at > context.now }).sortedBy { it.at }

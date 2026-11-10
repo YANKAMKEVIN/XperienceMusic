@@ -37,7 +37,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.ui.components.SystemBackHandler
-import com.xperiencemusic.shared.presentation.reminders.RemindersViewModel
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.remote_load_failed
 import com.xperiencemusic.shared.resources.remote_load_retry
@@ -73,7 +72,6 @@ import kotlin.reflect.KClass
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
 
 /** [shortLabel] is what fits in the tab capsule; [label] is the full name read aloud. */
 private data class Tab(
@@ -98,8 +96,6 @@ private val tabs = listOf(
 @Composable
 fun MainScaffold(onSignOut: () -> Unit, hasLoadFailure: Boolean, onRetryLoads: () -> Unit) {
     val navController = rememberNavController()
-    // Keeps the phone's planning reminders in step for as long as someone is signed in.
-    koinViewModel<RemindersViewModel>()
     AskNotificationPermission()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination

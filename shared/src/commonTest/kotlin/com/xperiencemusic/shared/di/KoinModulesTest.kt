@@ -2,7 +2,6 @@ package com.xperiencemusic.shared.di
 
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.data.remote.RemoteLoadMonitor
-import com.xperiencemusic.shared.domain.model.Reminder
 import com.xperiencemusic.shared.domain.repository.AudioPlayer
 import com.xperiencemusic.shared.domain.repository.ExerciseRepository
 import com.xperiencemusic.shared.domain.repository.FileStore
@@ -13,7 +12,6 @@ import com.xperiencemusic.shared.domain.repository.MembersRepository
 import com.xperiencemusic.shared.domain.repository.MicrophoneInput
 import com.xperiencemusic.shared.domain.repository.ObjectiveRecordingRepository
 import com.xperiencemusic.shared.domain.repository.PlanningRepository
-import com.xperiencemusic.shared.domain.repository.ReminderScheduler
 import com.xperiencemusic.shared.domain.repository.SessionResettable
 import com.xperiencemusic.shared.domain.repository.SetlistRepository
 import com.xperiencemusic.shared.domain.repository.SongRepository
@@ -22,6 +20,8 @@ import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.fakes.FakeAudioPlayer
 import com.xperiencemusic.shared.fakes.FakeFileStore
 import com.xperiencemusic.shared.fakes.FakeMicrophone
+import com.xperiencemusic.shared.platform.LocalNotification
+import com.xperiencemusic.shared.platform.NotificationScheduler
 import com.xperiencemusic.shared.presentation.account.AccountViewModel
 import com.xperiencemusic.shared.presentation.app.AppViewModel
 import com.xperiencemusic.shared.presentation.exercise.ExerciseViewModel
@@ -39,7 +39,6 @@ import com.xperiencemusic.shared.presentation.profile.ProfileViewModel
 import com.xperiencemusic.shared.presentation.progress.GrowthReviewViewModel
 import com.xperiencemusic.shared.presentation.progress.ProgressViewModel
 import com.xperiencemusic.shared.presentation.recordingform.RecordingFormViewModel
-import com.xperiencemusic.shared.presentation.reminders.RemindersViewModel
 import com.xperiencemusic.shared.presentation.setlisteditor.SetlistEditorViewModel
 import com.xperiencemusic.shared.presentation.signin.SignInViewModel
 import com.xperiencemusic.shared.presentation.song.SongDetailViewModel
@@ -77,7 +76,7 @@ class KoinModulesTest {
         single<AudioPlayer> { FakeAudioPlayer() }
         single<FileStore> { FakeFileStore() }
         single<MicrophoneInput> { FakeMicrophone(emptyList()) }
-        single<ReminderScheduler> { RecordingReminderScheduler() }
+        single<NotificationScheduler> { SilentNotificationScheduler() }
     }
 
     private lateinit var app: KoinApplication
@@ -116,7 +115,6 @@ class KoinModulesTest {
             koin.get<PlanningViewModel>(),
             koin.get<AvailabilityViewModel> { parametersOf(date) },
             koin.get<ServiceDetailViewModel> { parametersOf(date) },
-            koin.get<RemindersViewModel>(),
             koin.get<ProgressViewModel>(),
             koin.get<ExerciseViewModel> { parametersOf("exercise") },
             koin.get<GrowthReviewViewModel>(),
@@ -128,7 +126,7 @@ class KoinModulesTest {
             koin.get<MembersViewModel>(),
             koin.get<MiniPlayerViewModel>(),
         )
-        assertEquals(28, viewModels.size)
+        assertEquals(27, viewModels.size)
     }
 
     @Test
@@ -201,7 +199,7 @@ class KoinModulesTest {
         }
     }
 
-    private class RecordingReminderScheduler : ReminderScheduler {
-        override suspend fun replaceAll(reminders: List<Reminder>) = Unit
+    private class SilentNotificationScheduler : NotificationScheduler {
+        override suspend fun replaceAll(notifications: List<LocalNotification>) = Unit
     }
 }

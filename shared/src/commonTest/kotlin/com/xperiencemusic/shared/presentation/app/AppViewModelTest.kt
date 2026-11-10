@@ -1,22 +1,28 @@
 package com.xperiencemusic.shared.presentation.app
 
+import com.xperiencemusic.shared.data.repository.InMemoryMembersRepository
+import com.xperiencemusic.shared.data.repository.InMemoryPlanningRepository
+import com.xperiencemusic.shared.domain.model.PlanningMonth
+import com.xperiencemusic.shared.domain.model.Reminder
+import com.xperiencemusic.shared.domain.model.ServiceSignup
 import com.xperiencemusic.shared.domain.model.SessionState
 import com.xperiencemusic.shared.domain.repository.LocalDataStore
+import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.ObservePlanningUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveRemoteLoadFailureUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
 import com.xperiencemusic.shared.domain.usecase.RetryRemoteLoadsUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
+import com.xperiencemusic.shared.domain.usecase.SyncServiceRemindersUseCase
+import com.xperiencemusic.shared.fakes.FakeAnnouncedMonthsStore
+import com.xperiencemusic.shared.fakes.FakeReminderScheduler
 import com.xperiencemusic.shared.fakes.FakeRemoteLoadStatus
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
 import com.xperiencemusic.shared.fakes.member
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import com.xperiencemusic.shared.fakes.schedule
+import com.xperiencemusic.shared.fakes.setlistRepository
+import com.xperiencemusic.shared.fakes.songRepository
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -24,12 +30,26 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppViewModelTest {
     private val sessions = FakeSessionRepository(member())
     private var wipes = 0
     private val loads = FakeRemoteLoadStatus()
+    private val planning = InMemoryPlanningRepository(
+        listOf(PlanningMonth(LocalDate(2026, 11, 1), null, isValidated = true)),
+        listOf(ServiceSignup(LocalDate(2026, 11, 8), "me", true)),
+    )
+    private val reminders = FakeReminderScheduler()
     private lateinit var viewModel: AppViewModel
 
     @BeforeTest
@@ -41,6 +61,12 @@ class AppViewModelTest {
             SignOutUseCase(sessions, LocalDataStore { wipes++ }),
             ObserveRemoteLoadFailureUseCase(loads),
             RetryRemoteLoadsUseCase(loads),
+            SyncServiceRemindersUseCase(
+                ObservePlanningUseCase(planning, InMemoryMembersRepository(sessions), ObserveCurrentMemberUseCase(sessions)),
+                schedule(setlistRepository(), songRepository()),
+                reminders,
+                FakeAnnouncedMonthsStore(),
+            ) { LocalDateTime(2026, 10, 28, 12, 0) },
         )
     }
 
@@ -77,6 +103,15 @@ class AppViewModelTest {
         viewModel.onEvent(AppEvent.RetryLoadsClicked)
         assertEquals(1, loads.retries)
         assertFalse(viewModel.hasLoadFailure.value)
+    }
+
+    @Test
+    fun `les rappels suivent le planning tant que le membre est connecté`() = runTest {
+        assertEquals(LocalDate(2026, 11, 8), reminders.scheduled?.filterIsInstance<Reminder.ServiceEve>()?.single()?.date)
+
+        sessions.state.value = SessionState.SignedOut
+        planning.answer("me", LocalDate(2026, 11, 15), true)
+        assertEquals(1, reminders.scheduled?.filterIsInstance<Reminder.ServiceEve>()?.size, "nobody signed in: nothing planned again")
     }
 
     @Test

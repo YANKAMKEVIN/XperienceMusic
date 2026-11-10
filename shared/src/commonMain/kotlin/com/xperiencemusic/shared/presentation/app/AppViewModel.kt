@@ -8,10 +8,16 @@ import com.xperiencemusic.shared.domain.usecase.ObserveSessionUseCase
 import com.xperiencemusic.shared.domain.usecase.RetryRemoteLoadsUseCase
 import com.xperiencemusic.shared.domain.usecase.RetrySessionUseCase
 import com.xperiencemusic.shared.domain.usecase.SignOutUseCase
+import com.xperiencemusic.shared.domain.usecase.SyncServiceRemindersUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -35,13 +41,24 @@ sealed interface AppEvent {
     data object RetryLoadsClicked : AppEvent
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AppViewModel(
     observeSession: ObserveSessionUseCase,
     private val retrySession: RetrySessionUseCase,
     private val signOut: SignOutUseCase,
     observeLoadFailure: ObserveRemoteLoadFailureUseCase,
     private val retryLoads: RetryRemoteLoadsUseCase,
+    syncReminders: SyncServiceRemindersUseCase,
 ) : ViewModel() {
+    init {
+        // The phone's planning reminders follow the planning for as long as someone is signed in.
+        observeSession()
+            .map { it is SessionState.Ready }
+            .distinctUntilChanged()
+            .flatMapLatest { isSignedIn -> if (isSignedIn) syncReminders() else emptyFlow() }
+            .launchIn(viewModelScope)
+    }
+
     val state: StateFlow<AppUiState> = observeSession()
         .map { it.toUiState() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppUiState.Loading)

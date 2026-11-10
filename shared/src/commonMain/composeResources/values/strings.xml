@@ -902,6 +902,18 @@
     <string name="quoted_feedback">« %1$s »</string>
     <string name="members_legend_line">%1$s : %2$s</string>
     <string name="notification_channel_services">Services et répétitions</string>
+
+    <!-- Reminders -->
+    <string name="reminder_validated_title">Planning de %1$s validé</string>
+    <string name="reminder_validated_body">Tu sers : %1$s</string>
+    <string name="reminder_rehearsal_title">Répétition demain</string>
+    <string name="reminder_rehearsal_body">Travaille tes chants avant de venir : la répétition sert à mettre en commun.</string>
+    <string name="reminder_rehearsal_body_songs">Travaille %1$s avant de venir : la répétition sert à mettre en commun.</string>
+    <string name="reminder_eve_title">Demain tu es de service</string>
+    <string name="reminder_eve_friday">Vendredi : louange libre, pas de setlist.</string>
+    <string name="reminder_eve_sunday">Dimanche : relis la setlist une dernière fois.</string>
+    <string name="reminder_answers_title">Tes dispos de %1$s</string>
+    <string name="reminder_answers_body">%1$d services sans réponse. Réponds avant le %2$s dans Planning.</string>
     <string-array name="format_weekdays">
         <item>lundi</item>
         <item>mardi</item>

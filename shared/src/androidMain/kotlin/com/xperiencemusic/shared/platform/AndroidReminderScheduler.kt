@@ -9,8 +9,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.xperiencemusic.shared.domain.model.Reminder
-import com.xperiencemusic.shared.domain.repository.ReminderScheduler
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.notification_channel_services
 import kotlinx.coroutines.CoroutineScope
@@ -25,15 +23,15 @@ import kotlin.time.Clock
  * Alarms that wake [ReminderReceiver] at each reminder's time; reminders already due are shown at
  * once. The ids scheduled last time are kept so they can be cancelled when the plan changes.
  */
-class AndroidReminderScheduler(private val context: Context) : ReminderScheduler {
+class AndroidReminderScheduler(private val context: Context) : NotificationScheduler {
     private val alarms = context.getSystemService(AlarmManager::class.java)
     private val prefs = context.getSharedPreferences("reminders", Context.MODE_PRIVATE)
 
-    override suspend fun replaceAll(reminders: List<Reminder>) {
+    override suspend fun replaceAll(notifications: List<LocalNotification>) {
         prefs.getStringSet(KEY_IDS, emptySet()).orEmpty().forEach { id -> alarms.cancel(pendingIntent(id, null)) }
         val now = Clock.System.now()
         val scheduled = mutableSetOf<String>()
-        reminders.forEach { reminder ->
+        notifications.forEach { reminder ->
             val at = reminder.at.toInstant(TimeZone.currentSystemDefault())
             if (at <= now) {
                 showReminder(context, reminder.id, reminder.title, reminder.body)
@@ -46,7 +44,7 @@ class AndroidReminderScheduler(private val context: Context) : ReminderScheduler
         prefs.edit().putStringSet(KEY_IDS, scheduled).apply()
     }
 
-    private fun pendingIntent(id: String, reminder: Reminder?): PendingIntent {
+    private fun pendingIntent(id: String, reminder: LocalNotification?): PendingIntent {
         val intent = Intent(context, ReminderReceiver::class.java).setAction("xm.reminder.$id")
         if (reminder != null) {
             intent.putExtra(EXTRA_ID, reminder.id).putExtra(EXTRA_TITLE, reminder.title).putExtra(EXTRA_BODY, reminder.body)
