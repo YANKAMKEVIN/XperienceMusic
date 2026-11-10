@@ -50,8 +50,24 @@ les chants), tu annules une invitation en attente ou tu retires quelqu'un du gro
 
 ## 4. Configurer la connexion par code e-mail
 
-1. **Authentication → SMTP** : branche un envoi d'e-mails (Gmail avec un mot de passe
-   d'application, Brevo, Resend…). Sans SMTP personnalisé, les modèles ne sont pas modifiables.
+1. **Authentication → Emails → SMTP Settings** : branche l'envoi des codes sur
+   [Brevo](https://www.brevo.com/) (offre gratuite, 300 e-mails par jour). Sans SMTP
+   personnalisé, les modèles ne sont pas modifiables. Réglages en place depuis le 10 novembre 2026 :
+
+   | Champ | Valeur |
+   |---|---|
+   | Sender email | l'adresse de l'admin, validée dans Brevo (**Expéditeurs**) |
+   | Sender name | `Xperience Music` |
+   | Host | `smtp-relay.brevo.com` |
+   | Port | `587` |
+   | Username | le login affiché dans Brevo, **SMTP et API → SMTP** (`…@smtp-brevo.com`) |
+   | Password | une **clé SMTP** Brevo (pas une clé API), sans expiration |
+
+   Côté Brevo, le téléphone du compte doit être vérifié avant tout envoi. N'active pas le blocage
+   des adresses IP non autorisées pour les clés SMTP : Supabase envoie depuis des adresses qui
+   changent. Si un code n'arrive pas, Brevo garde chaque envoi dans **Transactionnel → Logs**.
+   Sans nom de domaine, Brevo remplace l'adresse Gmail de l'expéditeur par une adresse à lui ; si
+   les codes finissent en spam, il faudra un domaine.
 2. **Authentication → Providers → Email** : mets **Email OTP Length** à **6** (l'app attend 6 chiffres).
 3. **Authentication → Email Templates** : mets le **même** contenu dans **Confirm signup**
    (première connexion) et **Magic Link** (connexions suivantes), avec l'objet
@@ -101,9 +117,8 @@ for f in supabase/tests/supabase_stubs.sql supabase/migrations/*.sql supabase/te
 docker rm -f xm-pg
 ```
 
-## À faire plus tard
+## Bon à savoir
 
-- **Remplacer Gmail par Brevo ou Resend pour l'envoi des codes**, avant d'inviter tout le groupe.
-  Avec le SMTP Gmail, chaque code envoyé à un membre apparaît aussi dans les messages envoyés du
-  compte Gmail de l'admin. Un service dédié (gratuit à ce volume) envoie depuis une adresse
-  « Xperience Music » et garde les codes privés.
+- Sur l'offre gratuite, Supabase met le projet **en pause** après une semaine sans activité.
+  Les données restent intactes : **Resume project** sur le tableau de bord le relance en quelques
+  minutes. Tant que le groupe utilise l'app chaque semaine, ça n'arrive pas.

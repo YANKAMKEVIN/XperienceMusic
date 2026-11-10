@@ -107,7 +107,8 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
    besoin. C'est Kevin qui se connecte. À tester : micro (« Ma voix »), import accords.app, collage avec accords
    au-dessus, planning et rappels, parcours de croissance.
 5. **Plus tard.**
-   - Passer l'envoi des mails de Gmail à **Brevo** (ou Resend) avant d'inviter le groupe.
+   - ~~Passer l'envoi des mails de Gmail à **Brevo**.~~ Fait le 10 novembre 2026 (voir
+     `docs/supabase-setup.md`, étape 4).
    - Notifications quand une setlist est publiée (Firebase).
    - Test sur un vrai iPhone (il faut un compte Apple Developer pour TestFlight).
    - Version Android release signée et numéro de version, pour diffuser l'APK au groupe.
