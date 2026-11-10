@@ -124,93 +124,7 @@ fun SongEditorScreenContent(
             LoadingIndicator(Modifier.padding(padding))
             return@Scaffold
         }
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Spacing.l, vertical = Spacing.s),
-            verticalArrangement = Arrangement.spacedBy(Spacing.l),
-        ) {
-            state.error?.let { error ->
-                Text(
-                    stringResource(
-                        when (error) {
-                            SongEditorError.FORBIDDEN -> Res.string.error_forbidden
-                            SongEditorError.MISSING_TITLE -> Res.string.editor_error_title
-                            SongEditorError.NETWORK -> Res.string.error_generic
-                        },
-                    ),
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-            if (state.isNew) ImportFromLink(state, onEvent)
-            OutlinedTextField(
-                value = state.title,
-                onValueChange = { onEvent(SongEditorEvent.TitleChanged(it)) },
-                label = { Text(stringResource(Res.string.editor_title_label)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = state.artist,
-                onValueChange = { onEvent(SongEditorEvent.ArtistChanged(it)) },
-                label = { Text(stringResource(Res.string.editor_artist_label)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            SectionTitle(stringResource(Res.string.editor_key_title))
-            KeyPicker(
-                key = state.key,
-                onTonicSelected = { onEvent(SongEditorEvent.TonicSelected(it)) },
-                onModeSelected = { onEvent(SongEditorEvent.ModeSelected(it)) },
-            )
-
-            SectionTitle(stringResource(Res.string.editor_chart_title))
-            Text(
-                stringResource(Res.string.editor_chart_help),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            OutlinedTextField(
-                value = state.chart,
-                onValueChange = { onEvent(SongEditorEvent.ChartChanged(it)) },
-                label = { Text(stringResource(Res.string.editor_chart_label)) },
-                minLines = 8,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (state.hasChordsAbove) {
-                TextButton(onClick = { onEvent(SongEditorEvent.PlaceChordsClicked) }) {
-                    Text(stringResource(Res.string.editor_place_chords))
-                }
-            }
-            if (state.unknownChords.isNotEmpty()) {
-                Text(
-                    stringResource(Res.string.editor_unknown_chords, state.unknownChords.joinToString(", ")),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            if (state.preview.isNotEmpty() && state.chart.isNotBlank()) {
-                AppCard {
-                    SectionTitle(stringResource(Res.string.editor_preview_title), Modifier.padding(bottom = Spacing.s))
-                    ChordChartView(state.preview)
-                }
-            }
-            if (!state.isNew) {
-                TextButton(
-                    onClick = { onEvent(SongEditorEvent.DeleteClicked) },
-                    enabled = !state.isSaving,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.l),
-                ) {
-                    Text(stringResource(Res.string.editor_delete), color = MaterialTheme.colorScheme.error)
-                }
-            }
-        }
+        SongEditorForm(state, onEvent, Modifier.padding(padding))
     }
 
     if (state.isConfirmingDiscard) {
@@ -220,23 +134,129 @@ fun SongEditorScreenContent(
         )
     }
 
-    if (state.isConfirmingDeletion) {
-        AlertDialog(
-            onDismissRequest = { onEvent(SongEditorEvent.DeleteDismissed) },
-            title = { Text(stringResource(Res.string.editor_delete_title, state.title)) },
-            text = { Text(stringResource(Res.string.editor_delete_text)) },
-            confirmButton = {
-                TextButton(onClick = { onEvent(SongEditorEvent.DeleteConfirmed) }) {
-                    Text(stringResource(Res.string.song_delete_confirm_ok), color = MaterialTheme.colorScheme.error)
-                }
+    if (state.isConfirmingDeletion) DeleteSongDialog(state.title, onEvent)
+}
+
+/** Title, artist, key and chart, then the preview and the way to delete the song. */
+@Composable
+private fun SongEditorForm(state: SongEditorUiState, onEvent: (SongEditorEvent) -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = Spacing.l, vertical = Spacing.s),
+        verticalArrangement = Arrangement.spacedBy(Spacing.l),
+    ) {
+        state.error?.let { ErrorText(it) }
+        if (state.isNew) ImportFromLink(state, onEvent)
+        OutlinedTextField(
+            value = state.title,
+            onValueChange = { onEvent(SongEditorEvent.TitleChanged(it)) },
+            label = { Text(stringResource(Res.string.editor_title_label)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = state.artist,
+            onValueChange = { onEvent(SongEditorEvent.ArtistChanged(it)) },
+            label = { Text(stringResource(Res.string.editor_artist_label)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        SectionTitle(stringResource(Res.string.editor_key_title))
+        KeyPicker(
+            key = state.key,
+            onTonicSelected = { onEvent(SongEditorEvent.TonicSelected(it)) },
+            onModeSelected = { onEvent(SongEditorEvent.ModeSelected(it)) },
+        )
+
+        ChartSection(state, onEvent)
+        if (!state.isNew) {
+            TextButton(
+                onClick = { onEvent(SongEditorEvent.DeleteClicked) },
+                enabled = !state.isSaving,
+                modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.l),
+            ) {
+                Text(stringResource(Res.string.editor_delete), color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ErrorText(error: SongEditorError) {
+    Text(
+        stringResource(
+            when (error) {
+                SongEditorError.FORBIDDEN -> Res.string.error_forbidden
+                SongEditorError.MISSING_TITLE -> Res.string.editor_error_title
+                SongEditorError.NETWORK -> Res.string.error_generic
             },
-            dismissButton = {
-                TextButton(onClick = { onEvent(SongEditorEvent.DeleteDismissed) }) {
-                    Text(stringResource(Res.string.song_delete_confirm_cancel))
-                }
-            },
+        ),
+        color = MaterialTheme.colorScheme.error,
+    )
+}
+
+/**
+ * The chord chart field with its help, the chord-placing shortcut, the unknown chords and the
+ * preview. Emits straight into the form's column, so the spacing between them stays the form's.
+ */
+@Composable
+private fun ChartSection(state: SongEditorUiState, onEvent: (SongEditorEvent) -> Unit) {
+    SectionTitle(stringResource(Res.string.editor_chart_title))
+    Text(
+        stringResource(Res.string.editor_chart_help),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    OutlinedTextField(
+        value = state.chart,
+        onValueChange = { onEvent(SongEditorEvent.ChartChanged(it)) },
+        label = { Text(stringResource(Res.string.editor_chart_label)) },
+        minLines = 8,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    if (state.hasChordsAbove) {
+        TextButton(onClick = { onEvent(SongEditorEvent.PlaceChordsClicked) }) {
+            Text(stringResource(Res.string.editor_place_chords))
+        }
+    }
+    if (state.unknownChords.isNotEmpty()) {
+        Text(
+            stringResource(Res.string.editor_unknown_chords, state.unknownChords.joinToString(", ")),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
         )
     }
+    if (state.preview.isNotEmpty() && state.chart.isNotBlank()) {
+        AppCard {
+            SectionTitle(stringResource(Res.string.editor_preview_title), Modifier.padding(bottom = Spacing.s))
+            ChordChartView(state.preview)
+        }
+    }
+}
+
+@Composable
+private fun DeleteSongDialog(title: String, onEvent: (SongEditorEvent) -> Unit) {
+    AlertDialog(
+        onDismissRequest = { onEvent(SongEditorEvent.DeleteDismissed) },
+        title = { Text(stringResource(Res.string.editor_delete_title, title)) },
+        text = { Text(stringResource(Res.string.editor_delete_text)) },
+        confirmButton = {
+            TextButton(onClick = { onEvent(SongEditorEvent.DeleteConfirmed) }) {
+                Text(stringResource(Res.string.song_delete_confirm_ok), color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onEvent(SongEditorEvent.DeleteDismissed) }) {
+                Text(stringResource(Res.string.song_delete_confirm_cancel))
+            }
+        },
+    )
 }
 
 /** Fills the new song from one accords.app page. */

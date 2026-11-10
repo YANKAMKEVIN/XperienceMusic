@@ -229,21 +229,7 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
             }
             if (phase == ExercisePhase.LISTENING) {
                 TunerNeedle(check.needle, description = stringResource(Res.string.exercise_tuner), modifier = Modifier.padding(top = Spacing.l))
-                Row(Modifier.fillMaxWidth().padding(top = Spacing.xs)) {
-                    listOf("−50", "0", "+50").forEachIndexed { index, label ->
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = when (index) {
-                                0 -> TextAlign.Start
-                                1 -> TextAlign.Center
-                                else -> TextAlign.End
-                            },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
+                TunerScale()
             }
             if (phase != ExercisePhase.LISTENING) {
                 TextButton(onClick = { onEvent(ExerciseEvent.PlayReferenceClicked) }, modifier = Modifier.padding(top = Spacing.s)) {
@@ -255,29 +241,7 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
     }
 
     when (phase) {
-        ExercisePhase.SUCCEEDED -> AppCard {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
-                Text(
-                    stringResource(Res.string.exercise_success_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(start = Spacing.s),
-                )
-            }
-            Text(
-                stringResource(
-                    when {
-                        state.isWarmUp -> Res.string.exercise_success_warmup
-                        state.isChallenge -> Res.string.exercise_success_challenge
-                        else -> Res.string.exercise_success_text
-                    },
-                ),
-                modifier = Modifier.padding(top = Spacing.s),
-            )
-            OutlinedButton(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.padding(top = Spacing.m)) {
-                Text(stringResource(Res.string.exercise_retry))
-            }
-        }
+        ExercisePhase.SUCCEEDED -> SucceededCard(state, onEvent)
         ExercisePhase.LISTENING -> Live(check, onEvent)
         ExercisePhase.READY -> if (state.isLocked) {
             Text(
@@ -295,6 +259,53 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+/** The cents under the tuner: −50 on the left, 0 in the middle, +50 on the right. */
+@Composable
+private fun TunerScale() {
+    Row(Modifier.fillMaxWidth().padding(top = Spacing.xs)) {
+        listOf("−50", "0", "+50").forEachIndexed { index, label ->
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = when (index) {
+                    0 -> TextAlign.Start
+                    1 -> TextAlign.Center
+                    else -> TextAlign.End
+                },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SucceededCard(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Unit) {
+    AppCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+            Text(
+                stringResource(Res.string.exercise_success_title),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(start = Spacing.s),
+            )
+        }
+        Text(
+            stringResource(
+                when {
+                    state.isWarmUp -> Res.string.exercise_success_warmup
+                    state.isChallenge -> Res.string.exercise_success_challenge
+                    else -> Res.string.exercise_success_text
+                },
+            ),
+            modifier = Modifier.padding(top = Spacing.s),
+        )
+        OutlinedButton(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.padding(top = Spacing.m)) {
+            Text(stringResource(Res.string.exercise_retry))
         }
     }
 }
