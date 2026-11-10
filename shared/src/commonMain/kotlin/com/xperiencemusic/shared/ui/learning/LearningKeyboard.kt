@@ -40,6 +40,7 @@ import com.xperiencemusic.shared.resources.learning_key_unselected
 import com.xperiencemusic.shared.resources.learning_key_wrong
 import com.xperiencemusic.shared.resources.learning_keyboard_scroll
 import com.xperiencemusic.shared.ui.theme.Palette
+import com.xperiencemusic.shared.ui.theme.Sizes
 import org.jetbrains.compose.resources.stringResource
 
 private val WHITE_KEY_WIDTH = 72.dp
@@ -114,7 +115,7 @@ private fun PianoKey(midi: Int, state: LearningUiState, modifier: Modifier = Mod
     Box(
         modifier
             .background(keyColor, shape)
-            .border(1.dp, Palette.KeyEdge, shape)
+            .border(Sizes.hairline, Palette.KeyEdge, shape)
             .toggleable(selected, enabled = !state.saving, role = Role.Checkbox, onValueChange = { onClick() })
             .semantics {
                 contentDescription = label

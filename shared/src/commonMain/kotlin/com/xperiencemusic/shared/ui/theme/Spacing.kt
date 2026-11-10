@@ -90,6 +90,8 @@ object Sizes {
     val touchTarget = 48.dp
     /** A full-width secondary action. */
     val actionHeight = 52.dp
+    /** A tall tappable area: the tuner card and the report rows. */
+    val tallTarget = 64.dp
     /** Brand buttons, raised rows and the large controls of the stage mode. */
     val rowMin = 56.dp
 

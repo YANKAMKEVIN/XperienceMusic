@@ -17,7 +17,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.xperiencemusic.shared.resources.stage_text_bigger
+import com.xperiencemusic.shared.resources.stage_text_bigger_glyph
 import com.xperiencemusic.shared.resources.stage_text_smaller
+import com.xperiencemusic.shared.resources.stage_text_smaller_glyph
 import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -161,10 +163,10 @@ private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpen
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             StageButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }, modifier = Modifier.weight(1f), compact = true) {
-                Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = textSmaller })
+                GlyphLabel(stringResource(Res.string.stage_text_smaller_glyph), textSmaller)
             }
             StageButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }, modifier = Modifier.weight(1f), compact = true) {
-                Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = textBigger })
+                GlyphLabel(stringResource(Res.string.stage_text_bigger_glyph), textBigger)
             }
         }
         StageButton(onClick = { onEvent(StageEvent.AutoScrollToggled) }, modifier = Modifier.fillMaxWidth(), compact = true) {
@@ -247,7 +249,7 @@ private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.l, vertical = Spacing.s),
     ) {
         StageButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }, modifier = Modifier.width(STAGE_BUTTON_WIDTH)) {
-            Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = textSmaller })
+            GlyphLabel(stringResource(Res.string.stage_text_smaller_glyph), textSmaller)
         }
         StageButton(onClick = { onEvent(StageEvent.AutoScrollToggled) }, modifier = Modifier.weight(1f)) {
             Icon(
@@ -271,7 +273,7 @@ private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
             }
         }
         StageButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }, modifier = Modifier.width(STAGE_BUTTON_WIDTH)) {
-            Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = textBigger })
+            GlyphLabel(stringResource(Res.string.stage_text_bigger_glyph), textBigger)
         }
     }
     // The speed buttons unfold under the controls rather than shoving the lyrics down at once.
@@ -440,4 +442,9 @@ private fun StageScreenLandscapePreview() {
             onOpenSong = {},
         )
     }
+}
+
+@Composable
+private fun GlyphLabel(glyph: String, description: String) {
+    Text(glyph, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = description })
 }

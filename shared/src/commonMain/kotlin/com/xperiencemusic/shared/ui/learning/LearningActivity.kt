@@ -69,6 +69,7 @@ import com.xperiencemusic.shared.resources.learning_understood
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 
@@ -116,7 +117,7 @@ private fun CheckFeedbackPanel(feedback: CheckFeedback, passed: Boolean, kept: S
     Column(
         Modifier
             .fillMaxWidth()
-            .heightIn(max = 160.dp)
+            .heightIn(max = FEEDBACK_MAX_HEIGHT)
             .clip(RoundedCornerShape(Radius.card))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .verticalScroll(rememberScrollState())
@@ -148,10 +149,10 @@ private fun ChoiceButtons(choices: List<String>, selected: String?, enabled: Boo
                 containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
             ),
             border = BorderStroke(
-                if (isSelected) 2.dp else 1.dp,
+                if (isSelected) Sizes.stroke else Sizes.hairline,
                 if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
             ),
-            modifier = modifier.heightIn(min = 56.dp).semantics { this.selected = isSelected },
+            modifier = modifier.heightIn(min = Sizes.rowMin).semantics { this.selected = isSelected },
         ) {
             Text(choice, textAlign = TextAlign.Center)
         }
@@ -232,7 +233,7 @@ private fun RhythmAnswer(state: LearningUiState, onEvent: (LearningEvent) -> Uni
     OutlinedButton(onClick = { onEvent(LearningEvent.Metronome) }) {
         Text(stringResource(Res.string.learning_metronome, state.activity.bpm))
     }
-    Button(onClick = { onEvent(LearningEvent.Tap) }, modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)) {
+    Button(onClick = { onEvent(LearningEvent.Tap) }, modifier = Modifier.fillMaxWidth().heightIn(min = TAP_AREA_MIN_HEIGHT)) {
         Text(stringResource(Res.string.learning_tap, state.taps.size))
     }
     TextButton(onClick = { onEvent(LearningEvent.ResetTaps) }) { Text(stringResource(Res.string.learning_reset_taps)) }
@@ -273,3 +274,5 @@ internal fun HintBlock(state: LearningUiState, onEvent: (LearningEvent) -> Unit)
 }
 
 private const val MAX_HINTS = 3
+private val FEEDBACK_MAX_HEIGHT = 160.dp
+private val TAP_AREA_MIN_HEIGHT = 100.dp

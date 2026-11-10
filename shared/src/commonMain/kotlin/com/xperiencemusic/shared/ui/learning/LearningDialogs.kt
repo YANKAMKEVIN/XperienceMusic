@@ -54,6 +54,7 @@ import com.xperiencemusic.shared.resources.learning_summary_title
 import com.xperiencemusic.shared.resources.learning_summary_to_rework
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import com.xperiencemusic.shared.ui.theme.appSwitchColors
 import org.jetbrains.compose.resources.pluralStringResource
@@ -137,8 +138,8 @@ private fun StepRow(state: LearningUiState, index: Int, activity: LearningActivi
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 40.dp)
-                .padding(horizontal = Spacing.m, vertical = 10.dp)
+                .heightIn(min = CHOICE_MIN_HEIGHT)
+                .padding(horizontal = Spacing.m, vertical = Spacing.sm)
                 .semantics { stateDescription = closed },
         )
     }
@@ -181,10 +182,12 @@ internal fun SettingsDialog(state: LearningUiState, onEvent: (LearningEvent) -> 
 @Composable
 private fun Setting(label: String, value: Boolean, onChange: (Boolean) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(value, role = Role.Switch, onValueChange = onChange),
+        Modifier.fillMaxWidth().heightIn(min = Sizes.touchTarget).toggleable(value, role = Role.Switch, onValueChange = onChange),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, Modifier.weight(1f))
         Switch(value, onCheckedChange = null, colors = appSwitchColors())
     }
 }
+
+private val CHOICE_MIN_HEIGHT = 40.dp

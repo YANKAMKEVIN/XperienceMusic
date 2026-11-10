@@ -61,6 +61,7 @@ import com.xperiencemusic.shared.resources.piano_scale_status_missing
 import com.xperiencemusic.shared.resources.piano_scale_status_octave
 import com.xperiencemusic.shared.resources.piano_scale_tap_note
 import com.xperiencemusic.shared.ui.components.AppCard
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 
@@ -134,7 +135,7 @@ private fun StepButtons(state: PianoScaleUiState, report: PianoScaleReport, acti
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                 ),
-                modifier = Modifier.heightIn(min = 64.dp).semantics {
+                modifier = Modifier.heightIn(min = Sizes.tallTarget).semantics {
                     selected = isSelected
                     stateDescription = status
                 },

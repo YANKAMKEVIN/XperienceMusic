@@ -314,6 +314,8 @@
     <string name="stage_close">Quitter le mode scène</string>
     <string name="stage_text_bigger">Agrandir le texte</string>
     <string name="stage_text_smaller">Réduire le texte</string>
+    <string name="stage_text_bigger_glyph" translatable="false">A+</string>
+    <string name="stage_text_smaller_glyph" translatable="false">A−</string>
     <string name="stage_scroll_start">Défilement auto</string>
     <string name="stage_scroll_stop">Pause défilement</string>
     <string name="stage_speed">Vitesse %1$d/%2$d</string>

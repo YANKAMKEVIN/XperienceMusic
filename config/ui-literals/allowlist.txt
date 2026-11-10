@@ -1,0 +1,3 @@
+# Exceptions to :shared:checkUiLiterals, one per line:  <path relative to ui/ or navigation/>:<rule>  # why
+# Rules: text-literal, content-description, inline-size, color-literal, rounded-corner-literal, koin-inject
+# Keep this list empty if you can: prefer a token (Spacing, Radius, Sizes), a string resource or the theme colours.

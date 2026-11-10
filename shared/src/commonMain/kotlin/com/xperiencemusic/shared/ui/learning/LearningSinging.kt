@@ -52,6 +52,7 @@ import com.xperiencemusic.shared.ui.exercise.TunerNeedle
 import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 
@@ -86,7 +87,7 @@ internal fun SingPanel(state: LearningUiState, onEvent: (LearningEvent) -> Unit,
             GradientButton(
                 onClick = { permission.request { if (it) onEvent(LearningEvent.StartSinging) else onEvent(LearningEvent.MicrophoneDenied) } },
                 enabled = !state.saving && state.result != true,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.tallTarget),
             ) {
                 Text(stringResource(Res.string.learning_sing_now), style = MaterialTheme.typography.titleMedium)
             }
@@ -148,7 +149,12 @@ private fun MicLevel(level: Float) {
         horizontalArrangement = Arrangement.spacedBy(Spacing.s),
         modifier = Modifier.clearAndSetSemantics {},
     ) {
-        Icon(XmIcons.Mic, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+        Icon(
+            XmIcons.Mic,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(Sizes.iconS),
+        )
         Box(
             Modifier
                 .weight(1f)

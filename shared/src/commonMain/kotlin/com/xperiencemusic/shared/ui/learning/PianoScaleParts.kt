@@ -54,6 +54,7 @@ import com.xperiencemusic.shared.resources.piano_scale_settings_title
 import com.xperiencemusic.shared.resources.piano_scale_target
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.choiceState
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 
@@ -143,7 +144,7 @@ internal fun GoodToKnow() {
     AppCard {
         TextButton(
             onClick = { open = !open },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { stateDescription = folding },
+            modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.touchTarget).semantics { stateDescription = folding },
         ) {
             Text(
                 stringResource(if (open) Res.string.piano_scale_good_to_know_open else Res.string.piano_scale_good_to_know_closed),
