@@ -77,6 +77,7 @@ import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.learning.ObjectiveAudioReview
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
@@ -87,12 +88,12 @@ import com.xperiencemusic.shared.ui.components.LoadingIndicator
 @Composable
 fun GrowthReviewScreen(onBack: () -> Unit, viewModel: GrowthReviewViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    GrowthReviewScreenContent(state, viewModel::onEvent, onBack, objectiveAudio = { member, objective -> com.xperiencemusic.shared.ui.learning.ObjectiveAudioReview(member, objective) })
+    GrowthReviewScreenContent(state, viewModel::onEvent, onBack)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReviewEvent) -> Unit, onBack: () -> Unit, objectiveAudio: @Composable (String, String) -> Unit = { _, _ -> }) {
+fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReviewEvent) -> Unit, onBack: () -> Unit) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.hasError) {
         if (state.hasError) {
@@ -176,7 +177,11 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
                         confirmLabel = stringResource(Res.string.review_validate),
                         state = state,
                         onEvent = onEvent,
-                        takes = { objectiveAudio(objective.memberId, objective.objectiveId) },
+                        takes = {
+                            ObjectiveAudioReview(objective.takes) { take, title, subtitle ->
+                                onEvent(GrowthReviewEvent.PlayTake(take, title, subtitle))
+                            }
+                        },
                     )
                 }
             }
