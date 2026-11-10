@@ -61,6 +61,7 @@ import com.xperiencemusic.shared.resources.service_team
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
@@ -93,7 +94,7 @@ fun ServiceDetailScreenContent(state: ServiceDetailUiState, onEvent: (ServiceDet
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.title.replaceFirstChar { it.uppercase() }) },
+                title = { Text(state.date?.let { rememberFormattingWords().dayAndDate(it) }.orEmpty().replaceFirstChar { it.uppercase() }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.action_back))
@@ -208,7 +209,6 @@ private fun ServiceDetailScreenPreview() {
             ServiceDetailUiState(
                 isLoading = false,
                 date = LocalDate(2026, 11, 1),
-                title = "dimanche 1 nov.",
                 serving = listOf(ServingUi("g", "Grâce", Instrument.SINGER, VoicePart.SOPRANO, false), kevin),
                 missing = listOf(Instrument.BASS),
                 songTitles = listOf("À toi la gloire", "Holy, Holy, Holy"),

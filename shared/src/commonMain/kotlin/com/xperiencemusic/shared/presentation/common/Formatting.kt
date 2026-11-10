@@ -11,74 +11,30 @@ import com.xperiencemusic.shared.resources.format_weekdays_short
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.getStringArray
-import kotlin.concurrent.Volatile
 
 /**
- * The words dates and file sizes are spelled with. They live in the string resources
- * (`format_*`); [Formatting.loadWords] reads them once the app starts. Until then, and in unit
- * tests that run without resources, [French] stands in: the band is French-speaking, so both
- * read the same today.
+ * The words dates and file sizes are spelled with. Their only source is the string resources
+ * (`format_*`): screens read them with `rememberFormattingWords()`, code outside a composition
+ * (the reminders) with [loadFormattingWords]. View models keep dates and sizes as values.
  */
-internal data class FormattingWords(
+data class FormattingWords(
+    /** Monday first, as `DayOfWeek`. */
     val weekdays: List<String>,
     val shortWeekdays: List<String>,
+    /** January first, as `Month`. */
     val months: List<String>,
     val shortMonths: List<String>,
     val decimalSeparator: String,
     val kilobytes: String,
     val megabytes: String,
 ) {
-    companion object {
-        /** A copy of `values/strings.xml`, for the moments before the resources are read. */
-        val French = FormattingWords(
-            weekdays = listOf("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"),
-            shortWeekdays = listOf("lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."),
-            months = listOf(
-                "janvier", "février", "mars", "avril", "mai", "juin",
-                "juillet", "août", "septembre", "octobre", "novembre", "décembre",
-            ),
-            shortMonths = listOf(
-                "janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.",
-            ),
-            decimalSeparator = ",",
-            kilobytes = "Ko",
-            megabytes = "Mo",
-        )
-    }
-}
-
-/** Dates, sizes and durations as the UI spells them, with the words of [FormattingWords]. */
-internal object Formatting {
-    /** Keeps "1 nov." on one line: a day never ends a line with its month on the next. */
-    private const val NBSP = " "
-
-    @Volatile
-    private var words: FormattingWords = FormattingWords.French
-
-    /**
-     * Reads the words from the string resources (the device's language once there are
-     * translations). Called once at start-up; keeps the current words if the resources fail.
-     */
-    suspend fun loadWords() {
-        runCatching {
-            FormattingWords(
-                weekdays = getStringArray(Res.array.format_weekdays),
-                shortWeekdays = getStringArray(Res.array.format_weekdays_short),
-                months = getStringArray(Res.array.format_months),
-                shortMonths = getStringArray(Res.array.format_months_short),
-                decimalSeparator = getString(Res.string.format_decimal_separator),
-                kilobytes = getString(Res.string.format_unit_kilobytes),
-                megabytes = getString(Res.string.format_unit_megabytes),
-            )
-        }.onSuccess { loaded ->
-            if (loaded.weekdays.size == 7 && loaded.shortWeekdays.size == 7 && loaded.months.size == 12 && loaded.shortMonths.size == 12) {
-                words = loaded
-            }
-        }
+    init {
+        require(weekdays.size == 7 && shortWeekdays.size == 7) { "7 weekdays expected" }
+        require(months.size == 12 && shortMonths.size == 12) { "12 months expected" }
     }
 
-    private fun weekday(date: LocalDate) = words.weekdays[date.dayOfWeek.ordinal]
-    private fun shortMonth(date: LocalDate) = words.shortMonths[date.month.ordinal]
+    private fun weekday(date: LocalDate) = weekdays[date.dayOfWeek.ordinal]
+    private fun shortMonth(date: LocalDate) = shortMonths[date.month.ordinal]
 
     /** "mardi 14 oct." */
     fun dayAndDate(date: LocalDate): String = "${weekday(date)} ${date.day}$NBSP${shortMonth(date)}"
@@ -88,17 +44,23 @@ internal object Formatting {
 
     /** "13 – 18 oct.", or "28 oct. – 2 nov." across two months. */
     fun range(start: LocalDate, end: LocalDate): String =
-        if (start.month == end.month) "${start.day} – ${end.day}$NBSP${shortMonth(end)}"
-        else "${start.day}$NBSP${shortMonth(start)} – ${end.day}$NBSP${shortMonth(end)}"
+        if (start.month == end.month) {
+            "${start.day} – ${end.day}$NBSP${shortMonth(end)}"
+        } else {
+            "${start.day}$NBSP${shortMonth(start)} – ${end.day}$NBSP${shortMonth(end)}"
+        }
 
     /** "dim." */
-    fun shortWeekday(date: LocalDate): String = words.shortWeekdays[date.dayOfWeek.ordinal]
+    fun shortWeekday(date: LocalDate): String = shortWeekdays[date.dayOfWeek.ordinal]
 
     /** "25 oct." */
     fun dayAndMonth(date: LocalDate): String = "${date.day}$NBSP${shortMonth(date)}"
 
+    /** "novembre" */
+    fun month(date: LocalDate): String = months[date.month.ordinal]
+
     /** "novembre 2026" */
-    fun monthAndYear(date: LocalDate): String = "${words.months[date.month.ordinal]} ${date.year}"
+    fun monthAndYear(date: LocalDate): String = "${month(date)} ${date.year}"
 
     /** "14 oct. 2026" */
     fun shortDate(date: LocalDate): String = "${date.day}$NBSP${shortMonth(date)} ${date.year}"
@@ -108,12 +70,31 @@ internal object Formatting {
         val kilo = 1024.0
         return if (bytes >= kilo * kilo) {
             val tenths = (bytes / (kilo * kilo) * 10).toLong()
-            "${tenths / 10}${words.decimalSeparator}${tenths % 10} ${words.megabytes}"
+            "${tenths / 10}$decimalSeparator${tenths % 10} $megabytes"
         } else {
-            "${(bytes / kilo).toLong().coerceAtLeast(1)} ${words.kilobytes}"
+            "${(bytes / kilo).toLong().coerceAtLeast(1)} $kilobytes"
         }
     }
 
+    private companion object {
+        /** Keeps "1 nov." on one line: a day never ends a line with its month on the next. */
+        const val NBSP = " "
+    }
+}
+
+/** Reads [FormattingWords] from the string resources, for code that runs outside a screen. */
+suspend fun loadFormattingWords(): FormattingWords = FormattingWords(
+    weekdays = getStringArray(Res.array.format_weekdays),
+    shortWeekdays = getStringArray(Res.array.format_weekdays_short),
+    months = getStringArray(Res.array.format_months),
+    shortMonths = getStringArray(Res.array.format_months_short),
+    decimalSeparator = getString(Res.string.format_decimal_separator),
+    kilobytes = getString(Res.string.format_unit_kilobytes),
+    megabytes = getString(Res.string.format_unit_megabytes),
+)
+
+/** Spellings that need no words. */
+internal object Formatting {
     /** "3:32" */
     fun duration(totalSeconds: Int): String {
         val minutes = totalSeconds / 60

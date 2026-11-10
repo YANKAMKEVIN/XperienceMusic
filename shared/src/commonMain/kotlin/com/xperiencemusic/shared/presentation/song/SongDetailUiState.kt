@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.presentation.song
 
+import kotlinx.datetime.LocalDate
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.VoicePart
@@ -34,7 +35,7 @@ data class SongDetailUiState(
 data class RecordingUi(
     val id: String,
     val title: String,
-    val date: String,
+    val recordedOn: LocalDate,
     val duration: String,
     val isReference: Boolean,
     val playback: PlaybackStatus = PlaybackStatus.IDLE,

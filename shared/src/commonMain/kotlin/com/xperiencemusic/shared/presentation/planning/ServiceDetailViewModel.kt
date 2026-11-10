@@ -12,7 +12,6 @@ import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.ObservePlanningUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.Planning
-import com.xperiencemusic.shared.presentation.common.Formatting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -57,7 +56,7 @@ class ServiceDetailViewModel(
 fun deriveServiceDetail(planning: Planning, schedule: SetlistSchedule, date: LocalDate, today: LocalDate): ServiceDetailUiState {
     val me = planning.me
     val card = serviceCards(date.monthStart(), planning.members, planning.signups, me?.id, today).firstOrNull { it.date == date }
-        ?: return ServiceDetailUiState(isLoading = false, date = date, title = Formatting.dayAndDate(date))
+        ?: return ServiceDetailUiState(isLoading = false, date = date)
     val canPlan = me?.role?.can(Permission.PLAN_SERVICES) == true
     val onboarded = planning.members.filter { it.displayName != null }
     return ServiceDetailUiState(
@@ -65,7 +64,6 @@ fun deriveServiceDetail(planning: Planning, schedule: SetlistSchedule, date: Loc
         date = date,
         isPast = date < today,
         kind = date.serviceKind() ?: card.kind,
-        title = Formatting.dayAndDate(date),
         serving = card.serving,
         missing = card.missing,
         songTitles = schedule.weeks.firstOrNull { it.setlist.serviceDate == date }?.songs?.map { it.title }.orEmpty(),

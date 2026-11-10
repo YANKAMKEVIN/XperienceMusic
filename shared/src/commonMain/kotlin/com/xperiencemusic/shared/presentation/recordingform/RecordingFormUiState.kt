@@ -8,7 +8,6 @@ data class RecordingFormUiState(
     val songTitle: String = "",
     val title: String = "",
     val recordedOn: LocalDate,
-    val dateLabel: String,
     val file: PickedFileUi? = null,
     val makeReference: Boolean = false,
     /** The song's current recordings; when it already has the maximum, one must be replaced. */
@@ -23,9 +22,9 @@ data class RecordingFormUiState(
         get() = !isLoading && !isSaving && title.isNotBlank() && file != null && (!isFull || replaceId != null)
 }
 
-data class PickedFileUi(val name: String, val sizeLabel: String, val durationLabel: String?)
+data class PickedFileUi(val name: String, val sizeBytes: Long, val durationLabel: String?)
 
-data class ExistingRecordingUi(val id: String, val title: String, val dateLabel: String, val isReference: Boolean)
+data class ExistingRecordingUi(val id: String, val title: String, val recordedOn: LocalDate, val isReference: Boolean)
 
 enum class RecordingFormError { FORBIDDEN, FILE_UNREADABLE, FILE_TOO_LARGE, LIMIT_REACHED, NETWORK }
 

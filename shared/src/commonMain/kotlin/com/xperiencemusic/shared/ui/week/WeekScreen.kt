@@ -91,6 +91,7 @@ import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.components.choiceState
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
@@ -152,7 +153,7 @@ private fun WeekList(
         verticalArrangement = Arrangement.spacedBy(Spacing.m),
         modifier = Modifier.fillMaxSize(),
     ) {
-        item { WeekHeader(setlist?.rangeLabel, state.me, onAccount) }
+        item { WeekHeader(setlist?.let { rememberFormattingWords().range(it.rehearsalDate, it.serviceDate) }, state.me, onAccount) }
         if (state.weeks.size > 1) item { WeekTabs(state.weeks, onSelect = { onEvent(WeekEvent.WeekSelected(it)) }) }
         if (state.isOffline) item { OfflineBanner() }
         if (setlist == null) {
@@ -216,7 +217,7 @@ private fun EmptyWeek(state: WeekUiState, onPublish: () -> Unit) {
             value = if (countdown.daysLeft == 0) stringResource(Res.string.week_countdown_today) else stringResource(Res.string.week_countdown_days, countdown.daysLeft),
             caption = stringResource(if (countdown.daysLeft == 0) Res.string.week_countdown_caption_today else Res.string.week_countdown_caption),
             fraction = countdown.fraction,
-            title = stringResource(Res.string.week_countdown_title, countdown.dateLabel),
+            title = stringResource(Res.string.week_countdown_title, rememberFormattingWords().dayAndDate(countdown.date)),
             text = stringResource(Res.string.week_countdown_text),
         )
     }
@@ -243,6 +244,7 @@ private fun WeekHeader(rangeLabel: String?, me: MemberAvatarUi?, onAccount: () -
 /** The kept weeks, opened on the selected one: past weeks stay readable, coming ones are ready. */
 @Composable
 private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
+    val words = rememberFormattingWords()
     val listState = rememberLazyListState()
     val selected = weeks.indexOfFirst { it.isSelected }
     LaunchedEffect(selected) { if (selected > 0) listState.animateScrollToItem((selected - 1).coerceAtLeast(0)) }
@@ -252,7 +254,7 @@ private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
                 selected = week.isSelected,
                 onClick = { onSelect(week.serviceDate) },
                 label = {
-                    Text(if (week.timing == WeekTiming.CURRENT) stringResource(Res.string.week_this_week) else week.label)
+                    Text(if (week.timing == WeekTiming.CURRENT) stringResource(Res.string.week_this_week) else words.shortDayAndDate(week.serviceDate))
                 },
                 colors = FilterChipDefaults.filterChipColors(
                     labelColor = if (week.timing == WeekTiming.PAST) {
@@ -271,9 +273,10 @@ private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
 
 @Composable
 private fun DatesRow(setlist: WeekSetlistUi) {
+    val words = rememberFormattingWords()
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m), modifier = Modifier.height(IntrinsicSize.Min)) {
-        DateCard(stringResource(Res.string.setlist_rehearsal_label), setlist.rehearsalDate, Modifier.weight(1f).fillMaxHeight())
-        DateCard(stringResource(Res.string.setlist_service_label), setlist.serviceDateLabel, Modifier.weight(1f).fillMaxHeight())
+        DateCard(stringResource(Res.string.setlist_rehearsal_label), words.dayAndDate(setlist.rehearsalDate), Modifier.weight(1f).fillMaxHeight())
+        DateCard(stringResource(Res.string.setlist_service_label), words.dayAndDate(setlist.serviceDate), Modifier.weight(1f).fillMaxHeight())
     }
 }
 
@@ -375,16 +378,14 @@ private fun WeekScreenPreview() {
                 isLoading = false,
                 canPublish = true,
                 weeks = listOf(
-                    WeekTabUi(LocalDate(2026, 10, 11), "dim. 11 oct.", WeekTiming.PAST, isSelected = false),
-                    WeekTabUi(LocalDate(2026, 10, 18), "dim. 18 oct.", WeekTiming.CURRENT, isSelected = true),
-                    WeekTabUi(LocalDate(2026, 10, 25), "dim. 25 oct.", WeekTiming.AHEAD, isSelected = false),
+                    WeekTabUi(LocalDate(2026, 10, 11), WeekTiming.PAST, isSelected = false),
+                    WeekTabUi(LocalDate(2026, 10, 18), WeekTiming.CURRENT, isSelected = true),
+                    WeekTabUi(LocalDate(2026, 10, 25), WeekTiming.AHEAD, isSelected = false),
                 ),
                 setlist = WeekSetlistUi(
                     serviceDate = LocalDate(2026, 10, 18),
                     timing = WeekTiming.CURRENT,
-                    rangeLabel = "13 – 18 oct.",
-                    rehearsalDate = "mardi 13 oct.",
-                    serviceDateLabel = "dimanche 18 oct.",
+                    rehearsalDate = LocalDate(2026, 10, 13),
                     message = "On reprend l’intro acoustique.",
                     publishedBy = "Responsable musical",
                     songs = listOf(

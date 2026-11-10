@@ -46,6 +46,7 @@ import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
@@ -61,6 +62,7 @@ import androidx.compose.animation.core.tween
 
 @Composable
 internal fun PlanningHeader(state: PlanningUiState, onEvent: (PlanningEvent) -> Unit) {
+    val words = rememberFormattingWords()
     Column {
         TabHeader(stringResource(Res.string.planning_title))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Spacing.xs)) {
@@ -69,10 +71,10 @@ internal fun PlanningHeader(state: PlanningUiState, onEvent: (PlanningEvent) -> 
             }
             // The month slides the way the arrows point.
             AnimatedContent(
-                targetState = state.monthStart to state.monthLabel,
+                targetState = state.monthStart,
                 transitionSpec = {
-                    val from = initialState.first
-                    val to = targetState.first
+                    val from = initialState
+                    val to = targetState
                     val direction = if (from != null && to != null && to < from) -1 else 1
                     // The old title is gone before the new one shows, so the two never overlap.
                     (slideInHorizontally(tween(220, delayMillis = 90)) { it / 3 * direction } + fadeIn(monthFadeIn))
@@ -81,9 +83,9 @@ internal fun PlanningHeader(state: PlanningUiState, onEvent: (PlanningEvent) -> 
                 contentAlignment = Alignment.Center,
                 label = "month",
                 modifier = Modifier.weight(1f),
-            ) { (_, label) ->
+            ) { monthStart ->
                 Text(
-                    label.replaceFirstChar { it.uppercase() },
+                    monthStart?.let(words::monthAndYear).orEmpty().replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -111,7 +113,8 @@ internal fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Uni
                 Icon(XmIcons.Calendar, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
                     // A deadline already behind us is said as such, not as a date still to come.
-                    val late = state.isPastDeadline && state.answerByLabel != null
+                    val answerBy = state.answerBy?.let { rememberFormattingWords().dayAndMonth(it) }
+                    val late = state.isPastDeadline && answerBy != null
                     Text(
                         stringResource(if (late) Res.string.planning_late_title else Res.string.planning_open_title),
                         style = MaterialTheme.typography.titleMedium,
@@ -119,8 +122,8 @@ internal fun MonthBanner(state: PlanningUiState, onEvent: (PlanningEvent) -> Uni
                     )
                     Text(
                         when {
-                            late -> stringResource(Res.string.planning_late_text, state.answerByLabel.orEmpty())
-                            state.answerByLabel != null -> stringResource(Res.string.planning_open_text_by, state.answerByLabel)
+                            late -> stringResource(Res.string.planning_late_text, answerBy.orEmpty())
+                            answerBy != null -> stringResource(Res.string.planning_open_text_by, answerBy)
                             else -> stringResource(Res.string.planning_open_text)
                         },
                         style = MaterialTheme.typography.bodySmall,

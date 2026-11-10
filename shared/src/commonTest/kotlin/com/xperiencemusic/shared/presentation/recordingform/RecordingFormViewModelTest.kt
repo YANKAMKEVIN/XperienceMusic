@@ -53,7 +53,7 @@ class RecordingFormViewModelTest {
         val state = viewModel("empty").state.value
         assertTrue(state.makeReference)
         assertFalse(state.isFull)
-        assertEquals("13\u00A0oct. 2026", state.dateLabel)
+        assertEquals(LocalDate(2026, 10, 13), state.recordedOn)
     }
 
     @Test
@@ -61,7 +61,7 @@ class RecordingFormViewModelTest {
         val vm = viewModel("empty")
         vm.onEvent(RecordingFormEvent.FilePicked(audio))
         vm.onEvent(RecordingFormEvent.TitleChanged("Répétition"))
-        assertEquals(PickedFileUi("repet.mp3", "1,5 Mo", "3:32"), vm.state.value.file)
+        assertEquals(PickedFileUi("repet.mp3", audio.bytes.size.toLong(), "3:32"), vm.state.value.file)
         assertTrue(vm.state.value.canSave)
         vm.onEvent(RecordingFormEvent.SaveClicked)
         assertTrue(vm.state.value.isSaved)

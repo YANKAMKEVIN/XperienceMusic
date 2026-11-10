@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.song
 
+import kotlinx.datetime.LocalDate
 import androidx.compose.foundation.background
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -282,8 +283,8 @@ private fun SongDetailScreenPreview() {
                     ChartLine.Lyrics(listOf(ChartSegment("Mi", "À toi la "), ChartSegment("Si", "gloire"))),
                 ),
                 recordings = listOf(
-                    RecordingUi("1", "Répétition du mardi", "14 mai 2026", "3:32", isReference = true, playback = PlaybackStatus.PLAYING),
-                    RecordingUi("2", "Version acoustique", "2 août 2026", "3:18", isReference = false),
+                    RecordingUi("1", "Répétition du mardi", LocalDate(2026, 5, 14), "3:32", isReference = true, playback = PlaybackStatus.PLAYING),
+                    RecordingUi("2", "Version acoustique", LocalDate(2026, 8, 2), "3:18", isReference = false),
                 ),
                 maxRecordings = 3,
                 canManageRecordings = true,

@@ -78,6 +78,7 @@ import com.xperiencemusic.shared.ui.components.DiscardChangesDialog
 import com.xperiencemusic.shared.ui.components.EditorTopBar
 import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.components.SectionTitle
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
@@ -201,7 +202,7 @@ fun SetlistEditorScreenContent(
     }
     if (isConfirmingDelete) {
         DeleteSetlistDialog(
-            serviceLabel = state.serviceLabel,
+            serviceLabel = rememberFormattingWords().dayAndDate(state.serviceDate),
             onConfirm = {
                 isConfirmingDelete = false
                 onEvent(SetlistEditorEvent.DeleteConfirmed)
@@ -232,12 +233,13 @@ private fun ErrorText(error: SetlistEditorError) {
 /** The rehearsal and service dates, with what may be wrong with them. */
 @Composable
 private fun DatesCard(state: SetlistEditorUiState, onEditDate: (EditedDate) -> Unit) {
+    val words = rememberFormattingWords()
     AppCard {
         SectionTitle(stringResource(Res.string.setlist_dates_title))
-        DateRow(stringResource(Res.string.setlist_rehearsal_label), state.rehearsalLabel) {
+        DateRow(stringResource(Res.string.setlist_rehearsal_label), words.dayAndDate(state.rehearsalDate)) {
             onEditDate(EditedDate.REHEARSAL)
         }
-        DateRow(stringResource(Res.string.setlist_service_label), state.serviceLabel) {
+        DateRow(stringResource(Res.string.setlist_service_label), words.dayAndDate(state.serviceDate)) {
             onEditDate(EditedDate.SERVICE)
         }
         if (state.replacesExisting) {
@@ -386,8 +388,6 @@ private fun SetlistEditorScreenPreview() {
             SetlistEditorUiState(
                 rehearsalDate = LocalDate(2026, 10, 13),
                 serviceDate = LocalDate(2026, 10, 18),
-                rehearsalLabel = "mardi 13 oct.",
-                serviceLabel = "dimanche 18 oct.",
                 selected = listOf(SetlistSongUi("1", "À toi la gloire", "Ré majeur"), SetlistSongUi("2", "Amazing Grace", "Sol majeur")),
                 available = listOf(SetlistSongUi("3", "Holy, Holy, Holy", "Ré majeur")),
             ),

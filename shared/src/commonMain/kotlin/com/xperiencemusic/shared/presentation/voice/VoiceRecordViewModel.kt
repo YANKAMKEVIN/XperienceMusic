@@ -16,7 +16,6 @@ import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.RecordedVoice
 import com.xperiencemusic.shared.domain.usecase.SendVoiceUseCase
 import com.xperiencemusic.shared.domain.usecase.VoiceRecorder
-import com.xperiencemusic.shared.presentation.common.Formatting
 import com.xperiencemusic.shared.presentation.common.shortLabel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -217,7 +216,7 @@ internal fun deriveVoiceRecordState(
         seconds = seconds.toInt(),
         maxSeconds = VoiceRecorder.MAX_SECONDS.toInt(),
         level = if (local.phase == VoicePhase.RECORDING) level else 0f,
-        previous = previous?.let { PreviousSubmissionUi(Formatting.dayAndDate(it.submittedOn), it.status, it.feedback) },
+        previous = previous?.let { PreviousSubmissionUi(it.submittedOn, it.status, it.feedback) },
         error = local.error,
         isQuietTake = local.isQuietTake && local.phase in listOf(VoicePhase.RECORDED, VoicePhase.SENDING),
     )

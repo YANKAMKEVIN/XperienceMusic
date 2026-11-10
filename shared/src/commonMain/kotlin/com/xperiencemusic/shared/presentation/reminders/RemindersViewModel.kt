@@ -6,6 +6,7 @@ import com.xperiencemusic.shared.domain.repository.AnnouncedMonthsStore
 import com.xperiencemusic.shared.domain.repository.ReminderScheduler
 import com.xperiencemusic.shared.domain.usecase.ObservePlanningUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
+import com.xperiencemusic.shared.presentation.common.loadFormattingWords
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -27,7 +28,7 @@ class RemindersViewModel(
     init {
         viewModelScope.launch {
             combine(observePlanning(), observeSchedule(), ::Pair).collectLatest { (planning, schedule) ->
-                val reminders = planServiceReminders(planning, schedule, ReminderContext(now(), announced.load()))
+                val reminders = planServiceReminders(planning, schedule, ReminderContext(now(), announced.load()), loadFormattingWords())
                 try {
                     scheduler.replaceAll(reminders)
                 } catch (e: CancellationException) {

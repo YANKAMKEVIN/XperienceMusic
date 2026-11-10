@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.voice
 
+import kotlinx.datetime.LocalDate
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import com.xperiencemusic.shared.resources.review_mine
@@ -67,6 +68,7 @@ import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.PlayPauseButton
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Radius
 import com.xperiencemusic.shared.ui.theme.Sizes
@@ -164,7 +166,7 @@ private fun SubmitterRow(item: SubmissionUi, onEvent: (VoiceReviewEvent) -> Unit
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(
-                "${item.songTitle} · ${item.duration} · ${item.date}",
+                "${item.songTitle} · ${item.duration} · ${rememberFormattingWords().dayAndDate(item.submittedOn)}",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -242,10 +244,10 @@ private fun VoiceReviewPreview() {
             VoiceReviewUiState(
                 isLoading = false,
                 toReview = listOf(
-                    SubmissionUi("1", "Grâce", VoicePart.SOPRANO, "À toi la gloire", "lundi 12 oct.", "3:04", ExerciseStatus.SUBMITTED, null),
+                    SubmissionUi("1", "Grâce", VoicePart.SOPRANO, "À toi la gloire", LocalDate(2026, 10, 12), "3:04", ExerciseStatus.SUBMITTED, null),
                 ),
                 reviewed = listOf(
-                    SubmissionUi("2", "Daniel", VoicePart.TENOR, "Amazing Grace", "samedi 10 oct.", "3:21", ExerciseStatus.VALIDATED, "Très juste, bravo."),
+                    SubmissionUi("2", "Daniel", VoicePart.TENOR, "Amazing Grace", LocalDate(2026, 10, 10), "3:21", ExerciseStatus.VALIDATED, "Très juste, bravo."),
                 ),
             ),
             onEvent = {},

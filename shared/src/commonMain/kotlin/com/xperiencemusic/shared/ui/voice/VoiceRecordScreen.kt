@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.voice
 
+import kotlinx.datetime.LocalDate
 import com.xperiencemusic.shared.resources.quoted_feedback
 import com.xperiencemusic.shared.resources.voice_error_interrupted
 import com.xperiencemusic.shared.resources.voice_discard_keep
@@ -109,6 +110,7 @@ import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Radius
@@ -250,7 +252,7 @@ private fun PreviousCard(previous: PreviousSubmissionUi) {
     AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                stringResource(Res.string.voice_previous, previous.date),
+                stringResource(Res.string.voice_previous, rememberFormattingWords().dayAndDate(previous.submittedOn)),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
@@ -430,7 +432,7 @@ private fun VoiceRecordPreview() {
                 voicePart = VoicePart.ALTO,
                 guides = listOf(GuideUi("t", "ALTO", GuideKind.MY_VOICE, VoicePart.ALTO), GuideUi("r", "Répétition", GuideKind.REFERENCE)),
                 selectedGuideId = "t",
-                previous = PreviousSubmissionUi("lundi 12 oct.", ExerciseStatus.TO_REWORK, "Attention à la justesse au refrain."),
+                previous = PreviousSubmissionUi(LocalDate(2026, 10, 12), ExerciseStatus.TO_REWORK, "Attention à la justesse au refrain."),
             ),
             onEvent = {},
             onBack = {},

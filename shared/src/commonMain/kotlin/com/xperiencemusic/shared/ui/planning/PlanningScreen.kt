@@ -46,6 +46,7 @@ import com.xperiencemusic.shared.resources.planning_validate_incomplete
 import com.xperiencemusic.shared.resources.planning_validate_missing_answers
 import com.xperiencemusic.shared.resources.planning_validate_missing_members
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
@@ -107,7 +108,7 @@ fun PlanningScreenContent(
     }
     state.validation?.takeIf { state.isConfirmingValidation }?.let { validation ->
         ValidateMonthDialog(
-            monthLabel = state.monthLabel,
+            monthLabel = state.monthStart?.let { rememberFormattingWords().monthAndYear(it) }.orEmpty(),
             validation = validation,
             onConfirm = { onEvent(PlanningEvent.ValidateMonthConfirmed) },
             onDismiss = { onEvent(PlanningEvent.ValidateMonthDismissed) },
@@ -164,7 +165,7 @@ internal val monthFadeIn = tween<Float>(220, delayMillis = 90)
 
 private val previewCards = listOf(
     ServiceCardUi(
-        LocalDate(2026, 11, 1), ServiceKind.SUNDAY, "dim.", 1,
+        LocalDate(2026, 11, 1), ServiceKind.SUNDAY, 1,
         listOf(
             ServingUi("g", "Grâce", Instrument.SINGER, VoicePart.SOPRANO, false),
             ServingUi("k", "Kevin", Instrument.SINGER, VoicePart.TENOR, true),
@@ -172,7 +173,7 @@ private val previewCards = listOf(
         ),
         listOf(Instrument.BASS, Instrument.DRUMS), MyAnswer.SERVES, isPast = false,
     ),
-    ServiceCardUi(LocalDate(2026, 11, 6), ServiceKind.FRIDAY, "ven.", 6, emptyList(), listOf(Instrument.SINGER), MyAnswer.UNANSWERED, isPast = false, isToday = true),
+    ServiceCardUi(LocalDate(2026, 11, 6), ServiceKind.FRIDAY, 6, emptyList(), listOf(Instrument.SINGER), MyAnswer.UNANSWERED, isPast = false, isToday = true),
 )
 
 @Preview
@@ -183,10 +184,9 @@ private fun PlanningScreenPreview() {
             PlanningUiState(
                 isLoading = false,
                 monthStart = LocalDate(2026, 11, 1),
-                monthLabel = "novembre 2026",
                 canGoForward = true,
                 status = MonthStatus.OPEN,
-                answerByLabel = "25 oct.",
+                answerBy = LocalDate(2026, 10, 25),
                 unansweredCount = 3,
                 services = previewCards,
                 canPlan = true,
@@ -214,7 +214,7 @@ private fun ValidateMonthDialogPreview() {
 private fun PlanningScreenNotOpenPreview() {
     AppTheme {
         PlanningScreenContent(
-            PlanningUiState(isLoading = false, monthLabel = "décembre 2026", status = MonthStatus.NOT_OPEN),
+            PlanningUiState(isLoading = false, monthStart = LocalDate(2026, 12, 1), status = MonthStatus.NOT_OPEN),
             onEvent = {}, onMyAnswers = {}, onServiceClick = {},
         )
     }

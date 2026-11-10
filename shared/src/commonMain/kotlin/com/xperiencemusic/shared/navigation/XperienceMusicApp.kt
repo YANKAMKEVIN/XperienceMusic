@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -13,7 +12,6 @@ import com.xperiencemusic.shared.presentation.app.AppEvent
 import com.xperiencemusic.shared.presentation.app.AppUiState
 import com.xperiencemusic.shared.presentation.app.AppViewModel
 import com.xperiencemusic.shared.presentation.app.destination
-import com.xperiencemusic.shared.presentation.common.Formatting
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.session_not_invited_text
 import com.xperiencemusic.shared.resources.session_not_invited_title
@@ -35,8 +33,6 @@ import org.koin.compose.viewmodel.koinViewModel
 /** Shared entry point of both apps. Koin must be started first (see `initKoin`). */
 @Composable
 fun XperienceMusicApp() {
-    // Dates and sizes take their words from the string resources from now on.
-    LaunchedEffect(Unit) { Formatting.loadWords() }
     AppTheme {
         CompositionLocalProvider(LocalMicrophoneIntroStore provides koinInject<MicrophoneIntroStore>()) {
             Surface(Modifier.fillMaxSize()) {

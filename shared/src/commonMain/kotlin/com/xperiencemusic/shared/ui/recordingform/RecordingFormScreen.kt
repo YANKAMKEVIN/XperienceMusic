@@ -72,6 +72,7 @@ import com.xperiencemusic.shared.ui.components.DatePickerModal
 import com.xperiencemusic.shared.ui.components.EditorTopBar
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.platform.rememberAudioFilePicker
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import com.xperiencemusic.shared.ui.theme.appSwitchColors
@@ -157,7 +158,7 @@ fun RecordingFormScreenContent(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            DateRow(state.dateLabel, onChange = { isPickingDate = true })
+            DateRow(rememberFormattingWords().shortDate(state.recordedOn), onChange = { isPickingDate = true })
             ReferenceSwitch(state.makeReference, onChange = { onEvent(RecordingFormEvent.MakeReferenceChanged(it)) })
 
             if (state.isFull) ReplaceChooser(state, onEvent)
@@ -225,10 +226,11 @@ private fun ErrorText(error: RecordingFormError) {
 
 @Composable
 private fun FileCard(file: PickedFileUi) {
+    val size = rememberFormattingWords().fileSize(file.sizeBytes)
     AppCard {
         Text(file.name, style = MaterialTheme.typography.titleSmall)
         Text(
-            file.durationLabel?.let { stringResource(Res.string.recording_form_file_meta, it, file.sizeLabel) } ?: file.sizeLabel,
+            file.durationLabel?.let { stringResource(Res.string.recording_form_file_meta, it, size) } ?: size,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -262,7 +264,7 @@ private fun ReplaceOption(recording: ExistingRecordingUi, isSelected: Boolean, o
         RadioButton(selected = isSelected, onClick = null)
         Column(Modifier.weight(1f).padding(start = Spacing.s)) {
             Text(recording.title, style = MaterialTheme.typography.bodyLarge)
-            Text(recording.dateLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(rememberFormattingWords().shortDate(recording.recordedOn), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (recording.isReference) {
             Icon(
@@ -284,12 +286,11 @@ private fun RecordingFormScreenFullPreview() {
                 songTitle = "À toi la gloire",
                 title = "Répétition du mardi",
                 recordedOn = LocalDate(2026, 10, 13),
-                dateLabel = "13 oct. 2026",
-                file = PickedFileUi("repet-13-10.m4a", "4,2 Mo", "3:32"),
+                file = PickedFileUi("repet-13-10.m4a", 4_400_000, "3:32"),
                 existing = listOf(
-                    ExistingRecordingUi("1", "Prestation", "4 oct. 2026", isReference = true),
-                    ExistingRecordingUi("2", "Acoustique", "20 sept. 2026", isReference = false),
-                    ExistingRecordingUi("3", "Répétition", "1 sept. 2026", isReference = false),
+                    ExistingRecordingUi("1", "Prestation", LocalDate(2026, 10, 4), isReference = true),
+                    ExistingRecordingUi("2", "Acoustique", LocalDate(2026, 9, 20), isReference = false),
+                    ExistingRecordingUi("3", "Répétition", LocalDate(2026, 9, 1), isReference = false),
                 ),
                 isFull = true,
                 replaceId = "3",

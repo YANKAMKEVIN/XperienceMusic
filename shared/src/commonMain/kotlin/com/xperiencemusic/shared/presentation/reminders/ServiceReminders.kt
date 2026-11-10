@@ -7,7 +7,7 @@ import com.xperiencemusic.shared.domain.model.monthStart
 import com.xperiencemusic.shared.domain.model.serviceKind
 import com.xperiencemusic.shared.domain.model.servicesOf
 import com.xperiencemusic.shared.domain.usecase.Planning
-import com.xperiencemusic.shared.presentation.common.Formatting
+import com.xperiencemusic.shared.presentation.common.FormattingWords
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -31,7 +31,7 @@ private val EVENING = LocalTime(19, 0)
  * - the day before the answers are due, while some of their answers are missing.
  * Anything already past is dropped.
  */
-fun planServiceReminders(planning: Planning, schedule: SetlistSchedule, context: ReminderContext): List<Reminder> {
+fun planServiceReminders(planning: Planning, schedule: SetlistSchedule, context: ReminderContext, words: FormattingWords): List<Reminder> {
     val me = planning.me ?: return emptyList()
     val today = context.now.date
     val myServices = planning.signups
@@ -47,8 +47,8 @@ fun planServiceReminders(planning: Planning, schedule: SetlistSchedule, context:
             Reminder(
                 id = "validated-$month",
                 at = context.now,
-                title = "Planning de ${Formatting.monthAndYear(month).substringBefore(' ')} validé",
-                body = "Tu sers : ${dates.joinToString(", ") { Formatting.shortDayAndDate(it) }}",
+                title = "Planning de ${words.month(month)} validé",
+                body = "Tu sers : ${dates.joinToString(", ") { words.shortDayAndDate(it) }}",
             )
         }
 
@@ -86,8 +86,8 @@ fun planServiceReminders(planning: Planning, schedule: SetlistSchedule, context:
         Reminder(
             id = "answers-${month.monthStart}",
             at = LocalDateTime(answerBy.minus(DatePeriod(days = 1)), LocalTime(18, 0)),
-            title = "Tes dispos de ${Formatting.monthAndYear(month.monthStart).substringBefore(' ')}",
-            body = "$missing services sans réponse. Réponds avant le ${Formatting.dayAndMonth(answerBy)} dans Planning.",
+            title = "Tes dispos de ${words.month(month.monthStart)}",
+            body = "$missing services sans réponse. Réponds avant le ${words.dayAndMonth(answerBy)} dans Planning.",
         )
     }
 

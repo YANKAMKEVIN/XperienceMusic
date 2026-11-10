@@ -8,7 +8,6 @@ import com.xperiencemusic.shared.domain.usecase.AnswerServiceUseCase
 import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.ObservePlanningUseCase
 import com.xperiencemusic.shared.domain.usecase.Planning
-import com.xperiencemusic.shared.presentation.common.Formatting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -56,14 +55,14 @@ fun deriveAvailabilityState(planning: Planning, monthStart: LocalDate, today: Lo
     val canPlan = me?.role?.can(Permission.PLAN_SERVICES) == true
     return AvailabilityUiState(
         isLoading = false,
-        monthLabel = Formatting.monthAndYear(monthStart),
-        answerByLabel = month?.answerBy?.takeIf { isOpen }?.let(Formatting::dayAndMonth),
+        monthStart = monthStart,
+        answerBy = month?.answerBy?.takeIf { isOpen },
         isPastDeadline = isOpen && month?.answerBy?.let { it < today } == true,
         instrument = me?.profile?.instrument,
         voicePart = me?.profile?.voicePart,
         canAnswer = month != null && (isOpen || canPlan),
         rows = serviceCards(monthStart, planning.members, planning.signups, me?.id, today).map { card ->
-            AvailabilityRowUi(card.date, card.kind, Formatting.dayAndDate(card.date), card.myAnswer, card.isPast)
+            AvailabilityRowUi(card.date, card.kind, card.myAnswer, card.isPast)
         },
     )
 }

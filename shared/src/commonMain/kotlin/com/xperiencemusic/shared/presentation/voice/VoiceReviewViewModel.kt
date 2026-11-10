@@ -102,7 +102,7 @@ internal fun deriveVoiceReviewState(
         memberName = memberName,
         voicePart = voicePart,
         songTitle = songTitle,
-        date = Formatting.dayAndDate(submittedOn),
+        submittedOn = submittedOn,
         duration = Formatting.duration(durationSeconds),
         status = status,
         feedback = feedback,

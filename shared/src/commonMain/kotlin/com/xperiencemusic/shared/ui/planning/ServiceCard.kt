@@ -39,6 +39,7 @@ import com.xperiencemusic.shared.resources.planning_today
 import com.xperiencemusic.shared.resources.planning_you_serve
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.PillPadding
@@ -55,7 +56,7 @@ internal fun ServiceCard(card: ServiceCardUi, onClick: () -> Unit, modifier: Mod
     AppCard(onClick = onClick, modifier = modifier.alpha(if (card.isPast) 0.55f else 1f)) {
         Row(verticalAlignment = Alignment.Top) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(DATE_COLUMN_WIDTH)) {
-                Text(card.weekday, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(rememberFormattingWords().shortWeekday(card.date), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(card.day.toString(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
             }
             Column(Modifier.weight(1f).padding(start = Spacing.s)) {

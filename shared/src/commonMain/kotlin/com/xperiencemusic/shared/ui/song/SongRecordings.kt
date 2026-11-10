@@ -52,6 +52,7 @@ import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.PlayPauseButton
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -78,7 +79,7 @@ internal fun RecordingRow(recording: RecordingUi, canManage: Boolean, onEvent: (
                     }
                     Text(recording.title, style = MaterialTheme.typography.titleSmall)
                 }
-                val meta = stringResource(Res.string.song_recording_meta, recording.date, recording.duration)
+                val meta = stringResource(Res.string.song_recording_meta, rememberFormattingWords().shortDate(recording.recordedOn), recording.duration)
                 val offlineLabel = stringResource(Res.string.song_recording_offline)
                 Text(
                     if (recording.isAvailableOffline) "$meta · $offlineLabel" else meta,

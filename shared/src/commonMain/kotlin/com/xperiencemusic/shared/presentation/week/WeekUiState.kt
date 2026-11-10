@@ -31,8 +31,7 @@ enum class WeekTiming { PAST, CURRENT, AHEAD }
 data class RehearsalCountdownUi(
     /** 0 on the day itself. */
     val daysLeft: Int,
-    /** "mardi 13 oct." */
-    val dateLabel: String,
+    val date: LocalDate,
 ) {
     /** How much of the week before it is over: the ring of the countdown. */
     val fraction: Float get() = 1f - daysLeft / 7f
@@ -40,8 +39,6 @@ data class RehearsalCountdownUi(
 
 data class WeekTabUi(
     val serviceDate: LocalDate,
-    /** "dim. 19 oct." */
-    val label: String,
     val timing: WeekTiming,
     val isSelected: Boolean,
 )
@@ -64,10 +61,7 @@ sealed interface WeekEvent {
 data class WeekSetlistUi(
     val serviceDate: LocalDate,
     val timing: WeekTiming,
-    /** "13 – 18 octobre" */
-    val rangeLabel: String,
-    val rehearsalDate: String,
-    val serviceDateLabel: String,
+    val rehearsalDate: LocalDate,
     val message: String?,
     val publishedBy: String,
     val songs: List<WeekSongUi>,
