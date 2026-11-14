@@ -57,6 +57,7 @@ class RecordingFormViewModel(
             is RecordingFormEvent.TitleChanged -> _state.update { it.copy(title = event.title, error = null) }
             is RecordingFormEvent.DefaultTitleResolved -> _state.update { if (it.title.isBlank()) it.copy(title = event.title) else it }
             is RecordingFormEvent.DatePicked -> _state.update { it.copy(recordedOn = event.date) }
+            is RecordingFormEvent.FileCompressing -> _state.update { it.copy(compressionProgress = event.progress, error = null) }
             is RecordingFormEvent.FilePicked -> onFilePicked(event.file)
             is RecordingFormEvent.VoicePartSelected -> _state.update { it.copy(voicePart = event.voicePart, error = null) }
             is RecordingFormEvent.MakeReferenceChanged -> _state.update { it.copy(makeReference = event.makeReference) }
@@ -66,8 +67,11 @@ class RecordingFormViewModel(
     }
 
     private fun onFilePicked(file: AudioFile?) {
+        val wasCompressing = _state.value.compressionProgress != null
+        _state.update { it.copy(compressionProgress = null) }
         if (file == null) {
-            // Cancelled: keep any file chosen before.
+            // Cancelled: keep any file chosen before. After a compression, the file could not be read.
+            if (wasCompressing) _state.update { it.copy(error = RecordingFormError.FILE_UNREADABLE) }
             return
         }
         if (file.bytes.isEmpty()) {
@@ -81,6 +85,7 @@ class RecordingFormViewModel(
                     name = file.fileName,
                     sizeBytes = file.bytes.size.toLong(),
                     durationLabel = file.durationSeconds?.let(Formatting::duration),
+                    compressedFromBytes = file.compressedFromBytes,
                 ),
                 error = if (file.bytes.size > AudioFile.MAX_BYTES) RecordingFormError.FILE_TOO_LARGE else null,
             )

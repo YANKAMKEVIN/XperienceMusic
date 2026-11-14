@@ -354,6 +354,9 @@
     <string name="recording_form_pick_file">Choisir un fichier audio</string>
     <string name="recording_form_change_file">Changer de fichier</string>
     <string name="recording_form_file_meta">%1$s · %2$s</string>
+    <string name="recording_form_compressing">Compression du fichier… %1$d %%</string>
+    <string name="recording_form_compressing_help">Le fichier est allégé pour l’envoi. Garde l’app ouverte, ça peut prendre une minute pour une répétition entière.</string>
+    <string name="recording_form_compressed">Allégé de %1$s à %2$s pour l’envoi</string>
     <string name="recording_form_name_label">Nom de la version</string>
     <string name="recording_form_name_hint">Ex. : Répétition du mardi</string>
     <string name="recording_form_date_label">Enregistrée le</string>
@@ -363,7 +366,7 @@
     <string name="recording_form_full_help">Choisis celle que la nouvelle version remplace :</string>
     <string name="recording_form_uploading">Envoi en cours…</string>
     <string name="recording_form_error_unreadable">Impossible de lire ce fichier audio.</string>
-    <string name="recording_form_error_too_large">Le fichier dépasse 50 Mo. Exporte-le en MP3 ou M4A pour l’alléger.</string>
+    <string name="recording_form_error_too_large">Le fichier dépasse 50 Mo, même allégé. Coupe-le en deux parties ou exporte-le en MP3.</string>
     <string name="recording_form_error_limit">Ce chant a déjà 3 versions : choisis celle à remplacer.</string>
     <string name="action_add_recording">Ajouter une version</string>
 
