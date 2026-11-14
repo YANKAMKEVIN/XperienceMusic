@@ -40,6 +40,8 @@ import com.xperiencemusic.shared.presentation.songeditor.SongEditorViewModel
 import com.xperiencemusic.shared.presentation.songeditor.SongImportError
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.editor_artist_label
+import com.xperiencemusic.shared.resources.youtube_link_invalid
+import com.xperiencemusic.shared.ui.components.YouTubeLinkField
 import com.xperiencemusic.shared.resources.editor_chart_help
 import com.xperiencemusic.shared.resources.editor_chart_label
 import com.xperiencemusic.shared.resources.editor_chart_title
@@ -165,6 +167,11 @@ private fun SongEditorForm(state: SongEditorUiState, onEvent: (SongEditorEvent) 
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
             modifier = Modifier.fillMaxWidth(),
         )
+        YouTubeLinkField(
+            value = state.youtubeUrl,
+            onValueChange = { onEvent(SongEditorEvent.YouTubeUrlChanged(it)) },
+            isError = state.error == SongEditorError.INVALID_YOUTUBE_LINK,
+        )
 
         SectionTitle(stringResource(Res.string.editor_key_title))
         KeyPicker(
@@ -193,6 +200,7 @@ private fun ErrorText(error: SongEditorError) {
             when (error) {
                 SongEditorError.FORBIDDEN -> Res.string.error_forbidden
                 SongEditorError.MISSING_TITLE -> Res.string.editor_error_title
+                SongEditorError.INVALID_YOUTUBE_LINK -> Res.string.youtube_link_invalid
                 SongEditorError.NETWORK -> Res.string.error_generic
             },
         ),

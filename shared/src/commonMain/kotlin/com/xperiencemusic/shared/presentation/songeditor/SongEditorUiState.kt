@@ -10,6 +10,8 @@ data class SongEditorUiState(
     val isNew: Boolean = true,
     val title: String = "",
     val artist: String = "",
+    /** The song's YouTube video, as typed. */
+    val youtubeUrl: String = "",
     val key: Key = Key(0, Mode.MAJOR),
     val chart: String = "",
     /** The chart as it will be displayed, in solfège, to check the chords were understood. */
@@ -31,7 +33,7 @@ data class SongEditorUiState(
     val isConfirmingDeletion: Boolean = false,
     val isDeleted: Boolean = false,
     /** The song as the editor opened it (blank for a new one), to spot unsaved changes. */
-    val original: SongDraft = SongDraft(title = "", artist = "", key = Key(0, Mode.MAJOR), chart = ""),
+    val original: SongDraft = SongDraft(title = "", artist = "", key = Key(0, Mode.MAJOR), chart = "", youtubeUrl = ""),
     /** "Abandonner les modifications ?" is on screen. */
     val isConfirmingDiscard: Boolean = false,
     /** Set when the editor may close without saving; the screen then navigates away. */
@@ -40,7 +42,7 @@ data class SongEditorUiState(
     val canSave: Boolean get() = !isLoading && !isSaving && !isImporting && title.isNotBlank()
     val canImport: Boolean get() = isNew && !isImporting && importLink.isNotBlank()
 
-    val draft: SongDraft get() = SongDraft(title, artist, key, chart)
+    val draft: SongDraft get() = SongDraft(title, artist, key, chart, youtubeUrl)
 
     /** Leaving now would lose something: an edited field, or a link pasted but not imported yet. */
     val hasUnsavedChanges: Boolean
@@ -49,11 +51,12 @@ data class SongEditorUiState(
 
 enum class SongImportError { NOT_A_SONG_LINK, NOT_FOUND, NETWORK }
 
-enum class SongEditorError { FORBIDDEN, MISSING_TITLE, NETWORK }
+enum class SongEditorError { FORBIDDEN, MISSING_TITLE, INVALID_YOUTUBE_LINK, NETWORK }
 
 sealed interface SongEditorEvent {
     data class TitleChanged(val title: String) : SongEditorEvent
     data class ArtistChanged(val artist: String) : SongEditorEvent
+    data class YouTubeUrlChanged(val url: String) : SongEditorEvent
     data class TonicSelected(val tonic: Int) : SongEditorEvent
     data class ModeSelected(val mode: Mode) : SongEditorEvent
     data class ChartChanged(val chart: String) : SongEditorEvent

@@ -8,7 +8,7 @@ import com.xperiencemusic.music.theory.Key
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
-import com.xperiencemusic.shared.domain.model.SongDraft
+import com.xperiencemusic.shared.domain.model.youtubeUrl
 import com.xperiencemusic.shared.domain.usecase.DeleteSongUseCase
 import com.xperiencemusic.shared.domain.usecase.ImportSongFromLinkUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
@@ -37,7 +37,13 @@ class SongEditorViewModel(
             viewModelScope.launch {
                 val song = observeSong(songId).filterNotNull().first()
                 _state.update {
-                    it.copy(isLoading = false, title = song.title, artist = song.artist.orEmpty(), key = song.key)
+                    it.copy(
+                        isLoading = false,
+                        title = song.title,
+                        artist = song.artist.orEmpty(),
+                        youtubeUrl = song.youtubeUrl.orEmpty(),
+                        key = song.key,
+                    )
                         .withChart(song.chart)
                         .let { loaded -> loaded.copy(original = loaded.draft) }
                 }
@@ -49,6 +55,7 @@ class SongEditorViewModel(
         when (event) {
             is SongEditorEvent.TitleChanged -> _state.update { it.copy(title = event.title, error = null) }
             is SongEditorEvent.ArtistChanged -> _state.update { it.copy(artist = event.artist) }
+            is SongEditorEvent.YouTubeUrlChanged -> _state.update { it.copy(youtubeUrl = event.url, error = null) }
             is SongEditorEvent.TonicSelected -> _state.update { it.withKey(it.key.copy(tonic = event.tonic)) }
             is SongEditorEvent.ModeSelected -> _state.update { it.withKey(it.key.copy(mode = event.mode)) }
             is SongEditorEvent.ChartChanged -> _state.update {
@@ -103,7 +110,7 @@ class SongEditorViewModel(
         if (!current.canSave) return
         _state.update { it.copy(isSaving = true, error = null) }
         viewModelScope.launch {
-            val draft = SongDraft(current.title, current.artist, current.key, current.chart)
+            val draft = current.draft
             when (val result = saveSong(songId, draft)) {
                 is DomainResult.Success -> _state.update { it.copy(isSaving = false, savedSongId = result.value) }
                 is DomainResult.Failure -> _state.update { it.copy(isSaving = false, error = result.error.toEditorError()) }
@@ -138,5 +145,6 @@ private fun DomainError.toImportError() = when (this) {
 private fun DomainError.toEditorError() = when (this) {
     DomainError.FORBIDDEN, DomainError.NOT_SIGNED_IN -> SongEditorError.FORBIDDEN
     DomainError.INVALID_INPUT -> SongEditorError.MISSING_TITLE
+    DomainError.INVALID_LINK -> SongEditorError.INVALID_YOUTUBE_LINK
     else -> SongEditorError.NETWORK
 }

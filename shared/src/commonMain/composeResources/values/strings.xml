@@ -253,6 +253,9 @@
     <string name="editor_import_not_found">Aucun chant trouvé à cette adresse.</string>
     <string name="editor_import_network">Impossible de joindre accords.app. Vérifie ta connexion.</string>
     <string name="editor_artist_label">Auteur / compositeur (facultatif)</string>
+    <string name="youtube_link_label">Lien YouTube (facultatif)</string>
+    <string name="youtube_link_hint">https://youtu.be/…</string>
+    <string name="youtube_link_invalid">Ce n’est pas un lien YouTube. Copie l’adresse depuis « Partager » sur YouTube.</string>
     <string name="editor_key_title">Tonalité</string>
     <string name="editor_major">Majeur</string>
     <string name="editor_minor">Mineur</string>
@@ -283,6 +286,11 @@
     <string name="setlist_selected_title">Chants de la semaine (%1$d)</string>
     <string name="setlist_selected_empty">Ajoute au moins un chant ci-dessous.</string>
     <string name="setlist_add_title">Ajouter des chants</string>
+    <string name="setlist_new_song">Nouveau chant</string>
+    <string name="setlist_new_song_from_search">Créer « %1$s »</string>
+    <string name="setlist_new_song_help">Le titre et le lien YouTube suffisent. Tu pourras ajouter les paroles, les accords et la tonalité plus tard depuis la bibliothèque.</string>
+    <string name="setlist_new_song_add">Ajouter</string>
+    <string name="setlist_new_song_cancel">Annuler</string>
     <string name="setlist_move_up">Monter %1$s</string>
     <string name="setlist_move_down">Descendre %1$s</string>
     <string name="setlist_remove">Retirer %1$s</string>

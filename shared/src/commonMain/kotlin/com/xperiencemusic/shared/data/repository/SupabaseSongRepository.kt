@@ -8,6 +8,7 @@ import com.xperiencemusic.shared.data.mapper.toWriteDto
 import com.xperiencemusic.shared.data.remote.AUDIO_BUCKET
 import com.xperiencemusic.shared.data.remote.dto.IdDto
 import com.xperiencemusic.shared.data.remote.dto.SongDto
+import com.xperiencemusic.shared.data.remote.dto.SongLinkWriteDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
 import com.xperiencemusic.shared.data.remote.tracking
 import com.xperiencemusic.shared.data.session.SessionGuard
@@ -16,6 +17,7 @@ import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
 import com.xperiencemusic.shared.domain.model.SyncStatus
+import com.xperiencemusic.shared.domain.model.YouTubeLink
 import com.xperiencemusic.shared.domain.repository.SessionResettable
 import com.xperiencemusic.shared.domain.repository.SongRepository
 import io.github.jan.supabase.SupabaseClient
@@ -75,6 +77,7 @@ class SupabaseSongRepository(
     override suspend fun createSong(draft: SongDraft): String {
         val created = session.accountCall {
             client.from(SONGS).insert(draft.toWriteDto()) { select(Columns.list("id")) }.decodeSingle<IdDto>()
+                .also { replaceYouTubeLink(it.id, draft.youtubeUrl) }
         }
         reload()
         return created.id
@@ -83,8 +86,20 @@ class SupabaseSongRepository(
     override suspend fun updateSong(id: String, draft: SongDraft) {
         session.accountCall {
             client.from(SONGS).update(draft.toWriteDto()) { filter { eq("id", id) } }
+            replaceYouTubeLink(id, draft.youtubeUrl)
         }
         reload()
+    }
+
+    /** A song has one YouTube link: the previous one goes, the new one (if any) takes its place. */
+    private suspend fun replaceYouTubeLink(songId: String, url: String?) {
+        client.from(SONG_LINKS).delete {
+            filter {
+                eq("song_id", songId)
+                eq("label", YouTubeLink.LABEL)
+            }
+        }
+        if (url != null) client.from(SONG_LINKS).insert(SongLinkWriteDto(songId, YouTubeLink.LABEL, url))
     }
 
     override suspend fun deleteSong(id: String) {
@@ -178,6 +193,7 @@ class SupabaseSongRepository(
     private companion object {
         const val SONGS = "songs"
         const val VOICE_TRACKS = "voice_tracks"
+        const val SONG_LINKS = "song_links"
         const val SNAPSHOT = "songs"
     }
 }

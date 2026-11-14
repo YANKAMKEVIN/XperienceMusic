@@ -4,6 +4,8 @@ import com.xperiencemusic.shared.domain.model.VoiceTrack
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
+import com.xperiencemusic.shared.domain.model.SongLink
+import com.xperiencemusic.shared.domain.model.YouTubeLink
 import com.xperiencemusic.shared.domain.repository.SongRepository
 import com.xperiencemusic.shared.domain.model.SyncStatus
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +30,7 @@ class InMemorySongRepository(initialSongs: List<Song>) : SongRepository {
     override suspend fun createSong(draft: SongDraft): String {
         val id = "song-${songs.value.size + 1}-${draft.title.hashCode().toUInt()}"
         songs.update { all ->
-            all + (id to Song(id, draft.title, draft.artist, draft.key, draft.chart, emptyList(), emptyList(), emptyList()))
+            all + (id to Song(id, draft.title, draft.artist, draft.key, draft.chart, emptyList(), emptyList(), draft.youtubeLinks()))
         }
         return id
     }
@@ -36,7 +38,8 @@ class InMemorySongRepository(initialSongs: List<Song>) : SongRepository {
     override suspend fun updateSong(id: String, draft: SongDraft) {
         songs.update { all ->
             val song = all[id] ?: return@update all
-            all + (id to song.copy(title = draft.title, artist = draft.artist, key = draft.key, chart = draft.chart))
+            val links = song.links.filterNot { it.label == YouTubeLink.LABEL } + draft.youtubeLinks()
+            all + (id to song.copy(title = draft.title, artist = draft.artist, key = draft.key, chart = draft.chart, links = links))
         }
     }
 
@@ -73,3 +76,5 @@ class InMemorySongRepository(initialSongs: List<Song>) : SongRepository {
         }
     }
 }
+
+private fun SongDraft.youtubeLinks(): List<SongLink> = listOfNotNull(youtubeUrl?.let { SongLink(YouTubeLink.LABEL, it) })
