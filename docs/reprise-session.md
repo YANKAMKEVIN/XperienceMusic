@@ -116,8 +116,8 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
    - Ligne « Cette semaine tu sers… › » en haut de Semaine.
 6. **Avatars et « Mon compte »** (PR 7, branche `feat/member-avatar`). La migration
    `20261110000000_member_avatars.sql` est appliquée sur Supabase le 10 novembre 2026. Testé sur le S24 :
-   avatar dans Semaine, Mon compte, avatar dessiné, import de photo, retrait. Reste à faire : fusionner, en
-   réglant les petits conflits avec la PR 5 (`feat/rehearsal-upload`). Tester sur iPhone (sélecteur PHPicker).
+   avatar dans Semaine, Mon compte, avatar dessiné, import de photo, retrait. Fusionnée le 10 novembre 2026.
+   Reste à tester sur iPhone (sélecteur PHPicker).
 7. **Refonte qualité du code** (branche `refactor/code-quality`, partie de `main`, 10 novembre 2026), après un
    audit architecture / SOLID / code mort / valeurs en dur :
    - **Apprentissage remis en couches** : use cases, `ActivityGrader`, `LearningSessionStore`, `PcmRecorder`
@@ -134,6 +134,17 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
        dans `AppNavGraph.kt`, et le nom « Répétition du … » est composé par l'écran à partir de `strings.xml` ;
      - choix gardé : `SongRepository` n'est pas découpé et `SyncStatus` n'est pas fusionné avec le bandeau réseau,
        pour ne pas gêner la PR 5.
+8. **Dépôt de la répétition** (PR 5) : fusionnée le 10 novembre 2026, après un test complet sur le S24 avec la
+   vraie base (envoi pour tout le groupe, lecture, setlist, piste alto). Corrigé pendant le test : l'app
+   revenait sur Semaine et perdait le formulaire après un passage en arrière-plan.
+9. **Prochains chantiers** (demandés par Kevin le 10 novembre 2026) :
+   - Compression audio dans l'app avant l'envoi : Supabase gratuit limite à 50 Mo par fichier, soit environ
+     25 min avec le Dictaphone Samsung.
+   - Ajout rapide d'un chant dans « Publier la setlist » (titre + lien YouTube), et un champ lien YouTube sur
+     la fiche du chant. Aujourd'hui, une bibliothèque vide bloque la publication.
+   - En option : coller le message WhatsApp entier pour créer la setlist.
+   - QA : toujours rejouer la vraie semaine sur la vraie base, bibliothèque vide, avec une sortie de l'app en
+     cours de route.
 
 ## Règles à respecter
 
