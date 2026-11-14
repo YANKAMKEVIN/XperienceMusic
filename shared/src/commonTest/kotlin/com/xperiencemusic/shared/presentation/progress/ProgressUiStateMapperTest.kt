@@ -5,10 +5,15 @@ import com.xperiencemusic.shared.domain.model.ExerciseCheck
 import com.xperiencemusic.shared.domain.model.ExerciseProgress
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
+import com.xperiencemusic.shared.domain.model.Level
+import com.xperiencemusic.shared.domain.model.LevelRequest
+import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.SingerPath
 import com.xperiencemusic.shared.domain.model.StepState
 import com.xperiencemusic.shared.domain.model.VoicePart
+import com.xperiencemusic.shared.domain.usecase.ReviewQueue
 import com.xperiencemusic.shared.fakes.member
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -54,5 +59,18 @@ class ProgressUiStateMapperTest {
         val state = deriveProgressState(member(instrument = Instrument.DRUMS, voicePart = null), path(ExerciseStatus.TODO, ExerciseStatus.TODO, ExerciseStatus.TODO))
         assertFalse(state.hasPath)
         assertEquals(emptyList(), state.tiers)
+    }
+
+    @Test
+    fun `seul le relecteur voit les compteurs de sa file`() {
+        val queue = ReviewQueue(
+            levels = listOf(LevelRequest("r", "o", "Paul", Instrument.DRUMS, null, Level.CONFIRMED, ExerciseStatus.SUBMITTED, null, LocalDate(2026, 11, 2))),
+        )
+        val reviewer = deriveProgressState(member(role = Role.SUPER_ADMIN), null).withReviewQueue(queue)
+        assertEquals(0, reviewer.toReviewCount)
+        assertEquals(1, reviewer.toValidateCount)
+
+        val member = deriveProgressState(member(), null).withReviewQueue(queue)
+        assertEquals(0, member.toValidateCount)
     }
 }

@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.domain.usecase
 import com.xperiencemusic.shared.domain.model.AudioFile
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
+import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.model.VoiceTrack
 import com.xperiencemusic.shared.domain.repository.AudioStorage
@@ -26,22 +27,30 @@ class UploadVoiceTrackUseCase(
             is DomainResult.Failure -> return loaded
             is DomainResult.Success -> loaded.value
         }
-        if (audio.bytes.isEmpty()) return DomainResult.Failure(DomainError.INVALID_INPUT)
-        if (audio.bytes.size > AudioFile.MAX_BYTES) return DomainResult.Failure(DomainError.FILE_TOO_LARGE)
+        audioError(audio)?.let { return DomainResult.Failure(it) }
 
         val id = Uuid.random().toString()
         val path = "songs/$songId/voices/$id" + audio.extension.let { if (it.isEmpty()) "" else ".$it" }
-        when (val uploaded = runRemote { storage.upload(path, audio.mimeType, audio.bytes) }) {
-            is DomainResult.Failure -> return uploaded
-            is DomainResult.Success -> Unit
-        }
-        val saved = runRemote { songs.setVoiceTrack(songId, VoiceTrack(id, part, path)) }
+        return replaceTrack(song, VoiceTrack(id, part, path), audio)
+    }
+
+    private fun audioError(audio: AudioFile): DomainError? = when {
+        audio.bytes.isEmpty() -> DomainError.INVALID_INPUT
+        audio.bytes.size > AudioFile.MAX_BYTES -> DomainError.FILE_TOO_LARGE
+        else -> null
+    }
+
+    private suspend fun replaceTrack(song: Song, track: VoiceTrack, audio: AudioFile): DomainResult<Unit> {
+        val uploaded = runRemote { storage.upload(track.audioPath, audio.mimeType, audio.bytes) }
+        if (uploaded is DomainResult.Failure) return uploaded
+        val saved = runRemote { songs.setVoiceTrack(song.id, track) }
         if (saved is DomainResult.Failure) {
-            runRemote { storage.delete(path) }
+            runRemote { storage.delete(track.audioPath) }
             return saved
         }
         // The track is in place either way; a leftover file only costs storage.
-        song.voiceTracks.firstOrNull { it.voicePart == part }?.let { previous -> runRemote { storage.delete(previous.audioPath) } }
+        song.voiceTracks.firstOrNull { it.voicePart == track.voicePart }
+            ?.let { previous -> runRemote { storage.delete(previous.audioPath) } }
         return DomainResult.Success(Unit)
     }
 }

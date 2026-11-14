@@ -1,7 +1,5 @@
 package com.xperiencemusic.shared.platform
 
-import com.xperiencemusic.shared.domain.model.Reminder
-import com.xperiencemusic.shared.domain.repository.ReminderScheduler
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSDateComponents
 import platform.UserNotifications.UNAuthorizationOptionAlert
@@ -24,7 +22,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 
 /** Local notifications. The app posts no others, so every pending one is ours to replace. */
-class IosReminderScheduler : ReminderScheduler {
+class IosReminderScheduler : NotificationScheduler {
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
     // Shown even while the app is open: a validated planning is announced right away.
@@ -43,13 +41,13 @@ class IosReminderScheduler : ReminderScheduler {
     }
 
     @OptIn(ExperimentalForeignApi::class)
-    override suspend fun replaceAll(reminders: List<Reminder>) {
+    override suspend fun replaceAll(notifications: List<LocalNotification>) {
         center.requestAuthorizationWithOptions(
             UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge,
         ) { _, _ -> }
         center.removeAllPendingNotificationRequests()
         val now = Clock.System.now()
-        reminders.forEach { reminder ->
+        notifications.forEach { reminder ->
             val content = UNMutableNotificationContent().apply {
                 setTitle(reminder.title)
                 setBody(reminder.body)

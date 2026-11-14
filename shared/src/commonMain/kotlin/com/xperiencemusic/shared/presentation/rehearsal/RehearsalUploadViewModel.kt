@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.SetlistSchedule
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
-import com.xperiencemusic.shared.presentation.common.Formatting
 import com.xperiencemusic.shared.presentation.common.shortLabel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +28,6 @@ internal fun deriveRehearsalUpload(schedule: SetlistSchedule, serviceDate: Local
     return RehearsalUploadUiState(
         isLoading = false,
         rehearsalDate = rehearsal,
-        dateLabel = Formatting.dayAndDate(rehearsal),
         songs = week.songs.map { song ->
             RehearsalSongUi(
                 id = song.id,

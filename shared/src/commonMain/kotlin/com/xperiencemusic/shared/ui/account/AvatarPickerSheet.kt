@@ -47,8 +47,11 @@ import com.xperiencemusic.shared.resources.avatar_sheet_title
 import com.xperiencemusic.shared.ui.components.PresetImage
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+
+private val PRESET_MIN_SIZE = 72.dp
 
 /** Their own photo, or one of the drawn avatars (their role's first), or back to initials. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,7 +66,7 @@ fun AvatarPickerSheet(
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         val current = (state.me.avatar as? Avatar.Preset)?.preset
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 72.dp),
+            columns = GridCells.Adaptive(minSize = PRESET_MIN_SIZE),
             contentPadding = PaddingValues(start = Spacing.l, end = Spacing.l, bottom = Spacing.xl),
             horizontalArrangement = Arrangement.spacedBy(Spacing.m),
             verticalArrangement = Arrangement.spacedBy(Spacing.m),
@@ -72,7 +75,7 @@ fun AvatarPickerSheet(
                 Text(stringResource(Res.string.avatar_sheet_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             }
             item(span = { GridItemSpan(maxLineSpan) }) {
-                FilledTonalButton(onClick = onPickPhoto, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                FilledTonalButton(onClick = onPickPhoto, modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.touchTarget)) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                     Text(stringResource(Res.string.avatar_import_photo), modifier = Modifier.padding(start = Spacing.s))
                 }
@@ -88,7 +91,7 @@ fun AvatarPickerSheet(
             items(state.presets, key = { it.name }) { preset -> PresetChoice(preset, isSelected = preset == current, onClick = { onPreset(preset) }) }
             if (state.hasAvatar) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    TextButton(onClick = onRemove, modifier = Modifier.heightIn(min = 48.dp)) {
+                    TextButton(onClick = onRemove, modifier = Modifier.heightIn(min = Sizes.touchTarget)) {
                         Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                         Text(stringResource(Res.string.avatar_remove), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = Spacing.s))
                     }
@@ -103,7 +106,7 @@ private fun PresetChoice(preset: AvatarPreset, isSelected: Boolean, onClick: () 
     // Avatars of one role are numbered 1 to 4 for screen readers: "Chantre, avatar 3".
     val number = AvatarPreset.entries.filter { it.instrument == preset.instrument }.indexOf(preset) + 1
     val label = "${preset.instrument.label()}, ${stringResource(Res.string.avatar_preset_label, number)}"
-    val ring = if (isSelected) Modifier.border(BorderStroke(3.dp, BrandColors.gradient), CircleShape).padding(4.dp) else Modifier.padding(4.dp)
+    val ring = if (isSelected) Modifier.border(BorderStroke(Sizes.strokeBold, BrandColors.gradient), CircleShape).padding(Spacing.xs) else Modifier.padding(Spacing.xs)
     Box(
         Modifier
             .aspectRatio(1f)

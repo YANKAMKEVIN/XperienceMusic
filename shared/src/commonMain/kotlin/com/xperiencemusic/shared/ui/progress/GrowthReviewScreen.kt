@@ -5,6 +5,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.TextButton
 import com.xperiencemusic.shared.presentation.progress.RequestObjectiveUi
+import com.xperiencemusic.shared.resources.growth_review_comment_placeholder
 import com.xperiencemusic.shared.resources.growth_review_hide_objectives
 import com.xperiencemusic.shared.resources.growth_review_level_done
 import com.xperiencemusic.shared.resources.growth_review_objective_done
@@ -12,12 +13,10 @@ import com.xperiencemusic.shared.resources.growth_review_objective_mic
 import com.xperiencemusic.shared.resources.growth_review_sent_back
 import com.xperiencemusic.shared.resources.growth_review_show_objectives
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -43,7 +42,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -77,7 +75,10 @@ import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.learning.ObjectiveAudioReview
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -87,12 +88,12 @@ import com.xperiencemusic.shared.ui.components.LoadingIndicator
 @Composable
 fun GrowthReviewScreen(onBack: () -> Unit, viewModel: GrowthReviewViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    GrowthReviewScreenContent(state, viewModel::onEvent, onBack, objectiveAudio = { member, objective -> com.xperiencemusic.shared.ui.learning.ObjectiveAudioReview(member, objective) })
+    GrowthReviewScreenContent(state, viewModel::onEvent, onBack)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReviewEvent) -> Unit, onBack: () -> Unit, objectiveAudio: @Composable (String, String) -> Unit = { _, _ -> }) {
+fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReviewEvent) -> Unit, onBack: () -> Unit) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.hasError) {
         if (state.hasError) {
@@ -176,7 +177,11 @@ fun GrowthReviewScreenContent(state: GrowthReviewUiState, onEvent: (GrowthReview
                         confirmLabel = stringResource(Res.string.review_validate),
                         state = state,
                         onEvent = onEvent,
-                        takes = { objectiveAudio(objective.memberId, objective.objectiveId) },
+                        takes = {
+                            ObjectiveAudioReview(objective.takes) { take, title, subtitle ->
+                                onEvent(GrowthReviewEvent.PlayTake(take, title, subtitle))
+                            }
+                        },
                     )
                 }
             }
@@ -221,17 +226,17 @@ private fun ReviewCard(
             } else {
                 null
             },
-            placeholder = { Text("Une réussite observée, un point précis à travailler et le prochain essai attendu.") },
+            placeholder = { Text(stringResource(Res.string.growth_review_comment_placeholder)) },
             minLines = 2,
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(Radius.chip),
             modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s), modifier = Modifier.padding(top = Spacing.m)) {
             OutlinedButton(
                 onClick = { onEvent(GrowthReviewEvent.Answered(key, validated = false)) },
                 enabled = !isSaving,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.weight(1f).height(56.dp),
+                shape = RoundedCornerShape(Radius.card),
+                modifier = Modifier.weight(1f).height(Sizes.rowMin),
             ) { Text(stringResource(Res.string.review_rework)) }
             GradientButton(
                 onClick = { onEvent(GrowthReviewEvent.Answered(key, validated = true)) },

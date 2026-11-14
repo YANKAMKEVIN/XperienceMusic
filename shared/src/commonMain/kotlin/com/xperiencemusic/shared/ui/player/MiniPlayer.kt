@@ -45,6 +45,8 @@ import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.PlayPauseButton
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -54,6 +56,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.remember
+
+/** The pill's corners; the progress line keeps clear of them by as much. */
+private val CORNER_RADIUS = 22.dp
+private val PROGRESS_HEIGHT = 2.dp
 
 /**
  * A floating card above the tabs while something is loaded, so listening goes on across screens;
@@ -96,11 +102,11 @@ fun MiniPlayerContent(
     compact: Boolean = false,
 ) {
     val openLabel = stringResource(Res.string.player_open)
-    val shape = RoundedCornerShape(22.dp)
+    val shape = RoundedCornerShape(CORNER_RADIUS)
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = shape,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column {
@@ -111,10 +117,10 @@ fun MiniPlayerContent(
                     .padding(start = Spacing.s, end = Spacing.xs, top = if (compact) 0.dp else Spacing.s, bottom = if (compact) 0.dp else Spacing.s),
             ) {
                 if (!compact) Box(
-                    Modifier.size(44.dp).background(BrandColors.gradient, RoundedCornerShape(14.dp)),
+                    Modifier.size(Sizes.iconTile).background(BrandColors.gradient, RoundedCornerShape(Radius.chip)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(XmIcons.Notes, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                    Icon(XmIcons.Notes, contentDescription = null, tint = BrandColors.onGradient, modifier = Modifier.size(Sizes.iconL))
                 }
                 Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
                     Text(state.subtitle, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -145,7 +151,7 @@ fun MiniPlayerContent(
             LinearProgressIndicator(
                 progress = { state.progress },
                 trackColor = Color.Transparent,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp).height(2.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = CORNER_RADIUS).height(PROGRESS_HEIGHT),
             )
         }
     }

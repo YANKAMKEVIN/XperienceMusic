@@ -1,9 +1,15 @@
 package com.xperiencemusic.shared.ui.theme
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-/** Xperience Music art direction: deep night, violet to blue, near-white text. */
+/**
+ * Xperience Music art direction: deep night, violet to blue, near-white text.
+ *
+ * Read only inside `ui/theme`: screens go through `MaterialTheme.colorScheme`, `AppTheme.colors`
+ * or [BrandColors]. Kotlin has no package-private visibility, so this rule is kept by review.
+ */
 internal object Palette {
     val Night = Color(0xFF0B0A14)
     val NightRaised = Color(0xFF15131F)
@@ -37,9 +43,47 @@ object BrandColors {
     val Indigo = Color(0xFF6D5BFF)
     val Blue = Color(0xFF3D7BFF)
 
-    /** Something missing, gently: a part nobody covers yet. */
+    /** Something missing, gently: a part nobody covers yet. Screens read it as `AppTheme.colors.warning`. */
     val Amber = Color(0xFFF2B35B)
+
+    /** Text, icons and spinners drawn on the brand gradient: pure white, a touch brighter than the body text. */
+    val onGradient = Color.White
 
     val gradient: Brush get() = Brush.linearGradient(listOf(Purple, Indigo, Blue))
     val horizontalGradient: Brush get() = Brush.horizontalGradient(listOf(Purple, Indigo, Blue))
 }
+
+/** The colours Material's scheme has no slot for, read through `AppTheme.colors`. */
+@Immutable
+data class AppColors(
+    /** Done, validated, serving. */
+    val success: Color,
+    /** Missing or to rework, gently. */
+    val warning: Color,
+    /** Sent and waiting for an answer. */
+    val info: Color,
+    /** The night blue behind [info] content (the offline banner, the hero card's far end). */
+    val infoContainer: Color,
+    /** The eyebrow over a violet gradient card. */
+    val eyebrow: Color,
+    /** Body text on a raised gradient card: a step brighter than `onSurfaceVariant`. */
+    val onCardMuted: Color,
+    /** The hairline around a violet gradient card. */
+    val cardEdge: Color,
+    /** A black piano key, and the ink of the labels on the white ones. */
+    val ebony: Color,
+    /** The line between two piano keys. */
+    val keyEdge: Color,
+)
+
+internal val darkAppColors = AppColors(
+    success = Palette.Success,
+    warning = BrandColors.Amber,
+    info = Palette.Blue,
+    infoContainer = Palette.BlueDeep,
+    eyebrow = Palette.VioletLight,
+    onCardMuted = Palette.MistLight,
+    cardEdge = Palette.VioletEdge,
+    ebony = Palette.Ebony,
+    keyEdge = Palette.KeyEdge,
+)

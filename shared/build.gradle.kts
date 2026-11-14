@@ -118,6 +118,8 @@ kotlin {
     }
 }
 
+apply(from = rootProject.file("gradle/check-ui-literals.gradle.kts"))
+
 compose.resources {
     publicResClass = false
     packageOfResClass = "com.xperiencemusic.shared.resources"

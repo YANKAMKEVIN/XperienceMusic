@@ -1,0 +1,64 @@
+# Builds upon the default detekt configuration; only the differences are listed here.
+# Compose rules: https://mrmans0n.github.io/compose-rules/detekt/
+Compose:
+  ComposableAnnotationNaming:
+    active: true
+  ComposableNaming:
+    active: true
+  ContentEmitterReturningValues:
+    active: true
+  ModifierMissing:
+    active: true
+  ModifierNaming:
+    active: true
+  ModifierNotUsedAtRoot:
+    active: true
+  ModifierReused:
+    active: true
+  ModifierWithoutDefault:
+    active: true
+  MultipleEmitters:
+    active: true
+  MutableParams:
+    active: true
+  PreviewPublic:
+    active: true
+  RememberMissing:
+    active: true
+  UnstableCollections:
+    active: true
+  ViewModelForwarding:
+    active: true
+  ViewModelInjection:
+    active: true
+  LambdaParameterInRestartableEffect:
+    active: true
+  ParameterNaming:
+    active: true
+
+style:
+  MagicNumber:
+    active: false # design values are named by ui/theme tokens, enforced by checkUiLiterals
+  MaxLineLength:
+    maxLineLength: 140
+    excludeCommentStatements: true
+  ReturnCount:
+    max: 3
+  WildcardImport:
+    active: true
+    excludeImports: ['java.util.*', 'kotlin.test.*']
+complexity:
+  LongParameterList:
+    allowedFunctionParameters: 8
+    allowedConstructorParameters: 10
+    ignoreDefaultParameters: true
+    ignoreAnnotatedParameter: ['Composable']
+  TooManyFunctions:
+    allowedFunctionsPerFile: 20
+    allowedFunctionsPerClass: 20
+    ignoreAnnotatedFunctions: ['Composable']
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9_]*'

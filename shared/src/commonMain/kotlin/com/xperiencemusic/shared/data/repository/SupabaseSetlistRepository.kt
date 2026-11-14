@@ -5,9 +5,11 @@ import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.remote.dto.SetlistDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
 import com.xperiencemusic.shared.data.remote.tracking
-import com.xperiencemusic.shared.data.remote.postgrestCall
+import com.xperiencemusic.shared.data.session.SessionGuard
+import com.xperiencemusic.shared.data.session.accountCall
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.model.SyncStatus
+import com.xperiencemusic.shared.domain.repository.SessionResettable
 import com.xperiencemusic.shared.domain.repository.SetlistRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -31,11 +33,11 @@ import kotlinx.serialization.json.putJsonArray
 class SupabaseSetlistRepository(
     private val client: SupabaseClient,
     private val snapshots: SnapshotStore,
-) : SetlistRepository, com.xperiencemusic.shared.domain.repository.SessionResettable {
-    private var sessionGeneration = 0
+) : SetlistRepository, SessionResettable {
+    private val session = SessionGuard()
 
     override fun resetSession() {
-        sessionGeneration++
+        session.reset()
         setlists.value = null
         hasRefreshed = false
     }
@@ -58,7 +60,7 @@ class SupabaseSetlistRepository(
         }.filterNotNull()
 
     override suspend fun publish(setlist: Setlist) {
-        accountCall {
+        session.accountCall {
             client.postgrest.rpc(
                 "publish_setlist",
                 buildJsonObject {
@@ -73,14 +75,14 @@ class SupabaseSetlistRepository(
     }
 
     override suspend fun delete(serviceDate: LocalDate) {
-        accountCall {
+        session.accountCall {
             client.postgrest.rpc("delete_setlist", buildJsonObject { put("p_service_date", serviceDate.toString()) })
         }
         reload()
     }
 
     private suspend fun reload() {
-        val fetched = accountCall {
+        val fetched = session.accountCall {
             client.from(SETLISTS).select(Columns.raw(SetlistDto.COLUMNS)) {
                 // Every week ahead, and about six months of history.
                 order("service_date", Order.DESCENDING)
@@ -99,12 +101,4 @@ class SupabaseSetlistRepository(
     }
 
     private fun List<SetlistDto>.toDomainSorted() = map { it.toDomain() }.sortedBy { it.serviceDate }
-    /** Discard responses started under a previous account, including snapshot writes. */
-    private suspend fun <T> accountCall(block: suspend () -> T): T {
-        val generation = sessionGeneration
-        val result = postgrestCall(block)
-        if (generation != sessionGeneration) throw kotlin.coroutines.cancellation.CancellationException("Session ended")
-        return result
-    }
-
 }

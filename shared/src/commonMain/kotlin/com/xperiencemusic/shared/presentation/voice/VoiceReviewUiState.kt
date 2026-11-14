@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.presentation.voice
 
+import kotlinx.datetime.LocalDate
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.presentation.common.PlaybackStatus
@@ -22,7 +23,7 @@ data class SubmissionUi(
     val memberName: String,
     val voicePart: VoicePart?,
     val songTitle: String,
-    val date: String,
+    val submittedOn: LocalDate,
     val duration: String,
     val status: ExerciseStatus,
     val feedback: String?,

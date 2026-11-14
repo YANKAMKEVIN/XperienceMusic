@@ -4,7 +4,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.xperiencemusic.shared.domain.repository.AudioPlayer
 import com.xperiencemusic.shared.domain.repository.FileStore
 import com.xperiencemusic.shared.domain.repository.MicrophoneInput
-import com.xperiencemusic.shared.domain.repository.ReminderScheduler
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -15,5 +14,5 @@ actual val platformModule: Module = module {
     single<AudioPlayer> { AndroidAudioPlayer(androidContext(), get()) }
     single<FileStore> { AndroidFileStore(androidContext()) }
     single<MicrophoneInput> { AndroidMicrophone() }
-    single<ReminderScheduler> { AndroidReminderScheduler(androidContext()) }
+    single<NotificationScheduler> { AndroidReminderScheduler(androidContext()) }
 }

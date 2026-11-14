@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.presentation.progress
 
+import com.xperiencemusic.shared.domain.model.LearningProgress
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Level
@@ -9,7 +10,7 @@ import com.xperiencemusic.shared.domain.model.VoicePart
 data class ProgressUiState(
     val isLoading: Boolean = true,
     val name: String = "",
-    val learning: com.xperiencemusic.shared.domain.learning.LearningProgress? = null,
+    val learning: LearningProgress? = null,
     val instrument: Instrument? = null,
     val level: Level? = null,
     val voicePart: VoicePart? = null,

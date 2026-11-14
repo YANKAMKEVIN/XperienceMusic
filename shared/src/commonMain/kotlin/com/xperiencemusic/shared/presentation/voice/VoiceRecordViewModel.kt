@@ -8,24 +8,20 @@ import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.model.VoiceSubmission
 import com.xperiencemusic.shared.domain.repository.NowPlaying
-import com.xperiencemusic.shared.domain.repository.VoiceSubmissionRepository
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveMySubmissionsUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.PlayLocalAudioUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.RecordedVoice
 import com.xperiencemusic.shared.domain.usecase.SendVoiceUseCase
 import com.xperiencemusic.shared.domain.usecase.VoiceRecorder
-import com.xperiencemusic.shared.presentation.common.Formatting
 import com.xperiencemusic.shared.presentation.common.shortLabel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -46,12 +42,11 @@ internal data class VoiceLocal(
  * The singer records their part on [songId] with their voice track (or the reference) in the
  * earphones, listens back, then sends it to the super admin.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
 class VoiceRecordViewModel(
     private val songId: String,
     observeSong: ObserveSongUseCase,
     observeCurrentMember: ObserveCurrentMemberUseCase,
-    submissions: VoiceSubmissionRepository,
+    observeMySubmissions: ObserveMySubmissionsUseCase,
     private val recorder: VoiceRecorder,
     private val sendVoice: SendVoiceUseCase,
     private val playback: PlaybackController,
@@ -63,9 +58,7 @@ class VoiceRecordViewModel(
     private val song = observeSong(songId)
     private val member = observeCurrentMember()
 
-    private val mine = member.flatMapLatest { m ->
-        if (m == null) flowOf(null) else submissions.observeMine(m.id).map { list -> list.firstOrNull { it.songId == songId } }
-    }
+    private val mine = observeMySubmissions(songId).map { it.firstOrNull() }
 
     val state: StateFlow<VoiceRecordUiState> = combine(song, member, mine, local, recorder.level) { song, member, mine, local, level ->
         deriveVoiceRecordState(song, member?.profile?.voicePart, mine, local, level.seconds, level.level)
@@ -217,7 +210,7 @@ internal fun deriveVoiceRecordState(
         seconds = seconds.toInt(),
         maxSeconds = VoiceRecorder.MAX_SECONDS.toInt(),
         level = if (local.phase == VoicePhase.RECORDING) level else 0f,
-        previous = previous?.let { PreviousSubmissionUi(Formatting.dayAndDate(it.submittedOn), it.status, it.feedback) },
+        previous = previous?.let { PreviousSubmissionUi(it.submittedOn, it.status, it.feedback) },
         error = local.error,
         isQuietTake = local.isQuietTake && local.phase in listOf(VoicePhase.RECORDED, VoicePhase.SENDING),
     )

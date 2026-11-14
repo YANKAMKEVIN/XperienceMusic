@@ -9,25 +9,29 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.xperiencemusic.shared.domain.model.Reminder
-import com.xperiencemusic.shared.domain.repository.ReminderScheduler
+import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.notification_channel_services
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
+import org.jetbrains.compose.resources.getString
 import kotlin.time.Clock
 
 /**
  * Alarms that wake [ReminderReceiver] at each reminder's time; reminders already due are shown at
  * once. The ids scheduled last time are kept so they can be cancelled when the plan changes.
  */
-class AndroidReminderScheduler(private val context: Context) : ReminderScheduler {
+class AndroidReminderScheduler(private val context: Context) : NotificationScheduler {
     private val alarms = context.getSystemService(AlarmManager::class.java)
     private val prefs = context.getSharedPreferences("reminders", Context.MODE_PRIVATE)
 
-    override suspend fun replaceAll(reminders: List<Reminder>) {
+    override suspend fun replaceAll(notifications: List<LocalNotification>) {
         prefs.getStringSet(KEY_IDS, emptySet()).orEmpty().forEach { id -> alarms.cancel(pendingIntent(id, null)) }
         val now = Clock.System.now()
         val scheduled = mutableSetOf<String>()
-        reminders.forEach { reminder ->
+        notifications.forEach { reminder ->
             val at = reminder.at.toInstant(TimeZone.currentSystemDefault())
             if (at <= now) {
                 showReminder(context, reminder.id, reminder.title, reminder.body)
@@ -40,7 +44,7 @@ class AndroidReminderScheduler(private val context: Context) : ReminderScheduler
         prefs.edit().putStringSet(KEY_IDS, scheduled).apply()
     }
 
-    private fun pendingIntent(id: String, reminder: Reminder?): PendingIntent {
+    private fun pendingIntent(id: String, reminder: LocalNotification?): PendingIntent {
         val intent = Intent(context, ReminderReceiver::class.java).setAction("xm.reminder.$id")
         if (reminder != null) {
             intent.putExtra(EXTRA_ID, reminder.id).putExtra(EXTRA_TITLE, reminder.title).putExtra(EXTRA_BODY, reminder.body)
@@ -58,22 +62,30 @@ class AndroidReminderScheduler(private val context: Context) : ReminderScheduler
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        showReminder(
-            context,
-            intent.getStringExtra(AndroidReminderScheduler.EXTRA_ID) ?: return,
-            intent.getStringExtra(AndroidReminderScheduler.EXTRA_TITLE).orEmpty(),
-            intent.getStringExtra(AndroidReminderScheduler.EXTRA_BODY).orEmpty(),
-        )
+        val id = intent.getStringExtra(AndroidReminderScheduler.EXTRA_ID) ?: return
+        val title = intent.getStringExtra(AndroidReminderScheduler.EXTRA_TITLE).orEmpty()
+        val body = intent.getStringExtra(AndroidReminderScheduler.EXTRA_BODY).orEmpty()
+        // The channel's name is read from the string resources, which is a suspending call.
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.Default).launch {
+            try {
+                showReminder(context, id, title, body)
+            } finally {
+                pending.finish()
+            }
+        }
     }
 }
 
 private const val CHANNEL_ID = "services"
 
-internal fun showReminder(context: Context, id: String, title: String, body: String) {
+internal suspend fun showReminder(context: Context, id: String, title: String, body: String) {
     val manager = NotificationManagerCompat.from(context)
     if (!manager.areNotificationsEnabled()) return
+    // The name shows in the system's notification settings.
+    val channelName = getString(Res.string.notification_channel_services)
     context.getSystemService(NotificationManager::class.java).createNotificationChannel(
-        NotificationChannel(CHANNEL_ID, "Services et répétitions", NotificationManager.IMPORTANCE_DEFAULT),
+        NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT),
     )
     val open = context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
         PendingIntent.getActivity(context, 0, it, PendingIntent.FLAG_IMMUTABLE)

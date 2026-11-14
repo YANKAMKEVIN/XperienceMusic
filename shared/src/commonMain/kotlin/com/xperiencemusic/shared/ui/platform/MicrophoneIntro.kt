@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.tooling.preview.Preview
-import com.xperiencemusic.shared.domain.repository.MicrophoneIntroStore
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.microphone_intro_continue
 import com.xperiencemusic.shared.resources.microphone_intro_later
@@ -33,8 +32,15 @@ enum class MicrophoneUse {
     RECORD,
 }
 
-/** The phone's marker; null (previews, tests) never shows the explanation. */
-val LocalMicrophoneIntroStore = staticCompositionLocalOf<MicrophoneIntroStore?> { null }
+/** Whether the microphone was already explained on this phone, and a way to say it now is. */
+interface MicrophoneIntro {
+    fun wasExplained(): Boolean
+
+    fun markExplained()
+}
+
+/** Provided once at the root of the app; null (previews, tests) never shows the explanation. */
+val LocalMicrophoneIntro = staticCompositionLocalOf<MicrophoneIntro?> { null }
 
 /**
  * The microphone permission, with a short explanation before the very first system prompt
@@ -44,14 +50,14 @@ val LocalMicrophoneIntroStore = staticCompositionLocalOf<MicrophoneIntroStore?> 
 @Composable
 fun rememberMicrophonePermission(use: MicrophoneUse): MicrophonePermission {
     val system = rememberMicrophonePermission()
-    val store = LocalMicrophoneIntroStore.current
+    val intro = LocalMicrophoneIntro.current
     var pending by remember { mutableStateOf<((Boolean) -> Unit)?>(null) }
     pending?.let { onResult ->
         MicrophoneIntroDialog(
             use = use,
             onContinue = {
                 pending = null
-                store?.markShown()
+                intro?.markExplained()
                 system.request(onResult)
             },
             // Nothing was asked: the explanation comes back with the next tap.
@@ -61,7 +67,7 @@ fun rememberMicrophonePermission(use: MicrophoneUse): MicrophonePermission {
     return MicrophonePermission(
         isGranted = system.isGranted,
         request = { onResult ->
-            if (system.isGranted || store == null || store.wasShown()) system.request(onResult) else pending = onResult
+            if (system.isGranted || intro == null || intro.wasExplained()) system.request(onResult) else pending = onResult
         },
         openSettings = system.openSettings,
     )

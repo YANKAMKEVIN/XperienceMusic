@@ -1,8 +1,8 @@
 package com.xperiencemusic.shared.presentation.progress
 
-import com.xperiencemusic.shared.domain.learning.LearningAttempt
+import com.xperiencemusic.shared.domain.model.LearningAttempt
 import com.xperiencemusic.shared.domain.learning.LearningCatalog
-import com.xperiencemusic.shared.domain.learning.LearningProgress
+import com.xperiencemusic.shared.domain.model.LearningProgress
 import com.xperiencemusic.shared.domain.learning.PianoBasics
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Instrument

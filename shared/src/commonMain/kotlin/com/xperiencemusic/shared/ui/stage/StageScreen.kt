@@ -16,6 +16,10 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import com.xperiencemusic.shared.resources.stage_text_bigger
+import com.xperiencemusic.shared.resources.stage_text_bigger_glyph
+import com.xperiencemusic.shared.resources.stage_text_smaller
+import com.xperiencemusic.shared.resources.stage_text_smaller_glyph
 import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +39,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -43,14 +46,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -70,14 +71,13 @@ import com.xperiencemusic.shared.resources.stage_previous
 import com.xperiencemusic.shared.resources.stage_scroll_start
 import com.xperiencemusic.shared.resources.stage_scroll_stop
 import com.xperiencemusic.shared.resources.stage_slower
-import com.xperiencemusic.shared.resources.stage_text_bigger
-import com.xperiencemusic.shared.resources.stage_text_smaller
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.components.StageIcons
 import com.xperiencemusic.shared.ui.platform.HideSystemBars
 import com.xperiencemusic.shared.ui.platform.KeepScreenOn
 import com.xperiencemusic.shared.ui.song.ChordChartView
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
@@ -88,6 +88,11 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+
+/** The square-ish buttons of the controls bar (text size, speed). */
+private val STAGE_BUTTON_WIDTH = 64.dp
+/** Room under the last line so that it can scroll up to eye level. */
+private val LYRICS_END_ROOM = 240.dp
 
 @Composable
 fun StageScreen(
@@ -120,14 +125,14 @@ fun StageScreenContent(
             if (maxWidth > maxHeight) {
                 Row(Modifier.fillMaxSize()) {
                     Column(Modifier.weight(1f)) {
-                        StageToolbar(state, onEvent, onClose)
+                        StageToolbar(state, onClose)
                         StageBody(state, Modifier.weight(1f))
                     }
                     StageRail(state, onEvent, onOpenSong)
                 }
             } else {
                 Column(Modifier.fillMaxSize()) {
-                    StageToolbar(state, onEvent, onClose)
+                    StageToolbar(state, onClose)
                     StageBody(state, Modifier.weight(1f))
                     StageControls(state, onEvent)
                     if (state.setlistPosition != null) SetlistNavigation(state, onOpenSong)
@@ -138,7 +143,7 @@ fun StageScreenContent(
 }
 
 @Composable
-private fun StageBody(state: StageUiState, modifier: Modifier) {
+private fun StageBody(state: StageUiState, modifier: Modifier = Modifier) {
     if (state.isLoading) {
         Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
     } else {
@@ -149,6 +154,8 @@ private fun StageBody(state: StageUiState, modifier: Modifier) {
 /** Landscape: every control in a column of compact buttons beside the lyrics. */
 @Composable
 private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpenSong: (String) -> Unit) {
+    val textSmaller = stringResource(Res.string.stage_text_smaller)
+    val textBigger = stringResource(Res.string.stage_text_bigger)
     Column(
         verticalArrangement = Arrangement.spacedBy(Spacing.s, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -156,14 +163,10 @@ private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpen
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             StageButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }, modifier = Modifier.weight(1f), compact = true) {
-                Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
-                    contentDescription = "Réduire le texte"
-                })
+                GlyphLabel(stringResource(Res.string.stage_text_smaller_glyph), textSmaller)
             }
             StageButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }, modifier = Modifier.weight(1f), compact = true) {
-                Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
-                    contentDescription = "Agrandir le texte"
-                })
+                GlyphLabel(stringResource(Res.string.stage_text_bigger_glyph), textBigger)
             }
         }
         StageButton(onClick = { onEvent(StageEvent.AutoScrollToggled) }, modifier = Modifier.fillMaxWidth(), compact = true) {
@@ -215,7 +218,7 @@ private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpen
 }
 
 @Composable
-private fun StageToolbar(state: StageUiState, onEvent: (StageEvent) -> Unit, onClose: () -> Unit) {
+private fun StageToolbar(state: StageUiState, onClose: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = Spacing.s)) {
         IconButton(onClick = onClose) {
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.stage_close))
@@ -238,15 +241,15 @@ private fun StageToolbar(state: StageUiState, onEvent: (StageEvent) -> Unit, onC
 /** Text size and auto-scroll, big enough to hit on a music stand. */
 @Composable
 private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
+    val textSmaller = stringResource(Res.string.stage_text_smaller)
+    val textBigger = stringResource(Res.string.stage_text_bigger)
     Row(
         horizontalArrangement = Arrangement.spacedBy(Spacing.s),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.l, vertical = Spacing.s),
     ) {
-        StageButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }, modifier = Modifier.width(64.dp)) {
-            Text("A−", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
-                contentDescription = "Réduire le texte"
-            })
+        StageButton(onClick = { onEvent(StageEvent.TextSmallerClicked) }, modifier = Modifier.width(STAGE_BUTTON_WIDTH)) {
+            GlyphLabel(stringResource(Res.string.stage_text_smaller_glyph), textSmaller)
         }
         StageButton(onClick = { onEvent(StageEvent.AutoScrollToggled) }, modifier = Modifier.weight(1f)) {
             Icon(
@@ -269,10 +272,8 @@ private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
                 }
             }
         }
-        StageButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }, modifier = Modifier.width(64.dp)) {
-            Text("A+", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics {
-                contentDescription = "Agrandir le texte"
-            })
+        StageButton(onClick = { onEvent(StageEvent.TextBiggerClicked) }, modifier = Modifier.width(STAGE_BUTTON_WIDTH)) {
+            GlyphLabel(stringResource(Res.string.stage_text_bigger_glyph), textBigger)
         }
     }
     // The speed buttons unfold under the controls rather than shoving the lyrics down at once.
@@ -286,10 +287,10 @@ private fun StageControls(state: StageUiState, onEvent: (StageEvent) -> Unit) {
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            StageButton(onClick = { onEvent(StageEvent.SlowerClicked) }, modifier = Modifier.width(64.dp)) {
+            StageButton(onClick = { onEvent(StageEvent.SlowerClicked) }, modifier = Modifier.width(STAGE_BUTTON_WIDTH)) {
                 Icon(StageIcons.Minus, contentDescription = stringResource(Res.string.stage_slower))
             }
-            StageButton(onClick = { onEvent(StageEvent.FasterClicked) }, modifier = Modifier.padding(start = Spacing.s).width(64.dp)) {
+            StageButton(onClick = { onEvent(StageEvent.FasterClicked) }, modifier = Modifier.padding(start = Spacing.s).width(STAGE_BUTTON_WIDTH)) {
                 Icon(StageIcons.Plus, contentDescription = stringResource(Res.string.stage_faster))
             }
         }
@@ -306,19 +307,19 @@ private fun StageButton(
     OutlinedButton(
         onClick = onClick,
         shape = RoundedCornerShape(Radius.card),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outlineVariant),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         contentPadding = PaddingValues(horizontal = if (compact) Spacing.xs else Spacing.m),
-        modifier = modifier.height(if (compact) 48.dp else 56.dp),
+        modifier = modifier.height(if (compact) Sizes.touchTarget else Sizes.rowMin),
         content = content,
     )
 }
 
 @Composable
-private fun StageLyrics(state: StageUiState, modifier: Modifier) {
+private fun StageLyrics(state: StageUiState, modifier: Modifier = Modifier) {
     val scroll = rememberScrollState()
     val density = LocalDensity.current
     LaunchedEffect(state.isAutoScrolling, state.scrollSpeed) {
@@ -353,7 +354,7 @@ private fun StageLyrics(state: StageUiState, modifier: Modifier) {
     ) {
         ChordChartView(state.chart, scale = state.textScale)
         // Room so the last line can scroll up to eye level.
-        Spacer(Modifier.height(240.dp))
+        Spacer(Modifier.height(LYRICS_END_ROOM))
     }
 }
 
@@ -441,4 +442,9 @@ private fun StageScreenLandscapePreview() {
             onOpenSong = {},
         )
     }
+}
+
+@Composable
+private fun GlyphLabel(glyph: String, description: String) {
+    Text(glyph, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = description })
 }

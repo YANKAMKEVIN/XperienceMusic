@@ -1,7 +1,6 @@
 package com.xperiencemusic.shared.ui.profile
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -61,7 +59,6 @@ import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.onboarding.RoleChoices
 import com.xperiencemusic.shared.ui.onboarding.VoiceChoices
 import com.xperiencemusic.shared.ui.theme.AppTheme
-import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -130,7 +127,7 @@ fun ProfileScreenContent(state: ProfileUiState, onEvent: (ProfileEvent) -> Unit,
             SectionTitle(stringResource(Res.string.onboarding_instrument_title))
             RoleChoices(state.instrument) { onEvent(ProfileEvent.InstrumentSelected(it)) }
             if (state.saved != null && state.instrument != state.saved.instrument) {
-                Text(stringResource(Res.string.profile_role_change_note), style = MaterialTheme.typography.bodyMedium, color = BrandColors.Amber)
+                Text(stringResource(Res.string.profile_role_change_note), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.warning)
             }
             if (state.isSinger) {
                 SectionTitle(stringResource(Res.string.onboarding_voice_title))

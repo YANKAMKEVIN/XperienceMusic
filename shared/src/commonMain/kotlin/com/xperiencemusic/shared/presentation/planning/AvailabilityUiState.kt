@@ -7,8 +7,8 @@ import kotlinx.datetime.LocalDate
 
 data class AvailabilityUiState(
     val isLoading: Boolean = true,
-    val monthLabel: String = "",
-    val answerByLabel: String? = null,
+    val monthStart: LocalDate? = null,
+    val answerBy: LocalDate? = null,
     /** The deadline has passed; answers are still taken until the month is validated. */
     val isPastDeadline: Boolean = false,
     val instrument: Instrument? = null,
@@ -23,8 +23,6 @@ data class AvailabilityUiState(
 data class AvailabilityRowUi(
     val date: LocalDate,
     val kind: ServiceKind,
-    /** "dimanche 1 nov." */
-    val label: String,
     val answer: MyAnswer,
     val isPast: Boolean,
 )

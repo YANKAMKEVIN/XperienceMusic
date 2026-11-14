@@ -22,7 +22,11 @@ class RehearsalUploadStateTest {
     private val fresh = song("fresh", "Nouveau", recordings = listOf(recording(rehearsal, "Répétition")))
         .copy(voiceTracks = listOf(VoiceTrack("t", VoicePart.TENOR, "t"), VoiceTrack("s", VoicePart.SOPRANO, "s")))
     private val bare = song("bare", "Sans audio")
-    private val schedule = SetlistSchedule(listOf(WeeklySetlist(Setlist("w", rehearsal, sunday, listOf("clean", "fresh", "bare"), null, "x"), listOf(clean, fresh, bare))), 0)
+    private val week = WeeklySetlist(
+        Setlist("w", rehearsal, sunday, listOf("clean", "fresh", "bare"), null, "x"),
+        listOf(clean, fresh, bare),
+    )
+    private val schedule = SetlistSchedule(listOf(week), 0)
 
     @Test
     fun `un chant avec une version propre garde sa référence sans nouvelle prise`() {

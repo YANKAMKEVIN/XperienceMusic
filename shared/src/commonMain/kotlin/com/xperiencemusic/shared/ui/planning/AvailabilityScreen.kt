@@ -5,11 +5,9 @@ import com.xperiencemusic.shared.resources.availability_past_unavailable
 import com.xperiencemusic.shared.resources.availability_past_served
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -64,8 +62,8 @@ import com.xperiencemusic.shared.resources.planning_friday_hint
 import com.xperiencemusic.shared.ui.components.AppCard
 import com.xperiencemusic.shared.ui.components.choiceState
 import com.xperiencemusic.shared.ui.components.label
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
-import com.xperiencemusic.shared.ui.theme.Palette
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
@@ -97,7 +95,7 @@ fun AvailabilityScreenContent(state: AvailabilityUiState, onEvent: (Availability
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.availability_title, state.monthLabel)) },
+                title = { Text(stringResource(Res.string.availability_title, state.monthStart?.let { rememberFormattingWords().monthAndYear(it) }.orEmpty())) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.action_back))
@@ -133,11 +131,12 @@ private fun Intro(state: AvailabilityUiState) {
         val part = state.voicePart?.label()?.lowercase()?.let { voice -> "${state.instrument?.label()?.lowercase().orEmpty()} $voice".trim() }
             ?: state.instrument?.label()?.lowercase()
         if (part != null) Text(stringResource(Res.string.availability_role, part), style = MaterialTheme.typography.bodyMedium)
+        val answerBy = state.answerBy?.let { rememberFormattingWords().dayAndMonth(it) }
         val note = when {
             !state.canAnswer -> stringResource(Res.string.availability_locked)
-            state.isPastDeadline && state.answerByLabel != null -> stringResource(Res.string.availability_late, state.answerByLabel) + "\n" +
+            state.isPastDeadline && answerBy != null -> stringResource(Res.string.availability_late, answerBy) + "\n" +
                 stringResource(Res.string.availability_saved_hint)
-            state.answerByLabel != null -> stringResource(Res.string.availability_answer_by, state.answerByLabel) + "\n" +
+            answerBy != null -> stringResource(Res.string.availability_answer_by, answerBy) + "\n" +
                 stringResource(Res.string.availability_saved_hint)
             else -> stringResource(Res.string.availability_saved_hint)
         }
@@ -151,7 +150,7 @@ private fun AnswerRow(row: AvailabilityRowUi, enabled: Boolean, onEvent: (Availa
     AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                row.label.replaceFirstChar { it.uppercase() },
+                rememberFormattingWords().dayAndDate(row.date).replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.titleSmall,
                 color = if (row.isPast) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified,
                 modifier = Modifier.weight(1f),
@@ -185,12 +184,12 @@ private fun AnswerRow(row: AvailabilityRowUi, enabled: Boolean, onEvent: (Availa
             options.forEachIndexed { index, (serves, label) ->
                 val selected = (row.answer == MyAnswer.SERVES) == serves && row.answer != MyAnswer.UNANSWERED
                 // "Je sers" turns green and "Pas dispo" grey: the two answers no longer share one blue.
-                val tint = if (serves) Palette.Success else Palette.Mist
+                val tint = if (serves) AppTheme.colors.success else MaterialTheme.colorScheme.onSurfaceVariant
                 SegmentedButton(
                     selected = selected,
                     colors = SegmentedButtonDefaults.colors(
                         activeContainerColor = tint.copy(alpha = 0.22f),
-                        activeContentColor = if (serves) Palette.Success else Palette.Snow,
+                        activeContentColor = if (serves) AppTheme.colors.success else MaterialTheme.colorScheme.onSurface,
                         activeBorderColor = tint,
                     ),
                     onClick = { onEvent(AvailabilityEvent.Answered(row.date, serves)) },
@@ -212,15 +211,15 @@ private fun AvailabilityScreenPreview() {
         AvailabilityScreenContent(
             AvailabilityUiState(
                 isLoading = false,
-                monthLabel = "novembre 2026",
-                answerByLabel = "25 oct.",
+                monthStart = LocalDate(2026, 11, 1),
+                answerBy = LocalDate(2026, 10, 25),
                 instrument = Instrument.SINGER,
                 voicePart = VoicePart.TENOR,
                 canAnswer = true,
                 rows = listOf(
-                    AvailabilityRowUi(LocalDate(2026, 11, 1), ServiceKind.SUNDAY, "dimanche 1 nov.", MyAnswer.SERVES, false),
-                    AvailabilityRowUi(LocalDate(2026, 11, 6), ServiceKind.FRIDAY, "vendredi 6 nov.", MyAnswer.UNANSWERED, false),
-                    AvailabilityRowUi(LocalDate(2026, 11, 8), ServiceKind.SUNDAY, "dimanche 8 nov.", MyAnswer.NOT_AVAILABLE, false),
+                    AvailabilityRowUi(LocalDate(2026, 11, 1), ServiceKind.SUNDAY, MyAnswer.SERVES, false),
+                    AvailabilityRowUi(LocalDate(2026, 11, 6), ServiceKind.FRIDAY, MyAnswer.UNANSWERED, false),
+                    AvailabilityRowUi(LocalDate(2026, 11, 8), ServiceKind.SUNDAY, MyAnswer.NOT_AVAILABLE, false),
                 ),
             ),
             onEvent = {}, onBack = {},
