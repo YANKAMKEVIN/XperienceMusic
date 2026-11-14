@@ -9,11 +9,15 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -84,11 +88,26 @@ fun MainScaffold(onSignOut: () -> Unit, hasLoadFailure: Boolean, onRetryLoads: (
     }
 }
 
-/** Some data could not be fetched: the screens may be incomplete or out of date. */
+/**
+ * Some data could not be fetched: the screens may be incomplete or out of date. As the scaffold's
+ * top bar it owns the status bar inset, so it sits below the clock on its own surface.
+ */
 @Composable
 private fun RemoteLoadBanner(onRetry: () -> Unit) {
-    Column(Modifier.padding(Spacing.m)) {
-        Text(stringResource(Res.string.remote_load_failed))
-        TextButton(onClick = onRetry) { Text(stringResource(Res.string.remote_load_retry)) }
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(start = Spacing.l, end = Spacing.s, top = Spacing.xs, bottom = Spacing.xs),
+        ) {
+            Text(
+                stringResource(Res.string.remote_load_failed),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onRetry) { Text(stringResource(Res.string.remote_load_retry)) }
+        }
     }
 }
