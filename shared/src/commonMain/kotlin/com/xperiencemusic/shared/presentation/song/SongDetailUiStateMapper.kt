@@ -67,7 +67,7 @@ fun deriveSongDetailState(
 private fun Recording.toUi(playback: PlaybackStatus, isAvailableOffline: Boolean) = RecordingUi(
     id = id,
     title = title,
-    date = Formatting.shortDate(recordedOn),
+    recordedOn = recordedOn,
     duration = Formatting.duration(durationSeconds),
     isReference = isReference,
     playback = playback,

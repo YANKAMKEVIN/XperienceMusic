@@ -1,24 +1,35 @@
 package com.xperiencemusic.shared.ui.learning
 
-import androidx.compose.runtime.*
-import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedButton
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.xperiencemusic.shared.domain.learning.ObjectiveRecordings
-import com.xperiencemusic.shared.domain.model.PlaybackTrack
-import com.xperiencemusic.shared.domain.usecase.PlaybackController
-import org.koin.compose.koinInject
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import com.xperiencemusic.shared.presentation.learning.ObjectiveTakeUi
+import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.learning_take_label
+import com.xperiencemusic.shared.resources.learning_take_local
+import com.xperiencemusic.shared.resources.learning_take_pause
+import com.xperiencemusic.shared.resources.learning_take_seconds
+import com.xperiencemusic.shared.resources.learning_take_title
+import org.jetbrains.compose.resources.stringResource
 
-@Composable fun ObjectiveAudioReview(memberId:String,objectiveId:String) {
-    val recordings=koinInject<ObjectiveRecordings>()
-    val player=koinInject<PlaybackController>()
-    val flow=remember(memberId,recordings){recordings.observe(memberId)}
-    val rows by flow.collectAsStateWithLifecycle(emptyList())
-    val playback by player.state.collectAsStateWithLifecycle()
-    rows.filter{it.objectiveId==objectiveId}.sortedByDescending { it.submittedAt }.forEachIndexed { index,r->
-        val id="objective-${r.audioPath}"
-        OutlinedButton(onClick={player.playOrToggle(PlaybackTrack(id,"Prise d’évaluation","${r.seconds} secondes",r.audioPath))}) {
-            Text(if(playback.track?.id==id && playback.isPlaying)"Mettre en pause" else "Prise ${rows.count { it.objectiveId==objectiveId }-index} · ${r.submittedAt.take(10).ifEmpty { "sur ce téléphone" }} · ${r.seconds} s")
+/**
+ * The takes sent for an objective, newest first; a tap plays one or pauses it. [onPlay] gets the
+ * labels the system player shows.
+ */
+@Composable
+fun ObjectiveAudioReview(takes: List<ObjectiveTakeUi>, onPlay: (take: ObjectiveTakeUi, title: String, subtitle: String) -> Unit) {
+    val title = stringResource(Res.string.learning_take_title)
+    takes.forEach { take ->
+        val subtitle = stringResource(Res.string.learning_take_seconds, take.seconds)
+        OutlinedButton(onClick = { onPlay(take, title, subtitle) }) {
+            Text(
+                if (take.isPlaying) {
+                    stringResource(Res.string.learning_take_pause)
+                } else {
+                    val day = take.day.ifEmpty { stringResource(Res.string.learning_take_local) }
+                    stringResource(Res.string.learning_take_label, take.number, day, take.seconds)
+                },
+            )
         }
     }
 }

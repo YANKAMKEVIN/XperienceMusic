@@ -92,19 +92,26 @@ import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.OfflineBanner
 import com.xperiencemusic.shared.ui.components.PauseIcon
 import com.xperiencemusic.shared.ui.components.choiceState
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
 
+private val WAVES_HEIGHT = 44.dp
+/** The column of a song's number: two digits wide. */
+private val POSITION_WIDTH = 28.dp
+private val PLAY_BUTTON_SIZE = 40.dp
+
 /** [onEditWeek] opens the editor on a week's service date, or on the next free week when null. */
 @Composable
 fun WeekScreen(
     onSongClick: (String) -> Unit,
     onEditWeek: (LocalDate?) -> Unit,
-    onUploadRehearsal: (LocalDate) -> Unit = {},
+    onUploadRehearsal: (LocalDate) -> Unit,
     onAccount: () -> Unit,
     viewModel: WeekViewModel = koinViewModel(),
 ) {
@@ -157,7 +164,7 @@ private fun WeekList(
         verticalArrangement = Arrangement.spacedBy(Spacing.m),
         modifier = Modifier.fillMaxSize(),
     ) {
-        item { WeekHeader(setlist?.rangeLabel, state.me, onAccount) }
+        item { WeekHeader(setlist?.let { rememberFormattingWords().range(it.rehearsalDate, it.serviceDate) }, state.me, onAccount) }
         if (state.weeks.size > 1) item { WeekTabs(state.weeks, onSelect = { onEvent(WeekEvent.WeekSelected(it)) }) }
         if (state.isOffline) item { OfflineBanner() }
         if (setlist == null) {
@@ -173,7 +180,7 @@ private fun WeekList(
                     )
                 }
             } else {
-                item { BrandWaves(Modifier.fillMaxWidth().height(44.dp)) }
+                item { BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT)) }
             }
             item {
                 Text(
@@ -221,7 +228,7 @@ private fun EmptyWeek(state: WeekUiState, onPublish: () -> Unit) {
             value = if (countdown.daysLeft == 0) stringResource(Res.string.week_countdown_today) else stringResource(Res.string.week_countdown_days, countdown.daysLeft),
             caption = stringResource(if (countdown.daysLeft == 0) Res.string.week_countdown_caption_today else Res.string.week_countdown_caption),
             fraction = countdown.fraction,
-            title = stringResource(Res.string.week_countdown_title, countdown.dateLabel),
+            title = stringResource(Res.string.week_countdown_title, rememberFormattingWords().dayAndDate(countdown.date)),
             text = stringResource(Res.string.week_countdown_text),
         )
     }
@@ -234,12 +241,12 @@ private fun WeekHeader(rangeLabel: String?, me: MemberAvatarUi?, onAccount: () -
             val label = stringResource(Res.string.account_open, me.name)
             // 48 dp to touch, 40 dp to see, like an icon button.
             Box(
-                Modifier.size(48.dp).clip(CircleShape)
+                Modifier.size(Sizes.touchTarget).clip(CircleShape)
                     .clickable(role = Role.Button, onClick = onAccount)
                     .semantics { contentDescription = label },
                 contentAlignment = Alignment.Center,
             ) {
-                MemberAvatar(me, size = 40.dp)
+                MemberAvatar(me, size = Sizes.avatarS)
             }
         }
     }
@@ -248,6 +255,7 @@ private fun WeekHeader(rangeLabel: String?, me: MemberAvatarUi?, onAccount: () -
 /** The kept weeks, opened on the selected one: past weeks stay readable, coming ones are ready. */
 @Composable
 private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
+    val words = rememberFormattingWords()
     val listState = rememberLazyListState()
     val selected = weeks.indexOfFirst { it.isSelected }
     LaunchedEffect(selected) { if (selected > 0) listState.animateScrollToItem((selected - 1).coerceAtLeast(0)) }
@@ -257,7 +265,7 @@ private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
                 selected = week.isSelected,
                 onClick = { onSelect(week.serviceDate) },
                 label = {
-                    Text(if (week.timing == WeekTiming.CURRENT) stringResource(Res.string.week_this_week) else week.label)
+                    Text(if (week.timing == WeekTiming.CURRENT) stringResource(Res.string.week_this_week) else words.shortDayAndDate(week.serviceDate))
                 },
                 colors = FilterChipDefaults.filterChipColors(
                     labelColor = if (week.timing == WeekTiming.PAST) {
@@ -276,14 +284,15 @@ private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
 
 @Composable
 private fun DatesRow(setlist: WeekSetlistUi) {
+    val words = rememberFormattingWords()
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m), modifier = Modifier.height(IntrinsicSize.Min)) {
-        DateCard(stringResource(Res.string.setlist_rehearsal_label), setlist.rehearsalDate, Modifier.weight(1f).fillMaxHeight())
-        DateCard(stringResource(Res.string.setlist_service_label), setlist.serviceDateLabel, Modifier.weight(1f).fillMaxHeight())
+        DateCard(stringResource(Res.string.setlist_rehearsal_label), words.dayAndDate(setlist.rehearsalDate), Modifier.weight(1f).fillMaxHeight())
+        DateCard(stringResource(Res.string.setlist_service_label), words.dayAndDate(setlist.serviceDate), Modifier.weight(1f).fillMaxHeight())
     }
 }
 
 @Composable
-private fun DateCard(label: String, date: String, modifier: Modifier) {
+private fun DateCard(label: String, date: String, modifier: Modifier = Modifier) {
     AppCard(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -320,7 +329,7 @@ private fun WeekSongRow(song: WeekSongUi, dimmed: Boolean, onClick: () -> Unit, 
                 "${song.position}",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(28.dp),
+                modifier = Modifier.width(POSITION_WIDTH),
             )
             // A past week reads as history: the title fades with its key, not the key alone.
             Text(
@@ -336,12 +345,12 @@ private fun WeekSongRow(song: WeekSongUi, dimmed: Boolean, onClick: () -> Unit, 
                 // The label sits on the button itself, so a screen reader hears "pause" as soon as the icon shows it.
                 val label = if (song.isPlaying) stringResource(Res.string.week_pause_reference, song.title)
                 else stringResource(Res.string.week_play_reference, song.title)
-                FilledTonalIconButton(onClick = onPlay, modifier = Modifier.size(40.dp).semantics { contentDescription = label }) {
+                FilledTonalIconButton(onClick = onPlay, modifier = Modifier.size(PLAY_BUTTON_SIZE).semantics { contentDescription = label }) {
                     Icon(if (song.isPlaying) PauseIcon else Icons.Filled.PlayArrow, contentDescription = null)
                 }
             } else {
                 // Keeps titles and keys aligned with the rows that have a play button.
-                Box(Modifier.size(40.dp))
+                Box(Modifier.size(PLAY_BUTTON_SIZE))
             }
         }
     }
@@ -354,25 +363,25 @@ private fun AdminActions(state: WeekUiState, onEditWeek: (LocalDate?) -> Unit, o
         if (setlist != null) {
             OutlinedButton(
                 onClick = { onUploadRehearsal(setlist.serviceDate) },
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outline),
+                modifier = Modifier.fillMaxWidth().height(Sizes.actionHeight),
             ) {
-                Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(XmIcons.Mic, contentDescription = null, modifier = Modifier.size(Sizes.iconS))
                 Text(stringResource(Res.string.action_upload_rehearsal), modifier = Modifier.padding(start = Spacing.s))
             }
         }
         if (state.canEditSelected && setlist != null) {
             OutlinedButton(
                 onClick = { onEditWeek(setlist.serviceDate) },
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outline),
+                modifier = Modifier.fillMaxWidth().height(Sizes.actionHeight),
             ) {
-                Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(Sizes.iconS))
                 Text(stringResource(Res.string.action_edit_setlist), modifier = Modifier.padding(start = Spacing.s))
             }
         }
         TextButton(onClick = { onEditWeek(null) }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(Sizes.iconS))
             Text(
                 stringResource(if (setlist == null) Res.string.action_publish_setlist else Res.string.week_prepare_next),
                 modifier = Modifier.padding(start = Spacing.s),
@@ -390,16 +399,14 @@ private fun WeekScreenPreview() {
                 isLoading = false,
                 canPublish = true,
                 weeks = listOf(
-                    WeekTabUi(LocalDate(2026, 10, 11), "dim. 11 oct.", WeekTiming.PAST, isSelected = false),
-                    WeekTabUi(LocalDate(2026, 10, 18), "dim. 18 oct.", WeekTiming.CURRENT, isSelected = true),
-                    WeekTabUi(LocalDate(2026, 10, 25), "dim. 25 oct.", WeekTiming.AHEAD, isSelected = false),
+                    WeekTabUi(LocalDate(2026, 10, 11), WeekTiming.PAST, isSelected = false),
+                    WeekTabUi(LocalDate(2026, 10, 18), WeekTiming.CURRENT, isSelected = true),
+                    WeekTabUi(LocalDate(2026, 10, 25), WeekTiming.AHEAD, isSelected = false),
                 ),
                 setlist = WeekSetlistUi(
                     serviceDate = LocalDate(2026, 10, 18),
                     timing = WeekTiming.CURRENT,
-                    rangeLabel = "13 – 18 oct.",
-                    rehearsalDate = "mardi 13 oct.",
-                    serviceDateLabel = "dimanche 18 oct.",
+                    rehearsalDate = LocalDate(2026, 10, 13),
                     message = "On reprend l’intro acoustique.",
                     publishedBy = "Responsable musical",
                     songs = listOf(

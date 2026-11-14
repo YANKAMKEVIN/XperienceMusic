@@ -52,7 +52,7 @@ class PlanningViewModelTest {
             viewModel.onEvent(PlanningEvent.OpenMonthClicked)
             val opened = expectMostRecentItem()
             assertEquals(MonthStatus.OPEN, opened.status)
-            assertEquals("25\u00A0oct.", opened.answerByLabel)
+            assertEquals(LocalDate(2026, 10, 25), opened.answerBy)
             viewModel.onEvent(PlanningEvent.ValidateMonthClicked)
             val asking = expectMostRecentItem()
             assertTrue(asking.isConfirmingValidation, "validating asks first")

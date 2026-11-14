@@ -10,12 +10,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.presentation.common.PlaybackStatus
 import com.xperiencemusic.shared.resources.Res
-import com.xperiencemusic.shared.resources.player_loading
 import com.xperiencemusic.shared.resources.player_pause
 import com.xperiencemusic.shared.resources.player_play
+import com.xperiencemusic.shared.ui.theme.Sizes
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -32,7 +31,7 @@ fun PlayPauseButton(status: PlaybackStatus, itemLabel: String, onClick: () -> Un
         Crossfade(targetState = shown, animationSpec = tween(180), label = "play-pause") { visual ->
             when (visual) {
                 PlaybackStatus.LOADING -> Box(contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                    CircularProgressIndicator(strokeWidth = Sizes.stroke, modifier = Modifier.size(Sizes.iconS))
                 }
                 PlaybackStatus.PLAYING -> Icon(PauseIcon, contentDescription = stringResource(Res.string.player_pause, itemLabel))
                 PlaybackStatus.IDLE, PlaybackStatus.PAUSED ->

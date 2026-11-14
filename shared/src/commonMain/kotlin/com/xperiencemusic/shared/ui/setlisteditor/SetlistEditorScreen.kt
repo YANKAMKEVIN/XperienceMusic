@@ -2,7 +2,6 @@ package com.xperiencemusic.shared.ui.setlisteditor
 
 import com.xperiencemusic.shared.resources.setlist_date_long_gap
 import com.xperiencemusic.shared.resources.setlist_date_past
-import com.xperiencemusic.shared.ui.theme.BrandColors
 import com.xperiencemusic.shared.presentation.setlisteditor.SetlistDateWarning
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -79,6 +78,7 @@ import com.xperiencemusic.shared.ui.components.DiscardChangesDialog
 import com.xperiencemusic.shared.ui.components.EditorTopBar
 import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.components.SectionTitle
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
@@ -131,20 +131,7 @@ fun SetlistEditorScreenContent(
             contentPadding = PaddingValues(start = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
             verticalArrangement = Arrangement.spacedBy(Spacing.m),
         ) {
-            state.error?.let { error ->
-                item {
-                    Text(
-                        stringResource(
-                            when (error) {
-                                SetlistEditorError.FORBIDDEN -> Res.string.error_forbidden
-                                SetlistEditorError.INVALID -> Res.string.setlist_error_invalid
-                                SetlistEditorError.NETWORK -> Res.string.error_generic
-                            },
-                        ),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            }
+            state.error?.let { error -> item { ErrorText(error) } }
             if (state.isEditing) {
                 item {
                     Text(
@@ -154,43 +141,7 @@ fun SetlistEditorScreenContent(
                     )
                 }
             }
-            item {
-                AppCard {
-                    SectionTitle(stringResource(Res.string.setlist_dates_title))
-                    DateRow(stringResource(Res.string.setlist_rehearsal_label), state.rehearsalLabel) {
-                        editedDate = EditedDate.REHEARSAL
-                    }
-                    DateRow(stringResource(Res.string.setlist_service_label), state.serviceLabel) {
-                        editedDate = EditedDate.SERVICE
-                    }
-                    if (state.replacesExisting) {
-                        Text(
-                            stringResource(Res.string.setlist_replaces_hint),
-                            color = MaterialTheme.colorScheme.secondary,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    state.dateWarning?.let { warning ->
-                        Text(
-                            stringResource(
-                                when (warning) {
-                                    SetlistDateWarning.PAST_REHEARSAL -> Res.string.setlist_date_past
-                                    SetlistDateWarning.LONG_GAP -> Res.string.setlist_date_long_gap
-                                },
-                            ),
-                            color = BrandColors.Amber,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    if (state.hasDateConflict) {
-                        Text(
-                            stringResource(Res.string.setlist_date_conflict),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-            }
+            item { DatesCard(state, onEditDate = { editedDate = it }) }
             item {
                 OutlinedTextField(
                     value = state.message,
@@ -224,17 +175,7 @@ fun SetlistEditorScreenContent(
             // over a song that is still fading out.
             item(key = "add-title") { SectionTitle(stringResource(Res.string.setlist_add_title), Modifier.animateItem().padding(top = Spacing.l)) }
             item(key = "add-search") {
-                OutlinedTextField(
-                    value = state.query,
-                    onValueChange = { onEvent(SetlistEditorEvent.QueryChanged(it)) },
-                    placeholder = { Text(stringResource(Res.string.library_search)) },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    trailingIcon = if (state.query.isEmpty()) null else {
-                        { ClearSearchButton { onEvent(SetlistEditorEvent.QueryChanged("")) } }
-                    },
-                    singleLine = true,
-                    modifier = Modifier.animateItem().fillMaxWidth(),
-                )
+                SongSearchField(state.query, onQueryChange = { onEvent(SetlistEditorEvent.QueryChanged(it)) }, Modifier.animateItem())
             }
             items(state.available, key = { "available-${it.id}" }) { song ->
                 AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) }, modifier = Modifier.animateItem())
@@ -260,37 +201,121 @@ fun SetlistEditorScreenContent(
         )
     }
     if (isConfirmingDelete) {
-        AlertDialog(
-            onDismissRequest = { isConfirmingDelete = false },
-            title = { Text(stringResource(Res.string.setlist_delete_title, state.serviceLabel)) },
-            text = { Text(stringResource(Res.string.setlist_delete_text)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    isConfirmingDelete = false
-                    onEvent(SetlistEditorEvent.DeleteConfirmed)
-                }) { Text(stringResource(Res.string.setlist_delete_confirm), color = MaterialTheme.colorScheme.error) }
+        DeleteSetlistDialog(
+            serviceLabel = rememberFormattingWords().dayAndDate(state.serviceDate),
+            onConfirm = {
+                isConfirmingDelete = false
+                onEvent(SetlistEditorEvent.DeleteConfirmed)
             },
-            dismissButton = {
-                TextButton(onClick = { isConfirmingDelete = false }) { Text(stringResource(Res.string.setlist_delete_cancel)) }
-            },
+            onDismiss = { isConfirmingDelete = false },
         )
     }
 
     editedDate?.let { which ->
-        DatePickerModal(
-            initialDate = if (which == EditedDate.REHEARSAL) state.rehearsalDate else state.serviceDate,
-            onDatePicked = { date: LocalDate ->
-                onEvent(
-                    if (which == EditedDate.REHEARSAL) {
-                        SetlistEditorEvent.RehearsalDatePicked(date)
-                    } else {
-                        SetlistEditorEvent.ServiceDatePicked(date)
-                    },
-                )
-            },
-            onDismiss = { editedDate = null },
-        )
+        SetlistDatePicker(which, state, onEvent, onDismiss = { editedDate = null })
     }
+}
+
+@Composable
+private fun ErrorText(error: SetlistEditorError) {
+    Text(
+        stringResource(
+            when (error) {
+                SetlistEditorError.FORBIDDEN -> Res.string.error_forbidden
+                SetlistEditorError.INVALID -> Res.string.setlist_error_invalid
+                SetlistEditorError.NETWORK -> Res.string.error_generic
+            },
+        ),
+        color = MaterialTheme.colorScheme.error,
+    )
+}
+
+/** The rehearsal and service dates, with what may be wrong with them. */
+@Composable
+private fun DatesCard(state: SetlistEditorUiState, onEditDate: (EditedDate) -> Unit) {
+    val words = rememberFormattingWords()
+    AppCard {
+        SectionTitle(stringResource(Res.string.setlist_dates_title))
+        DateRow(stringResource(Res.string.setlist_rehearsal_label), words.dayAndDate(state.rehearsalDate)) {
+            onEditDate(EditedDate.REHEARSAL)
+        }
+        DateRow(stringResource(Res.string.setlist_service_label), words.dayAndDate(state.serviceDate)) {
+            onEditDate(EditedDate.SERVICE)
+        }
+        if (state.replacesExisting) {
+            Text(
+                stringResource(Res.string.setlist_replaces_hint),
+                color = MaterialTheme.colorScheme.secondary,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        state.dateWarning?.let { warning ->
+            Text(
+                stringResource(
+                    when (warning) {
+                        SetlistDateWarning.PAST_REHEARSAL -> Res.string.setlist_date_past
+                        SetlistDateWarning.LONG_GAP -> Res.string.setlist_date_long_gap
+                    },
+                ),
+                color = AppTheme.colors.warning,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        if (state.hasDateConflict) {
+            Text(
+                stringResource(Res.string.setlist_date_conflict),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SongSearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        placeholder = { Text(stringResource(Res.string.library_search)) },
+        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        trailingIcon = if (query.isEmpty()) null else {
+            { ClearSearchButton { onQueryChange("") } }
+        },
+        singleLine = true,
+        modifier = modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun DeleteSetlistDialog(serviceLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.setlist_delete_title, serviceLabel)) },
+        text = { Text(stringResource(Res.string.setlist_delete_text)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(Res.string.setlist_delete_confirm), color = MaterialTheme.colorScheme.error) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.setlist_delete_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun SetlistDatePicker(which: EditedDate, state: SetlistEditorUiState, onEvent: (SetlistEditorEvent) -> Unit, onDismiss: () -> Unit) {
+    DatePickerModal(
+        initialDate = if (which == EditedDate.REHEARSAL) state.rehearsalDate else state.serviceDate,
+        onDatePicked = { date: LocalDate ->
+            onEvent(
+                if (which == EditedDate.REHEARSAL) {
+                    SetlistEditorEvent.RehearsalDatePicked(date)
+                } else {
+                    SetlistEditorEvent.ServiceDatePicked(date)
+                },
+            )
+        },
+        onDismiss = onDismiss,
+    )
 }
 
 @Composable
@@ -363,8 +388,6 @@ private fun SetlistEditorScreenPreview() {
             SetlistEditorUiState(
                 rehearsalDate = LocalDate(2026, 10, 13),
                 serviceDate = LocalDate(2026, 10, 18),
-                rehearsalLabel = "mardi 13 oct.",
-                serviceLabel = "dimanche 18 oct.",
                 selected = listOf(SetlistSongUi("1", "À toi la gloire", "Ré majeur"), SetlistSongUi("2", "Amazing Grace", "Sol majeur")),
                 available = listOf(SetlistSongUi("3", "Holy, Holy, Holy", "Ré majeur")),
             ),

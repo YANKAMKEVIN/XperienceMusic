@@ -12,10 +12,19 @@ import com.xperiencemusic.shared.domain.usecase.GrowthReview
 import com.xperiencemusic.shared.domain.usecase.ObserveGrowthReviewUseCase
 import com.xperiencemusic.shared.domain.usecase.ReviewLevelRequestUseCase
 import com.xperiencemusic.shared.domain.usecase.ReviewObjectiveUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveObjectiveRecordingsUseCase
+import com.xperiencemusic.shared.domain.usecase.PlaybackController
+import com.xperiencemusic.shared.presentation.learning.ObjectiveTakeUi
+import com.xperiencemusic.shared.presentation.learning.objectiveTakes
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -60,6 +69,8 @@ data class ObjectiveReviewUi(
     /** What to check before validating. */
     val criterion: String,
     val target: Level?,
+    /** The takes the member sent for it, newest first. */
+    val takes: List<ObjectiveTakeUi> = emptyList(),
 )
 
 sealed interface GrowthReviewEvent {
@@ -67,6 +78,9 @@ sealed interface GrowthReviewEvent {
     data class Answered(val key: String, val validated: Boolean) : GrowthReviewEvent
     data object ErrorShown : GrowthReviewEvent
     data object AnswerShown : GrowthReviewEvent
+
+    /** Plays a take sent for an objective, or pauses it; the screen names it for the system controls. */
+    data class PlayTake(val take: ObjectiveTakeUi, val title: String, val subtitle: String) : GrowthReviewEvent
 }
 
 /** Only what still waits for an answer, oldest first. */
@@ -102,16 +116,34 @@ fun deriveGrowthReview(review: GrowthReview, objectives: List<Objective>): Growt
     )
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GrowthReviewViewModel(
     observeReview: ObserveGrowthReviewUseCase,
     private val objectives: List<Objective>,
     private val reviewRequest: ReviewLevelRequestUseCase,
     private val reviewObjective: ReviewObjectiveUseCase,
+    private val observeRecordings: ObserveObjectiveRecordingsUseCase,
+    private val playback: PlaybackController,
 ) : ViewModel() {
     private val form = MutableStateFlow(GrowthReviewUiState(isLoading = false))
 
-    val state: StateFlow<GrowthReviewUiState> = combine(observeReview(), form) { review, f ->
-        deriveGrowthReview(review, objectives).copy(
+    private val review = observeReview().map { deriveGrowthReview(it, objectives) }
+
+    /** The takes of every member waiting for an objective review, by member. */
+    private val recordings = review.flatMapLatest { derived ->
+        val members = derived.objectives.map { it.memberId }.distinct()
+        if (members.isEmpty()) {
+            flowOf(emptyMap())
+        } else {
+            combine(members.map { member -> observeRecordings(member).map { member to it } }) { it.toMap() }
+        }
+    }.onStart { emit(emptyMap()) }
+
+    val state: StateFlow<GrowthReviewUiState> = combine(review, recordings, playback.state, form) { derived, takes, playing, f ->
+        derived.copy(
+            objectives = derived.objectives.map { objective ->
+                objective.copy(takes = objectiveTakes(takes[objective.memberId].orEmpty(), objective.objectiveId, playing))
+            },
             comments = f.comments, savingKey = f.savingKey, missingCommentKey = f.missingCommentKey, hasError = f.hasError,
             lastAnswer = f.lastAnswer,
         )
@@ -125,6 +157,7 @@ class GrowthReviewViewModel(
             is GrowthReviewEvent.Answered -> answer(event.key, event.validated)
             GrowthReviewEvent.ErrorShown -> form.update { it.copy(hasError = false) }
             GrowthReviewEvent.AnswerShown -> form.update { it.copy(lastAnswer = null) }
+            is GrowthReviewEvent.PlayTake -> playback.playOrToggle(event.take.track(event.title, event.subtitle))
         }
     }
 

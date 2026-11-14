@@ -43,7 +43,7 @@ class PlanningStateTest {
         val signups = listOf(ServiceSignup(LocalDate(2026, 10, 16), "me", true))
         val state = derivePlanningState(planning(months = months, signups = signups), october, today)
         assertEquals(MonthStatus.OPEN, state.status)
-        assertEquals("octobre 2026", state.monthLabel)
+        assertEquals(october, state.monthStart)
         // Oct. 2026: Fridays 2, 9, 16, 23, 30 and Sundays 4, 11, 18, 25; from the 15th on, 5 left, one answered.
         assertEquals(9, state.services.size)
         assertEquals(4, state.unansweredCount)
@@ -91,7 +91,7 @@ class PlanningStateTest {
         val late = listOf(PlanningMonth(october, LocalDate(2026, 10, 10), false))
         val state = derivePlanningState(planning(months = late), october, friday)
         assertTrue(state.isPastDeadline)
-        assertEquals("10\u00A0oct.", state.answerByLabel)
+        assertEquals(LocalDate(2026, 10, 10), state.answerBy)
         assertTrue(state.services.single { it.day == 16 }.isToday)
         assertEquals(1, state.services.count { it.isToday })
         assertTrue(deriveAvailabilityState(planning(months = late), october, friday).isPastDeadline)

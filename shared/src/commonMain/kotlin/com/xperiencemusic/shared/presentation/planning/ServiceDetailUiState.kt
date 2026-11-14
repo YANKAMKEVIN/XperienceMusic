@@ -9,8 +9,6 @@ data class ServiceDetailUiState(
     val date: LocalDate? = null,
     val isPast: Boolean = false,
     val kind: ServiceKind = ServiceKind.SUNDAY,
-    /** "dimanche 1 nov." */
-    val title: String = "",
     val serving: List<ServingUi> = emptyList(),
     val missing: List<Instrument> = emptyList(),
     /** Sundays only: the songs of that service's setlist, once published. */

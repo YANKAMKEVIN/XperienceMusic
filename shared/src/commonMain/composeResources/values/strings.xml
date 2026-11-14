@@ -89,6 +89,8 @@
     <string name="tab_progress">Ma progression</string>
     <string name="tab_progress_short">Progrès</string>
     <string name="tab_planning">Planning</string>
+    <string name="remote_load_failed">Actualisation impossible. Les données peuvent être incomplètes ou anciennes.</string>
+    <string name="remote_load_retry">Réessayer</string>
 
     <!-- Planning -->
     <string name="planning_title">Planning</string>
@@ -312,6 +314,8 @@
     <string name="stage_close">Quitter le mode scène</string>
     <string name="stage_text_bigger">Agrandir le texte</string>
     <string name="stage_text_smaller">Réduire le texte</string>
+    <string name="stage_text_bigger_glyph" translatable="false">A+</string>
+    <string name="stage_text_smaller_glyph" translatable="false">A−</string>
     <string name="stage_scroll_start">Défilement auto</string>
     <string name="stage_scroll_stop">Pause défilement</string>
     <string name="stage_speed">Vitesse %1$d/%2$d</string>
@@ -328,6 +332,7 @@
     <string name="recording_form_target_all">Tout le groupe</string>
     <string name="recording_form_voice_replaces">La piste %1$s actuelle sera remplacée.</string>
     <string name="recording_form_reference_keeps">« %1$s » restera disponible, mais ne sera plus la référence.</string>
+    <string name="recording_form_rehearsal_title">Répétition du %1$s</string>
     <string name="action_upload_rehearsal">Déposer la répétition</string>
     <string name="rehearsal_upload_date">Répétition : %1$s</string>
     <string name="rehearsal_upload_help">Ajoute une prise seulement si elle est utile. Sans nouvelle prise, le groupe continue avec la référence du chant.</string>
@@ -583,8 +588,395 @@
     <string name="exercise_locked">Valide d’abord l’exercice précédent du parcours pour débloquer celui-ci.</string>
     <string name="exercise_success_warmup">Échauffement fait : ta série continue. À demain !</string>
     <string name="exercise_success_challenge">Défi réussi : le palier est terminé et le suivant est débloqué.</string>
+    <!-- Guided learning -->
+    <string name="learning_comfort">Confort</string>
+    <string name="learning_not_for_singer">Ces modules sont proposés au parcours chantre.</string>
+    <string name="learning_not_for_piano">Ces modules sont proposés au parcours piano.</string>
+    <string name="learning_step_of">Étape %1$d / %2$d</string>
+    <string name="learning_show_steps">Voir les étapes</string>
+    <string name="learning_pause">Faire une pause · progression conservée</string>
+    <string name="learning_summary_title">Une séance de plus !</string>
+    <plurals name="learning_activities_worked">
+        <item quantity="one">%1$d activité travaillée</item>
+        <item quantity="other">%1$d activités travaillées</item>
+    </plurals>
+    <string name="learning_summary_done">✓ %1$s</string>
+    <string name="learning_summary_to_rework">À reprendre tranquillement</string>
+    <string name="learning_summary_easy">Tu as travaillé sans difficulté signalée. La prochaine séance t’aidera à entretenir ces repères.</string>
+    <string name="learning_summary_difficult">Les prochaines révisions tiendront compte de tes difficultés. Tu peux aussi les reprendre depuis les étapes.</string>
+    <string name="learning_summary_next">Prochaine étape : %1$s</string>
+    <string name="learning_summary_finish">Terminer ma séance</string>
+    <string name="learning_summary_continue">Continuer librement</string>
+    <string name="learning_steps_title">Les étapes</string>
+    <string name="learning_step_done">✓ %1$s</string>
+    <string name="learning_step_number">%1$d. %2$s</string>
+    <string name="learning_step_later">%1$s · à reprendre</string>
+    <string name="learning_step_locked">%1$s · à découvrir ensuite</string>
+    <string name="learning_step_locked_state">pas encore ouverte</string>
+    <string name="learning_steps_rule">Les étapes suivantes s’ouvrent une à une : réussis celle en cours, ou, pour une activité chantée, choisis « Je le ferai plus tard ».</string>
+    <string name="learning_close">Fermer</string>
+    <string name="learning_settings_title">Ton confort</string>
+    <string name="learning_setting_touch_sound">Son des touches</string>
+    <string name="learning_setting_reward_sound">Son de réussite</string>
+    <string name="learning_setting_haptics">Vibrations légères</string>
+    <string name="learning_setting_reduce_motion">Réduire les animations</string>
+    <string name="learning_setting_large_text">Texte plus grand</string>
+    <string name="learning_settings_note">Le texte conserve aussi les réglages de taille du téléphone. Les animations suivent les réglages système.</string>
+    <string name="learning_settings_done">C’est réglé</string>
+    <string name="learning_today_eyebrow">TA SÉANCE DU JOUR</string>
+    <string name="learning_today_title">Un petit pas, à ton rythme</string>
+    <plurals name="learning_activity_count">
+        <item quantity="one">%1$d activité</item>
+        <item quantity="other">%1$d activités</item>
+    </plurals>
+    <string name="learning_today_plan">Environ %1$d minutes · %2$s aujourd’hui · %3$d dans le module</string>
+    <string name="learning_today_first">Au programme : %1$s</string>
+    <string name="learning_today_returning">Heureux de te retrouver. Reprends doucement avec une courte révision : tes progrès sont conservés.</string>
+    <string name="learning_today_done">%1$d / %2$d activités terminées</string>
+    <string name="learning_continue_session">Continuer ma séance</string>
+    <string name="learning_start_session">Commencer ma séance</string>
+    <string name="learning_resume">Reprendre · %1$s</string>
+    <string name="learning_explore_steps">Explorer les étapes</string>
+    <plurals name="learning_pending">
+        <item quantity="one">%1$d essai conservé sur ce téléphone, en attente d’envoi.</item>
+        <item quantity="other">%1$d essais conservés sur ce téléphone, en attente d’envoi.</item>
+    </plurals>
+    <string name="learning_sync">Synchroniser</string>
+    <string name="learning_mastery_discover">À découvrir</string>
+    <string name="learning_mastery_discover_text">Commence par les repères et les premières activités.</string>
+    <string name="learning_mastery_submitted">Envoyé au responsable</string>
+    <string name="learning_mastery_submitted_text">Le responsable va vérifier ton objectif. Tu peux continuer les activités en attendant.</string>
+    <string name="learning_mastery_practising">En pratique</string>
+    <string name="learning_mastery_practising_text">Tu as commencé les exercices. La pratique régulière construit tes repères.</string>
+    <string name="learning_mastery_consolidating">À consolider</string>
+    <string name="learning_mastery_consolidating_text">Certaines activités demandent encore de l’aide ou une révision. Une réussite à l’écran ne valide pas le jeu réel.</string>
+    <string name="learning_mastery_validated">Validée par le responsable</string>
+    <string name="learning_mastery_validated_text">Le responsable a confirmé la compétence sur ton instrument. Continue à l’entretenir.</string>
+    <string name="learning_mastery_explain">Comprendre ce statut</string>
+    <string name="learning_evaluated_apart_singer">Les exercices à l’écran et ta voix en situation sont évalués séparément.</string>
+    <string name="learning_evaluated_apart_piano">Les exercices à l’écran et le jeu sur l’instrument sont évalués séparément.</string>
+    <string name="learning_next_work">Mon prochain travail</string>
+    <string name="learning_rework_hint">Reprends cette consigne, puis envoie une nouvelle prise au responsable.</string>
+    <string name="learning_record_singer">Enregistrer ma voix pour le responsable</string>
+    <string name="learning_record_piano">Enregistrer mon jeu pour le responsable</string>
+    <string name="learning_request_review">Demander une évaluation en répétition</string>
+    <string name="learning_needs_connection">Une connexion est nécessaire pour envoyer la demande.</string>
+    <string name="learning_scale_eyebrow">UNE CORRECTION AU MICRO</string>
+    <string name="learning_scale_title">Ta gamme, note par note</string>
+    <string name="learning_scale_text">Joue une montée de Do majeur à une main. L’app compare les notes après la prise et propose un passage à reprendre.</string>
+    <string name="learning_scale_try">Essayer la correction automatique</string>
+    <string name="learning_scale_note">Essai local et expérimental · sans pédale · validation finale par le responsable.</string>
+    <string name="learning_start_advice">Mon point de départ conseillé : %1$s</string>
+    <string name="learning_explore_module">Explorer ce module</string>
+    <string name="learning_redo_quiz">Refaire le petit bilan</string>
+    <string name="learning_challenge_eyebrow">DÉFI MUSICAL</string>
+    <string name="learning_challenge_step">%1$d. %2$s</string>
+    <string name="learning_challenge_listen">À écouter : %1$s</string>
+    <string name="learning_challenge_example">Écouter les notes de la grille</string>
+    <string name="learning_challenge_example_note">Démonstration note par note : le rythme d’accompagnement reste à travailler sur ton instrument.</string>
+    <string name="learning_challenge_record">Enregistrer mon défi</string>
+    <string name="learning_challenge_locked">Prépare ce défi avec les activités du module ; l’envoi au responsable s’ouvrira ensuite.</string>
+    <string name="learning_path_singer">Mon parcours chantre</string>
+    <string name="learning_path_piano">Mon parcours piano</string>
+    <string name="learning_module_count">%1$d / %2$d activités</string>
+    <string name="learning_recent_title">Mes derniers essais</string>
+    <string name="learning_recent_row">%1$s · %2$s · %3$s</string>
+    <string name="learning_recent_passed">réussi</string>
+    <string name="learning_recent_passed_help">réussi avec aide</string>
+    <string name="learning_recent_failed">à reprendre</string>
+    <string name="learning_rhythm_title">Mon rythme</string>
+    <plurals name="learning_weekly_days">
+        <item quantity="one">%1$d jour de pratique ces 7 derniers jours · objectif %2$d</item>
+        <item quantity="other">%1$d jours de pratique ces 7 derniers jours · objectif %2$d</item>
+    </plurals>
+    <string name="learning_rhythm_rule">Une journée compte dès qu’un exercice est enregistré. Plusieurs séances le même jour comptent une fois.</string>
+    <string name="learning_weekly_target">%1$d j / sem.</string>
+    <string name="learning_rhythm_note">Un repère personnel, à ajuster librement. Tu peux reprendre à tout moment.</string>
+    <string name="learning_quiz_title">Trouver mon point de départ</string>
+    <string name="learning_quiz_note">Trois repères facultatifs. Aucune compétence n’est validée ni aucune étape sautée.</string>
+    <string name="learning_quiz_chord">Quelles notes composent Do majeur ?</string>
+    <string name="learning_quiz_chord_right">Do–Mi–Sol</string>
+    <string name="learning_quiz_chord_wrong">Do–Mi♭–Sol</string>
+    <string name="learning_quiz_rhythm">Combien de croches durent une noire ?</string>
+    <string name="learning_quiz_rhythm_wrong">4</string>
+    <string name="learning_quiz_rhythm_right">2</string>
+    <string name="learning_quiz_transpose">C–F–G un ton plus haut devient…</string>
+    <string name="learning_quiz_transpose_right">D–G–A</string>
+    <string name="learning_quiz_transpose_wrong">D–F–A</string>
+    <string name="learning_quiz_result">%1$d / 3 repères retrouvés. Suggestion : %2$s. Tu peux explorer chaque module à ton rythme.</string>
+    <string name="learning_quiz_keep">Conserver ce conseil</string>
+    <string name="learning_quiz_from_zero">Je préfère commencer de zéro</string>
+    <string name="learning_continue">Continuer</string>
+    <string name="learning_saving">Sauvegarde…</string>
+    <string name="learning_understood">J’ai compris</string>
+    <string name="learning_practice_done">J’ai effectué cet entraînement</string>
+    <string name="learning_check">Vérifier</string>
+    <string name="learning_postpone">Je le ferai plus tard</string>
+    <string name="learning_feedback_lesson">Leçon terminée.</string>
+    <string name="learning_feedback_passed">Activité réussie.</string>
+    <string name="learning_feedback_passed_help">Activité réussie avec aide.</string>
+    <string name="learning_feedback_tempo">Écart moyen : %1$d %. Vise des intervalles plus réguliers, puis recommence.</string>
+    <plurals name="learning_correct_notes">
+        <item quantity="one">%1$d note correcte</item>
+        <item quantity="other">%1$d notes correctes</item>
+    </plurals>
+    <plurals name="learning_note_count">
+        <item quantity="one">%1$d note</item>
+        <item quantity="other">%1$d notes</item>
+    </plurals>
+    <string name="learning_feedback_move">%1$s. Tu as choisi %2$s : déplace cette note vers %3$s.</string>
+    <string name="learning_feedback_octave">Le nom est bon, mais vérifie l’octave de %1$s.</string>
+    <string name="learning_feedback_extra">%1$s. Retire %2$s puis vérifie les intervalles.</string>
+    <string name="learning_feedback_missing">%1$s. Il manque %2$s ; conserve ta sélection et cherche les suivantes.</string>
+    <string name="learning_feedback_ear_colour">Tu as choisi %1$s. Réécoute la tierce ; utilise un indice avant de réessayer.</string>
+    <string name="learning_feedback_ear">Tu as choisi %1$s. Réécoute note par note, puis réessaie.</string>
+    <string name="learning_feedback_retry">Reprends la consigne ; un indice peut t’aider.</string>
+    <string name="learning_keep_notes">À conserver : %1$s</string>
+    <string name="learning_keep_root">cherche d’abord la fondamentale</string>
+    <string name="learning_kind_lesson">COMPRENDRE</string>
+    <string name="learning_kind_ear">ÉCOUTER</string>
+    <string name="learning_kind_keyboard">CONSTRUIRE</string>
+    <string name="learning_kind_practice_singer">AVEC TA VOIX</string>
+    <string name="learning_kind_practice_piano">SUR TON INSTRUMENT</string>
+    <string name="learning_kind_choice">FAIRE LE LIEN</string>
+    <string name="learning_kind_rhythm">SENTIR LE TEMPO</string>
+    <string name="learning_kind_sing">CHANTER</string>
+    <string name="learning_listen_notes">Écouter les notes</string>
+    <string name="learning_listen_chord">Écouter l’accord</string>
+    <string name="learning_listen_broken">Écouter note par note</string>
+    <string name="learning_listen_first">Écoute avant de choisir.</string>
+    <string name="learning_selection">Ta sélection : %1$s</string>
+    <string name="learning_selection_none">aucune</string>
+    <string name="learning_listen_selection">Écouter ma sélection</string>
+    <string name="learning_metronome">Écouter 8 clics · %1$d BPM</string>
+    <string name="learning_tap">Frapper la pulsation · %1$d/8</string>
+    <string name="learning_reset_taps">Recommencer les appuis</string>
+    <string name="learning_declarative_singer">Cette étape est déclarative. Seul le responsable peut valider la compétence en situation.</string>
+    <string name="learning_declarative_piano">Cette étape est déclarative. Seul le responsable peut valider la compétence sur ton instrument.</string>
+    <string name="learning_hint_first">Un indice</string>
+    <string name="learning_hint_more">Un peu plus d’aide</string>
+    <string name="learning_hint_all">Les aides sont affichées</string>
+    <string name="learning_hint_keyboard">Cherche la fondamentale, puis compte les demi-tons. Majeur : 4 puis 3 ; mineur : 3 puis 4.</string>
+    <string name="learning_hint_ear">Réécoute note par note et concentre-toi sur la distance entre les deux premières notes.</string>
+    <string name="learning_hint_rhythm">Relâche la main et garde un mouvement régulier. Le premier appui fixe le départ.</string>
+    <string name="learning_hint_sing">Écoute d’abord tes notes, respire, puis chante sans pousser : la note doit être stable avant de compter.</string>
+    <string name="learning_hint_other">Reprends la règle dans la leçon précédente.</string>
+    <string name="learning_hint_keyboard_missing">Les notes manquantes sont maintenant repérées sur le clavier. Tu gardes ta sélection.</string>
+    <string name="learning_hint_demo">Écouter la démonstration</string>
+    <string name="learning_sing_targets_one">À chanter : %1$s · %2$s</string>
+    <string name="learning_sing_targets_many">À chanter : %1$s · %2$s chacune</string>
+    <string name="learning_seconds">%1$s s</string>
+    <string name="learning_listen_my_notes">Écouter mes notes</string>
+    <string name="learning_listen_my_note">Écouter ma note</string>
+    <string name="learning_earphones">Mets des écouteurs : l’autre voix joue pendant que tu chantes, et le micro ne doit entendre que toi.</string>
+    <string name="learning_stop_listening">Arrêter l’écoute</string>
+    <string name="learning_hears_nothing">Je ne t’entends pas encore… Approche le téléphone et chante un peu plus fort.</string>
+    <string name="learning_hearing">J’entends : %1$s</string>
+    <string name="learning_tuner_none">Aucune note entendue</string>
+    <string name="learning_tuner_low">Un peu bas</string>
+    <string name="learning_tuner_high">Un peu haut</string>
+    <string name="learning_tuner_in_tune">Juste</string>
+    <string name="learning_sing_step">Note %1$d / %2$d</string>
+    <string name="learning_sung">Bien tenu ! Tu peux vérifier l’activité.</string>
+    <string name="learning_sing_now">Chanter maintenant</string>
+    <string name="learning_postpone_hint">Pas d’écouteurs ou trop de bruit autour de toi ? « Je le ferai plus tard » ouvre l’étape suivante. Cette activité restera à reprendre : elle ne compte pas comme réussie.</string>
+    <string name="learning_mic_denied">Autorise le micro dans les réglages pour chanter l’exercice.</string>
+    <string name="learning_mic_unavailable">Micro indisponible. Vérifie l’autorisation, puis réessaie.</string>
+    <string name="learning_error_save">Sauvegarde impossible. Ta sélection est conservée ; réessaie.</string>
+    <string name="learning_error_review">Demande non envoyée. Vérifie ta connexion puis réessaie.</string>
+    <string name="learning_keyboard_scroll">Fais glisser le clavier pour explorer les deux octaves.</string>
+    <string name="learning_key_wrong">sélectionnée, à corriger</string>
+    <string name="learning_key_selected">sélectionnée</string>
+    <string name="learning_key_missing">indice : note à ajouter</string>
+    <string name="learning_key_unselected">non sélectionnée</string>
+    <string name="learning_take_title">Prise d’évaluation</string>
+    <string name="learning_take_seconds">%1$d secondes</string>
+    <string name="learning_take_pause">Mettre en pause</string>
+    <string name="learning_take_label">Prise %1$d · %2$s · %3$d s</string>
+    <string name="learning_take_local">sur ce téléphone</string>
+    <string name="assessment_title_singer">Ma prise chantée</string>
+    <string name="assessment_title_piano">Mon jeu sur l’instrument</string>
+    <string name="assessment_instructions_singer">Choisis un endroit calme. Tiens le téléphone à un bras de distance, chante puis arrête. La prise est partagée seulement avec toi et le responsable habilité. Durée : 3 secondes à 5 minutes.</string>
+    <string name="assessment_instructions_piano">Choisis un endroit calme. Pose le téléphone près de l’instrument, joue puis arrête. La prise est partagée seulement avec toi et le responsable habilité. Durée : 3 secondes à 5 minutes.</string>
+    <string name="assessment_recording">Enregistrement · %1$d s</string>
+    <string name="assessment_stop">Arrêter</string>
+    <string name="assessment_redo">Refaire la prise</string>
+    <string name="assessment_record">Enregistrer mon jeu</string>
+    <string name="assessment_listen">Réécouter · %1$d s</string>
+    <string name="assessment_sending">Envoi…</string>
+    <string name="assessment_send">Envoyer pour évaluation</string>
+    <string name="assessment_too_short">La prise est trop courte. Enregistre au moins 3 secondes.</string>
+    <string name="assessment_rehearsal">Tu peux aussi demander une évaluation en répétition sans envoyer d’enregistrement.</string>
+    <string name="assessment_take_title">Mon essai</string>
+    <string name="assessment_sent">Prise et demande envoyées. Le retour du responsable apparaîtra dans ce module.</string>
+    <string name="assessment_kept">Prise conservée. Reviens au module pour relancer la demande d’évaluation.</string>
+    <string name="assessment_error_send">Envoi impossible. La prise est encore disponible pour réessayer.</string>
+    <string name="assessment_error_mic">Microphone indisponible. Vérifie son autorisation et réessaie.</string>
+    <string name="assessment_denied_singer">Autorise le microphone pour enregistrer ta voix.</string>
+    <string name="assessment_denied_piano">Autorise le microphone pour enregistrer ton instrument.</string>
+    <string name="piano_scale_title">Mon atelier piano</string>
+    <string name="piano_scale_eyebrow_scale">UNE GAMME · UNE MAIN</string>
+    <string name="piano_scale_eyebrow_focus">MON PASSAGE À TRAVAILLER</string>
+    <string name="piano_scale_key_c">Do majeur</string>
+    <string name="piano_scale_key_g">Sol majeur</string>
+    <string name="piano_scale_key_f">Fa majeur</string>
+    <string name="piano_scale_ascending">Montée</string>
+    <string name="piano_scale_descending">Descente</string>
+    <string name="piano_scale_direction">%1$s · %2$d BPM · une note par pulsation</string>
+    <string name="piano_scale_instructions">Relâche chaque touche avant la suivante. Joue une seule fois, sans pédale ni accompagnement. Do4 est le Do central.</string>
+    <string name="piano_scale_not_allowed">Connecte-toi avec ton profil piano pour utiliser cet exercice.</string>
+    <string name="piano_scale_check_title">1 · Vérifions le micro</string>
+    <string name="piano_scale_check_text">Joue une note pour vérifier le signal, puis relâche-la. Ce test n’est pas enregistré.</string>
+    <string name="piano_scale_signal_loud">Le son sature : éloigne un peu le téléphone ou baisse le volume.</string>
+    <string name="piano_scale_signal_seen">Le micro reçoit du son. Laisse la note s’éteindre avant de commencer.</string>
+    <string name="piano_scale_signal_waiting">J’attends un son. Rapproche le téléphone du piano si nécessaire.</string>
+    <string name="piano_scale_go">C’est parti · départ dans 3 s</string>
+    <string name="piano_scale_cancel_check">Annuler le test micro</string>
+    <string name="piano_scale_countdown_title">2 · Prépare ta main</string>
+    <string name="piano_scale_countdown_text">Le signal de départ sera visuel. Aucun son de l’app ne sera joué pendant la prise.</string>
+    <string name="piano_scale_cancel_start">Annuler le départ</string>
+    <string name="piano_scale_your_turn">À TOI</string>
+    <string name="piano_scale_recording">%1$d / %2$d s · %3$d BPM</string>
+    <string name="piano_scale_stop_after">Tu peux arrêter après ta dernière note.</string>
+    <string name="piano_scale_follow">Suis le repère visuel à ton rythme.</string>
+    <string name="piano_scale_beat_note">Le repère est indicatif ; il ne mesure pas ta synchronisation exacte.</string>
+    <string name="piano_scale_stop">Arrêter et voir mon bilan</string>
+    <string name="piano_scale_analyzing">Je prépare ton retour sur ce téléphone…</string>
+    <string name="piano_scale_example">Écouter l’exemple · %1$d BPM</string>
+    <string name="piano_scale_listen_take">Réécouter toute ma prise</string>
+    <string name="piano_scale_redo">Refaire le même exercice</string>
+    <string name="piano_scale_prepare">Préparer le micro</string>
+    <string name="piano_scale_stop_audio">Arrêter l’écoute</string>
+    <string name="piano_scale_settings_title">Mon exercice</string>
+    <string name="piano_scale_bpm">%1$d BPM</string>
+    <string name="piano_scale_full_scale">Revenir à la gamme complète</string>
+    <string name="piano_scale_good_to_know_open">À savoir ▴</string>
+    <string name="piano_scale_good_to_know_closed">À savoir ▾</string>
+    <string name="piano_scale_expanded">déplié</string>
+    <string name="piano_scale_collapsed">replié</string>
+    <string name="piano_scale_note_experimental">Correction expérimentale de notes isolées : les accords, la pédale et le bruit peuvent tromper l’analyse. Le responsable garde la validation finale.</string>
+    <string name="piano_scale_note_local">Essai local, sans envoi au serveur. L’audio est effacé au nouvel essai ou au changement d’exercice, à la sortie ou en arrière-plan. Seul le bilan précédent reste temporairement pour comparer deux essais identiques ; il est aussi effacé à la sortie. Aucun niveau n’est validé automatiquement.</string>
+    <string name="piano_scale_note_tempo">Le tempo règle l’exemple et le guide visuel. La correction évalue les notes, sans imposer une synchronisation exacte.</string>
+    <string name="piano_scale_note_change">Changer d’exercice efface la prise et sa comparaison.</string>
+    <string name="piano_scale_target">%1$d · %2$s</string>
+    <string name="piano_scale_current_beat">repère actuel</string>
+    <string name="piano_scale_expected_note">note attendue</string>
+    <string name="piano_scale_report_title">3 · Ton bilan</string>
+    <string name="piano_scale_quality_short">La prise est trop courte. Joue lentement tout l’exercice, puis arrête.</string>
+    <string name="piano_scale_quality_quiet">Le son est trop faible pour conclure. Rapproche le téléphone du piano.</string>
+    <string name="piano_scale_quality_clipped">Le son sature. Éloigne un peu le téléphone ou baisse le volume du piano.</string>
+    <string name="piano_scale_quality_uncertain">Je ne distingue pas assez clairement les notes. Recommence lentement, sans pédale, avec une seule main.</string>
+    <string name="piano_scale_no_verdict">Aucun verdict sur les notes et aucune comparaison pour cette prise.</string>
+    <string name="piano_scale_matched">%1$d / %2$d notes attendues retrouvées</string>
+    <string name="piano_scale_tap_note">Touche une note pour réécouter son passage. Les repères et la détection restent approximatifs.</string>
+    <string name="piano_scale_status_match">✓ repérée</string>
+    <string name="piano_scale_status_octave">octave</string>
+    <string name="piano_scale_status_missing">non repérée</string>
+    <string name="piano_scale_status_extra">+ détectée</string>
+    <string name="piano_scale_status_check">à vérifier</string>
+    <string name="piano_scale_detail_match">%1$s a été repérée dans cette prise.</string>
+    <string name="piano_scale_detail_octave">%1$s détectée au lieu de %2$s : vérifie l’octave.</string>
+    <string name="piano_scale_detail_wrong">%1$s détectée au lieu de %2$s : reprends cette transition.</string>
+    <string name="piano_scale_detail_missing">%1$s n’a pas été repérée. Elle peut avoir été omise ou mal détectée.</string>
+    <string name="piano_scale_detail_extra">%1$s supplémentaire détectée : vérifie ce passage.</string>
+    <string name="piano_scale_marker">Repère ≈ %1$s s</string>
+    <string name="piano_scale_preparing_passage">Préparation du passage…</string>
+    <string name="piano_scale_replay_passage">Réécouter ce passage</string>
+    <string name="piano_scale_expected">Écouter la note attendue · %1$s</string>
+    <string name="piano_scale_focus">Travailler autour de cette note · 3 notes</string>
+    <string name="piano_scale_irregular">L’espacement des notes varie : garde un mouvement lent et régulier.</string>
+    <string name="piano_scale_regular">L’espacement des notes est régulier sur cette prise.</string>
+    <string name="piano_scale_since_last">Depuis ton dernier essai exploitable</string>
+    <string name="piano_scale_compare">%1$d → %2$d notes attendues retrouvées sur %3$d.</string>
+    <string name="piano_scale_regained">Cette fois, la détection retrouve : %1$s.</string>
+    <string name="piano_scale_check_again">À vérifier de nouveau : %1$s.</string>
+    <string name="piano_scale_same">Les mêmes notes sont repérées. Consolide ce passage tranquillement.</string>
+    <string name="piano_scale_compare_note">Même exercice et même tempo. Ce retour compare deux détections, sans valider une maîtrise définitive.</string>
+    <string name="piano_scale_msg_denied">Autorise le microphone pour essayer la correction.</string>
+    <string name="piano_scale_msg_timeout">Le test micro est terminé. Rapproche le téléphone et réessaie quand tu es prêt.</string>
+    <string name="piano_scale_msg_stopped">Le microphone s’est arrêté. Réessaie le test micro.</string>
+    <string name="piano_scale_msg_failed">Microphone indisponible ou prise interrompue. Vérifie l’autorisation et réessaie.</string>
+    <string name="piano_scale_msg_analysis">Analyse impossible. Recommence une courte prise.</string>
+    <string name="piano_scale_msg_passage">Lecture du passage impossible. Réessaie la réécoute.</string>
+    <string name="piano_scale_msg_interrupted">L’essai a été interrompu. Recommence quand tu es prêt.</string>
+    <string name="piano_scale_take_title">Mon essai au piano</string>
+    <string name="piano_scale_take_subtitle">Essai privé sur ce téléphone</string>
+    <string name="piano_scale_passage_title">Passage à réécouter</string>
+    <string name="piano_scale_passage_subtitle">Repère approximatif</string>
     <string name="status_todo">À faire</string>
     <string name="status_submitted">Envoyé</string>
     <string name="status_validated">Validé</string>
     <string name="status_to_rework">À retravailler</string>
+
+    <!-- UI tokens refactor: content descriptions, review placeholder, date words and units. -->
+    <string name="cd_transpose_down">Baisser d’un demi-ton</string>
+    <string name="cd_transpose_up">Monter d’un demi-ton</string>
+    <string name="cd_key">Tonalité %1$s</string>
+    <string name="cd_exercise_target">%1$s, %2$d s</string>
+    <string name="exercise_target_frequency">%1$d Hz · %2$d s</string>
+    <string name="growth_review_comment_placeholder">Une réussite observée, un point précis à travailler et le prochain essai attendu.</string>
+    <string name="quoted_feedback">« %1$s »</string>
+    <string name="members_legend_line">%1$s : %2$s</string>
+    <string name="notification_channel_services">Services et répétitions</string>
+
+    <!-- Reminders -->
+    <string name="reminder_validated_title">Planning de %1$s validé</string>
+    <string name="reminder_validated_body">Tu sers : %1$s</string>
+    <string name="reminder_rehearsal_title">Répétition demain</string>
+    <string name="reminder_rehearsal_body">Travaille tes chants avant de venir : la répétition sert à mettre en commun.</string>
+    <string name="reminder_rehearsal_body_songs">Travaille %1$s avant de venir : la répétition sert à mettre en commun.</string>
+    <string name="reminder_eve_title">Demain tu es de service</string>
+    <string name="reminder_eve_friday">Vendredi : louange libre, pas de setlist.</string>
+    <string name="reminder_eve_sunday">Dimanche : relis la setlist une dernière fois.</string>
+    <string name="reminder_answers_title">Tes dispos de %1$s</string>
+    <string name="reminder_answers_body">%1$d services sans réponse. Réponds avant le %2$s dans Planning.</string>
+    <string-array name="format_weekdays">
+        <item>lundi</item>
+        <item>mardi</item>
+        <item>mercredi</item>
+        <item>jeudi</item>
+        <item>vendredi</item>
+        <item>samedi</item>
+        <item>dimanche</item>
+    </string-array>
+    <string-array name="format_months_short">
+        <item>janv.</item>
+        <item>févr.</item>
+        <item>mars</item>
+        <item>avr.</item>
+        <item>mai</item>
+        <item>juin</item>
+        <item>juil.</item>
+        <item>août</item>
+        <item>sept.</item>
+        <item>oct.</item>
+        <item>nov.</item>
+        <item>déc.</item>
+    </string-array>
+    <string-array name="format_months">
+        <item>janvier</item>
+        <item>février</item>
+        <item>mars</item>
+        <item>avril</item>
+        <item>mai</item>
+        <item>juin</item>
+        <item>juillet</item>
+        <item>août</item>
+        <item>septembre</item>
+        <item>octobre</item>
+        <item>novembre</item>
+        <item>décembre</item>
+    </string-array>
+    <string-array name="format_weekdays_short">
+        <item>lun.</item>
+        <item>mar.</item>
+        <item>mer.</item>
+        <item>jeu.</item>
+        <item>ven.</item>
+        <item>sam.</item>
+        <item>dim.</item>
+    </string-array>
+    <string name="format_decimal_separator">,</string>
+    <string name="format_unit_kilobytes">Ko</string>
+    <string name="format_unit_megabytes">Mo</string>
 </resources>

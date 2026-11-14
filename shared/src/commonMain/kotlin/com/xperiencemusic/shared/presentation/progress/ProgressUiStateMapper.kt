@@ -2,7 +2,7 @@ package com.xperiencemusic.shared.presentation.progress
 
 import com.xperiencemusic.music.pitch.Pitch
 import com.xperiencemusic.shared.domain.model.ExerciseCheck
-import com.xperiencemusic.shared.domain.usecase.GrowthReview
+import com.xperiencemusic.shared.domain.usecase.ReviewQueue
 import com.xperiencemusic.shared.domain.usecase.MyGrowth
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Song
@@ -15,12 +15,8 @@ import com.xperiencemusic.shared.domain.model.SingerPath
 import com.xperiencemusic.shared.domain.model.VoicePart
 import kotlin.math.roundToInt
 
-/** Adds the week's songs and the review queue to an already derived state. */
-fun ProgressUiState.withVoices(
-    weekSongs: List<Song>,
-    mine: List<VoiceSubmission>,
-    allSubmissions: List<VoiceSubmission>,
-): ProgressUiState = copy(
+/** Adds the week's songs, with what the member sent of each, to an already derived state. */
+fun ProgressUiState.withVoices(weekSongs: List<Song>, mine: List<VoiceSubmission>): ProgressUiState = copy(
     weekVoices = if (hasPath) {
         weekSongs.map { song ->
             val sent = mine.firstOrNull { it.songId == song.id }
@@ -29,7 +25,12 @@ fun ProgressUiState.withVoices(
     } else {
         emptyList()
     },
-    toReviewCount = if (canReview) allSubmissions.count { it.status == ExerciseStatus.SUBMITTED } else 0,
+)
+
+/** Adds what waits for the reviewer; nothing for a member who does not review. */
+fun ProgressUiState.withReviewQueue(queue: ReviewQueue): ProgressUiState = copy(
+    toReviewCount = if (canReview) queue.toReview else 0,
+    toValidateCount = if (canReview) queue.toValidate else 0,
 )
 
 fun deriveProgressState(member: Member?, path: SingerPath?): ProgressUiState {
@@ -78,8 +79,8 @@ private fun PathStep.toUi(voicePart: VoicePart): StepUi {
     )
 }
 
-/** Adds the way to the next level, and the super admin's queue, to an already derived state. */
-fun ProgressUiState.withGrowth(growth: MyGrowth?, review: GrowthReview?): ProgressUiState {
+/** Adds the way to the next level to an already derived state. */
+fun ProgressUiState.withGrowth(growth: MyGrowth?): ProgressUiState {
     if (growth == null) return this
     val progress = growth.progress
     return copy(
@@ -108,11 +109,6 @@ fun ProgressUiState.withGrowth(growth: MyGrowth?, review: GrowthReview?): Progre
                 feedback = check?.feedback.takeIf { objective.autoTier == null },
                 autoTier = objective.autoTier,
             )
-        },
-        toValidateCount = if (canReview && review != null) {
-            review.requests.count { it.status == ExerciseStatus.SUBMITTED } + review.checks.count { it.status == ExerciseStatus.SUBMITTED }
-        } else {
-            0
         },
     )
 }

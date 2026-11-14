@@ -14,7 +14,6 @@ import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
-import com.xperiencemusic.shared.presentation.common.Formatting
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -175,8 +174,6 @@ fun deriveSetlistEditorState(draft: SetlistDraft, library: List<Song>, matches: 
     return SetlistEditorUiState(
         rehearsalDate = draft.rehearsalDate,
         serviceDate = draft.serviceDate,
-        rehearsalLabel = Formatting.dayAndDate(draft.rehearsalDate),
-        serviceLabel = Formatting.dayAndDate(draft.serviceDate),
         message = draft.message,
         query = draft.query,
         selected = draft.selectedIds.mapNotNull { byId[it]?.toSetlistSongUi() },

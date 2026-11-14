@@ -5,16 +5,18 @@ import com.xperiencemusic.shared.domain.model.VoiceTrack
 import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.mapper.toWriteDto
-import com.xperiencemusic.shared.data.remote.dto.IdDto
 import com.xperiencemusic.shared.data.remote.AUDIO_BUCKET
+import com.xperiencemusic.shared.data.remote.dto.IdDto
 import com.xperiencemusic.shared.data.remote.dto.SongDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
 import com.xperiencemusic.shared.data.remote.tracking
-import com.xperiencemusic.shared.data.remote.postgrestCall
+import com.xperiencemusic.shared.data.session.SessionGuard
+import com.xperiencemusic.shared.data.session.accountCall
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
 import com.xperiencemusic.shared.domain.model.SyncStatus
+import com.xperiencemusic.shared.domain.repository.SessionResettable
 import com.xperiencemusic.shared.domain.repository.SongRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -42,11 +44,11 @@ import kotlinx.serialization.json.put
 class SupabaseSongRepository(
     private val client: SupabaseClient,
     private val snapshots: SnapshotStore,
-) : SongRepository, com.xperiencemusic.shared.domain.repository.SessionResettable {
-    private var sessionGeneration = 0
+) : SongRepository, SessionResettable {
+    private val session = SessionGuard()
 
     override fun resetSession() {
-        sessionGeneration++
+        session.reset()
         songs.value = null
         hasRefreshed = false
     }
@@ -71,7 +73,7 @@ class SupabaseSongRepository(
     }
 
     override suspend fun createSong(draft: SongDraft): String {
-        val created = accountCall {
+        val created = session.accountCall {
             client.from(SONGS).insert(draft.toWriteDto()) { select(Columns.list("id")) }.decodeSingle<IdDto>()
         }
         reload()
@@ -79,7 +81,7 @@ class SupabaseSongRepository(
     }
 
     override suspend fun updateSong(id: String, draft: SongDraft) {
-        accountCall {
+        session.accountCall {
             client.from(SONGS).update(draft.toWriteDto()) { filter { eq("id", id) } }
         }
         reload()
@@ -90,13 +92,13 @@ class SupabaseSongRepository(
             song.recordings.map { it.audioPath } + song.voiceTracks.map { it.audioPath }
         }.orEmpty()
         // Rows of recordings, voice tracks and setlist entries go with the song (on delete cascade).
-        accountCall { client.from(SONGS).delete { filter { eq("id", id) } } }
+        session.accountCall { client.from(SONGS).delete { filter { eq("id", id) } } }
         if (audioPaths.isNotEmpty()) ignoringFailures { client.storage.from(AUDIO_BUCKET).delete(audioPaths) }
         reload()
     }
 
     override suspend fun addRecording(songId: String, recording: Recording, replacingId: String?) {
-        accountCall {
+        session.accountCall {
             client.postgrest.rpc(
                 "add_recording",
                 buildJsonObject {
@@ -115,7 +117,7 @@ class SupabaseSongRepository(
     }
 
     override suspend fun deleteRecording(songId: String, recordingId: String, newReferenceId: String?) {
-        val deletedPath = accountCall {
+        val deletedPath = session.accountCall {
             client.postgrest.rpc(
                 "delete_recording",
                 buildJsonObject {
@@ -130,14 +132,14 @@ class SupabaseSongRepository(
     }
 
     override suspend fun setReference(songId: String, recordingId: String) {
-        accountCall {
+        session.accountCall {
             client.postgrest.rpc("set_reference_recording", buildJsonObject { put("p_recording_id", recordingId) })
         }
         reload()
     }
 
     override suspend fun setVoiceTrack(songId: String, track: VoiceTrack) {
-        accountCall {
+        session.accountCall {
             client.from(VOICE_TRACKS).upsert(
                 VoiceTrackWriteDto(track.id, songId, track.voicePart.name, track.audioPath),
             ) { onConflict = "song_id,voice_part" }
@@ -161,7 +163,7 @@ class SupabaseSongRepository(
     }
 
     private suspend fun reload() = loading.withLock {
-        val fetched = accountCall {
+        val fetched = session.accountCall {
             client.from(SONGS).select(Columns.raw(SongDto.COLUMNS)).decodeList<SongDto>()
         }
         publish(fetched)
@@ -178,12 +180,4 @@ class SupabaseSongRepository(
         const val VOICE_TRACKS = "voice_tracks"
         const val SNAPSHOT = "songs"
     }
-    /** Discard responses started under a previous account, including snapshot writes. */
-    private suspend fun <T> accountCall(block: suspend () -> T): T {
-        val generation = sessionGeneration
-        val result = postgrestCall(block)
-        if (generation != sessionGeneration) throw kotlin.coroutines.cancellation.CancellationException("Session ended")
-        return result
-    }
-
 }

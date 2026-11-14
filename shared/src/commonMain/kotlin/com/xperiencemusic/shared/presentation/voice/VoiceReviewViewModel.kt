@@ -8,7 +8,7 @@ import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.PlaybackState
 import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.model.VoiceSubmission
-import com.xperiencemusic.shared.domain.repository.VoiceSubmissionRepository
+import com.xperiencemusic.shared.domain.usecase.ObserveBandSubmissionsUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.ReviewVoiceUseCase
@@ -33,13 +33,13 @@ internal data class ReviewLocal(
 
 /** The super admin's "À écouter": every singer's part, played here and answered in one place. */
 class VoiceReviewViewModel(
-    private val submissions: VoiceSubmissionRepository,
+    observeBandSubmissions: ObserveBandSubmissionsUseCase,
     private val review: ReviewVoiceUseCase,
     private val playback: PlaybackController,
     currentMember: ObserveCurrentMemberUseCase,
 ) : ViewModel() {
     private val local = MutableStateFlow(ReviewLocal())
-    private val all = submissions.observeAll()
+    private val all = observeBandSubmissions()
 
     val state: StateFlow<VoiceReviewUiState> = combine(all, local, playback.state, currentMember()) { all, local, playing, me ->
         deriveVoiceReviewState(all, local, playing, me?.id)
@@ -102,7 +102,7 @@ internal fun deriveVoiceReviewState(
         memberName = memberName,
         voicePart = voicePart,
         songTitle = songTitle,
-        date = Formatting.dayAndDate(submittedOn),
+        submittedOn = submittedOn,
         duration = Formatting.duration(durationSeconds),
         status = status,
         feedback = feedback,

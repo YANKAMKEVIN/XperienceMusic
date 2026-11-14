@@ -39,7 +39,7 @@ fun KeyPicker(
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-            (0 until SEMITONES_PER_OCTAVE).forEach { tonic ->
+            for (tonic in 0 until SEMITONES_PER_OCTAVE) {
                 FilterChip(
                     selected = key.tonic == tonic,
                     onClick = { onTonicSelected(tonic) },

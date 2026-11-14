@@ -1,0 +1,452 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:PianoScaleViewModel.kt:PianoScaleViewModel$!foreground || s.phase != PianoScalePhase.PREPARING || !s.signalSeen || s.signal == PianoInputSignal.LOUD</ID>
+    <ID>ComplexCondition:PianoScaleViewModel.kt:PianoScaleViewModel$!foreground || s.phase != PianoScalePhase.RESULT || s.preparingReplay || current.sampleRate &lt;= 0</ID>
+    <ID>ComposableParamOrder:EmptyState.kt:@Composable private fun EmptyStateLayout</ID>
+    <ID>ComposableParamOrder:LearningKeyboard.kt:@Composable private fun PianoKey</ID>
+    <ID>ComposableParamOrder:PianoScaleScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun PianoScaleScreenContent</ID>
+    <ID>CompositionLocalAllowlist:AppTheme.kt:private val LocalAppColors = staticCompositionLocalOf { darkAppColors }</ID>
+    <ID>CompositionLocalAllowlist:MemberAvatar.kt:/** * Provided once at the root of the app (see `XperienceMusicApp`); without it (previews) every * photo falls back to the initials. */ val LocalAvatarPhotoLoader = staticCompositionLocalOf { AvatarPhotoLoader { null } }</ID>
+    <ID>CompositionLocalAllowlist:MicrophoneIntro.kt:/** Provided once at the root of the app; null (previews, tests) never shows the explanation. */ val LocalMicrophoneIntro = staticCompositionLocalOf&lt;MicrophoneIntro?&gt; { null }</ID>
+    <ID>CompositionLocalAllowlist:ProgressMotion.kt:/** "Réduire les animations", provided by the progress screen and read by its moving parts. */ internal val LocalCalmMotion = staticCompositionLocalOf { false }</ID>
+    <ID>CyclomaticComplexMethod:ActivityGrader.kt:ActivityGrader$fun grade: GradeResult</ID>
+    <ID>CyclomaticComplexMethod:LearningActivity.kt:@Composable internal fun HintBlock</ID>
+    <ID>CyclomaticComplexMethod:LearningCatalog.kt:fun variedActivity: LearningActivity</ID>
+    <ID>CyclomaticComplexMethod:LearningKeyboard.kt:@Composable private fun PianoKey</ID>
+    <ID>CyclomaticComplexMethod:LearningScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun LearningScreenContent</ID>
+    <ID>CyclomaticComplexMethod:LearningSinging.kt:@Composable internal fun SingPanel</ID>
+    <ID>CyclomaticComplexMethod:LearningViewModel.kt:LearningViewModel$fun onEvent</ID>
+    <ID>CyclomaticComplexMethod:LibraryScreen.kt:@Composable private fun LibraryList</ID>
+    <ID>CyclomaticComplexMethod:MemberAvatar.kt:private fun AvatarPreset.drawable: DrawableResource</ID>
+    <ID>CyclomaticComplexMethod:PianoScaleScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun PianoScaleScreenContent</ID>
+    <ID>CyclomaticComplexMethod:PlanningHeader.kt:@Composable internal fun MonthBanner</ID>
+    <ID>CyclomaticComplexMethod:PlanningUiStateMapper.kt:fun derivePlanningState: PlanningUiState</ID>
+    <ID>CyclomaticComplexMethod:ProgressScreen.kt:@Composable fun ProgressScreenContent</ID>
+    <ID>CyclomaticComplexMethod:ServiceDetailScreen.kt:@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) @Composable fun ServiceDetailScreenContent</ID>
+    <ID>CyclomaticComplexMethod:SetlistEditorViewModel.kt:SetlistEditorViewModel$fun onEvent</ID>
+    <ID>CyclomaticComplexMethod:SongEditorViewModel.kt:SongEditorViewModel$fun onEvent</ID>
+    <ID>CyclomaticComplexMethod:VoiceRecordScreen.kt:@Composable private fun Recorder</ID>
+    <ID>LambdaParameterEventTrailing:LearningKeyboard.kt:onClick: () -&gt; Unit</ID>
+    <ID>LambdaParameterEventTrailing:ProgressFocus.kt:onAsk: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:AccountScreen.kt:onEvent: (AccountEvent) -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:AvailabilityScreen.kt:onEvent: (AvailabilityEvent) -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:GrowthReviewScreen.kt:onEvent: (GrowthReviewEvent) -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:MembersScreen.kt:onEvent: (MembersEvent) -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:PlanningScreen.kt:onEvent: (PlanningEvent) -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:ProfileScreen.kt:onBack: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:ProfileScreen.kt:onEvent: (ProfileEvent) -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:ProgressScreen.kt:onEvent: (ProgressEvent) -&gt; Unit = {}</ID>
+    <ID>LambdaParameterInRestartableEffect:RecordingFormScreen.kt:onSaved: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:ServiceDetailScreen.kt:onEvent: (ServiceDetailEvent) -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:SetlistEditorScreen.kt:onBack: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:SetlistEditorScreen.kt:onPublished: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:SongDetailScreen.kt:onEvent: (SongDetailEvent) -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:SongEditorScreen.kt:onBack: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:SongEditorScreen.kt:onDeleted: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:SongEditorScreen.kt:onSaved: (String) -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:VoiceReviewScreen.kt:onEvent: (VoiceReviewEvent) -&gt; Unit</ID>
+    <ID>LongMethod:AccountScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountScreenContent</ID>
+    <ID>LongMethod:ExerciseScreen.kt:@Composable private fun AutomaticCheck</ID>
+    <ID>LongMethod:GrowthCards.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable internal fun ObjectiveSheet</ID>
+    <ID>LongMethod:GrowthReviewScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun GrowthReviewScreenContent</ID>
+    <ID>LongMethod:LibraryScreen.kt:@Composable private fun LibraryList</ID>
+    <ID>LongMethod:MembersScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun MembersScreenContent</ID>
+    <ID>LongMethod:OnboardingScreen.kt:@Composable fun OnboardingScreenContent</ID>
+    <ID>LongMethod:PlanningHeader.kt:@Composable internal fun MonthBanner</ID>
+    <ID>LongMethod:PlayerSheet.kt:@Composable fun PlayerContent</ID>
+    <ID>LongMethod:ProfileScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun ProfileScreenContent</ID>
+    <ID>LongMethod:ProgressScreen.kt:@Composable fun ProgressScreenContent</ID>
+    <ID>LongMethod:RecordingFormScreen.kt:@Composable fun RecordingFormScreenContent</ID>
+    <ID>LongMethod:SampleSongs.kt:SampleSongs$fun all: List&lt;Song&gt;</ID>
+    <ID>LongMethod:ServiceDetailScreen.kt:@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) @Composable fun ServiceDetailScreenContent</ID>
+    <ID>LongMethod:SetlistEditorScreen.kt:@Composable fun SetlistEditorScreenContent</ID>
+    <ID>LongMethod:SingerPathView.kt:@Composable fun TierPath</ID>
+    <ID>LongMethod:SongDetailScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SongDetailScreenContent</ID>
+    <ID>LongMethod:StageScreen.kt:@Composable private fun StageRail</ID>
+    <ID>LongMethod:VoiceRecordScreen.kt:@Composable private fun Recorder</ID>
+    <ID>LongMethod:VoiceRecordScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun VoiceRecordScreenContent</ID>
+    <ID>LongMethod:VoiceReviewScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun VoiceReviewScreenContent</ID>
+    <ID>MatchingDeclarationName:AssessmentScreen.kt:AssessmentActions</ID>
+    <ID>MatchingDeclarationName:DestinationViewModels.kt:DestinationViewModelStores : ViewModel</ID>
+    <ID>MatchingDeclarationName:Fakes.kt:FakeSessionRepository : SessionRepository</ID>
+    <ID>MatchingDeclarationName:LearningScreen.kt:LearningNavigation</ID>
+    <ID>MatchingDeclarationName:Qualifiers.kt:AppScopes</ID>
+    <ID>MatchingDeclarationName:ServiceReminders.kt:ReminderContext</ID>
+    <ID>MatchingDeclarationName:SongDetailUiStateMapper.kt:SongDetailLocalState</ID>
+    <ID>MaxLineLength:AccountScreen.kt:CircularProgressIndicator(Modifier.size(Sizes.avatarL + AVATAR_RING_GAP * 2).align(Alignment.Center), strokeWidth = Sizes.strokeBold)</ID>
+    <ID>MaxLineLength:AccountScreen.kt:MenuRow(Icons.Filled.CheckCircle, stringResource(Res.string.account_validate), count = state.toValidateCount, onClick = onValidate)</ID>
+    <ID>MaxLineLength:AccountScreen.kt:MenuRow(Icons.Filled.Notifications, stringResource(Res.string.account_review), count = state.toReviewCount, onClick = onReview)</ID>
+    <ID>MaxLineLength:AccountScreen.kt:Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Spacing.l, vertical = Spacing.m)</ID>
+    <ID>MaxLineLength:AccountScreen.kt:OutlinedButton</ID>
+    <ID>MaxLineLength:AccountScreen.kt:snackbar.showSnackbar(getString(if (error == AccountError.PHOTO_UNREADABLE) Res.string.avatar_error_photo else Res.string.avatar_error_save))</ID>
+    <ID>MaxLineLength:AvailabilityScreen.kt:Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = Spacing.xs))</ID>
+    <ID>MaxLineLength:AvailabilityScreen.kt:title = { Text(stringResource(Res.string.availability_title, state.monthStart?.let { rememberFormattingWords().monthAndYear(it) }.orEmpty())) }</ID>
+    <ID>MaxLineLength:AvailabilityScreen.kt:val</ID>
+    <ID>MaxLineLength:AvatarPickerSheet.kt:Text(stringResource(Res.string.avatar_remove), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = Spacing.s))</ID>
+    <ID>MaxLineLength:AvatarPickerSheet.kt:Text(stringResource(Res.string.avatar_sheet_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })</ID>
+    <ID>MaxLineLength:AvatarPickerSheet.kt:items(state.presets, key = { it.name }) { preset -&gt; PresetChoice(preset, isSelected = preset == current, onClick = { onPreset(preset) }) }</ID>
+    <ID>MaxLineLength:AvatarPickerSheet.kt:val ring = if (isSelected) Modifier.border(BorderStroke(Sizes.strokeBold, BrandColors.gradient), CircleShape).padding(Spacing.xs) else Modifier.padding(Spacing.xs)</ID>
+    <ID>MaxLineLength:BrandHeader.kt:autoSize = TextAutoSize.StepBased(minFontSize = TITLE_MIN_FONT_SIZE, maxFontSize = titleStyle.fontSize, stepSize = TITLE_FONT_STEP)</ID>
+    <ID>MaxLineLength:ChangeAvatarUseCaseTest.kt:ChangeAvatarUseCaseTest$assertEquals(DomainResult.Failure(DomainError.FILE_TOO_LARGE), changeAvatar.usePhoto(ByteArray(ChangeAvatarUseCase.MAX_PHOTO_BYTES + 1)))</ID>
+    <ID>MaxLineLength:ChoiceCards.kt:.</ID>
+    <ID>MaxLineLength:ChoiceCards.kt:Icon(icon, contentDescription = null, tint = if (isSelected) colors.onPrimary else colors.primary, modifier = Modifier.size(Sizes.iconXl))</ID>
+    <ID>MaxLineLength:EmailFieldPill.kt:CircularProgressIndicator(color = BrandColors.onGradient, strokeWidth = Sizes.stroke, modifier = Modifier.size(Sizes.iconM))</ID>
+    <ID>MaxLineLength:ExerciseScreen.kt:TunerNeedle(check.needle, description = stringResource(Res.string.exercise_tuner), modifier = Modifier.padding(top = Spacing.l))</ID>
+    <ID>MaxLineLength:ExerciseViewModelTest.kt:ExerciseViewModelTest$private</ID>
+    <ID>MaxLineLength:Fakes.kt:FakeSessionRepository$return Member("me", profile, currentMember()?.role ?: Role.MEMBER, currentMember()?.avatar).also { state.value = SessionState.Ready(it) }</ID>
+    <ID>MaxLineLength:FileLearningRepositoryTest.kt:FileLearningRepositoryTest$"""[{"attempt":{"id":"a1","memberId":"me","activityId":"piano-chords-major","version":1,"passed":true,"day":"2026-10-18","hints":1},"synced":true}]"""</ID>
+    <ID>MaxLineLength:FileLearningSessionStoreTest.kt:FileLearningSessionStoreTest$files.writeText("snapshots/learning-resume-me-piano-chords.json", """{"index":1,"encounter":2,"notes":[60,64],"answer":"Majeur","hints":2}""")</ID>
+    <ID>MaxLineLength:FloatingTabBar.kt:Text(tab.label, style = MaterialTheme.typography.labelLarge, color = content, maxLines = 1, overflow = TextOverflow.Ellipsis)</ID>
+    <ID>MaxLineLength:FloatingTabBar.kt:enter = expandHorizontally(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn()</ID>
+    <ID>MaxLineLength:GrowthCards.kt:.</ID>
+    <ID>MaxLineLength:GrowthCards.kt:Modifier.fillMaxWidth().clip(RoundedCornerShape(Radius.card)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(Spacing.ml)</ID>
+    <ID>MaxLineLength:GrowthCards.kt:Text("${i + 1}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:GrowthCards.kt:Text(stringResource(Res.string.growth_learn_title).uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)</ID>
+    <ID>MaxLineLength:GrowthCards.kt:Text(stringResource(Res.string.progress_objective_module, module.done, module.total), style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.info)</ID>
+    <ID>MaxLineLength:GrowthCards.kt:Text(stringResource(Res.string.progress_objective_number, number), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:GrowthCards.kt:Text(stringResource(Res.string.progress_sheet_criterion).uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:GrowthCards.kt:Text(stringResource(Res.string.progress_sheet_reached_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:GrowthCards.kt:Text(stringResource(Res.string.quoted_feedback, objective.feedback), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.warning)</ID>
+    <ID>MaxLineLength:GrowthObjectives.kt:GrowthObjectives$private</ID>
+    <ID>MaxLineLength:GrowthReviewScreen.kt:ObjectiveReviewUi("o1", "d", "Daniel", Instrument.PIANO, "piano-c1", "Les accords de la setlist", "Jouer tous les accords sans hésiter.", Level.CONFIRMED)</ID>
+    <ID>MaxLineLength:GrowthReviewScreen.kt:Text(listOfNotNull(name, part).joinToString(" · "), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:GrowthReviewScreen.kt:item { Heading(stringResource(Res.string.growth_review_objectives, state.objectives.size), Modifier.padding(top = Spacing.m)) }</ID>
+    <ID>MaxLineLength:GrowthReviewViewModelTest.kt:GrowthReviewViewModelTest$requests = listOf(LevelRequest("r1", "g", "Grâce", Instrument.SINGER, null, Level.CONFIRMED, ExerciseStatus.SUBMITTED, null, day))</ID>
+    <ID>MaxLineLength:InMemoryGrowthRepository.kt:InMemoryGrowthRepository$val check = ObjectiveCheck(memberId, member?.profile?.displayName.orEmpty(), member?.profile?.instrument, objectiveId, ExerciseStatus.SUBMITTED, null, dates.today())</ID>
+    <ID>MaxLineLength:InMemoryMembersRepository.kt:InMemoryMembersRepository$BandMember(it.id, DEMO_EMAIL, it.profile.displayName, it.role, it.profile.instrument, it.profile.voicePart, it.profile.level)</ID>
+    <ID>MaxLineLength:IosReminderScheduler.kt:IosReminderScheduler.&lt;no name provided&gt;$withCompletionHandler(UNNotificationPresentationOptionBanner or UNNotificationPresentationOptionList or UNNotificationPresentationOptionSound)</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("chart-degree", "Lire les degrés", LearningKind.CHOICE, "En Do majeur, à quel accord correspond le degré IV ?", "Do est I ; Ré II ; Mi III ; Fa IV. Le degré IV est Fa majeur.", answer = "Fa majeur", choices = listOf("Ré mineur", "Fa majeur", "Sol majeur"))</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("chart-name", "Lire Am", LearningKind.CHOICE, "Quel accord est indiqué par Am ?", "A signifie La ; m signifie mineur : La mineur.", answer = "La mineur", choices = listOf("La majeur", "La mineur", "Do mineur"))</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("chart-practice", "Une première lecture", LearningKind.PRACTICE, "Sur ton instrument, lis C | Am | F | G : quatre temps par accord. Repère les changements avant de commencer.", "Puis demande au responsable une grille inconnue. Le critère final est une première lecture sans s’arrêter. La mémorisation de cet exemple ne suffit pas à valider la compétence.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("rhythm-count", "Partager un temps", LearningKind.CHOICE, "Combien de croches occupent la durée d’une noire ?", "Deux croches durent autant qu’une noire.", answer = "2", choices = listOf("1", "2", "4"))</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("rhythm-practice", "Trois motifs au métronome", LearningKind.PRACTICE, "Sur ton piano, garde le même tempo avec des accords plaqués, des arpèges puis un motif rythmique.", "Travaille chaque motif séparément puis enchaîne-les pendant trois minutes. La stabilité et l’accompagnement réel seront évalués par le responsable.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("rhythm-six", "Comprendre le 6/8", LearningKind.CHOICE, "Dans un 6/8 ressenti en deux grandes pulsations, combien de croches contient chaque grande pulsation ?", "Six croches sont groupées en deux ensembles de trois : 1–2–3 / 4–5–6.", answer = "3", choices = listOf("2", "3", "6"))</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("rhythm-tap", "Garder le tempo", LearningKind.RHYTHM, "Écoute le clic, puis frappe huit pulsations régulières à 72 BPM. Le premier appui sert de départ.", "L’exercice mesure les intervalles entre tes appuis, pas ton jeu au piano. Vise une pulsation stable, sans accélérer.", bpm=72)</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("scale-ear", "Écouter la montée", LearningKind.EAR, "Écoute les notes séparées : l’accord est-il majeur ou mineur ?", "Do–Mi–Sol forme une triade majeure issue de la gamme de Do.", listOf(60, 64, 67), answer = "Majeur")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("scale-practice", "Deux mains, progressivement", LearningKind.PRACTICE, "Travaille Do, Sol, Ré, Fa, La et Mi majeur, mains séparées puis ensemble, sur une octave.", "Commence lentement. Le critère final est une octave à deux mains à 70 BPM dans ces six tonalités. Cette pratique est déclarative : le clavier virtuel ne vérifie ni ton doigté ni ta posture.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("transpose-grid", "Déplacer une grille", LearningKind.CHOICE, "C–F–G transposé un ton plus haut donne…", "Chaque accord monte d’un ton : D–G–A.", answer = "D–G–A", choices = listOf("D–G–A", "D–F–A", "C–G–A"))</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("transpose-name", "Un ton plus haut", LearningKind.CHOICE, "Do majeur transposé un ton plus haut devient…", "Do → Do♯ → Ré : deux demi-tons donnent Ré majeur.", answer = "Ré majeur", choices = listOf("Do♯ majeur", "Ré majeur", "Mi majeur"))</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$LearningActivity("transpose-practice", "Changer de tonalité sur demande", LearningKind.PRACTICE, "Choisis un chant connu. Joue-le dans sa tonalité puis un ton plus haut et un ton plus bas.", "Utilise les degrés pour conserver les relations entre accords. Le responsable évaluera la transposition sur l’instrument, à la demande.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$keys("chart-c", "Lire puis construire C", "La grille indique C. Construis cet accord en position fondamentale à partir de Do4.", setOf(60, 64, 67), "C signifie Do majeur : Do, Mi, Sol.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$keys("scale-half", "Trouver le demi-ton", "Sélectionne Mi4 et Fa4 : ces deux touches blanches sont voisines.", setOf(64, 65), "Mi et Fa sont séparés d’un demi-ton, sans touche noire entre les deux.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$keys("scale-triad", "Les repères de Do", "Sélectionne les degrés I, III et V de Do majeur.", setOf(60, 64, 67), "Compte Do(1), Ré(2), Mi(3), Fa(4), Sol(5).")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$keys("transpose-build", "Jouer le nouvel accord", "Transpose Do majeur un ton plus haut : construis Ré majeur à partir de Ré4.", setOf(62, 66, 69), "Déplace Do, Mi et Sol de deux demi-tons : Ré, Fa♯, La.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$lesson("chart-letters", "Deux écritures, un accord", "C = Do, D = Ré, E = Mi, F = Fa, G = Sol, A = La, B = Si. Le petit m indique mineur.", "Une grille indique les accords et la structure. Repère couplet, refrain et pont avant de jouer.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$lesson("rhythm-pulse", "Sentir la pulsation", "La pulsation est le battement régulier qui soutient la musique. À 60 BPM, il y a un battement par seconde.", "En 4/4, compte 1–2–3–4. Une noire dure un temps, deux croches partagent un temps.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$lesson("scale-fingering", "Travailler sans tension", "Sur l’instrument, commence par une main et un tempo confortable. Arrête en cas de douleur.", "Do majeur main droite en montant : 1–2–3–1–2–3–4–5. Main gauche : 5–4–3–2–1–3–2–1. Fais passer le pouce sans tordre le poignet ; demande au responsable de vérifier ta posture.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$lesson("scale-understand", "Les pas de la gamme", "Une gamme majeure suit : ton, ton, demi-ton, ton, ton, ton, demi-ton.", "Un ton correspond à deux touches voisines successives ; un demi-ton à une seule. En Do : Do Ré Mi Fa Sol La Si Do.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:LearningCatalog$lesson("transpose-rule", "Déplacer les mêmes relations", "Transposer consiste à déplacer toutes les notes du même intervalle. Un ton plus haut : ajoute deux demi-tons.", "C–F–G devient D–G–A. Les degrés I–IV–V restent identiques, mais la tonalité change.")</ID>
+    <ID>MaxLineLength:LearningCatalog.kt:instruction = "Construis $label $quality $position. Pars du registre autour de ${noteLabel(notes.min())} et retrouve les intervalles."</ID>
+    <ID>MaxLineLength:LearningDialogs.kt:stringResource(if (state.sessionDifficult.isEmpty()) Res.string.learning_summary_easy else Res.string.learning_summary_difficult)</ID>
+    <ID>MaxLineLength:LearningHome.kt:Text(stringResource(if (state.completed.isNotEmpty()) Res.string.learning_continue_session else Res.string.learning_start_session))</ID>
+    <ID>MaxLineLength:LearningHome.kt:TextButton(onClick = { onEvent(LearningEvent.ChallengeExample) }) { Text(stringResource(Res.string.learning_challenge_example)) }</ID>
+    <ID>MaxLineLength:LearningHome.kt:if (startingPoint == null) StartingPoint(state, onEvent) else StartingPointAdvice(state, startingPoint, onEvent, navigation.onModule)</ID>
+    <ID>MaxLineLength:LearningHome.kt:stringResource(if (state.module.instrument == Instrument.SINGER) Res.string.learning_path_singer else Res.string.learning_path_piano)</ID>
+    <ID>MaxLineLength:LearningScreen.kt:LearningScreenContent(LearningUiState(loading = false, allowed = true, index = 1, mode = LearningMode.ACTIVITY), {}, LearningNavigation({}))</ID>
+    <ID>MaxLineLength:LearningScreen.kt:if (state.module.instrument == Instrument.SINGER) Res.string.learning_not_for_singer else Res.string.learning_not_for_piano</ID>
+    <ID>MaxLineLength:LearningSessionTest.kt:LearningSessionTest$val preferences = LearningPreferences(touchSound = false, rewardSound = false, haptics = false, weeklyTarget = 3, startingPoint = "piano-chart")</ID>
+    <ID>MaxLineLength:LearningSinging.kt:onClick = { permission.request { if (it) onEvent(LearningEvent.StartSinging) else onEvent(LearningEvent.MicrophoneDenied) } }</ID>
+    <ID>MaxLineLength:LearningStartingPoint.kt:QuizQuestion(Res.string.learning_quiz_chord, listOf(Res.string.learning_quiz_chord_right, Res.string.learning_quiz_chord_wrong), right = 0)</ID>
+    <ID>MaxLineLength:LearningStartingPoint.kt:QuizQuestion(Res.string.learning_quiz_rhythm, listOf(Res.string.learning_quiz_rhythm_wrong, Res.string.learning_quiz_rhythm_right), right = 1)</ID>
+    <ID>MaxLineLength:LearningUiState.kt:LearningUiState$val</ID>
+    <ID>MaxLineLength:LearningUseCasesTest.kt:LearningUseCasesTest.Submission$val submit = SubmitObjectiveRecordingUseCase(sessions, learning, recordings, TickObjectiveUseCase(sessions, growth, GrowthObjectives.all))</ID>
+    <ID>MaxLineLength:LearningViewModel.kt:LearningViewModel$it.copy(index = s.index, postponed = it.postponed + id, difficult = it.difficult + id, titles = it.titles + (id to s.activity.title))</ID>
+    <ID>MaxLineLength:LearningViewModelTest.kt:LearningViewModelTest$private</ID>
+    <ID>MaxLineLength:LibraryScreen.kt:Icon(XmIcons.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Sizes.iconL))</ID>
+    <ID>MaxLineLength:LibraryScreen.kt:contentPadding = PaddingValues(start = Spacing.l, top = if (isShort) Spacing.s else Spacing.l, end = Spacing.l, bottom = Spacing.xxl)</ID>
+    <ID>MaxLineLength:LocalizedReminderSchedulerTest.kt:LocalizedReminderSchedulerTest$val bare = LocalizedReminderScheduler(notifications, strings = { _, _ -&gt; error("no text needed") }, loadWords = { error("no words needed") })</ID>
+    <ID>MaxLineLength:MainScaffold.kt:.</ID>
+    <ID>MaxLineLength:MainScaffold.kt:Modifier.fillMaxHeight().windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start)).padding(start = Spacing.s, top = Spacing.s, bottom = Spacing.s)</ID>
+    <ID>MaxLineLength:MiniPlayer.kt:.</ID>
+    <ID>MaxLineLength:NameFieldGreeting.kt:textStyle = TextStyle(color = colors.onSurface, fontSize = fontSize, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)</ID>
+    <ID>MaxLineLength:NotificationPermission.android.kt:val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED</ID>
+    <ID>MaxLineLength:OnboardingScreen.kt:AppTheme { OnboardingScreenContent(OnboardingUiState(step = OnboardingStep.ROLE, name = "Sarah", instrument = Instrument.SINGER), onEvent = {}) }</ID>
+    <ID>MaxLineLength:OnboardingScreen.kt:CircularProgressIndicator(color = BrandColors.onGradient, strokeWidth = Sizes.stroke, modifier = Modifier.size(Sizes.iconL))</ID>
+    <ID>MaxLineLength:OnboardingScreen.kt:Column</ID>
+    <ID>MaxLineLength:OnboardingScreen.kt:StepProgress(state.progress, stringResource(Res.string.onboarding_progress, state.stepIndex + 1), Modifier.padding(top = Spacing.l, bottom = Spacing.s))</ID>
+    <ID>MaxLineLength:OnboardingScreen.kt:Text(stringResource(Res.string.onboarding_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:OnboardingScreen.kt:Text(stringResource(Res.string.onboarding_title), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })</ID>
+    <ID>MaxLineLength:OnboardingScreen.kt:Text(stringResource(Res.string.onboarding_voice_unknown_text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:OnboardingScreen.kt:border = BorderStroke(if (isUnknown) Sizes.stroke else Sizes.hairline, if (isUnknown) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)</ID>
+    <ID>MaxLineLength:PianoBasics.kt:PianoBasics$"Depuis Do : compte 4 demi-tons jusqu’à Mi, puis 3 jusqu’à Sol. Un demi-ton est le passage à la touche voisine, blanche ou noire. Formule : fondamentale, tierce majeure, quinte."</ID>
+    <ID>MaxLineLength:PianoBasics.kt:PianoBasics$"Do majeur contient Do, Mi et Sol. Compte 4 demi-tons puis 3 ; aucune autre note n’est nécessaire."</ID>
+    <ID>MaxLineLength:PianoBasics.kt:PianoBasics$"Do mineur : Do, Mi♭, Sol. Formule : 3 demi-tons puis 4. La fondamentale et la quinte restent les mêmes. Écoute les deux couleurs sans les réduire à une émotion unique."</ID>
+    <ID>MaxLineLength:PianoBasics.kt:PianoBasics$"En Do majeur, joue Do majeur → Fa majeur → Sol majeur → Do majeur. Commence lentement, puis essaie des renversements pour limiter les déplacements."</ID>
+    <ID>MaxLineLength:PianoBasics.kt:PianoBasics$"Fa majeur contient Fa, La et Do. Ici : Do4–Fa4–La4. Après ce défi, tu peux demander une évaluation sur ton instrument ; cela ne valide pas automatiquement la compétence."</ID>
+    <ID>MaxLineLength:PianoBasics.kt:PianoBasics$"Le premier renversement de Do majeur place Mi en bas : Mi4, Sol4, Do5. Garde les doigts près des touches et cherche un mouvement confortable, sans tension."</ID>
+    <ID>MaxLineLength:PianoBasics.kt:PianoBasics$"Sélectionne Mi, Sol et le Do de droite (Do5). Le Do de gauche correspond à une autre disposition."</ID>
+    <ID>MaxLineLength:PianoBasics.kt:PianoBasics$"Travaille ensuite en Sol, Ré, Fa, La et Mi. Compte quatre temps par accord. Si tu hésites, ralentis. Le critère final est d’enchaîner I–IV–V–I dans six tonalités sans hésiter, avec renversements. Cette étape d’entraînement reste déclarative ; le responsable évaluera ton jeu réel."</ID>
+    <ID>MaxLineLength:PianoScaleParts.kt:notes.forEach { Text(stringResource(it), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Spacing.s)) }</ID>
+    <ID>MaxLineLength:PianoScaleViewModelTest.kt:PianoScaleViewModelTest$mic.channel.send(AudioFrame(FloatArray(4096) { i -&gt; (sin(2 * PI * hz * (frame * 4096 + i) / 12_000) * 0.3).toFloat() }, 12_000))</ID>
+    <ID>MaxLineLength:PianoScaleViewModelTest.kt:PianoScaleViewModelTest$val mic = object: MicrophoneInput { override fun frames(frameSize: Int): Flow&lt;AudioFrame&gt; = flow { throw MicrophoneUnavailableException() } }</ID>
+    <ID>MaxLineLength:PlanningHeader.kt:Text(stringResource(Res.string.planning_validated), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.tertiary)</ID>
+    <ID>MaxLineLength:PlanningHeader.kt:pluralStringResource(Res.plurals.planning_validated_incomplete, state.incompleteAfterValidation, state.incompleteAfterValidation)</ID>
+    <ID>MaxLineLength:PlanningScreen.kt:Box(Modifier.animateItem(fadeInSpec = monthFadeIn, fadeOutSpec = monthFadeOut)) { MonthBanner(state, onEvent, onMyAnswers) }</ID>
+    <ID>MaxLineLength:PlanningScreen.kt:ServiceCardUi(LocalDate(2026, 11, 6), ServiceKind.FRIDAY, 6, emptyList(), listOf(Instrument.SINGER), MyAnswer.UNANSWERED, isPast = false, isToday = true)</ID>
+    <ID>MaxLineLength:PlanningScreen.kt:pluralStringResource(Res.plurals.planning_validate_missing_answers, validation.missingAnswers, validation.missingAnswers) + " "</ID>
+    <ID>MaxLineLength:PlanningScreen.kt:pluralStringResource(Res.plurals.planning_validate_missing_members, validation.missingMembers, validation.missingMembers)</ID>
+    <ID>MaxLineLength:PlanningScreen.kt:validation = MonthValidationUi(missingAnswers = 22, missingMembers = 9, incompleteServices = 2, uncoveredParts = listOf(Instrument.BASS, Instrument.DRUMS))</ID>
+    <ID>MaxLineLength:PlanningScreen.kt:validation = MonthValidationUi(missingAnswers = 22, missingMembers = 9, incompleteServices = 2, uncoveredParts = listOf(Instrument.SINGER, Instrument.BASS, Instrument.DRUMS))</ID>
+    <ID>MaxLineLength:PlanningStateTest.kt:PlanningStateTest$assertEquals(null, derivePlanningState(planning(months = months, signups = signups), october, today).validation, "members cannot validate")</ID>
+    <ID>MaxLineLength:PlanningViewModel.kt:PlanningViewModel$val</ID>
+    <ID>MaxLineLength:PlayerSheet.kt:PlaybackStatus.LOADING -&gt; CircularProgressIndicator(color = BrandColors.onGradient, strokeWidth = Sizes.stroke, modifier = Modifier.size(PLAY_LOADER_SIZE))</ID>
+    <ID>MaxLineLength:PlayerSheet.kt:PlaybackStatus.PLAYING -&gt; Icon(PauseIcon, contentDescription = label, tint = BrandColors.onGradient, modifier = Modifier.size(Sizes.iconXxl))</ID>
+    <ID>MaxLineLength:PlayerSheet.kt:else -&gt; Icon(Icons.Filled.PlayArrow, contentDescription = label, tint = BrandColors.onGradient, modifier = Modifier.size(PLAY_GLYPH_SIZE))</ID>
+    <ID>MaxLineLength:ProfileScreen.kt:Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = Spacing.l, vertical = Spacing.m)</ID>
+    <ID>MaxLineLength:ProfileScreen.kt:Text(stringResource(Res.string.profile_role_change_note), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.warning)</ID>
+    <ID>MaxLineLength:ProfileScreen.kt:deriveProfileState(MemberProfile("Sarah", Instrument.SINGER, VoicePart.ALTO, Level.BEGINNER)).copy(voicePart = VoicePart.SOPRANO)</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:GradientButton</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:LevelRing</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:Text("/${card.required}", style = AppTypography.numberSuffix, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = Spacing.s))</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:Text(stringResource(Res.string.growth_rework, card.feedback), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.warning, modifier = Modifier.padding(horizontal = Spacing.l))</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:Text(stringResource(Res.string.growth_waiting), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.info, modifier = Modifier.padding(horizontal = Spacing.l))</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:Text(stringResource(Res.string.progress_ring_top), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:Text(stringResource(Res.string.progress_ring_towards, next.target()), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:cta(stringResource(if (focus.done == 0) Res.string.progress_focus_start else Res.string.progress_focus_continue)) { onOpenLearning(focus.moduleId) }</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:listOf(stringResource(tierTitles.getOrElse(focus.tier - 1) { tierTitles.last() }), focus.detail).filter { it.isNotBlank() }.joinToString(" · ")</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:stringResource(if (card.requestStatus == ExerciseStatus.TO_REWORK) Res.string.growth_ask_again else Res.string.growth_ask, next.target())</ID>
+    <ID>MaxLineLength:ProgressFocus.kt:val segments = objectives.map { it.segment(it.id in started) }.ifEmpty { List(card.required) { if (it &lt; card.done) RingSegment.VALIDATED else RingSegment.TODO } }</ID>
+    <ID>MaxLineLength:ProgressFocusTest.kt:ProgressFocusTest$tiers = listOf(TierUi(1, true, listOf(step("a", StepState.DONE))), TierUi(2, false, listOf(step("b", StepState.CURRENT), step("c", StepState.LOCKED))))</ID>
+    <ID>MaxLineLength:ProgressFocusTest.kt:ProgressFocusTest$val objectives = listOf(objective("singer-c4"), objective("singer-c5"), objective("singer-c6", ExerciseStatus.SUBMITTED), objective("singer-c7"))</ID>
+    <ID>MaxLineLength:ProgressHeader.kt:Icon(XmIcons.Flame, contentDescription = null, tint = if (state.streakDays &gt; 0) AppTheme.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(Sizes.iconXs))</ID>
+    <ID>MaxLineLength:ProgressHeader.kt:Text(pluralStringResource(Res.plurals.progress_streak, state.streakDays, state.streakDays), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = Spacing.xsm))</ID>
+    <ID>MaxLineLength:ProgressHeader.kt:subtitle = listOfNotNull(state.name.takeIf { it.isNotBlank() }, state.voicePart?.label() ?: state.instrument?.label(), state.level?.label()).joinToString(" · ")</ID>
+    <ID>MaxLineLength:ProgressMotion.kt:.</ID>
+    <ID>MaxLineLength:ProgressMotion.kt:Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = AppTheme.colors.eyebrow, modifier = Modifier.padding(end = EYEBROW_END_CLEARANCE))</ID>
+    <ID>MaxLineLength:ProgressMotion.kt:Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(end = TITLE_END_CLEARANCE))</ID>
+    <ID>MaxLineLength:ProgressMotion.kt:drawArc(BrandColors.gradient, start, drawn, false, topLeft, arcSize, alpha = glow, style = Stroke(stroke, cap = StrokeCap.Round))</ID>
+    <ID>MaxLineLength:ProgressMotion.kt:internal</ID>
+    <ID>MaxLineLength:ProgressMotion.kt:time = rememberInfiniteTransition(label = "eq").animateFloat(0f, 1f, infiniteRepeatable(tween(1_100, easing = LinearEasing)), label = "t").value</ID>
+    <ID>MaxLineLength:ProgressMotion.kt:val background by animateColorAsState(if (isOn) MaterialTheme.colorScheme.onSurface else Color.Transparent, fade, label = "tab-bg")</ID>
+    <ID>MaxLineLength:ProgressMotion.kt:val content by animateColorAsState(if (isOn) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onSurfaceVariant, fade, label = "tab-fg")</ID>
+    <ID>MaxLineLength:ProgressScreen.kt:.</ID>
+    <ID>MaxLineLength:ProgressScreen.kt:LevelHero</ID>
+    <ID>MaxLineLength:ProgressScreen.kt:ObjectiveUi("singer-c${i + 1}", title, "Ce qu’on apprend", "Le critère", if (i &lt; 2) ExerciseStatus.VALIDATED else null, null)</ID>
+    <ID>MaxLineLength:ProgressScreen.kt:TodayCard(state.focus(), onExerciseClick, onOpenLearning, onRecordVoice, Modifier.padding(horizontal = Spacing.l, vertical = Spacing.m).enter(2))</ID>
+    <ID>MaxLineLength:ProgressScreen.kt:levelCard = LevelCardUi(Level.BEGINNER, Level.CONFIRMED, done = 2, required = 7, requestStatus = null, feedback = null, canAsk = false)</ID>
+    <ID>MaxLineLength:ProgressScreen.kt:objectives</ID>
+    <ID>MaxLineLength:ProgressSections.kt:Text(stringResource(Res.string.progress_modules_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)</ID>
+    <ID>MaxLineLength:ProgressSections.kt:Text(stringResource(Res.string.progress_voice_empty), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ProgressSections.kt:Text(stringResource(Res.string.quoted_feedback, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ProgressUiStateMapperTest.kt:ProgressUiStateMapperTest$levels = listOf(LevelRequest("r", "o", "Paul", Instrument.DRUMS, null, Level.CONFIRMED, ExerciseStatus.SUBMITTED, null, LocalDate(2026, 11, 2)))</ID>
+    <ID>MaxLineLength:ProgressUiStateMapperTest.kt:ProgressUiStateMapperTest$val state = deriveProgressState(member(instrument = Instrument.DRUMS, voicePart = null), path(ExerciseStatus.TODO, ExerciseStatus.TODO, ExerciseStatus.TODO))</ID>
+    <ID>MaxLineLength:RecordingFormScreen.kt:Text(rememberFormattingWords().shortDate(recording.recordedOn), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ReviewQueueUseCasesTest.kt:ReviewQueueUseCasesTest$assertEquals(listOf("v1", "v2", "v3"), ObserveBandSubmissionsUseCase(world.currentMember, world.submissions)().first().map { it.id }.sorted())</ID>
+    <ID>MaxLineLength:SampleGrowth.kt:SampleGrowth$ObjectiveCheck("demo-daniel", "Daniel", Instrument.PIANO, "piano-c1", ExerciseStatus.SUBMITTED, null, today.minus(DatePeriod(days = 1)))</ID>
+    <ID>MaxLineLength:SampleGrowth.kt:SampleGrowth$ObjectiveCheck("demo-daniel", "Daniel", Instrument.PIANO, "piano-c2", ExerciseStatus.VALIDATED, null, today.minus(DatePeriod(days = 8)))</ID>
+    <ID>MaxLineLength:ServiceCard.kt:Text(rememberFormattingWords().shortWeekday(card.date), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ServiceCard.kt:Text(stringResource(Res.string.planning_complete), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary, modifier = modifier)</ID>
+    <ID>MaxLineLength:ServiceDetailScreen.kt:Checkbox(checked = row.serves == true, onCheckedChange = null, enabled = enabled, modifier = Modifier.minimumInteractiveComponentSize())</ID>
+    <ID>MaxLineLength:ServiceDetailScreen.kt:Text("${index + 1} $title", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = Spacing.s))</ID>
+    <ID>MaxLineLength:ServiceDetailScreen.kt:Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = Spacing.xs))</ID>
+    <ID>MaxLineLength:ServiceDetailScreen.kt:state.songTitles.isEmpty() -&gt; Note(stringResource(if (state.isPast) Res.string.service_setlist_none_past else Res.string.service_setlist_none))</ID>
+    <ID>MaxLineLength:ServiceDetailScreen.kt:title = { Text(state.date?.let { rememberFormattingWords().dayAndDate(it) }.orEmpty().replaceFirstChar { it.uppercase() }) }</ID>
+    <ID>MaxLineLength:ServicePlanning.kt:.</ID>
+    <ID>MaxLineLength:ServiceRemindersTest.kt:ServiceRemindersTest$val reminders = planServiceReminders(planning(true, signups = listOf(ServiceSignup(sunday8, "me", true))), schedule, ReminderContext(late, setOf(november)))</ID>
+    <ID>MaxLineLength:ServiceRemindersTest.kt:ServiceRemindersTest$val signups = listOf(ServiceSignup(sunday8, "me", true), ServiceSignup(friday13, "me", true), ServiceSignup(LocalDate(2026, 11, 15), "me", false))</ID>
+    <ID>MaxLineLength:SetlistAndSearchTest.kt:SetlistAndSearchTest$publish(setlist.copy(rehearsalDate = LocalDate(2026, 10, 20), serviceDate = LocalDate(2026, 10, 25), songIds = listOf("s1", "s2")))</ID>
+    <ID>MaxLineLength:SetlistEditorScreen.kt:TextButton(onClick = onConfirm) { Text(stringResource(Res.string.setlist_delete_confirm), color = MaterialTheme.colorScheme.error) }</ID>
+    <ID>MaxLineLength:SetlistEditorScreen.kt:item(key = "add-title") { SectionTitle(stringResource(Res.string.setlist_add_title), Modifier.animateItem().padding(top = Spacing.l)) }</ID>
+    <ID>MaxLineLength:SetlistEditorScreen.kt:private</ID>
+    <ID>MaxLineLength:SetlistEditorViewModel.kt:SetlistEditorViewModel$suggestBandWeek().let { SetlistDraft(rehearsalDate = it.rehearsalDate, serviceDate = it.serviceDate, today = suggestBandWeek.today()) }</ID>
+    <ID>MaxLineLength:SingerExercises.kt:SingerExercises$"Monte et redescends doucement cinq notes sur « mi », une seconde chacune. Une minute pour réveiller la voix et garder ta série."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Articule clairement les consonnes, mais laisse les voyelles porter le son. Le texte doit rester compréhensible pour l’assemblée."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Avant le temps de louange, repère les tonalités qui se suivent et décide avec le groupe comment passer de l’une à l’autre."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Chante la dernière note d’un refrain connu et tiens-la : c’est souvent la tonique. La retrouver aide à apprendre un chant et à trouver sa tonalité."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Commence une note droite, puis laisse-la vivre en fin de tenue. Un vibrato trop large ou forcé gêne la justesse du groupe."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"C’est la situation du chant : ta ligne bouge pendant que les autres tiennent. Chaque note doit rester juste malgré la voix fixe."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Debout, épaules détendues, poids sur les deux pieds"</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Je chante la première phrase avec assurance"</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Je continue avec le groupe, sans m’arrêter"</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Je donne un signal clair et je lance la suite"</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Je le signale au technicien ou au responsable"</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Je reviens à ma ligne en écoutant ma propre voix"</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"La gamme pentatonique garde cinq notes de la gamme majeure : 1, 2, 3, 5 et 6. Elles sonnent bien sur presque tous les accords."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Mets des écouteurs pour les exercices suivants : le micro du téléphone entendrait sinon l’autre voix. Écoute ta propre note avant tout, sans chanter plus fort."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Nomme la voix (« les altos »), chante sa première note, puis la phrase entière. Fais répéter avant d’ajouter la voix suivante."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Par un geste convenu à l’avance"</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Quand la mélodie et le texte restent compréhensibles"</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Quand plusieurs voix chantent, chacune a sa propre ligne. L’oreille est attirée par la mélodie principale : il faut apprendre à rester sur la sienne."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Repère les départs après les silences et les respirations : ce sont eux qui décalent le plus souvent. Le critère final, un chant entier en place avec le groupe, est vérifié par le responsable."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Tape doucement du pied pendant que tu écoutes un chant : c’est la pulsation. Chanter en place, c’est démarrer et changer de syllabe sur ces battements, ni avant ni après."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Trop loin, ta voix disparaît ; trop près, elle sature et les graves gonflent. Une distance constante donne un volume régulier au technicien comme à l’assemblée."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Une phrase courte, simple, qui laisse la place au chant"</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$"Une phrase de louange et une phrase de prière ne se chantent pas de la même façon. L’interprétation vient du sens, pas de la performance."</ID>
+    <ID>MaxLineLength:SingerLearning.kt:SingerLearning$private</ID>
+    <ID>MaxLineLength:SingerPathView.kt:Icon(XmIcons.Medal, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Sizes.iconM))</ID>
+    <ID>MaxLineLength:SingerPathView.kt:x = if (isRight) x - nodeSize / 2 - Spacing.m - (width / 2 - nodeSize / 2 - Spacing.m) else x + nodeSize / 2 + Spacing.m</ID>
+    <ID>MaxLineLength:SongDetailScreen.kt:AppTheme { SongDetailScreenContent(SongDetailUiState(isLoading = false, isMissing = true), onEvent = {}, onBack = {}, onEdit = {}, onAddRecording = {}, onOpenStage = {}) }</ID>
+    <ID>MaxLineLength:SongDetailScreen.kt:RecordingUi("1", "Répétition du mardi", LocalDate(2026, 5, 14), "3:32", isReference = true, playback = PlaybackStatus.PLAYING)</ID>
+    <ID>MaxLineLength:SongEditorViewModel.kt:SongEditorViewModel$it.copy(isImporting = false, importLink = "", importedTitle = song.title, title = song.title, artist = song.artist.orEmpty(), key = song.key ?: it.key)</ID>
+    <ID>MaxLineLength:SongEditorViewModel.kt:SongEditorViewModel$val pasted = event.chart.length - it.chart.length &gt; 1 &amp;&amp; event.chart.count { c -&gt; c == '\n' } &gt; it.chart.count { c -&gt; c == '\n' }</ID>
+    <ID>MaxLineLength:SongKeyControls.kt:TextButton</ID>
+    <ID>MaxLineLength:SongRecordings.kt:val meta = stringResource(Res.string.song_recording_meta, rememberFormattingWords().shortDate(recording.recordedOn), recording.duration)</ID>
+    <ID>MaxLineLength:StageScreen.kt:ChartLine.Lyrics(listOf(ChartSegment("Ré", "À toi la "), ChartSegment("La", "gloire, Ô Ressus", continuesWord = true), ChartSegment("Si m", "cité !")))</ID>
+    <ID>MaxLineLength:StageScreen.kt:StageButton</ID>
+    <ID>MaxLineLength:StageScreen.kt:contentDescription = stringResource(if (state.isAutoScrolling) Res.string.stage_scroll_stop else Res.string.stage_scroll_start)</ID>
+    <ID>MaxLineLength:SupabaseGrowthRepository.kt:SupabaseGrowthRepository$session.accountCall { client.from(REQUESTS).update(GrowthReviewDto(status.name, feedback, now())) { filter { eq("id", requestId) } } }</ID>
+    <ID>MaxLineLength:TunerNeedle.kt:drawLine(center, Offset(size.width / 2, LINE_INSET.toPx()), Offset(size.width / 2, size.height - LINE_INSET.toPx()), strokeWidth = Sizes.hairline.toPx())</ID>
+    <ID>MaxLineLength:TunerNeedle.kt:drawLine(needle, Offset(x, LINE_INSET.toPx()), Offset(x, size.height - LINE_INSET.toPx()), strokeWidth = NEEDLE_WIDTH.toPx(), cap = StrokeCap.Round)</ID>
+    <ID>MaxLineLength:VoiceRecordScreen.kt:.</ID>
+    <ID>MaxLineLength:VoiceRecordScreen.kt:CircularProgressIndicator(color = BrandColors.onGradient, strokeWidth = Sizes.stroke, modifier = Modifier.size(Sizes.iconL))</ID>
+    <ID>MaxLineLength:VoiceRecordScreen.kt:GuideChip(guideLabel(guide), state.selectedGuideId == guide.id, enabled) { onEvent(VoiceRecordEvent.GuideSelected(guide.id)) }</ID>
+    <ID>MaxLineLength:VoiceRecordScreen.kt:Icon(XmIcons.Mic, contentDescription = null, tint = BrandColors.onGradient, modifier = Modifier.size(Sizes.iconXxl))</ID>
+    <ID>MaxLineLength:VoiceRecordScreen.kt:Text(stringResource(Res.string.quoted_feedback, it), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.s))</ID>
+    <ID>MaxLineLength:VoiceReviewScreen.kt:SubmissionUi("1", "Grâce", VoicePart.SOPRANO, "À toi la gloire", LocalDate(2026, 10, 12), "3:04", ExerciseStatus.SUBMITTED, null)</ID>
+    <ID>MaxLineLength:VoiceReviewScreen.kt:SubmissionUi("2", "Daniel", VoicePart.TENOR, "Amazing Grace", LocalDate(2026, 10, 10), "3:21", ExerciseStatus.VALIDATED, "Très juste, bravo.")</ID>
+    <ID>MaxLineLength:VoiceReviewScreen.kt:onEvent(if (result == SnackbarResult.ActionPerformed) VoiceReviewEvent.UndoClicked(answer.submissionId) else VoiceReviewEvent.AnswerShown)</ID>
+    <ID>MaxLineLength:WeekScreen.kt:DateCard(stringResource(Res.string.setlist_rehearsal_label), words.dayAndDate(setlist.rehearsalDate), Modifier.weight(1f).fillMaxHeight())</ID>
+    <ID>MaxLineLength:WeekScreen.kt:DateCard(stringResource(Res.string.setlist_service_label), words.dayAndDate(setlist.serviceDate), Modifier.weight(1f).fillMaxHeight())</ID>
+    <ID>MaxLineLength:WeekScreen.kt:FilledTonalIconButton</ID>
+    <ID>MaxLineLength:WeekScreen.kt:Text(if (week.timing == WeekTiming.CURRENT) stringResource(Res.string.week_this_week) else words.shortDayAndDate(week.serviceDate))</ID>
+    <ID>MaxLineLength:WeekScreen.kt:WeekScreenContent(state = state, onEvent = viewModel::onEvent, onSongClick = onSongClick, onEditWeek = onEditWeek, onAccount = onAccount)</ID>
+    <ID>MaxLineLength:WeekScreen.kt:caption = stringResource(if (countdown.daysLeft == 0) Res.string.week_countdown_caption_today else Res.string.week_countdown_caption)</ID>
+    <ID>MaxLineLength:WeekScreen.kt:value = if (countdown.daysLeft == 0) stringResource(Res.string.week_countdown_today) else stringResource(Res.string.week_countdown_days, countdown.daysLeft)</ID>
+    <ID>MaxLineLength:XmIcons.kt:XmIcons$moveTo(19.5f, 16f)</ID>
+    <ID>MaxLineLength:XmIcons.kt:XmIcons$moveTo(9.5f, 18f)</ID>
+    <ID>ModifierMissing:AccountScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountScreenContent</ID>
+    <ID>ModifierMissing:AssessmentScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AssessmentScreenContent</ID>
+    <ID>ModifierMissing:AvailabilityScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AvailabilityScreenContent</ID>
+    <ID>ModifierMissing:BrandSplash.kt:@Composable fun BrandSplash</ID>
+    <ID>ModifierMissing:ChoiceCards.kt:@Composable fun IconTile</ID>
+    <ID>ModifierMissing:ChoiceCards.kt:@Composable fun LevelBars</ID>
+    <ID>ModifierMissing:ClearSearchButton.kt:@Composable fun ClearSearchButton</ID>
+    <ID>ModifierMissing:EditorTopBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun EditorTopBar</ID>
+    <ID>ModifierMissing:ExerciseScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun ExerciseScreenContent</ID>
+    <ID>ModifierMissing:GrowthReviewScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun GrowthReviewScreenContent</ID>
+    <ID>ModifierMissing:LearningScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun LearningScreenContent</ID>
+    <ID>ModifierMissing:LibraryScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun LibraryScreenContent</ID>
+    <ID>ModifierMissing:MainScaffold.kt:@Composable fun MainScaffold</ID>
+    <ID>ModifierMissing:MembersScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun MembersScreenContent</ID>
+    <ID>ModifierMissing:MiniPlayer.kt:@Composable fun MiniPlayerContent</ID>
+    <ID>ModifierMissing:ObjectiveAudioReview.kt:@Composable fun ObjectiveAudioReview</ID>
+    <ID>ModifierMissing:OnboardingScreen.kt:@Composable fun OnboardingScreenContent</ID>
+    <ID>ModifierMissing:PianoScaleScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun PianoScaleScreenContent</ID>
+    <ID>ModifierMissing:PlanningScreen.kt:@Composable fun PlanningScreenContent</ID>
+    <ID>ModifierMissing:PlayerSheet.kt:@Composable fun PlayerContent</ID>
+    <ID>ModifierMissing:ProfileScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun ProfileScreenContent</ID>
+    <ID>ModifierMissing:ProgressScreen.kt:@Composable fun ProgressScreenContent</ID>
+    <ID>ModifierMissing:RecordingFormScreen.kt:@Composable fun RecordingFormScreenContent</ID>
+    <ID>ModifierMissing:ServiceDetailScreen.kt:@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) @Composable fun ServiceDetailScreenContent</ID>
+    <ID>ModifierMissing:SessionMessageScreen.kt:@Composable fun SessionMessageScreen</ID>
+    <ID>ModifierMissing:SetlistEditorScreen.kt:@Composable fun SetlistEditorScreenContent</ID>
+    <ID>ModifierMissing:SignInScreen.kt:@Composable fun SignInScreenContent</ID>
+    <ID>ModifierMissing:SongDetailScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SongDetailScreenContent</ID>
+    <ID>ModifierMissing:SongEditorScreen.kt:@Composable fun SongEditorScreenContent</ID>
+    <ID>ModifierMissing:StageScreen.kt:@Composable fun StageScreenContent</ID>
+    <ID>ModifierMissing:VoiceRecordScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun VoiceRecordScreenContent</ID>
+    <ID>ModifierMissing:VoiceReviewScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun VoiceReviewScreenContent</ID>
+    <ID>ModifierMissing:WeekScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun WeekScreenContent</ID>
+    <ID>ModifierMissing:XperienceMusicApp.kt:@Composable fun XperienceMusicApp</ID>
+    <ID>MultipleEmitters:AssessmentScreen.kt:@Composable private fun Recording</ID>
+    <ID>MultipleEmitters:AssessmentScreen.kt:@Composable private fun TakeControls</ID>
+    <ID>MultipleEmitters:ExerciseScreen.kt:@Composable private fun AutomaticCheck</ID>
+    <ID>MultipleEmitters:ExerciseScreen.kt:@OptIn(ExperimentalLayoutApi::class) @Composable private fun NoteSteps</ID>
+    <ID>MultipleEmitters:LearningActivity.kt:@Composable internal fun HintBlock</ID>
+    <ID>MultipleEmitters:LearningActivity.kt:@Composable private fun ExampleButtons</ID>
+    <ID>MultipleEmitters:LearningActivity.kt:@Composable private fun KeyboardAnswer</ID>
+    <ID>MultipleEmitters:LearningActivity.kt:@Composable private fun RhythmAnswer</ID>
+    <ID>MultipleEmitters:LearningKeyboard.kt:@Composable internal fun PianoKeyboard</ID>
+    <ID>MultipleEmitters:LearningScreen.kt:@Composable private fun ActivityPage</ID>
+    <ID>MultipleEmitters:LearningSinging.kt:@Composable internal fun SingPanel</ID>
+    <ID>MultipleEmitters:LearningSinging.kt:@Composable private fun SingingLive</ID>
+    <ID>MultipleEmitters:OnboardingScreen.kt:@Composable internal fun VoiceChoices</ID>
+    <ID>MultipleEmitters:OnboardingScreen.kt:@Composable private fun NameStep</ID>
+    <ID>MultipleEmitters:OnboardingScreen.kt:@Composable private fun Question</ID>
+    <ID>MultipleEmitters:OnboardingScreen.kt:@Composable private fun VoiceStep</ID>
+    <ID>MultipleEmitters:PianoScaleReport.kt:@Composable private fun Comparison</ID>
+    <ID>MultipleEmitters:PianoScaleReport.kt:@Composable private fun StepDetail</ID>
+    <ID>MultipleEmitters:PianoScaleReport.kt:@Composable private fun UnusableTake</ID>
+    <ID>MultipleEmitters:PianoScaleScreen.kt:@Composable private fun ReadyActions</ID>
+    <ID>MultipleEmitters:SignInScreen.kt:@Composable private fun CodeStep</ID>
+    <ID>MultipleEmitters:SignInScreen.kt:@Composable private fun EmailStep</ID>
+    <ID>MultipleEmitters:SongEditorScreen.kt:@Composable private fun ChartSection</ID>
+    <ID>ParameterNaming:DatePickerModal.kt:onDatePicked: (LocalDate) -&gt; Unit</ID>
+    <ID>ParameterNaming:KeyPicker.kt:onModeSelected: (Mode) -&gt; Unit</ID>
+    <ID>ParameterNaming:KeyPicker.kt:onTonicSelected: (Int) -&gt; Unit</ID>
+    <ID>ParameterNaming:RecordingFormScreen.kt:onSaved: () -&gt; Unit</ID>
+    <ID>ParameterNaming:SetlistEditorScreen.kt:onPublished: () -&gt; Unit</ID>
+    <ID>ParameterNaming:SongEditorScreen.kt:onDeleted: () -&gt; Unit</ID>
+    <ID>ParameterNaming:SongEditorScreen.kt:onSaved: (String) -&gt; Unit</ID>
+    <ID>ReturnCount:AccordsAppPageSource.kt:JsScanner$fun readString: String?</ID>
+    <ID>ReturnCount:AccordsAppPageSource.kt:JsScanner$fun skipValue: Boolean</ID>
+    <ID>ReturnCount:AccordsAppPageSource.kt:internal fun extractNuxtChordPro: String?</ID>
+    <ID>ReturnCount:ChangeAvatarUseCase.kt:ChangeAvatarUseCase$@OptIn(ExperimentalUuidApi::class) suspend fun usePhoto: DomainResult&lt;Member&gt;</ID>
+    <ID>ReturnCount:GrowthUseCases.kt:RequestLevelUseCase$suspend operator fun invoke: DomainResult&lt;Unit&gt;</ID>
+    <ID>ReturnCount:GrowthUseCases.kt:ReviewLevelRequestUseCase$suspend operator fun invoke: DomainResult&lt;Unit&gt;</ID>
+    <ID>ReturnCount:GrowthUseCases.kt:ReviewObjectiveUseCase$suspend operator fun invoke: DomainResult&lt;Unit&gt;</ID>
+    <ID>ReturnCount:GrowthUseCases.kt:TickObjectiveUseCase$suspend operator fun invoke: DomainResult&lt;Unit&gt;</ID>
+    <ID>ReturnCount:InMemorySessionRepository.kt:InMemorySessionRepository$private fun restore: SessionState</ID>
+    <ID>ReturnCount:InviteMemberUseCase.kt:InviteMemberUseCase$suspend operator fun invoke: DomainResult&lt;String&gt;</ID>
+    <ID>ReturnCount:LearningCatalog.kt:fun variedActivity: LearningActivity</ID>
+    <ID>ReturnCount:LearningProgress.kt:fun LearningProgress.mastery: Mastery</ID>
+    <ID>ReturnCount:LearningUseCases.kt:SubmitObjectiveRecordingUseCase$suspend operator fun invoke: DomainResult&lt;SubmissionOutcome&gt;</ID>
+    <ID>ReturnCount:PlanningUseCases.kt:AdjustServiceUseCase$suspend operator fun invoke: DomainResult&lt;Unit&gt;</ID>
+    <ID>ReturnCount:PlanningUseCases.kt:AnswerServiceUseCase$suspend operator fun invoke: DomainResult&lt;Unit&gt;</ID>
+    <ID>ReturnCount:PlanningUseCases.kt:OpenPlanningMonthUseCase$suspend operator fun invoke: DomainResult&lt;Unit&gt;</ID>
+    <ID>ReturnCount:ProgressFocus.kt:fun ProgressUiState.focus: FocusUi</ID>
+    <ID>ReturnCount:PublishSetlistUseCase.kt:PublishSetlistUseCase$suspend operator fun invoke: DomainResult&lt;Setlist&gt;</ID>
+    <ID>ReturnCount:RecordingAccess.kt:internal suspend fun loadSongForRecordingChange: DomainResult&lt;Song&gt;</ID>
+    <ID>ReturnCount:RemoteMappers.kt:fun ProfileDto.toDomain: Member?</ID>
+    <ID>ReturnCount:SaveSongUseCase.kt:SaveSongUseCase$suspend operator fun invoke: DomainResult&lt;String&gt;</ID>
+    <ID>ReturnCount:SignInLink.kt:SignInLink.Companion$fun parse: SignInLink?</ID>
+    <ID>ReturnCount:UploadRecordingUseCase.kt:UploadRecordingUseCase$@OptIn(ExperimentalUuidApi::class) suspend operator fun invoke: DomainResult&lt;Song&gt;</ID>
+    <ID>ReturnCount:VoiceUseCases.kt:ReviewVoiceUseCase$suspend operator fun invoke: DomainResult&lt;Unit&gt;</ID>
+    <ID>ReturnCount:VoiceUseCases.kt:SendVoiceUseCase$@OptIn(ExperimentalUuidApi::class) suspend operator fun invoke: DomainResult&lt;Unit&gt;</ID>
+    <ID>SwallowedException:AndroidReminderScheduler.kt:e: SecurityException</ID>
+    <ID>SwallowedException:AudioFilePicker.android.kt:e: RuntimeException</ID>
+    <ID>SwallowedException:FileLearningRepository.kt:FileLearningRepository$e: Exception</ID>
+    <ID>SwallowedException:IgnoringFailures.kt:e: Exception</ID>
+    <ID>SwallowedException:LoadAvatarPhotoUseCase.kt:LoadAvatarPhotoUseCase$e: Exception</ID>
+    <ID>SwallowedException:PianoScaleViewModel.kt:PianoScaleViewModel$e: Exception</ID>
+    <ID>SwallowedException:PlaybackController.kt:PlaybackController$e: Exception</ID>
+    <ID>SwallowedException:RemoteLoadMonitor.kt:RemoteLoadMonitor$e: Exception</ID>
+    <ID>SwallowedException:RunRemote.kt:e: Exception</ID>
+    <ID>SwallowedException:SupabaseAvatarStorage.kt:SupabaseAvatarStorage$e: Exception</ID>
+    <ID>SwallowedException:SupabaseErrors.kt:e: PostgrestRestException</ID>
+    <ID>SwallowedException:SupabaseSessionRepository.kt:SupabaseSessionRepository$e: AuthRestException</ID>
+    <ID>SwallowedException:SupabaseSessionRepository.kt:SupabaseSessionRepository$e: Exception</ID>
+    <ID>SwallowedException:SyncServiceRemindersUseCase.kt:SyncServiceRemindersUseCase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AudioFilePicker.android.kt:e: RuntimeException</ID>
+    <ID>TooGenericExceptionCaught:FileLearningRepository.kt:FileLearningRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:IgnoringFailures.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:LoadAvatarPhotoUseCase.kt:LoadAvatarPhotoUseCase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PianoScaleViewModel.kt:PianoScaleViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PlaybackController.kt:PlaybackController$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RemoteLoadMonitor.kt:RemoteLoadMonitor$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RunRemote.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SupabaseAvatarStorage.kt:SupabaseAvatarStorage$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SupabaseObjectiveRecordingRepository.kt:SupabaseObjectiveRecordingRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SupabaseSessionRepository.kt:SupabaseSessionRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SyncServiceRemindersUseCase.kt:SyncServiceRemindersUseCase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SyncTracking.kt:e: Exception</ID>
+    <ID>UnstableCollections:ChoiceChips.kt:List&lt;T&gt;</ID>
+    <ID>UnstableCollections:ChordChartView.kt:List&lt;ChartLine&gt;</ID>
+    <ID>UnstableCollections:FloatingTabBar.kt:List&lt;FloatingTab&gt;</ID>
+    <ID>UnstableCollections:GrowthCards.kt:List&lt;ModuleProgressUi&gt;</ID>
+    <ID>UnstableCollections:GrowthCards.kt:List&lt;ObjectiveUi&gt;</ID>
+    <ID>UnstableCollections:GrowthReviewScreen.kt:List&lt;RequestObjectiveUi&gt;</ID>
+    <ID>UnstableCollections:LearningActivity.kt:List&lt;String&gt;</ID>
+    <ID>UnstableCollections:LearningActivity.kt:Set&lt;Int&gt;?</ID>
+    <ID>UnstableCollections:ObjectiveAudioReview.kt:List&lt;ObjectiveTakeUi&gt;</ID>
+    <ID>UnstableCollections:ProgressFocus.kt:List&lt;ModuleProgressUi&gt;</ID>
+    <ID>UnstableCollections:ProgressFocus.kt:List&lt;ObjectiveUi&gt;</ID>
+    <ID>UnstableCollections:ProgressMotion.kt:List&lt;RingSegment&gt;</ID>
+    <ID>UnstableCollections:ProgressMotion.kt:List&lt;String&gt;</ID>
+    <ID>UnstableCollections:ProgressSections.kt:List&lt;ModuleProgressUi&gt;</ID>
+    <ID>UnstableCollections:ProgressSections.kt:List&lt;WeekVoiceUi&gt;</ID>
+    <ID>UnstableCollections:ServiceCard.kt:List&lt;Instrument&gt;</ID>
+    <ID>UnstableCollections:SongRecordings.kt:List&lt;LinkUi&gt;</ID>
+    <ID>UnstableCollections:SongRecordings.kt:List&lt;VoiceTrackUi&gt;</ID>
+    <ID>UnstableCollections:WeekScreen.kt:List&lt;WeekTabUi&gt;</ID>
+    <ID>ViewModelInjection:DestinationViewModels.kt:val stores = viewModel { DestinationViewModelStores() }</ID>
+    <ID>WildcardImport:PianoScaleViewModelTest.kt:import com.xperiencemusic.shared.domain.repository.*</ID>
+    <ID>WildcardImport:PianoScaleViewModelTest.kt:import com.xperiencemusic.shared.domain.usecase.*</ID>
+    <ID>WildcardImport:PianoScaleViewModelTest.kt:import com.xperiencemusic.shared.fakes.*</ID>
+    <ID>WildcardImport:PianoScaleViewModelTest.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:PianoScaleViewModelTest.kt:import kotlinx.coroutines.flow.*</ID>
+    <ID>WildcardImport:PianoScaleViewModelTest.kt:import kotlinx.coroutines.test.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

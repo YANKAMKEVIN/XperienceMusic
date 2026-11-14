@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:PianoScaleAnalyzer.kt:PianoScaleAnalyzer$pitch != null &amp;&amp; pitch.confidence &gt;= 0.92 &amp;&amp; pitch.frequencyHz.isFinite() &amp;&amp; pitch.frequencyHz &gt; 0</ID>
+    <ID>ComplexCondition:PianoScaleCoaching.kt:previous == null || previous.quality != PianoScaleQuality.USABLE || current.quality != PianoScaleQuality.USABLE || previous.expectedNotes != current.expectedNotes</ID>
+    <ID>CyclomaticComplexMethod:ChordProImport.kt:ChordProImport$fun parse: ImportedChart</ID>
+    <ID>CyclomaticComplexMethod:PianoScaleAnalyzer.kt:PianoScaleAnalyzer$fun analyze: PianoScaleReport</ID>
+    <ID>CyclomaticComplexMethod:PianoScaleAnalyzer.kt:fun alignPianoScale: List&lt;PianoScaleStep&gt;</ID>
+    <ID>MaxLineLength:ChordChartTest.kt:ChordChartTest$val words = (ChordChart.render("[1]Tu es [5]saint, [6m]Sei[4]gneur", doMajeur, Notation.SOLFEGE).single() as ChartLine.Lyrics).words()</ID>
+    <ID>MaxLineLength:PianoScaleAnalyzer.kt:PianoScaleAnalyzer$fun</ID>
+    <ID>MaxLineLength:PianoScaleAnalyzerTest.kt:PianoScaleAnalyzerTest$private</ID>
+    <ID>MaxLineLength:PianoScaleAnalyzerTest.kt:PianoScaleAnalyzerTest$val heard = (listOf(59) + PianoScaleExercise.notes).mapIndexed { index, midi -&gt; HeardPianoNote(midi, index.toDouble(), index + 0.7) }</ID>
+    <ID>MaxLineLength:PianoScaleCoaching.kt:if (previous == null || previous.quality != PianoScaleQuality.USABLE || current.quality != PianoScaleQuality.USABLE || previous.expectedNotes != current.expectedNotes) return null</ID>
+    <ID>MaxLineLength:PianoScaleCoachingTest.kt:PianoScaleCoachingTest$steps = alignPianoScale(expected, played.mapIndexed { index, midi -&gt; HeardPianoNote(midi, index.toDouble(), index + 0.7) })</ID>
+    <ID>ReturnCount:Chord.kt:Chord.Companion$fun parse: Chord?</ID>
+    <ID>ReturnCount:PianoScaleAnalyzer.kt:PianoScaleAnalyzer$fun analyze: PianoScaleReport</ID>
+  </CurrentIssues>
+</SmellBaseline>

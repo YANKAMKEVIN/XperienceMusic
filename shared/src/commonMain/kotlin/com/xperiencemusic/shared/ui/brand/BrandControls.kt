@@ -29,6 +29,13 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.graphicsLayer
+import com.xperiencemusic.shared.ui.theme.PillPadding
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
+import com.xperiencemusic.shared.ui.theme.Spacing
+
+/** Darkens the gradient while the button is pressed (the gradient hides Material's ripple). */
+private val PRESSED_SCRIM = Color.Black.copy(alpha = 0.16f)
 
 /**
  * The screen's main action, in the brand gradient. One per screen at most. The gradient hides
@@ -41,7 +48,7 @@ fun GradientButton(
     enabled: Boolean = true,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(Radius.card)
     val interaction = remember { MutableInteractionSource() }
     val isPressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if (isPressed) 0.97f else 1f, tween(120), label = "gradient-press")
@@ -52,7 +59,7 @@ fun GradientButton(
         interactionSource = interaction,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
-            contentColor = Color.White,
+            contentColor = BrandColors.onGradient,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
@@ -62,20 +69,20 @@ fun GradientButton(
                 scaleX = scale
                 scaleY = scale
             }
-            .defaultMinSize(minHeight = 56.dp),
+            .defaultMinSize(minHeight = Sizes.rowMin),
     ) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .defaultMinSize(minHeight = 56.dp)
+                .defaultMinSize(minHeight = Sizes.rowMin)
                 .then(if (enabled) Modifier.background(BrandColors.horizontalGradient, shape) else Modifier)
-                .then(if (isPressed) Modifier.background(Color.Black.copy(alpha = 0.16f), shape) else Modifier),
+                .then(if (isPressed) Modifier.background(PRESSED_SCRIM, shape) else Modifier),
             contentAlignment = Alignment.Center,
         ) {
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 20.dp),
+                modifier = Modifier.padding(horizontal = Spacing.lxl),
                 content = content,
             )
         }
@@ -94,6 +101,6 @@ fun KeyPill(label: String, modifier: Modifier = Modifier, dimmed: Boolean = fals
         modifier = modifier
             .alpha(if (dimmed) 0.6f else 1f)
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
-            .padding(horizontal = 10.dp, vertical = 3.dp),
+            .padding(PillPadding.tag),
     )
 }

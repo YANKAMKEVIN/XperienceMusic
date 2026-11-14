@@ -54,10 +54,20 @@ class RecordingFormViewModelTest {
 
     @Test
     fun `une prise de répétition est préremplie et devient la référence`() = runTest {
-        val state = viewModel("full", LocalDate(2026, 10, 6)).state.value
-        assertTrue(state.title.startsWith("Répétition du"))
-        assertEquals(LocalDate(2026, 10, 6), state.recordedOn)
-        assertTrue(state.makeReference)
+        val vm = viewModel("full", LocalDate(2026, 10, 6))
+        assertEquals(LocalDate(2026, 10, 6), vm.state.value.rehearsalDate)
+        vm.onEvent(RecordingFormEvent.DefaultTitleResolved("Répétition du mar. 6 oct."))
+        assertEquals("Répétition du mar. 6 oct.", vm.state.value.title)
+        assertEquals(LocalDate(2026, 10, 6), vm.state.value.recordedOn)
+        assertTrue(vm.state.value.makeReference)
+    }
+
+    @Test
+    fun `le nom par défaut ne remplace pas un nom déjà tapé`() = runTest {
+        val vm = viewModel("full", LocalDate(2026, 10, 6))
+        vm.onEvent(RecordingFormEvent.TitleChanged("Ma prise"))
+        vm.onEvent(RecordingFormEvent.DefaultTitleResolved("Répétition du mar. 6 oct."))
+        assertEquals("Ma prise", vm.state.value.title)
     }
 
     @Test
@@ -90,7 +100,7 @@ class RecordingFormViewModelTest {
         val state = viewModel("empty").state.value
         assertTrue(state.makeReference)
         assertFalse(state.isFull)
-        assertEquals("13\u00A0oct. 2026", state.dateLabel)
+        assertEquals(LocalDate(2026, 10, 13), state.recordedOn)
     }
 
     @Test
@@ -98,7 +108,7 @@ class RecordingFormViewModelTest {
         val vm = viewModel("empty")
         vm.onEvent(RecordingFormEvent.FilePicked(audio))
         vm.onEvent(RecordingFormEvent.TitleChanged("Répétition"))
-        assertEquals(PickedFileUi("repet.mp3", "1,5 Mo", "3:32"), vm.state.value.file)
+        assertEquals(PickedFileUi("repet.mp3", audio.bytes.size.toLong(), "3:32"), vm.state.value.file)
         assertTrue(vm.state.value.canSave)
         vm.onEvent(RecordingFormEvent.SaveClicked)
         assertTrue(vm.state.value.isSaved)

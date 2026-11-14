@@ -34,8 +34,17 @@ import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.brand.BrandWaves
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import com.xperiencemusic.shared.ui.theme.Radius
+
+/** The square the illustration (glow or countdown ring) is drawn in. */
+private val ILLUSTRATION_SIZE = 160.dp
+private val TILE_SIZE = 88.dp
+private val TILE_ICON_SIZE = 42.dp
+private val RING_SIZE = 150.dp
+private val RING_STROKE = 12.dp
+private val WAVES_HEIGHT = 40.dp
 
 /**
  * An empty screen that still looks finished: an icon in a glowing tile, the brand waves, what will
@@ -53,7 +62,7 @@ fun EmptyState(
     EmptyStateLayout(title, text, modifier, actionLabel, onAction) {
         Box(
             Modifier
-                .size(160.dp)
+                .size(ILLUSTRATION_SIZE)
                 .background(
                     Brush.radialGradient(listOf(BrandColors.Indigo.copy(alpha = 0.35f), Color.Transparent)),
                 ),
@@ -61,12 +70,12 @@ fun EmptyState(
         ) {
             Box(
                 Modifier
-                    .size(88.dp)
+                    .size(TILE_SIZE)
                     .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(Radius.hero))
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(Radius.hero)),
+                    .border(Sizes.hairline, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(Radius.hero)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, contentDescription = null, tint = BrandColors.Purple, modifier = Modifier.size(42.dp))
+                Icon(icon, contentDescription = null, tint = BrandColors.Purple, modifier = Modifier.size(TILE_ICON_SIZE))
             }
         }
     }
@@ -91,9 +100,9 @@ fun CountdownEmptyState(
     LaunchedEffect(fraction) { sweep.animateTo(fraction.coerceIn(0.04f, 1f), tween(900, easing = FastOutSlowInEasing)) }
     val track = MaterialTheme.colorScheme.surfaceContainerHigh
     EmptyStateLayout(title, text, modifier, actionLabel, onAction, actionIsGradient = false) {
-        Box(Modifier.size(160.dp), contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(150.dp)) {
-                val stroke = 12.dp.toPx()
+        Box(Modifier.size(ILLUSTRATION_SIZE), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.size(RING_SIZE)) {
+                val stroke = RING_STROKE.toPx()
                 drawArc(track, 0f, 360f, useCenter = false, style = Stroke(stroke))
                 drawArc(
                     BrandColors.gradient,
@@ -115,7 +124,7 @@ fun CountdownEmptyState(
 private fun EmptyStateLayout(
     title: String,
     text: String,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     actionLabel: String?,
     onAction: () -> Unit,
     actionIsGradient: Boolean = true,
@@ -126,7 +135,7 @@ private fun EmptyStateLayout(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         illustration()
-        BrandWaves(Modifier.fillMaxWidth().height(40.dp))
+        BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT))
         Text(
             title,
             style = MaterialTheme.typography.titleLarge,

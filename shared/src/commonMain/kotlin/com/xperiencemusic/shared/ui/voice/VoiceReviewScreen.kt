@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.voice
 
+import kotlinx.datetime.LocalDate
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import com.xperiencemusic.shared.resources.review_mine
@@ -7,12 +8,10 @@ import com.xperiencemusic.shared.resources.review_rework_snack
 import com.xperiencemusic.shared.resources.review_undo
 import com.xperiencemusic.shared.resources.review_validated_snack
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -43,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.VoicePart
@@ -70,7 +68,10 @@ import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.PlayPauseButton
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -165,7 +166,7 @@ private fun SubmitterRow(item: SubmissionUi, onEvent: (VoiceReviewEvent) -> Unit
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(
-                "${item.songTitle} · ${item.duration} · ${item.date}",
+                "${item.songTitle} · ${item.duration} · ${rememberFormattingWords().dayAndDate(item.submittedOn)}",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -201,15 +202,15 @@ private fun ToReviewCard(item: SubmissionUi, onEvent: (VoiceReviewEvent) -> Unit
                 null
             },
             minLines = 2,
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(Radius.chip),
             modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s), modifier = Modifier.padding(top = Spacing.m)) {
             OutlinedButton(
                 onClick = { onEvent(VoiceReviewEvent.ReworkClicked(item.id)) },
                 enabled = !item.isSaving,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.weight(1f).height(56.dp),
+                shape = RoundedCornerShape(Radius.card),
+                modifier = Modifier.weight(1f).height(Sizes.rowMin),
             ) { Text(stringResource(Res.string.review_rework)) }
             GradientButton(
                 onClick = { onEvent(VoiceReviewEvent.ValidateClicked(item.id)) },
@@ -243,10 +244,10 @@ private fun VoiceReviewPreview() {
             VoiceReviewUiState(
                 isLoading = false,
                 toReview = listOf(
-                    SubmissionUi("1", "Grâce", VoicePart.SOPRANO, "À toi la gloire", "lundi 12 oct.", "3:04", ExerciseStatus.SUBMITTED, null),
+                    SubmissionUi("1", "Grâce", VoicePart.SOPRANO, "À toi la gloire", LocalDate(2026, 10, 12), "3:04", ExerciseStatus.SUBMITTED, null),
                 ),
                 reviewed = listOf(
-                    SubmissionUi("2", "Daniel", VoicePart.TENOR, "Amazing Grace", "samedi 10 oct.", "3:21", ExerciseStatus.VALIDATED, "Très juste, bravo."),
+                    SubmissionUi("2", "Daniel", VoicePart.TENOR, "Amazing Grace", LocalDate(2026, 10, 10), "3:21", ExerciseStatus.VALIDATED, "Très juste, bravo."),
                 ),
             ),
             onEvent = {},

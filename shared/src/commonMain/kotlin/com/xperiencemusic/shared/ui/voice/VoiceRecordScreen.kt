@@ -1,5 +1,7 @@
 package com.xperiencemusic.shared.ui.voice
 
+import kotlinx.datetime.LocalDate
+import com.xperiencemusic.shared.resources.quoted_feedback
 import com.xperiencemusic.shared.resources.voice_error_interrupted
 import com.xperiencemusic.shared.resources.voice_discard_keep
 import com.xperiencemusic.shared.resources.voice_discard_text
@@ -21,7 +23,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -109,13 +110,22 @@ import com.xperiencemusic.shared.ui.platform.MicrophoneUse
 import com.xperiencemusic.shared.ui.platform.rememberMicrophonePermission
 import com.xperiencemusic.shared.ui.components.MicrophoneDeniedNotice
 import com.xperiencemusic.shared.ui.progress.ExerciseStatusBadge
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
+
+private val WAVES_HEIGHT = 80.dp
+private val RECORD_BUTTON_SIZE = 84.dp
+/** The halo that breathes around the record button while it records. */
+private val RECORD_GLOW_SIZE = 96.dp
+private val STOP_SQUARE_SIZE = 26.dp
 
 @Composable
 fun VoiceRecordScreen(
@@ -242,7 +252,7 @@ private fun PreviousCard(previous: PreviousSubmissionUi) {
     AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                stringResource(Res.string.voice_previous, previous.date),
+                stringResource(Res.string.voice_previous, rememberFormattingWords().dayAndDate(previous.submittedOn)),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
@@ -250,7 +260,7 @@ private fun PreviousCard(previous: PreviousSubmissionUi) {
             ExerciseStatusBadge(previous.status)
         }
         previous.feedback?.let {
-            Text("« $it »", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.s))
+            Text(stringResource(Res.string.quoted_feedback, it), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.s))
         }
     }
 }
@@ -319,20 +329,20 @@ private fun Recorder(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> U
             style = MaterialTheme.typography.labelLarge,
             color = if (isRecording) BrandColors.Purple else MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        BrandWaves(Modifier.fillMaxWidth().height(80.dp).scale(scaleX = 1f, scaleY = if (isRecording) pulse else 0.4f))
+        BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT).scale(scaleX = 1f, scaleY = if (isRecording) pulse else 0.4f))
         when (state.phase) {
             VoicePhase.READY, VoicePhase.RECORDING -> {
                 val label = stringResource(if (isRecording) Res.string.voice_stop else Res.string.voice_record)
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(top = Spacing.s)) {
                     if (isRecording) {
                         Box(
-                            Modifier.size(96.dp).scale(pulse)
+                            Modifier.size(RECORD_GLOW_SIZE).scale(pulse)
                                 .background(Brush.radialGradient(listOf(BrandColors.Purple.copy(alpha = 0.4f), Color.Transparent)), CircleShape),
                         )
                     }
                     Box(
                         Modifier
-                            .size(84.dp)
+                            .size(RECORD_BUTTON_SIZE)
                             .clip(CircleShape)
                             .background(BrandColors.gradient)
                             .clickable(onClickLabel = label, role = Role.Button) {
@@ -342,9 +352,9 @@ private fun Recorder(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> U
                         contentAlignment = Alignment.Center,
                     ) {
                         if (isRecording) {
-                            Box(Modifier.size(26.dp).background(Color.White, RoundedCornerShape(6.dp)))
+                            Box(Modifier.size(STOP_SQUARE_SIZE).background(BrandColors.onGradient, RoundedCornerShape(Radius.small)))
                         } else {
-                            Icon(XmIcons.Mic, contentDescription = null, tint = Color.White, modifier = Modifier.size(36.dp))
+                            Icon(XmIcons.Mic, contentDescription = null, tint = BrandColors.onGradient, modifier = Modifier.size(Sizes.iconXxl))
                         }
                     }
                 }
@@ -355,7 +365,7 @@ private fun Recorder(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> U
                     Text(
                         stringResource(Res.string.voice_quiet_take),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = BrandColors.Amber,
+                        color = AppTheme.colors.warning,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = Spacing.m).semantics { liveRegion = LiveRegionMode.Polite },
                     )
@@ -373,7 +383,7 @@ private fun Recorder(state: VoiceRecordUiState, onEvent: (VoiceRecordEvent) -> U
                     modifier = Modifier.fillMaxWidth().padding(top = Spacing.l),
                 ) {
                     if (sending) {
-                        CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
+                        CircularProgressIndicator(color = BrandColors.onGradient, strokeWidth = Sizes.stroke, modifier = Modifier.size(Sizes.iconL))
                     } else {
                         Text(stringResource(Res.string.voice_send), style = MaterialTheme.typography.titleMedium)
                     }
@@ -422,7 +432,7 @@ private fun VoiceRecordPreview() {
                 voicePart = VoicePart.ALTO,
                 guides = listOf(GuideUi("t", "ALTO", GuideKind.MY_VOICE, VoicePart.ALTO), GuideUi("r", "Répétition", GuideKind.REFERENCE)),
                 selectedGuideId = "t",
-                previous = PreviousSubmissionUi("lundi 12 oct.", ExerciseStatus.TO_REWORK, "Attention à la justesse au refrain."),
+                previous = PreviousSubmissionUi(LocalDate(2026, 10, 12), ExerciseStatus.TO_REWORK, "Attention à la justesse au refrain."),
             ),
             onEvent = {},
             onBack = {},

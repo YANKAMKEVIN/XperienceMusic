@@ -5,8 +5,6 @@ import kotlinx.datetime.LocalDate
 data class SetlistEditorUiState(
     val rehearsalDate: LocalDate,
     val serviceDate: LocalDate,
-    val rehearsalLabel: String,
-    val serviceLabel: String,
     val message: String = "",
     val query: String = "",
     /** In setlist order. */

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import com.xperiencemusic.shared.resources.cd_exercise_target
 import com.xperiencemusic.shared.resources.exercise_accompaniment
 import com.xperiencemusic.shared.resources.exercise_locked
 import com.xperiencemusic.shared.resources.exercise_step
@@ -22,10 +23,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.resources.exercise_mic_on
+import com.xperiencemusic.shared.resources.exercise_target_frequency
 import com.xperiencemusic.shared.resources.exercise_target_label
 import com.xperiencemusic.shared.ui.brand.BrandWaves
 import com.xperiencemusic.shared.ui.brand.GradientButton
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.PillPadding
+import com.xperiencemusic.shared.ui.theme.Sizes
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +37,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -42,11 +45,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -88,7 +89,6 @@ import com.xperiencemusic.shared.resources.exercise_start
 import com.xperiencemusic.shared.resources.exercise_stop
 import com.xperiencemusic.shared.resources.exercise_success_text
 import com.xperiencemusic.shared.resources.exercise_success_title
-import com.xperiencemusic.shared.resources.exercise_target
 import com.xperiencemusic.shared.resources.exercise_too_high
 import com.xperiencemusic.shared.resources.exercise_too_low
 import com.xperiencemusic.shared.resources.exercise_tuner
@@ -103,6 +103,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
+
+private val WAVES_HEIGHT = 72.dp
+private val HOLD_BAR_HEIGHT = 10.dp
+private val MIC_DOT_SIZE = 8.dp
 
 @Composable
 fun ExerciseScreen(
@@ -200,15 +204,16 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            val targetDescription = stringResource(Res.string.cd_exercise_target, check.targetNoteLabel, check.requiredSeconds)
             Text(
                 check.targetNoteLabel,
                 style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.semantics {
-                    contentDescription = "${check.targetNoteLabel}, ${check.requiredSeconds} s"
+                    contentDescription = targetDescription
                 },
             )
             Text(
-                "${frequencyOf(check.targetMidi)} Hz · ${check.requiredSeconds} s",
+                stringResource(Res.string.exercise_target_frequency, frequencyOf(check.targetMidi), check.requiredSeconds),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -224,21 +229,7 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
             }
             if (phase == ExercisePhase.LISTENING) {
                 TunerNeedle(check.needle, description = stringResource(Res.string.exercise_tuner), modifier = Modifier.padding(top = Spacing.l))
-                Row(Modifier.fillMaxWidth().padding(top = Spacing.xs)) {
-                    listOf("−50", "0", "+50").forEachIndexed { index, label ->
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = when (index) {
-                                0 -> TextAlign.Start
-                                1 -> TextAlign.Center
-                                else -> TextAlign.End
-                            },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
+                TunerScale()
             }
             if (phase != ExercisePhase.LISTENING) {
                 TextButton(onClick = { onEvent(ExerciseEvent.PlayReferenceClicked) }, modifier = Modifier.padding(top = Spacing.s)) {
@@ -250,30 +241,8 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
     }
 
     when (phase) {
-        ExercisePhase.SUCCEEDED -> AppCard {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
-                Text(
-                    stringResource(Res.string.exercise_success_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(start = Spacing.s),
-                )
-            }
-            Text(
-                stringResource(
-                    when {
-                        state.isWarmUp -> Res.string.exercise_success_warmup
-                        state.isChallenge -> Res.string.exercise_success_challenge
-                        else -> Res.string.exercise_success_text
-                    },
-                ),
-                modifier = Modifier.padding(top = Spacing.s),
-            )
-            OutlinedButton(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.padding(top = Spacing.m)) {
-                Text(stringResource(Res.string.exercise_retry))
-            }
-        }
-        ExercisePhase.LISTENING -> Live(check, onEvent)
+        ExercisePhase.SUCCEEDED -> SucceededCard(state, onEvent)
+        ExercisePhase.LISTENING -> Live(check)
         ExercisePhase.READY -> if (state.isLocked) {
             Text(
                 stringResource(Res.string.exercise_locked),
@@ -294,11 +263,58 @@ private fun AutomaticCheck(check: AutomaticCheckUi, state: ExerciseUiState, onEv
     }
 }
 
+/** The cents under the tuner: −50 on the left, 0 in the middle, +50 on the right. */
 @Composable
-private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
+private fun TunerScale() {
+    Row(Modifier.fillMaxWidth().padding(top = Spacing.xs)) {
+        listOf("−50", "0", "+50").forEachIndexed { index, label ->
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = when (index) {
+                    0 -> TextAlign.Start
+                    1 -> TextAlign.Center
+                    else -> TextAlign.End
+                },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SucceededCard(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Unit) {
+    AppCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+            Text(
+                stringResource(Res.string.exercise_success_title),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(start = Spacing.s),
+            )
+        }
+        Text(
+            stringResource(
+                when {
+                    state.isWarmUp -> Res.string.exercise_success_warmup
+                    state.isChallenge -> Res.string.exercise_success_challenge
+                    else -> Res.string.exercise_success_text
+                },
+            ),
+            modifier = Modifier.padding(top = Spacing.s),
+        )
+        OutlinedButton(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.padding(top = Spacing.m)) {
+            Text(stringResource(Res.string.exercise_retry))
+        }
+    }
+}
+
+@Composable
+private fun Live(check: AutomaticCheckUi) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
         // The waves say the microphone hears something; the gauge above gives the measure.
-        BrandWaves(Modifier.fillMaxWidth().height(72.dp).alpha(if (check.tuning == Tuning.SILENT) 0.35f else 1f))
+        BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT).alpha(if (check.tuning == Tuning.SILENT) 0.35f else 1f))
         Text(
             check.heardNoteLabel?.let { stringResource(Res.string.exercise_heard, it) } ?: "",
             style = MaterialTheme.typography.titleMedium,
@@ -325,7 +341,7 @@ private fun Live(check: AutomaticCheckUi, onEvent: (ExerciseEvent) -> Unit) {
             style = MaterialTheme.typography.titleLarge,
         )
         Box(
-            Modifier.fillMaxWidth().height(10.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            Modifier.fillMaxWidth().height(HOLD_BAR_HEIGHT).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
         ) {
             Box(
                 Modifier.fillMaxWidth(check.holdProgress).fillMaxHeight().clip(CircleShape).background(BrandColors.horizontalGradient),
@@ -346,7 +362,7 @@ private fun ListeningAction(onEvent: (ExerciseEvent) -> Unit) {
             .padding(start = Spacing.l, end = Spacing.l, top = Spacing.s),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
+            Box(Modifier.size(MIC_DOT_SIZE).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
             Text(
                 stringResource(Res.string.exercise_mic_on),
                 style = MaterialTheme.typography.labelLarge,
@@ -366,8 +382,8 @@ private fun ListeningAction(onEvent: (ExerciseEvent) -> Unit) {
 private fun NoteSteps(check: AutomaticCheckUi, isListening: Boolean) {
     val colors = MaterialTheme.colorScheme
     FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.xsm, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xsm),
         modifier = Modifier.fillMaxWidth().padding(top = Spacing.m),
     ) {
         check.noteLabels.forEachIndexed { index, label ->
@@ -377,15 +393,15 @@ private fun NoteSteps(check: AutomaticCheckUi, isListening: Boolean) {
                 label,
                 style = MaterialTheme.typography.labelLarge,
                 color = when {
-                    isDone -> Color.White
+                    isDone -> BrandColors.onGradient
                     isCurrent -> colors.onSurface
                     else -> colors.onSurfaceVariant
                 },
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(if (isDone) BrandColors.gradient else SolidColor(colors.surfaceContainerHigh))
-                    .border(if (isCurrent) 2.dp else 0.dp, if (isCurrent) colors.primary else Color.Transparent, CircleShape)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .border(if (isCurrent) Sizes.stroke else 0.dp, if (isCurrent) colors.primary else Color.Transparent, CircleShape)
+                    .padding(PillPadding.badge),
             )
         }
     }

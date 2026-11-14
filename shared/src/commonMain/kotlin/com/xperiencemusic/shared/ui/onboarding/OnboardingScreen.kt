@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -39,7 +39,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -93,9 +92,13 @@ import com.xperiencemusic.shared.ui.components.choiceState
 import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+
+private val PROGRESS_HEIGHT = 4.dp
+private val TOP_BAR_MONOGRAM_SIZE = 40.dp
 
 @Composable
 fun OnboardingScreen(onSignOut: () -> Unit, viewModel: OnboardingViewModel = koinViewModel()) {
@@ -120,12 +123,12 @@ fun OnboardingScreenContent(state: OnboardingUiState, onEvent: (OnboardingEvent)
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.onboarding_back))
                         }
                     } else {
-                        Spacer(Modifier.size(48.dp))
+                        Spacer(Modifier.size(Sizes.touchTarget))
                     }
                     Spacer(Modifier.weight(1f))
-                    XmMonogram(size = 40.dp)
+                    XmMonogram(size = TOP_BAR_MONOGRAM_SIZE)
                     Spacer(Modifier.weight(1f))
-                    Spacer(Modifier.size(48.dp))
+                    Spacer(Modifier.size(Sizes.touchTarget))
                 }
                 StepProgress(state.progress, stringResource(Res.string.onboarding_progress, state.stepIndex + 1), Modifier.padding(top = Spacing.l, bottom = Spacing.s))
                 AnimatedContent(
@@ -159,7 +162,7 @@ fun OnboardingScreenContent(state: OnboardingUiState, onEvent: (OnboardingEvent)
                 modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.xl, vertical = Spacing.l),
             ) {
                 if (state.isSubmitting) {
-                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
+                    CircularProgressIndicator(color = BrandColors.onGradient, strokeWidth = Sizes.stroke, modifier = Modifier.size(Sizes.iconL))
                 } else {
                     Text(
                         stringResource(if (state.isLastStep) Res.string.onboarding_submit else Res.string.onboarding_continue),
@@ -181,12 +184,12 @@ private fun StepProgress(fraction: Float, description: String, modifier: Modifie
     Box(
         modifier
             .fillMaxWidth()
-            .height(4.dp)
-            .clip(RoundedCornerShape(2.dp))
+            .height(PROGRESS_HEIGHT)
+            .clip(CircleShape)
             .background(MaterialTheme.colorScheme.outline)
             .semantics { contentDescription = description; progressBarRangeInfo = ProgressBarRangeInfo(fraction, 0f..1f) },
     ) {
-        Box(Modifier.fillMaxWidth(shown).height(4.dp).clip(RoundedCornerShape(2.dp)).background(BrandColors.horizontalGradient))
+        Box(Modifier.fillMaxWidth(shown).height(PROGRESS_HEIGHT).clip(CircleShape).background(BrandColors.horizontalGradient))
     }
 }
 
@@ -278,8 +281,8 @@ internal fun VoiceChoices(selected: VoicePart?, isUnknown: Boolean, onSelect: (V
     // Many singers have never been told their part: they can go on and choose it later.
     OutlinedButton(
         onClick = onUnknown,
-        border = BorderStroke(if (isUnknown) 2.dp else 1.dp, if (isUnknown) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).choiceState(isUnknown),
+        border = BorderStroke(if (isUnknown) Sizes.stroke else Sizes.hairline, if (isUnknown) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline),
+        modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.touchTarget).choiceState(isUnknown),
     ) { Text(stringResource(Res.string.onboarding_voice_unknown)) }
     if (isUnknown) {
         Text(stringResource(Res.string.onboarding_voice_unknown_text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

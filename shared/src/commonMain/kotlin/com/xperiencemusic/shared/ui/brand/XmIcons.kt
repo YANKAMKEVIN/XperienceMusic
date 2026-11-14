@@ -8,21 +8,27 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathBuilder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import com.xperiencemusic.shared.ui.theme.Sizes
+
+/** The icons are drawn on a 24 × 24 grid. */
+private const val VIEWPORT = 24f
+/** Placeholder paint: `Icon` tints the whole vector with its own colour. */
+private val INK = SolidColor(Color.Black)
 
 /** Line icons of the tab bar, drawn like the brand mockups (2 dp strokes, round ends). */
 object XmIcons {
     /** Two beamed eighth notes: the week's songs. */
     val Notes: ImageVector by lazy {
-        ImageVector.Builder("Notes", 24.dp, 24.dp, 24f, 24f)
+        ImageVector.Builder("Notes", Sizes.icon, Sizes.icon, VIEWPORT, VIEWPORT)
             .path(
-                stroke = SolidColor(Color.Black),
+                stroke = INK,
                 strokeLineWidth = 2f,
                 strokeLineCap = StrokeCap.Round,
                 strokeLineJoin = StrokeJoin.Round,
             ) {
                 moveTo(9f, 18f); verticalLineTo(5.5f); lineTo(19f, 3.5f); verticalLineTo(16f)
             }
-            .path(fill = SolidColor(Color.Black)) {
+            .path(fill = INK) {
                 // Two tilted heads, approximated by circles.
                 moveTo(9.5f, 18f); arcToRelative(3f, 2.4f, 0f, true, true, -6f, 0f); arcToRelative(3f, 2.4f, 0f, true, true, 6f, 0f); close()
                 moveTo(19.5f, 16f); arcToRelative(3f, 2.4f, 0f, true, true, -6f, 0f); arcToRelative(3f, 2.4f, 0f, true, true, 6f, 0f); close()
@@ -166,8 +172,8 @@ object XmIcons {
     }
 
     private fun icon(name: String, block: PathBuilder.() -> Unit): ImageVector =
-        ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).path(
-            stroke = SolidColor(Color.Black),
+        ImageVector.Builder(name, Sizes.icon, Sizes.icon, VIEWPORT, VIEWPORT).path(
+            stroke = INK,
             strokeLineWidth = 2f,
             strokeLineCap = StrokeCap.Round,
             strokeLineJoin = StrokeJoin.Round,

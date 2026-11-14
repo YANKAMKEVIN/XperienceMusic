@@ -5,6 +5,7 @@ import com.xperiencemusic.shared.data.repository.InMemoryExerciseRepository
 import com.xperiencemusic.shared.data.repository.InMemoryVoiceSubmissionRepository
 import com.xperiencemusic.shared.domain.repository.DateProvider
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveMySubmissionsUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.PlayLocalAudioUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
@@ -51,7 +52,7 @@ class VoiceRecordViewModelTest {
             "s1",
             ObserveSongUseCase(songs),
             ObserveCurrentMemberUseCase(sessions),
-            submissions,
+            ObserveMySubmissionsUseCase(ObserveCurrentMemberUseCase(sessions), submissions),
             VoiceRecorder(FakeMicrophone(List(FakeMicrophone.framesFor(seconds)) { 62 })),
             SendVoiceUseCase(sessions, InMemoryAudioStorage(), submissions, InMemoryExerciseRepository(emptyList()), today),
             playback,

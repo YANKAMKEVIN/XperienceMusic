@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.data.local
 
 import com.xperiencemusic.shared.domain.model.Reminder
 import com.xperiencemusic.shared.domain.repository.ReminderScheduler
+import com.xperiencemusic.shared.domain.repository.SessionResettable
 import com.xperiencemusic.shared.fakes.FakeAudioCache
 import com.xperiencemusic.shared.fakes.FakeFileStore
 import kotlinx.coroutines.test.runTest
@@ -22,7 +23,7 @@ class DeviceDataStoreTest {
                 remindersCleared = reminders.isEmpty()
             }
         }
-        DeviceDataStore(SnapshotStore(files), audio, files, reminders) { reset = true }.clearAll()
+        DeviceDataStore(SnapshotStore(files), audio, files, reminders) { listOf(SessionResettable { reset = true }) }.clearAll()
         assertTrue(reset)
         assertTrue(files.files.isEmpty())
         assertTrue(audio.cachedPaths.value.isEmpty())

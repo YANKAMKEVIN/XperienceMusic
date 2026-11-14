@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
-import com.xperiencemusic.shared.presentation.common.Formatting
 import com.xperiencemusic.shared.presentation.common.MemberAvatarUi
 
 class WeekViewModel(
@@ -64,7 +63,7 @@ class WeekViewModel(
             me = member?.let { MemberAvatarUi(it.profile.displayName, it.avatar) },
             nextRehearsal = getToday().let { today ->
                 val rehearsal = BandWeek.nextRehearsal(today)
-                RehearsalCountdownUi(today.daysUntil(rehearsal), Formatting.dayAndDate(rehearsal))
+                RehearsalCountdownUi(today.daysUntil(rehearsal), rehearsal)
             },
             isRefreshing = refreshing,
             isOffline = syncStatus == SyncStatus.FAILED,

@@ -7,7 +7,6 @@ import com.xperiencemusic.shared.domain.model.ServiceSignup
 import com.xperiencemusic.shared.domain.model.monthStart
 import com.xperiencemusic.shared.domain.model.planTeams
 import com.xperiencemusic.shared.domain.usecase.Planning
-import com.xperiencemusic.shared.presentation.common.Formatting
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
@@ -45,11 +44,10 @@ fun derivePlanningState(planning: Planning, monthStart: LocalDate, today: LocalD
     return PlanningUiState(
         isLoading = false,
         monthStart = monthStart,
-        monthLabel = Formatting.monthAndYear(monthStart),
         canGoBack = shown.any { it < monthStart },
         canGoForward = shown.any { it > monthStart },
         status = status,
-        answerByLabel = month?.answerBy?.takeIf { status == MonthStatus.OPEN }?.let(Formatting::dayAndMonth),
+        answerBy = month?.answerBy?.takeIf { status == MonthStatus.OPEN },
         isPastDeadline = status == MonthStatus.OPEN && month?.answerBy?.let { it < today } == true,
         incompleteAfterValidation = if (status == MonthStatus.VALIDATED) services.count { !it.isPast && it.missing.isNotEmpty() } else 0,
         unansweredCount = if (status == MonthStatus.OPEN) services.count { !it.isPast && it.myAnswer == MyAnswer.UNANSWERED } else 0,
@@ -82,7 +80,6 @@ fun serviceCards(
     ServiceCardUi(
         date = team.date,
         kind = team.kind,
-        weekday = Formatting.shortWeekday(team.date),
         day = team.date.day,
         serving = team.serving.map { ServingUi(it.id, it.displayName ?: it.email, it.instrument, it.voicePart, it.id == myId) },
         missing = team.missing,

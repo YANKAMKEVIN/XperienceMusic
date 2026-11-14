@@ -9,6 +9,7 @@ import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.usecase.CompleteExerciseUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
+import com.xperiencemusic.shared.domain.usecase.PlayLocalAudioUseCase
 import com.xperiencemusic.shared.domain.usecase.PlayReferenceNoteUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
 import com.xperiencemusic.shared.domain.usecase.TrackSingingUseCase
@@ -57,7 +58,7 @@ class ExerciseViewModelTest {
             ObserveSingerPathUseCase(repository, today),
             TrackSingingUseCase(mic),
             CompleteExerciseUseCase(sessions, repository, today),
-            PlayReferenceNoteUseCase(FakeFileStore(), player, playback),
+            PlayReferenceNoteUseCase(PlayLocalAudioUseCase(FakeFileStore(), player, playback)),
             playback,
         )
     }

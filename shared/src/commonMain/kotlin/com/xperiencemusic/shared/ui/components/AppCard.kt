@@ -10,8 +10,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 
 /** Raised surface used for list rows and grouped content. Clickable when [onClick] is set. */
@@ -27,7 +27,7 @@ fun AppCard(
         Column(Modifier.padding(Spacing.l), content = content)
     }
     // A hairline keeps cards apart on the night background, as in the brand mockups.
-    val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    val border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outlineVariant)
     if (onClick != null) {
         Surface(onClick = onClick, shape = shape, color = color, border = border, modifier = modifier.fillMaxWidth(), content = inner)
     } else {

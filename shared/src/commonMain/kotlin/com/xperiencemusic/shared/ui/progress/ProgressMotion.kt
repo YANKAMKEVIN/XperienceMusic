@@ -51,9 +51,11 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.AppTypography
 import com.xperiencemusic.shared.ui.theme.BrandColors
-import com.xperiencemusic.shared.ui.theme.Palette
+import com.xperiencemusic.shared.ui.theme.Sizes
+import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -62,6 +64,21 @@ import kotlin.math.cos
 import kotlin.math.sin
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.xperiencemusic.shared.ui.theme.Radius
+
+/** How far a section rises as it fades in. */
+private val ENTER_OFFSET = 24.dp
+private val RING_SIZE = 200.dp
+private val RING_STROKE = 12.dp
+/** Leaves room between the ring and its box for the orbiting dot. */
+private val RING_INSET = 22.dp
+private val ORBIT_OFFSET = 16.dp
+private val ORBIT_DOT_RADIUS = 3.dp
+private val EQUALIZER_WIDTH = 64.dp
+private val EQUALIZER_HEIGHT = 36.dp
+private val EQUALIZER_BAR = 4.dp
+/** The focus card's eyebrow and title keep clear of the equalizer in the top corner. */
+private val EYEBROW_END_CLEARANCE = 72.dp
+private val TITLE_END_CLEARANCE = 56.dp
 
 /** "Réduire les animations", provided by the progress screen and read by its moving parts. */
 internal val LocalCalmMotion = staticCompositionLocalOf { false }
@@ -78,7 +95,7 @@ internal fun Modifier.enter(order: Int): Modifier {
     }
     return graphicsLayer {
         alpha = shown.value
-        translationY = (1 - shown.value) * 24.dp.toPx()
+        translationY = (1 - shown.value) * ENTER_OFFSET.toPx()
     }
 }
 
@@ -109,10 +126,13 @@ internal fun LevelRing(segments: List<RingSegment>, description: String, modifie
         orbit = motion.animateFloat(0f, 360f, infiniteRepeatable(tween(14_000, easing = LinearEasing)), label = "orbit").value
         glow = motion.animateFloat(0.55f, 1f, infiniteRepeatable(tween(1_400), RepeatMode.Reverse), label = "glow").value
     }
-    Box(modifier.size(200.dp).semantics { contentDescription = description }, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.size(200.dp)) {
-            val stroke = 12.dp.toPx()
-            val radius = size.minDimension / 2 - 22.dp.toPx()
+    val track = MaterialTheme.colorScheme.surfaceContainerHigh
+    val orbitDot = AppTheme.colors.info
+    val segmentColors = segments.map { it.color() }
+    Box(modifier.size(RING_SIZE).semantics { contentDescription = description }, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.size(RING_SIZE)) {
+            val stroke = RING_STROKE.toPx()
+            val radius = size.minDimension / 2 - RING_INSET.toPx()
             val topLeft = Offset(center.x - radius, center.y - radius)
             val arcSize = Size(radius * 2, radius * 2)
             val count = segments.size.coerceAtLeast(1)
@@ -121,7 +141,7 @@ internal fun LevelRing(segments: List<RingSegment>, description: String, modifie
             segments.forEachIndexed { i, segment ->
                 val start = -90f + i * slot + gap / 2
                 val sweep = slot - gap
-                drawArc(Palette.NightHigh, start, sweep, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+                drawArc(track, start, sweep, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
                 val drawn = sweep * sweeps[i].value
                 if (drawn <= 0f) return@forEachIndexed
                 when (segment) {
@@ -130,23 +150,24 @@ internal fun LevelRing(segments: List<RingSegment>, description: String, modifie
                     RingSegment.STARTED ->
                         drawArc(BrandColors.gradient, start, drawn, false, topLeft, arcSize, alpha = glow, style = Stroke(stroke, cap = StrokeCap.Round))
                     else ->
-                        drawArc(segment.color(), start, drawn, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+                        drawArc(segmentColors[i], start, drawn, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
                 }
             }
             val angle = (orbit - 90f) * PI.toFloat() / 180f
-            val orbitRadius = radius + 16.dp.toPx()
-            drawCircle(Palette.Blue, 3.dp.toPx(), Offset(center.x + orbitRadius * cos(angle), center.y + orbitRadius * sin(angle)))
+            val orbitRadius = radius + ORBIT_OFFSET.toPx()
+            drawCircle(orbitDot, ORBIT_DOT_RADIUS.toPx(), Offset(center.x + orbitRadius * cos(angle), center.y + orbitRadius * sin(angle)))
         }
         content()
     }
 }
 
+@Composable
 private fun RingSegment.color(): Color = when (this) {
-    RingSegment.VALIDATED -> Palette.Success
-    RingSegment.WAITING -> Palette.Blue
-    RingSegment.REWORK -> BrandColors.Amber
-    RingSegment.STARTED -> Palette.Violet
-    RingSegment.TODO -> Palette.NightHigh
+    RingSegment.VALIDATED -> AppTheme.colors.success
+    RingSegment.WAITING -> AppTheme.colors.info
+    RingSegment.REWORK -> AppTheme.colors.warning
+    RingSegment.STARTED -> MaterialTheme.colorScheme.primary
+    RingSegment.TODO -> MaterialTheme.colorScheme.surfaceContainerHigh
 }
 
 /** A number that counts up from zero the first time it shows; written straight away when calm. */
@@ -170,14 +191,14 @@ internal fun CountUp(target: Int, style: androidx.compose.ui.text.TextStyle, mod
 
 /** A small equalizer that dances while the focus card waits for a tap; it holds still when calm. */
 @Composable
-internal fun Equalizer(modifier: Modifier = Modifier, color: Color = Palette.Violet) {
+internal fun Equalizer(modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.primary) {
     var time = 0.3f
     if (!LocalCalmMotion.current) {
         time = rememberInfiniteTransition(label = "eq").animateFloat(0f, 1f, infiniteRepeatable(tween(1_100, easing = LinearEasing)), label = "t").value
     }
     val phases = remember { listOf(0f, .15f, .3f, .1f, .45f, .2f, .35f, .05f, .25f) }
-    Canvas(modifier.width(64.dp).height(36.dp)) {
-        val bar = 4.dp.toPx()
+    Canvas(modifier.width(EQUALIZER_WIDTH).height(EQUALIZER_HEIGHT)) {
+        val bar = EQUALIZER_BAR.toPx()
         val step = size.width / phases.size
         phases.forEachIndexed { i, phase ->
             val level = 0.25f + 0.75f * abs(sin(PI.toFloat() * (time + phase)))
@@ -199,20 +220,20 @@ internal fun SectionTabs(labels: List<String>, selected: Int, onSelect: (Int) ->
         modifier
             .fillMaxWidth()
             .clip(CircleShape)
-            .background(Palette.NightRaised)
-            .border(1.dp, Palette.Outline, CircleShape)
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(Sizes.hairline, MaterialTheme.colorScheme.outline, CircleShape)
+            .padding(Spacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
         labels.forEachIndexed { i, label ->
             val isOn = i == selected
             val fade: AnimationSpec<Color> = if (LocalCalmMotion.current) snap() else tween(250)
-            val background by animateColorAsState(if (isOn) Palette.Snow else Color.Transparent, fade, label = "tab-bg")
-            val content by animateColorAsState(if (isOn) Palette.Night else Palette.Mist, fade, label = "tab-fg")
+            val background by animateColorAsState(if (isOn) MaterialTheme.colorScheme.onSurface else Color.Transparent, fade, label = "tab-bg")
+            val content by animateColorAsState(if (isOn) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onSurfaceVariant, fade, label = "tab-fg")
             Box(
                 Modifier
                     .weight(1f)
-                    .height(44.dp)
+                    .height(Sizes.compactTarget)
                     .clip(CircleShape)
                     .background(background)
                     .clickable { onSelect(i) }
@@ -222,7 +243,7 @@ internal fun SectionTabs(labels: List<String>, selected: Int, onSelect: (Int) ->
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                Text(label, color = content, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(label, color = content, style = AppTypography.tabLabel)
             }
         }
     }
@@ -242,16 +263,16 @@ internal fun FocusCard(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.linearGradient(listOf(Palette.VioletDeep, Palette.NightRaised, Palette.BlueDeep)))
-            .border(1.dp, Palette.VioletEdge, shape)
-            .padding(20.dp),
+            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.surfaceContainer, AppTheme.colors.infoContainer)))
+            .border(Sizes.hairline, AppTheme.colors.cardEdge, shape)
+            .padding(Spacing.lxl),
     ) {
         Equalizer(Modifier.align(Alignment.TopEnd))
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = Palette.VioletLight, modifier = Modifier.padding(end = 72.dp))
-            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(end = 56.dp))
-            text?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Palette.MistLight) }
-            if (action != null) Box(Modifier.padding(top = 10.dp)) { action() }
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xsm)) {
+            Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = AppTheme.colors.eyebrow, modifier = Modifier.padding(end = EYEBROW_END_CLEARANCE))
+            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(end = TITLE_END_CLEARANCE))
+            text?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.onCardMuted) }
+            if (action != null) Box(Modifier.padding(top = Spacing.sm)) { action() }
         }
     }
 }

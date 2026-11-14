@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,15 +57,26 @@ import com.xperiencemusic.shared.resources.progress_sheet_criterion
 import com.xperiencemusic.shared.resources.progress_sheet_learn
 import com.xperiencemusic.shared.resources.progress_sheet_reached
 import com.xperiencemusic.shared.resources.progress_sheet_reached_hint
+import com.xperiencemusic.shared.resources.quoted_feedback
 import com.xperiencemusic.shared.resources.status_submitted
 import com.xperiencemusic.shared.resources.status_to_rework
 import com.xperiencemusic.shared.resources.status_validated
 import com.xperiencemusic.shared.ui.brand.GradientButton
+import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
-import com.xperiencemusic.shared.ui.theme.Palette
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+
+/** The disc holding an objective's number. */
+private val NUMBER_SIZE = 28.dp
+/** A status word in capitals: a touch narrower than the other pills. */
+private val STATUS_CHIP_PADDING = PaddingValues(horizontal = 9.dp, vertical = Spacing.xs)
+/** The objective sheet's sides, wider than the screen's 16 dp: the sheet's text runs long. */
+private val SHEET_SIDE_PADDING = 22.dp
+private val PROGRESS_BAR_HEIGHT = 6.dp
 
 /** "Confirmé", "Pro": the level as it ends "passer …" and "vers …" sentences. */
 @Composable
@@ -81,11 +93,11 @@ internal fun ObjectiveUi.segment(started: Boolean): RingSegment = when (status) 
 
 @Composable
 private fun ObjectiveUi.statusLabel(started: Boolean = false): Pair<String, Color> = when (status) {
-    ExerciseStatus.VALIDATED -> stringResource(Res.string.status_validated) to Palette.Success
-    ExerciseStatus.SUBMITTED -> stringResource(Res.string.status_submitted) to Palette.Blue
-    ExerciseStatus.TO_REWORK -> stringResource(Res.string.status_to_rework) to BrandColors.Amber
-    else -> if (started) stringResource(Res.string.progress_objective_started) to Palette.Violet
-    else stringResource(Res.string.progress_objective_todo) to Palette.Mist
+    ExerciseStatus.VALIDATED -> stringResource(Res.string.status_validated) to AppTheme.colors.success
+    ExerciseStatus.SUBMITTED -> stringResource(Res.string.status_submitted) to AppTheme.colors.info
+    ExerciseStatus.TO_REWORK -> stringResource(Res.string.status_to_rework) to AppTheme.colors.warning
+    else -> if (started) stringResource(Res.string.progress_objective_started) to MaterialTheme.colorScheme.primary
+    else stringResource(Res.string.progress_objective_todo) to MaterialTheme.colorScheme.onSurfaceVariant
 }
 
 /**
@@ -95,34 +107,34 @@ private fun ObjectiveUi.statusLabel(started: Boolean = false): Pair<String, Colo
 @Composable
 internal fun ObjectiveList(objectives: List<ObjectiveUi>, modules: List<ModuleProgressUi>, onOpen: (ObjectiveUi) -> Unit) {
     val started = remember(objectives, modules) { startedObjectives(objectives, modules) }
-    Column(Modifier.padding(horizontal = Spacing.l), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.padding(horizontal = Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
         objectives.forEachIndexed { i, objective ->
             val (label, color) = objective.statusLabel(objective.id in started)
             val module = modules.firstOrNull { it.objectiveId == objective.id }
-            val shape = RoundedCornerShape(18.dp)
+            val shape = RoundedCornerShape(Radius.row)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.m),
                 modifier = Modifier
                     .enter(i)
                     .fillMaxWidth()
-                    .heightIn(min = 56.dp)
+                    .heightIn(min = Sizes.rowMin)
                     .clip(shape)
-                    .background(Palette.NightRaised)
-                    .border(1.dp, if (objective.status == null) Palette.Outline else color.copy(alpha = 0.45f), shape)
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .border(Sizes.hairline, if (objective.status == null) MaterialTheme.colorScheme.outline else color.copy(alpha = 0.45f), shape)
                     .clickable(role = Role.Button) { onOpen(objective) }
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                    .padding(horizontal = Spacing.ml, vertical = Spacing.sm),
             ) {
                 Box(
-                    Modifier.size(28.dp).clip(CircleShape).background(Palette.NightHigh),
+                    Modifier.size(NUMBER_SIZE).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("${i + 1}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Palette.Mist)
+                    Text("${i + 1}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                     Text(objective.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     if (module != null && module.done > 0 && objective.status != ExerciseStatus.VALIDATED) {
-                        Text(stringResource(Res.string.progress_objective_module, module.done, module.total), style = MaterialTheme.typography.labelSmall, color = Palette.Blue)
+                        Text(stringResource(Res.string.progress_objective_module, module.done, module.total), style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.info)
                     }
                 }
                 StatusChip(label, color)
@@ -138,7 +150,7 @@ private fun StatusChip(label: String, color: Color) {
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.ExtraBold,
         color = color,
-        modifier = Modifier.clip(CircleShape).background(color.copy(alpha = 0.16f)).padding(horizontal = 9.dp, vertical = 4.dp),
+        modifier = Modifier.clip(CircleShape).background(color.copy(alpha = 0.16f)).padding(STATUS_CHIP_PADDING),
     )
 }
 
@@ -162,35 +174,35 @@ internal fun ObjectiveSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Palette.NightRaised,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(start = 22.dp, end = 22.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(start = SHEET_SIDE_PADDING, end = SHEET_SIDE_PADDING, bottom = Spacing.xl),
+            verticalArrangement = Arrangement.spacedBy(Spacing.ml),
         ) {
             val (label, color) = objective.statusLabel()
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
                 StatusChip(label, color)
-                Text(stringResource(Res.string.progress_objective_number, number), style = MaterialTheme.typography.labelMedium, color = Palette.Mist)
+                Text(stringResource(Res.string.progress_objective_number, number), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(objective.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(stringResource(Res.string.growth_learn_title).uppercase(), style = MaterialTheme.typography.labelMedium, color = Palette.Violet)
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Text(stringResource(Res.string.growth_learn_title).uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 Text(objective.learn, style = MaterialTheme.typography.bodyLarge)
             }
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Palette.NightHigh).padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(Radius.card)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(Spacing.ml),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
             ) {
-                Text(stringResource(Res.string.progress_sheet_criterion).uppercase(), style = MaterialTheme.typography.labelMedium, color = Palette.Mist)
+                Text(stringResource(Res.string.progress_sheet_criterion).uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(objective.criterion, style = MaterialTheme.typography.bodyLarge)
             }
             if (objective.status == ExerciseStatus.TO_REWORK && objective.feedback != null) {
-                Text("« ${objective.feedback} »", style = MaterialTheme.typography.bodyMedium, color = BrandColors.Amber)
+                Text(stringResource(Res.string.quoted_feedback, objective.feedback), style = MaterialTheme.typography.bodyMedium, color = AppTheme.colors.warning)
             }
             if (moduleId != null && objective.status != ExerciseStatus.VALIDATED) {
                 GradientButton(onClick = { onLearn(moduleId) }, modifier = Modifier.fillMaxWidth()) {
@@ -201,25 +213,25 @@ internal fun ObjectiveSheet(
                 objective.autoTier != null -> Text(
                     stringResource(Res.string.growth_by_microphone, objective.autoTier),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Palette.Mist,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 objective.status != ExerciseStatus.VALIDATED -> {
                     val ticked = objective.status == ExerciseStatus.SUBMITTED
                     // The whole row, explanation included, toggles: a 48 dp target at least.
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.m),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .heightIn(min = Sizes.touchTarget)
+                            .clip(RoundedCornerShape(Radius.chip))
                             .toggleable(value = ticked, enabled = !isWorking, role = Role.Checkbox) { onToggle(objective.id, it) }
                             .padding(vertical = Spacing.s),
                     ) {
                         Checkbox(checked = ticked, onCheckedChange = null, enabled = !isWorking)
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                             Text(stringResource(Res.string.progress_sheet_reached), style = MaterialTheme.typography.titleSmall)
-                            Text(stringResource(Res.string.progress_sheet_reached_hint), style = MaterialTheme.typography.bodySmall, color = Palette.Mist)
+                            Text(stringResource(Res.string.progress_sheet_reached_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -231,29 +243,29 @@ internal fun ObjectiveSheet(
 /** The guided modules of the member's part, each with its progress bar. */
 @Composable
 internal fun ModulesList(modules: List<ModuleProgressUi>, onOpen: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
         modules.forEachIndexed { i, module ->
-            val shape = RoundedCornerShape(20.dp)
+            val shape = RoundedCornerShape(Radius.cardLarge)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .enter(i)
                     .fillMaxWidth()
                     .clip(shape)
-                    .background(Palette.NightRaised)
-                    .border(1.dp, Palette.Outline, shape)
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .border(Sizes.hairline, MaterialTheme.colorScheme.outline, shape)
                     .clickable(role = Role.Button) { onOpen(module.id) }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .padding(horizontal = Spacing.l, vertical = Spacing.ml),
             ) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
                     Text(module.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     ProgressBar(if (module.total == 0) 0f else module.done.toFloat() / module.total)
                 }
                 Text(
                     stringResource(Res.string.progress_module_count, module.done, module.total),
                     style = MaterialTheme.typography.labelLarge,
-                    color = Palette.Mist,
-                    modifier = Modifier.padding(start = 14.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = Spacing.ml),
                 )
             }
         }
@@ -268,9 +280,9 @@ private fun ProgressBar(fraction: Float) {
         delay(300)
         shown.animateTo(fraction, tween(800, easing = FastOutSlowInEasing))
     }
-    Box(Modifier.fillMaxWidth().height(6.dp).clip(CircleShape).background(Palette.NightHigh)) {
+    Box(Modifier.fillMaxWidth().height(PROGRESS_BAR_HEIGHT).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
         Box(
-            Modifier.fillMaxWidth(shown.value).height(6.dp).clip(CircleShape).background(BrandColors.horizontalGradient),
+            Modifier.fillMaxWidth(shown.value).height(PROGRESS_BAR_HEIGHT).clip(CircleShape).background(BrandColors.horizontalGradient),
         )
     }
 }

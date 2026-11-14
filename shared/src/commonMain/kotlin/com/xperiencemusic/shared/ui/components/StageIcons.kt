@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathBuilder
 import androidx.compose.ui.graphics.vector.path
-import androidx.compose.ui.unit.dp
+import com.xperiencemusic.shared.ui.theme.Sizes
 
 /** Glyphs missing from the core icon set: full screen, text size, slow/fast. */
 object StageIcons {
@@ -29,7 +29,7 @@ object StageIcons {
     }
 
     private fun stroked(name: String, block: PathBuilder.() -> Unit): ImageVector =
-        ImageVector.Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
+        ImageVector.Builder(name = name, defaultWidth = Sizes.icon, defaultHeight = Sizes.icon, viewportWidth = 24f, viewportHeight = 24f)
             .path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, pathBuilder = block)
             .build()
 }

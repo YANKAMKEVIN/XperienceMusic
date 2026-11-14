@@ -2,18 +2,20 @@ package com.xperiencemusic.shared.presentation.progress
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.xperiencemusic.shared.data.local.SnapshotStore
+import com.xperiencemusic.shared.domain.learning.LearningCatalog
 import com.xperiencemusic.shared.domain.model.DomainResult
-import com.xperiencemusic.shared.domain.model.Permission
-import com.xperiencemusic.shared.domain.repository.VoiceSubmissionRepository
+import com.xperiencemusic.shared.domain.model.LearningProgress
+import com.xperiencemusic.shared.domain.usecase.GetLearningPreferencesUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
-import com.xperiencemusic.shared.domain.usecase.ObserveGrowthReviewUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveLearningProgressUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveMyGrowthUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveMySubmissionsUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveReviewQueueUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
 import com.xperiencemusic.shared.domain.usecase.RequestLevelUseCase
+import com.xperiencemusic.shared.domain.usecase.SyncLearningUseCase
 import com.xperiencemusic.shared.domain.usecase.TickObjectiveUseCase
-import com.xperiencemusic.shared.presentation.learning.LearningPreferences
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,13 +34,14 @@ class ProgressViewModel(
     observeCurrentMember: ObserveCurrentMemberUseCase,
     observeSingerPath: ObserveSingerPathUseCase,
     observeSchedule: ObserveSetlistScheduleUseCase,
-    submissions: VoiceSubmissionRepository,
+    observeMySubmissions: ObserveMySubmissionsUseCase,
+    observeReviewQueue: ObserveReviewQueueUseCase,
     observeMyGrowth: ObserveMyGrowthUseCase,
-    observeGrowthReview: ObserveGrowthReviewUseCase,
     private val requestLevel: RequestLevelUseCase,
     private val tickObjective: TickObjectiveUseCase,
-    learningRepository: com.xperiencemusic.shared.domain.learning.LearningRepository,
-    snapshots: SnapshotStore,
+    observeLearningProgress: ObserveLearningProgressUseCase,
+    syncLearning: SyncLearningUseCase,
+    getLearningPreferences: GetLearningPreferencesUseCase,
 ) : ViewModel() {
     private val action = MutableStateFlow(ActionState())
 
@@ -47,36 +50,35 @@ class ProgressViewModel(
             if (member == null) {
                 flowOf(deriveProgressState(null, null))
             } else {
-                // Only the super admin may read everyone's submissions and growth.
-                val isReviewer = member.role.can(Permission.REVIEW_TRAINING)
-                val all = if (isReviewer) submissions.observeAll() else flowOf(emptyList())
-                val review = if (isReviewer) observeGrowthReview() else flowOf(null)
+                // The queue stays empty for whoever may not read the others' work.
                 combine(
                     combine(observeSingerPath(member.id), observeSchedule(), ::Pair),
-                    submissions.observeMine(member.id),
-                    all,
+                    observeMySubmissions(),
+                    observeReviewQueue(),
                     observeMyGrowth(),
-                    review,
-                ) { (path, schedule), mine, everyone, growth, queue ->
+                ) { (path, schedule), mine, queue, growth ->
                     deriveProgressState(member, path)
-                        .withVoices(schedule.current?.songs.orEmpty(), mine, everyone)
-                        .withGrowth(growth, queue)
+                        .withVoices(schedule.current?.songs.orEmpty(), mine)
+                        .withGrowth(growth)
+                        .withReviewQueue(queue)
                 }.onStart { emit(deriveProgressState(member, null)) }
             }
         }
 
     private val learning = observeCurrentMember().flatMapLatest { member ->
-        if (member != null && com.xperiencemusic.shared.domain.learning.LearningCatalog.modulesFor(member.profile.instrument).isNotEmpty()) {
+        if (member != null && LearningCatalog.modulesFor(member.profile.instrument).isNotEmpty()) {
             // Fetches the history kept on the server too: a fresh phone would otherwise show 0 done.
-            learningRepository.observe(member.id)
-                .onStart { viewModelScope.launch { learningRepository.sync(member.id) } }
-                .map { it as com.xperiencemusic.shared.domain.learning.LearningProgress? }
-        } else flowOf(null)
+            observeLearningProgress(member.id)
+                .onStart { viewModelScope.launch { syncLearning(member.id) } }
+                .map<LearningProgress, LearningProgress?> { it }
+        } else {
+            flowOf(null)
+        }
     }
 
     // The comfort settings live with the guided path; read again each time the screen comes back.
     private val reduceMotion = observeCurrentMember().map { member ->
-        member != null && snapshots.load("learning-settings-${member.id}", LearningPreferences.serializer())?.reduceMotion == true
+        member != null && getLearningPreferences(member.id).reduceMotion
     }
 
     val state: StateFlow<ProgressUiState> = combine(base, action, learning, reduceMotion) { state, act, course, calm ->

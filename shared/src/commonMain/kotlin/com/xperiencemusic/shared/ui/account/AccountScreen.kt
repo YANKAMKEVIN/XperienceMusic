@@ -97,10 +97,19 @@ import com.xperiencemusic.shared.ui.components.label
 import com.xperiencemusic.shared.ui.platform.rememberPhotoPicker
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+
+/** The space between the avatar and its gradient ring. */
+private val AVATAR_RING_GAP = 5.dp
+/** Round ripple of the avatar, ring included. */
+private val AVATAR_RIPPLE_RADIUS = 64.dp
+private val EDIT_BADGE_SIZE = 34.dp
+/** The background-coloured ring that cuts the badge out of the avatar. */
+private val EDIT_BADGE_RING = 3.dp
 
 @Composable
 fun AccountScreen(
@@ -177,10 +186,10 @@ fun AccountScreenContent(
             BigAvatar(state, onClick = { isPicking = true })
             Identity(state)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                OutlinedButton(onClick = onEditProfile, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                OutlinedButton(onClick = onEditProfile, modifier = Modifier.weight(1f).heightIn(min = Sizes.touchTarget)) {
                     Text(stringResource(Res.string.account_edit_profile), textAlign = TextAlign.Center)
                 }
-                OutlinedButton(onClick = { isPicking = true }, enabled = !state.isSaving, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                OutlinedButton(onClick = { isPicking = true }, enabled = !state.isSaving, modifier = Modifier.weight(1f).heightIn(min = Sizes.touchTarget)) {
                     Text(stringResource(Res.string.account_change_avatar), textAlign = TextAlign.Center)
                 }
             }
@@ -215,26 +224,26 @@ private fun BigAvatar(state: AccountUiState, onClick: () -> Unit) {
             // Not clipped: the edit badge sits on the corner, outside the circle. The ripple stays round.
             .clickable(
                 interactionSource = null,
-                indication = ripple(bounded = false, radius = 64.dp),
+                indication = ripple(bounded = false, radius = AVATAR_RIPPLE_RADIUS),
                 enabled = !state.isSaving,
                 role = Role.Button,
                 onClick = onClick,
             )
             .semantics { contentDescription = label },
     ) {
-        Box(Modifier.border(BorderStroke(3.dp, BrandColors.gradient), CircleShape).padding(5.dp)) {
-            MemberAvatar(state.me, size = 112.dp)
+        Box(Modifier.border(BorderStroke(Sizes.strokeBold, BrandColors.gradient), CircleShape).padding(AVATAR_RING_GAP)) {
+            MemberAvatar(state.me, size = Sizes.avatarL)
         }
         if (state.isSaving) {
-            CircularProgressIndicator(Modifier.size(122.dp).align(Alignment.Center), strokeWidth = 3.dp)
+            CircularProgressIndicator(Modifier.size(Sizes.avatarL + AVATAR_RING_GAP * 2).align(Alignment.Center), strokeWidth = Sizes.strokeBold)
         } else {
             Box(
-                Modifier.align(Alignment.BottomEnd).size(34.dp).clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.background).padding(3.dp)
+                Modifier.align(Alignment.BottomEnd).size(EDIT_BADGE_SIZE).clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.background).padding(EDIT_BADGE_RING)
                     .clip(CircleShape).background(BrandColors.gradient),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Icon(Icons.Filled.Edit, contentDescription = null, tint = BrandColors.onGradient, modifier = Modifier.size(Sizes.iconXs))
             }
         }
     }
@@ -301,7 +310,7 @@ private fun MenuRow(
     tint: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(MaterialTheme.shapes.medium)
+        Modifier.fillMaxWidth().heightIn(min = Sizes.actionHeight).clip(MaterialTheme.shapes.medium)
             .clickable(role = Role.Button, onClick = onClick).padding(horizontal = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -36,8 +36,7 @@ class RecordingFormViewModel(
         MutableStateFlow(
             RecordingFormUiState(
                 recordedOn = recordedOn,
-                dateLabel = Formatting.shortDate(recordedOn),
-                title = rehearsalDate?.let { "Répétition du ${Formatting.shortDayAndDate(it)}" }.orEmpty(),
+                rehearsalDate = rehearsalDate,
             ),
         )
     }
@@ -56,9 +55,8 @@ class RecordingFormViewModel(
     fun onEvent(event: RecordingFormEvent) {
         when (event) {
             is RecordingFormEvent.TitleChanged -> _state.update { it.copy(title = event.title, error = null) }
-            is RecordingFormEvent.DatePicked -> _state.update {
-                it.copy(recordedOn = event.date, dateLabel = Formatting.shortDate(event.date))
-            }
+            is RecordingFormEvent.DefaultTitleResolved -> _state.update { if (it.title.isBlank()) it.copy(title = event.title) else it }
+            is RecordingFormEvent.DatePicked -> _state.update { it.copy(recordedOn = event.date) }
             is RecordingFormEvent.FilePicked -> onFilePicked(event.file)
             is RecordingFormEvent.VoicePartSelected -> _state.update { it.copy(voicePart = event.voicePart, error = null) }
             is RecordingFormEvent.MakeReferenceChanged -> _state.update { it.copy(makeReference = event.makeReference) }
@@ -81,7 +79,7 @@ class RecordingFormViewModel(
             it.copy(
                 file = PickedFileUi(
                     name = file.fileName,
-                    sizeLabel = Formatting.fileSize(file.bytes.size.toLong()),
+                    sizeBytes = file.bytes.size.toLong(),
                     durationLabel = file.durationSeconds?.let(Formatting::duration),
                 ),
                 error = if (file.bytes.size > AudioFile.MAX_BYTES) RecordingFormError.FILE_TOO_LARGE else null,
@@ -121,7 +119,7 @@ private fun RecordingFormUiState.withSong(song: Song, isRehearsal: Boolean) = co
     songTitle = song.title,
     existing = song.recordings
         .sortedWith(compareByDescending<Recording> { it.isReference }.thenByDescending { it.recordedOn })
-        .map { ExistingRecordingUi(it.id, it.title, Formatting.shortDate(it.recordedOn), it.isReference) },
+        .map { ExistingRecordingUi(it.id, it.title, it.recordedOn, it.isReference) },
     isFull = song.recordings.size >= Song.MAX_RECORDINGS,
     existingVoices = song.voiceTracks.map { it.voicePart }.toSet(),
     currentReferenceTitle = song.referenceRecording?.title,

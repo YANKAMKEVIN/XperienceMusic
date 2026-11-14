@@ -1,6 +1,11 @@
 package com.xperiencemusic.shared.domain.learning
 
 import com.xperiencemusic.shared.domain.model.Instrument
+import com.xperiencemusic.shared.domain.model.LearningActivity
+import com.xperiencemusic.shared.domain.model.LearningKind
+import com.xperiencemusic.shared.domain.model.LearningModule
+import com.xperiencemusic.shared.domain.model.MusicalChallenge
+import com.xperiencemusic.shared.domain.model.SingTarget
 
 /**
  * The singers' guided path: one module per objective of the programme that no microphone tier

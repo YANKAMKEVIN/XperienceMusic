@@ -15,8 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.xperiencemusic.shared.ui.theme.AppTheme
+import com.xperiencemusic.shared.ui.theme.Sizes
+import com.xperiencemusic.shared.ui.theme.Spacing
+import com.xperiencemusic.shared.ui.theme.WordmarkSize
+
+private val SPLASH_MONOGRAM_SIZE = 132.dp
+private val SPLASH_WAVES_HEIGHT = 140.dp
+private val LOADER_STROKE = 2.5.dp
 
 /** Shown while the session is being restored: logo, wordmark, waves and a loader. */
 @Composable
@@ -28,18 +34,18 @@ fun BrandSplash() {
             verticalArrangement = Arrangement.Center,
         ) {
             Spacer(Modifier.weight(1f))
-            XmMonogram(size = 132.dp)
-            Spacer(Modifier.height(20.dp))
-            BrandWordmark(fontSize = 34.sp)
-            BrandWaves(Modifier.fillMaxWidth().height(140.dp))
+            XmMonogram(size = SPLASH_MONOGRAM_SIZE)
+            Spacer(Modifier.height(Spacing.lxl))
+            BrandWordmark(size = WordmarkSize.Splash)
+            BrandWaves(Modifier.fillMaxWidth().height(SPLASH_WAVES_HEIGHT))
             Spacer(Modifier.weight(1f))
             CircularProgressIndicator(
-                strokeWidth = 2.5.dp,
+                strokeWidth = LOADER_STROKE,
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(Sizes.iconXxl),
             )
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(Sizes.touchTarget))
         }
     }
 }

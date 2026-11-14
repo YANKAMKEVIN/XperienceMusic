@@ -2,7 +2,6 @@ package com.xperiencemusic.shared.presentation.week
 
 import com.xperiencemusic.shared.domain.model.SetlistSchedule
 import com.xperiencemusic.shared.domain.model.WeeklySetlist
-import com.xperiencemusic.shared.presentation.common.Formatting
 import com.xperiencemusic.shared.presentation.common.shortLabel
 import kotlinx.datetime.LocalDate
 
@@ -23,7 +22,6 @@ fun deriveWeekState(schedule: SetlistSchedule, selected: LocalDate?, playingReco
         weeks = schedule.weeks.mapIndexed { i, weekly ->
             WeekTabUi(
                 serviceDate = weekly.setlist.serviceDate,
-                label = Formatting.shortDayAndDate(weekly.setlist.serviceDate),
                 timing = timingOf(i),
                 isSelected = i == index,
             )
@@ -35,9 +33,7 @@ fun deriveWeekState(schedule: SetlistSchedule, selected: LocalDate?, playingReco
 private fun WeeklySetlist.toUi(timing: WeekTiming, playingRecordingPath: String?) = WeekSetlistUi(
     serviceDate = setlist.serviceDate,
     timing = timing,
-    rangeLabel = Formatting.range(setlist.rehearsalDate, setlist.serviceDate),
-    rehearsalDate = Formatting.dayAndDate(setlist.rehearsalDate),
-    serviceDateLabel = Formatting.dayAndDate(setlist.serviceDate),
+    rehearsalDate = setlist.rehearsalDate,
     message = setlist.message?.takeIf { it.isNotBlank() },
     publishedBy = setlist.publishedBy,
     songs = songs.mapIndexed { index, song ->

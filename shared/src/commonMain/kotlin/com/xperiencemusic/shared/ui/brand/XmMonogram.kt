@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.ui.brand
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -21,24 +22,26 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.ui.theme.BrandColors
 
+private val DEFAULT_SIZE = 96.dp
+
 /**
  * The XM monogram: white X, gradient M whose right leg is a note. Same drawing as the app icon
  * (design/make_icon.swift), in a 1000x1000 design space with y pointing down.
  */
 @Composable
-fun XmMonogram(modifier: Modifier = Modifier, size: Dp = 96.dp) {
+fun XmMonogram(modifier: Modifier = Modifier, size: Dp = DEFAULT_SIZE) {
+    val snow = MaterialTheme.colorScheme.onBackground
     Canvas(modifier.size(size)) {
         val unit = this.size.minDimension / 1000f
         // Centre the drawing (it spans x 150..935, y 200..760 once flipped).
         translate(left = (500f - 542f) * unit, top = (500f - 480f) * unit) {
-            scale(unit, unit, pivot = Offset.Zero) { drawMonogram() }
+            scale(unit, unit, pivot = Offset.Zero) { drawMonogram(snow) }
         }
     }
 }
 
-private val snow = Color(0xFFF4F3FA)
-
-private fun DrawScope.drawMonogram() {
+/** [snow] paints the X: the theme's near-white, as on the app icon. */
+private fun DrawScope.drawMonogram(snow: Color) {
     // Design coordinates were y-up; flip once here.
     fun p(x: Float, y: Float) = Offset(x, 1000f - y)
 

@@ -5,6 +5,7 @@ import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.repository.AudioPlayer
 import com.xperiencemusic.shared.domain.repository.AudioUrlProvider
 import com.xperiencemusic.shared.domain.repository.NowPlaying
+import com.xperiencemusic.shared.domain.repository.SessionResettable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,7 @@ class PlaybackController(
     private val player: AudioPlayer,
     private val urls: AudioUrlProvider,
     private val scope: CoroutineScope,
-) {
+) : SessionResettable {
     private val session = MutableStateFlow(Session())
     private var loading: Job? = null
 
@@ -85,6 +86,9 @@ class PlaybackController(
     fun seekTo(positionMs: Long) {
         if (state.value.track != null) player.seekTo(positionMs.coerceAtLeast(0))
     }
+
+    /** The next member must not find the previous one's track loaded. */
+    override fun resetSession() = stop()
 
     fun stop() {
         loading?.cancel()

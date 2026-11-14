@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,15 +35,19 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.xperiencemusic.shared.ui.theme.AppTypography
 import com.xperiencemusic.shared.ui.theme.BrandColors
+import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
+
+/** The caret of the current box: as tall as a digit. */
+private val CURSOR_HEIGHT = 28.dp
 
 /**
  * One rounded box per digit. It is a single text field underneath, so typing, deleting, pasting
@@ -107,8 +112,8 @@ fun CodeBoxes(
 }
 
 @Composable
-private fun DigitBox(digit: Char?, isCurrent: Boolean, isError: Boolean, modifier: Modifier) {
-    val shape = RoundedCornerShape(16.dp)
+private fun DigitBox(digit: Char?, isCurrent: Boolean, isError: Boolean, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(Radius.card)
     val colors = MaterialTheme.colorScheme
     val border: Brush = when {
         isError -> SolidColor(colors.error)
@@ -122,20 +127,19 @@ private fun DigitBox(digit: Char?, isCurrent: Boolean, isError: Boolean, modifie
         modifier
             .aspectRatio(0.82f)
             .background(if (isError) colors.error.copy(alpha = 0.14f) else colors.surfaceContainer, shape)
-            .border(if (isCurrent || isError) 2.dp else 1.dp, border, shape),
+            .border(if (isCurrent || isError) Sizes.stroke else Sizes.hairline, border, shape),
         contentAlignment = Alignment.Center,
     ) {
         if (digit != null) {
             Text(
                 digit.toString(),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = AppTypography.displayNumber,
                 color = if (isError) colors.error else colors.onSurface,
                 modifier = Modifier.scale(pop),
             )
         } else if (isCurrent) {
             // Where the next digit goes.
-            Box(Modifier.size(width = 2.dp, height = 28.dp).background(BrandColors.gradient, RoundedCornerShape(1.dp)))
+            Box(Modifier.size(width = Sizes.stroke, height = CURSOR_HEIGHT).background(BrandColors.gradient, CircleShape))
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.presentation.voice
 
+import kotlinx.datetime.LocalDate
 import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.VoicePart
 
@@ -37,7 +38,7 @@ enum class VoicePhase { READY, RECORDING, RECORDED, SENDING, SENT }
 
 enum class VoiceError { MICROPHONE, TOO_SHORT, SEND_FAILED, INTERRUPTED }
 
-data class PreviousSubmissionUi(val date: String, val status: ExerciseStatus, val feedback: String?)
+data class PreviousSubmissionUi(val submittedOn: LocalDate, val status: ExerciseStatus, val feedback: String?)
 
 sealed interface VoiceRecordEvent {
     data class GuideSelected(val id: String?) : VoiceRecordEvent

@@ -5,9 +5,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.xperiencemusic.shared.domain.repository.MicrophoneIntroStore
+import com.xperiencemusic.shared.domain.usecase.LoadAvatarPhotoUseCase
+import com.xperiencemusic.shared.domain.usecase.MarkMicrophoneExplainedUseCase
+import com.xperiencemusic.shared.domain.usecase.WasMicrophoneExplainedUseCase
 import com.xperiencemusic.shared.presentation.app.AppEvent
 import com.xperiencemusic.shared.presentation.app.AppUiState
 import com.xperiencemusic.shared.presentation.app.AppViewModel
@@ -20,8 +23,11 @@ import com.xperiencemusic.shared.resources.session_sign_out
 import com.xperiencemusic.shared.resources.session_unreachable_text
 import com.xperiencemusic.shared.resources.session_unreachable_title
 import com.xperiencemusic.shared.ui.brand.BrandSplash
+import com.xperiencemusic.shared.ui.components.AvatarPhotoLoader
+import com.xperiencemusic.shared.ui.components.LocalAvatarPhotoLoader
 import com.xperiencemusic.shared.ui.onboarding.OnboardingScreen
-import com.xperiencemusic.shared.ui.platform.LocalMicrophoneIntroStore
+import com.xperiencemusic.shared.ui.platform.LocalMicrophoneIntro
+import com.xperiencemusic.shared.ui.platform.MicrophoneIntro
 import com.xperiencemusic.shared.ui.session.SessionMessageScreen
 import com.xperiencemusic.shared.ui.session.SignOutDialog
 import com.xperiencemusic.shared.ui.signin.SignInScreen
@@ -33,8 +39,22 @@ import org.koin.compose.viewmodel.koinViewModel
 /** Shared entry point of both apps. Koin must be started first (see `initKoin`). */
 @Composable
 fun XperienceMusicApp() {
+    val loadAvatarPhoto = koinInject<LoadAvatarPhotoUseCase>()
+    val wasMicrophoneExplained = koinInject<WasMicrophoneExplainedUseCase>()
+    val markMicrophoneExplained = koinInject<MarkMicrophoneExplainedUseCase>()
+    val avatarPhotos = remember(loadAvatarPhoto) { AvatarPhotoLoader { path -> loadAvatarPhoto(path) } }
+    val microphoneIntro = remember(wasMicrophoneExplained, markMicrophoneExplained) {
+        object : MicrophoneIntro {
+            override fun wasExplained() = wasMicrophoneExplained()
+
+            override fun markExplained() = markMicrophoneExplained()
+        }
+    }
     AppTheme {
-        CompositionLocalProvider(LocalMicrophoneIntroStore provides koinInject<MicrophoneIntroStore>()) {
+        CompositionLocalProvider(
+            LocalAvatarPhotoLoader provides avatarPhotos,
+            LocalMicrophoneIntro provides microphoneIntro,
+        ) {
             Surface(Modifier.fillMaxSize()) {
                 AppRoot()
             }
@@ -46,6 +66,7 @@ fun XperienceMusicApp() {
 private fun AppRoot(viewModel: AppViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val isConfirmingSignOut by viewModel.isConfirmingSignOut.collectAsStateWithLifecycle()
+    val hasLoadFailure by viewModel.hasLoadFailure.collectAsStateWithLifecycle()
     val signOut = { viewModel.onEvent(AppEvent.SignOutClicked) }
     DestinationViewModelScope(state.destination) {
         when (val current = state) {
@@ -68,7 +89,11 @@ private fun AppRoot(viewModel: AppViewModel = koinViewModel()) {
                 onSignOut = signOut,
             )
             AppUiState.Onboarding -> OnboardingScreen(onSignOut = signOut)
-            AppUiState.Ready -> MainScaffold(onSignOut = signOut)
+            AppUiState.Ready -> MainScaffold(
+                onSignOut = signOut,
+                hasLoadFailure = hasLoadFailure,
+                onRetryLoads = { viewModel.onEvent(AppEvent.RetryLoadsClicked) },
+            )
         }
     }
     if (isConfirmingSignOut) {

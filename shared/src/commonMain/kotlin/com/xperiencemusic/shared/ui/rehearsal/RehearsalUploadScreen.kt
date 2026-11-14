@@ -51,6 +51,7 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 
 /** [onAddTake] opens the recording form on a song, with the rehearsal's date. */
 @Composable
@@ -70,8 +71,10 @@ fun RehearsalUploadScreenContent(
     state: RehearsalUploadUiState,
     onBack: () -> Unit,
     onAddTake: (songId: String, rehearsalDate: LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.action_upload_rehearsal)) },
@@ -102,7 +105,10 @@ fun RehearsalUploadScreenContent(
             }
             item {
                 Column {
-                    Text(stringResource(Res.string.rehearsal_upload_date, state.dateLabel), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(Res.string.rehearsal_upload_date, rememberFormattingWords().dayAndDate(rehearsalDate)),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
                     Text(
                         stringResource(Res.string.rehearsal_upload_help),
                         style = MaterialTheme.typography.bodySmall,
@@ -165,9 +171,11 @@ private fun RehearsalUploadScreenPreview() {
             RehearsalUploadUiState(
                 isLoading = false,
                 rehearsalDate = LocalDate(2026, 11, 10),
-                dateLabel = "mardi 10 nov.",
                 songs = listOf(
-                    RehearsalSongUi("a", "À toi la gloire", "Ré", "Répétition du mar. 10 nov.", listOf(VoicePart.SOPRANO, VoicePart.ALTO), hasNewTake = true),
+                    RehearsalSongUi(
+                        "a", "À toi la gloire", "Ré", "Répétition du mar. 10 nov.",
+                        listOf(VoicePart.SOPRANO, VoicePart.ALTO), hasNewTake = true,
+                    ),
                     RehearsalSongUi("b", "Holy, Holy, Holy", "Ré", null, emptyList(), hasNewTake = false),
                     RehearsalSongUi("c", "Amazing Grace", "Sol", "Version propre", emptyList(), hasNewTake = false),
                 ),

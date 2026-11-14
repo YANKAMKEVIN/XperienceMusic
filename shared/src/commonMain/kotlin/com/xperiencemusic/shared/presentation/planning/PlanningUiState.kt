@@ -14,13 +14,11 @@ enum class MyAnswer { SERVES, NOT_AVAILABLE, UNANSWERED }
 data class PlanningUiState(
     val isLoading: Boolean = true,
     val monthStart: LocalDate? = null,
-    /** "novembre 2026" */
-    val monthLabel: String = "",
     val canGoBack: Boolean = false,
     val canGoForward: Boolean = false,
     val status: MonthStatus = MonthStatus.NOT_OPEN,
-    /** "25 oct.", while the month is open with a deadline. */
-    val answerByLabel: String? = null,
+    /** While the month is open with a deadline. */
+    val answerBy: LocalDate? = null,
     /** The deadline is behind us but the month is still open: answers are late, not closed. */
     val isPastDeadline: Boolean = false,
     /** Once validated: the services still to come whose team lacks a part, said in the banner. */
@@ -52,8 +50,6 @@ data class MonthValidationUi(
 data class ServiceCardUi(
     val date: LocalDate,
     val kind: ServiceKind,
-    /** "dim." */
-    val weekday: String,
     val day: Int,
     val serving: List<ServingUi>,
     val missing: List<Instrument>,

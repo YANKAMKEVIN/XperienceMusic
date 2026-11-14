@@ -6,8 +6,6 @@ import kotlinx.datetime.LocalDate
 data class RehearsalUploadUiState(
     val isLoading: Boolean = true,
     val rehearsalDate: LocalDate? = null,
-    /** "mardi 10 nov." */
-    val dateLabel: String = "",
     val songs: List<RehearsalSongUi> = emptyList(),
 )
 

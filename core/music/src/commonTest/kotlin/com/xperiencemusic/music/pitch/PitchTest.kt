@@ -63,9 +63,10 @@ class PitchTest {
     fun `holdNote valide une note tenue assez longtemps malgré une courte coupure`() {
         val la = Pitch.midiToFrequency(69.0)
         val frames = List(20) { la } + listOf(null) + List(15) { la * 1.01 } // +17 cents
-        val result = HoldNoteEvaluator(targetMidi = 69, requiredSeconds = 3.0).evaluate(frames, frameSeconds = 0.1)
-        assertTrue(result.isSuccess)
-        assertEquals(3.6, result.longestHoldSeconds, absoluteTolerance = 1e-9)
+        val tracker = HoldNoteTracker(targetMidi = 69, requiredSeconds = 3.0)
+        val last = frames.map { tracker.push(it, frameSeconds = 0.1) }.last()
+        assertTrue(last.isSuccess)
+        assertEquals(3.6, last.currentHoldSeconds, absoluteTolerance = 1e-9)
     }
 
     @Test
@@ -85,8 +86,9 @@ class PitchTest {
         val la = Pitch.midiToFrequency(69.0)
         val laDiese = Pitch.midiToFrequency(70.0)
         val frames = List(15) { la } + List(5) { laDiese } + List(15) { la }
-        val result = HoldNoteEvaluator(targetMidi = 69, requiredSeconds = 2.0).evaluate(frames, frameSeconds = 0.1)
-        assertFalse(result.isSuccess)
-        assertEquals(1.5, result.longestHoldSeconds, absoluteTolerance = 1e-9)
+        val tracker = HoldNoteTracker(targetMidi = 69, requiredSeconds = 2.0)
+        val progress = frames.map { tracker.push(it, frameSeconds = 0.1) }
+        assertTrue(progress.none { it.isSuccess })
+        assertEquals(1.5, progress.maxOf { it.currentHoldSeconds }, absoluteTolerance = 1e-9)
     }
 }

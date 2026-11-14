@@ -3,47 +3,28 @@ package com.xperiencemusic.shared.presentation.account
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.DomainResult
-import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.Member
-import com.xperiencemusic.shared.domain.model.Permission
-import com.xperiencemusic.shared.domain.repository.VoiceSubmissionRepository
 import com.xperiencemusic.shared.domain.usecase.ChangeAvatarUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
-import com.xperiencemusic.shared.domain.usecase.ObserveGrowthReviewUseCase
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.xperiencemusic.shared.domain.usecase.ObserveReviewQueueUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class AccountViewModel(
     observeCurrentMember: ObserveCurrentMemberUseCase,
-    submissions: VoiceSubmissionRepository,
-    observeGrowthReview: ObserveGrowthReviewUseCase,
+    observeReviewQueue: ObserveReviewQueueUseCase,
     private val changeAvatar: ChangeAvatarUseCase,
 ) : ViewModel() {
     private val action = MutableStateFlow(Action())
 
     /** What waits for the reviewer, as on the Progress tab; nothing for everyone else. */
-    private val base = observeCurrentMember().flatMapLatest { member ->
-        if (member == null || !member.role.can(Permission.REVIEW_TRAINING)) {
-            flowOf(deriveAccountState(member))
-        } else {
-            combine(submissions.observeAll(), observeGrowthReview()) { all, review ->
-                deriveAccountState(member).copy(
-                    toReviewCount = all.count { it.status == ExerciseStatus.SUBMITTED },
-                    toValidateCount = review.requests.count { it.status == ExerciseStatus.SUBMITTED } +
-                        review.checks.count { it.status == ExerciseStatus.SUBMITTED },
-                )
-            }
-        }
+    private val base = combine(observeCurrentMember(), observeReviewQueue()) { member, queue ->
+        deriveAccountState(member).copy(toReviewCount = queue.toReview, toValidateCount = queue.toValidate)
     }
 
     val state: StateFlow<AccountUiState> = combine(base, action) { state, act ->

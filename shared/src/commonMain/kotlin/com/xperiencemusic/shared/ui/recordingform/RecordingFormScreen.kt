@@ -1,6 +1,7 @@
 package com.xperiencemusic.shared.ui.recordingform
 
 import com.xperiencemusic.shared.resources.recording_form_reference_keeps
+import com.xperiencemusic.shared.resources.recording_form_rehearsal_title
 import com.xperiencemusic.shared.resources.recording_form_voice_replaces
 import com.xperiencemusic.shared.resources.recording_form_target_all
 import com.xperiencemusic.shared.resources.recording_form_target_title
@@ -79,6 +80,7 @@ import com.xperiencemusic.shared.ui.components.DatePickerModal
 import com.xperiencemusic.shared.ui.components.EditorTopBar
 import com.xperiencemusic.shared.ui.components.SectionTitle
 import com.xperiencemusic.shared.ui.platform.rememberAudioFilePicker
+import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Spacing
 import com.xperiencemusic.shared.ui.theme.appSwitchColors
@@ -98,6 +100,13 @@ fun RecordingFormScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.isSaved) { if (state.isSaved) onSaved() }
+    val words = rememberFormattingWords()
+    val rehearsalTitle = state.rehearsalDate?.let {
+        stringResource(Res.string.recording_form_rehearsal_title, words.shortDayAndDate(it))
+    }
+    LaunchedEffect(rehearsalTitle) {
+        rehearsalTitle?.let { viewModel.onEvent(RecordingFormEvent.DefaultTitleResolved(it)) }
+    }
     val pickFile = rememberAudioFilePicker { viewModel.onEvent(RecordingFormEvent.FilePicked(it)) }
     RecordingFormScreenContent(state = state, onEvent = viewModel::onEvent, onPickFile = pickFile, onBack = onBack)
 }
@@ -183,36 +192,8 @@ fun RecordingFormScreenContent(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            stringResource(Res.string.recording_form_date_label),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(state.dateLabel, style = MaterialTheme.typography.titleMedium)
-                    }
-                    TextButton(onClick = { isPickingDate = true }) { Text(stringResource(Res.string.setlist_change_date)) }
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.toggleable(
-                        value = state.makeReference,
-                        role = Role.Switch,
-                        onValueChange = { onEvent(RecordingFormEvent.MakeReferenceChanged(it)) },
-                    ),
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(Res.string.recording_form_reference), style = MaterialTheme.typography.titleSmall)
-                        Text(
-                            stringResource(Res.string.recording_form_reference_help),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(checked = state.makeReference, onCheckedChange = null, colors = appSwitchColors())
-                }
+                DateRow(rememberFormattingWords().shortDate(state.recordedOn), onChange = { isPickingDate = true })
+                ReferenceSwitch(state.makeReference, onChange = { onEvent(RecordingFormEvent.MakeReferenceChanged(it)) })
 
                 if (state.makeReference && !state.isFull) {
                     state.currentReferenceTitle?.let {
@@ -239,6 +220,40 @@ fun RecordingFormScreenContent(
 }
 
 @Composable
+private fun DateRow(dateLabel: String, onChange: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                stringResource(Res.string.recording_form_date_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(dateLabel, style = MaterialTheme.typography.titleMedium)
+        }
+        TextButton(onClick = onChange) { Text(stringResource(Res.string.setlist_change_date)) }
+    }
+}
+
+/** "Make it the reference": the whole row toggles. */
+@Composable
+private fun ReferenceSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onChange),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(Res.string.recording_form_reference), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(Res.string.recording_form_reference_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = null, colors = appSwitchColors())
+    }
+}
+
+@Composable
 private fun ErrorText(error: RecordingFormError) {
     Text(
         stringResource(
@@ -256,10 +271,11 @@ private fun ErrorText(error: RecordingFormError) {
 
 @Composable
 private fun FileCard(file: PickedFileUi) {
+    val size = rememberFormattingWords().fileSize(file.sizeBytes)
     AppCard {
         Text(file.name, style = MaterialTheme.typography.titleSmall)
         Text(
-            file.durationLabel?.let { stringResource(Res.string.recording_form_file_meta, it, file.sizeLabel) } ?: file.sizeLabel,
+            file.durationLabel?.let { stringResource(Res.string.recording_form_file_meta, it, size) } ?: size,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -293,7 +309,7 @@ private fun ReplaceOption(recording: ExistingRecordingUi, isSelected: Boolean, o
         RadioButton(selected = isSelected, onClick = null)
         Column(Modifier.weight(1f).padding(start = Spacing.s)) {
             Text(recording.title, style = MaterialTheme.typography.bodyLarge)
-            Text(recording.dateLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(rememberFormattingWords().shortDate(recording.recordedOn), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (recording.isReference) {
             Icon(
@@ -315,12 +331,11 @@ private fun RecordingFormScreenFullPreview() {
                 songTitle = "À toi la gloire",
                 title = "Répétition du mardi",
                 recordedOn = LocalDate(2026, 10, 13),
-                dateLabel = "13 oct. 2026",
-                file = PickedFileUi("repet-13-10.m4a", "4,2 Mo", "3:32"),
+                file = PickedFileUi("repet-13-10.m4a", 4_400_000, "3:32"),
                 existing = listOf(
-                    ExistingRecordingUi("1", "Prestation", "4 oct. 2026", isReference = true),
-                    ExistingRecordingUi("2", "Acoustique", "20 sept. 2026", isReference = false),
-                    ExistingRecordingUi("3", "Répétition", "1 sept. 2026", isReference = false),
+                    ExistingRecordingUi("1", "Prestation", LocalDate(2026, 10, 4), isReference = true),
+                    ExistingRecordingUi("2", "Acoustique", LocalDate(2026, 9, 20), isReference = false),
+                    ExistingRecordingUi("3", "Répétition", LocalDate(2026, 9, 1), isReference = false),
                 ),
                 isFull = true,
                 replaceId = "3",
