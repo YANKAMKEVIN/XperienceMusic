@@ -15,6 +15,8 @@ data class WeekUiState(
     val isRefreshing: Boolean = false,
     /** The server could not be reached: what is shown is the copy on the phone. */
     val isOffline: Boolean = false,
+    /** The first load failed and the phone has no copy yet: nothing to show but a way to retry. */
+    val hasLoadFailed: Boolean = false,
     /** Null when the coming weeks have nothing to download. */
     val offline: WeekOfflineUi? = null,
     /** The next rehearsal, counted down while no setlist is published. */

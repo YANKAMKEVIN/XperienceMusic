@@ -49,6 +49,9 @@ import com.xperiencemusic.shared.resources.library_empty
 import com.xperiencemusic.shared.resources.library_empty_admin
 import com.xperiencemusic.shared.resources.library_empty_member
 import com.xperiencemusic.shared.resources.library_empty_title
+import com.xperiencemusic.shared.resources.library_load_failed_title
+import com.xperiencemusic.shared.resources.first_load_failed_text
+import com.xperiencemusic.shared.resources.offline_retry
 import com.xperiencemusic.shared.resources.library_search
 import com.xperiencemusic.shared.resources.library_title
 import com.xperiencemusic.shared.resources.library_versions
@@ -114,7 +117,9 @@ private fun LibraryList(
         verticalArrangement = Arrangement.spacedBy(if (isShort) Spacing.s else Spacing.m),
     ) {
         if (!isShort) item { TabHeader(stringResource(Res.string.library_title)) { addButton() } }
-        if (state.isOffline) item { OfflineBanner() }
+        if (state.isOffline) {
+            item { OfflineBanner(onRetry = { onEvent(LibraryEvent.RefreshPulled) }, isRetrying = state.isRefreshing) }
+        }
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
@@ -148,7 +153,15 @@ private fun LibraryList(
         }
         if (!state.isLoading && state.songs.isEmpty()) {
             item {
-                if (state.query.isBlank() && state.selectedKey == null) {
+                if (state.hasLoadFailed) {
+                    EmptyState(
+                        icon = XmIcons.Book,
+                        title = stringResource(Res.string.library_load_failed_title),
+                        text = stringResource(Res.string.first_load_failed_text),
+                        actionLabel = stringResource(Res.string.offline_retry),
+                        onAction = { onEvent(LibraryEvent.RefreshPulled) },
+                    )
+                } else if (state.query.isBlank() && state.selectedKey == null) {
                     EmptyState(
                         icon = XmIcons.Book,
                         title = stringResource(Res.string.library_empty_title),

@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.presentation.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.Permission
+import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SyncStatus
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -30,7 +32,9 @@ class LibraryViewModel(
     private val selectedKeyLabel = MutableStateFlow<String?>(null)
     private val isRefreshing = MutableStateFlow(false)
 
-    private val keys = searchSongs("").map { deriveKeyFilters(it) }
+    // Both start empty: until the phone has a copy of the songs, they publish nothing, and the
+    // screen would wait on them forever when the first load fails.
+    private val keys = searchSongs("").map { deriveKeyFilters(it) }.onStart { emit(emptyList()) }
 
     /** The chosen key, dropped once no song is in it any more or the filter is hidden. */
     private val selectedKey = combine(keys, selectedKeyLabel) { keys, label ->
@@ -39,7 +43,8 @@ class LibraryViewModel(
 
     private val results = combine(query, selectedKey) { query, key -> query to key }
         .flatMapLatest { (query, key) -> searchSongs(query, key) }
-        .map { songs -> songs.map { it.toLibraryItem() } }
+        .map<List<Song>, List<LibrarySongUi>?> { songs -> songs.map { it.toLibraryItem() } }
+        .onStart { emit(null) }
 
     private val filters = combine(query, keys, selectedKey) { query, keys, key -> Triple(query, keys, key) }
 
@@ -50,15 +55,17 @@ class LibraryViewModel(
         observeSyncStatus(),
         isRefreshing,
     ) { (query, keys, key), songs, member, sync, refreshing ->
+        val hasFailed = sync == SyncStatus.FAILED
         LibraryUiState(
             query = query,
             keys = if (keys.size < 2) emptyList() else keys.map { it.shortLabel() },
             selectedKey = key?.shortLabel(),
-            isLoading = false,
-            songs = songs,
+            isLoading = songs == null && !hasFailed,
+            songs = songs.orEmpty(),
             canAddSong = member?.role?.can(Permission.EDIT_SONG) == true,
             isRefreshing = refreshing,
-            isOffline = sync == SyncStatus.FAILED,
+            isOffline = songs != null && hasFailed,
+            hasLoadFailed = songs == null && hasFailed,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryUiState())
 

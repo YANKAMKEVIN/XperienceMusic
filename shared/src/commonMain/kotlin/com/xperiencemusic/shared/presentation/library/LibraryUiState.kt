@@ -10,7 +10,10 @@ data class LibraryUiState(
     val songs: List<LibrarySongUi> = emptyList(),
     val canAddSong: Boolean = false,
     val isRefreshing: Boolean = false,
+    /** The server could not be reached: what is shown is the copy on the phone. */
     val isOffline: Boolean = false,
+    /** The first load failed and the phone has no copy yet: nothing to show but a way to retry. */
+    val hasLoadFailed: Boolean = false,
 )
 
 data class LibrarySongUi(
