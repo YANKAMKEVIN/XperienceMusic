@@ -47,12 +47,12 @@ class SupabaseMembersRepository(
 
     override suspend fun invite(email: String, role: Role) {
         session.accountCall { client.from(INVITATIONS).insert(InvitationDto(email, role.name)) }
-        reload()
+        loads.load("Members") { reload() }
     }
 
     override suspend fun cancelInvitation(email: String) {
         session.accountCall { client.from(INVITATIONS).delete { filter { eq("email", email) } } }
-        reload()
+        loads.load("Members") { reload() }
     }
 
     override suspend fun changeRole(member: BandMember, role: Role) {
@@ -61,14 +61,14 @@ class SupabaseMembersRepository(
             // Kept in step so a removed-then-reinvited account gets the same role back.
             client.from(INVITATIONS).update(RoleUpdateDto(role.name)) { filter { eq("email", member.email) } }
         }
-        reload()
+        loads.load("Members") { reload() }
     }
 
     override suspend fun changeLevel(member: BandMember, level: Level) {
         session.accountCall {
             client.from(PROFILES).update(LevelUpdateDto(level.name)) { filter { eq("id", member.id) } }
         }
-        reload()
+        loads.load("Members") { reload() }
     }
 
     override suspend fun remove(member: BandMember) {
@@ -76,7 +76,7 @@ class SupabaseMembersRepository(
             client.from(INVITATIONS).delete { filter { eq("email", member.email) } }
             client.from(PROFILES).delete { filter { eq("id", member.id) } }
         }
-        reload()
+        loads.load("Members") { reload() }
     }
 
     private suspend fun reload() {

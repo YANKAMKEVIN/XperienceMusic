@@ -71,15 +71,22 @@ class SupabaseSetlistRepository(
                 },
             )
         }
-        reload()
+        refreshAfterWrite()
     }
 
     override suspend fun delete(serviceDate: LocalDate) {
         session.accountCall {
             client.postgrest.rpc("delete_setlist", buildJsonObject { put("p_service_date", serviceDate.toString()) })
         }
-        reload()
+        refreshAfterWrite()
     }
+
+    /**
+     * Called after a write the server accepted: the write must stay a success even if this reload
+     * fails (network drop), or the user retries and duplicates it. The failure shows in [syncStatus]
+     * and the next refresh retries.
+     */
+    private suspend fun refreshAfterWrite() = ignoringFailures { _syncStatus.tracking { reload() } }
 
     private suspend fun reload() {
         val fetched = session.accountCall {

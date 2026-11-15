@@ -50,19 +50,19 @@ class SupabaseGrowthRepository(
         session.accountCall {
             client.from(REQUESTS).upsert(LevelRequestUpsertDto(memberId, target.name, now())) { onConflict = "member_id,target_level" }
         }
-        reload()
+        loads.load("Growth") { reload() }
     }
 
     override suspend fun reviewRequest(requestId: String, status: ExerciseStatus, feedback: String?) {
         session.accountCall { client.from(REQUESTS).update(GrowthReviewDto(status.name, feedback, now())) { filter { eq("id", requestId) } } }
-        reload()
+        loads.load("Growth") { reload() }
     }
 
     override suspend fun tickObjective(memberId: String, objectiveId: String) {
         session.accountCall {
             client.from(CHECKS).upsert(ObjectiveCheckUpsertDto(memberId, objectiveId, now())) { onConflict = "member_id,objective_id" }
         }
-        reload()
+        loads.load("Growth") { reload() }
     }
 
     override suspend fun untickObjective(memberId: String, objectiveId: String) {
@@ -74,7 +74,7 @@ class SupabaseGrowthRepository(
                 }
             }
         }
-        reload()
+        loads.load("Growth") { reload() }
     }
 
     override suspend fun reviewObjective(memberId: String, objectiveId: String, status: ExerciseStatus, feedback: String?) {
@@ -86,7 +86,7 @@ class SupabaseGrowthRepository(
                 }
             }
         }
-        reload()
+        loads.load("Growth") { reload() }
     }
 
     private suspend fun reload() {

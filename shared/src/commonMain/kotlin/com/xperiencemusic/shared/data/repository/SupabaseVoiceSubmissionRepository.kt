@@ -63,7 +63,7 @@ class SupabaseVoiceSubmissionRepository(
                 VoiceSubmissionUpsertDto(memberId, songId, audioPath, durationSeconds, Clock.System.now().toString()),
             ) { onConflict = "member_id,song_id" }
         }
-        reload()
+        loads.load("VoiceSubmission") { reload() }
         return previous?.audioPath?.takeIf { it != audioPath }
     }
 
@@ -73,7 +73,7 @@ class SupabaseVoiceSubmissionRepository(
                 filter { eq("id", submissionId) }
             }
         }
-        reload()
+        loads.load("VoiceSubmission") { reload() }
     }
 
     private suspend fun reload() {
