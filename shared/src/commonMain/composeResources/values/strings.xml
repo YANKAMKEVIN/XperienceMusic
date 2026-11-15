@@ -99,6 +99,12 @@
     <string name="planning_open_title">Inscriptions ouvertes</string>
     <string name="planning_open_text">Dis pour chaque vendredi et dimanche si tu sers.</string>
     <string name="planning_open_text_by">Réponds avant le %1$s pour chaque vendredi et dimanche.</string>
+    <!-- Transposition from the song’s key: "+2 demi-tons", "−1 demi-ton". %1$s is the signed number. -->
+    <plurals name="transpose_offset">
+        <item quantity="one">%1$s demi-ton</item>
+        <item quantity="other">%1$s demi-tons</item>
+    </plurals>
+    <string name="stage_transposed">%1$s · origine %2$s</string>
     <plurals name="planning_unanswered">
         <item quantity="one">%1$d date sans ta réponse</item>
         <item quantity="other">%1$d dates sans ta réponse</item>
@@ -912,6 +918,7 @@
     <string name="cd_transpose_down">Baisser d’un demi-ton</string>
     <string name="cd_transpose_up">Monter d’un demi-ton</string>
     <string name="cd_key">Tonalité %1$s</string>
+    <string name="cd_key_transposed">Tonalité %1$s, transposée de %2$s</string>
     <string name="cd_exercise_target">%1$s, %2$d s</string>
     <string name="exercise_target_frequency">%1$d Hz · %2$d s</string>
     <string name="growth_review_comment_placeholder">Une réussite observée, un point précis à travailler et le prochain essai attendu.</string>

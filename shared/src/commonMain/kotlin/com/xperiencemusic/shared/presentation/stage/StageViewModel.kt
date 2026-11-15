@@ -80,6 +80,8 @@ fun deriveStageState(
         isLoading = false,
         title = song.title,
         keyLabel = key.label(keyNotation),
+        transposeSemitones = transposeSemitones.takeIf { key != song.key } ?: 0,
+        originalKeyLabel = song.key.label(keyNotation).takeIf { key != song.key },
         chart = ChordChart.render(song.chart, key, notation),
         textScale = settings.textScale,
         isAutoScrolling = settings.isAutoScrolling,

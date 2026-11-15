@@ -1,5 +1,10 @@
 package com.xperiencemusic.shared.ui.song
 
+import com.xperiencemusic.shared.presentation.common.signedSemitones
+import com.xperiencemusic.shared.resources.cd_key_transposed
+import com.xperiencemusic.shared.resources.transpose_offset
+import org.jetbrains.compose.resources.pluralStringResource
+import kotlin.math.abs
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -65,6 +70,11 @@ import androidx.compose.animation.core.tween
 /** The key between − and + keeps its width as it changes ("Do" to "Fa#m"). */
 private val KEY_LABEL_MIN_WIDTH = 96.dp
 
+/** "+2 demi-tons", "−1 demi-ton": a transposition away from the song's own key. */
+@Composable
+internal fun transposeOffsetLabel(semitones: Int): String =
+    pluralStringResource(Res.plurals.transpose_offset, abs(semitones), signedSemitones(semitones))
+
 /** The transposer pill (− key +) over the notation switch, as in the brand mockups. */
 @Composable
 internal fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) -> Unit) {
@@ -94,16 +104,29 @@ internal fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent)
                     contentAlignment = Alignment.Center,
                     label = "key",
                     modifier = Modifier.widthIn(min = KEY_LABEL_MIN_WIDTH).clipToBounds(),
-                ) { (_, keyLabel) ->
-                    val keyDescription = stringResource(Res.string.cd_key, keyLabel)
-                    Text(
-                        keyLabel,
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.semantics {
-                            contentDescription = keyDescription
-                        },
-                    )
+                ) { (semitones, keyLabel) ->
+                    // How far from the song's key, under the key itself: "Mi majeur" alone did not
+                    // say whether the chart was the original or two semitones up.
+                    val offset = transposeOffsetLabel(semitones)
+                    val keyDescription = if (semitones == 0) {
+                        stringResource(Res.string.cd_key, keyLabel)
+                    } else {
+                        stringResource(Res.string.cd_key_transposed, keyLabel, offset)
+                    }
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clearAndSetSemantics { contentDescription = keyDescription },
+                    ) {
+                        Text(keyLabel, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                        if (semitones != 0) {
+                            Text(
+                                offset,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
                 }
                 IconButton(
                     onClick = { onEvent(SongDetailEvent.TransposeUpClicked) },
