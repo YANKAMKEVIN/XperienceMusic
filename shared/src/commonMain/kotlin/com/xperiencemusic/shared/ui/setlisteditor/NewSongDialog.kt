@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -63,7 +65,8 @@ internal fun NewSongDialog(form: NewSongUi, onEvent: (SetlistEditorEvent) -> Uni
         onDismissRequest = { onEvent(SetlistEditorEvent.NewSongDismissed) },
         title = { Text(stringResource(Res.string.setlist_new_song)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
+            // Scrolls when the keyboard leaves little room, so the error and the fields stay reachable.
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
                 Text(stringResource(Res.string.setlist_new_song_help), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
                     value = form.title,
@@ -79,6 +82,8 @@ internal fun NewSongDialog(form: NewSongUi, onEvent: (SetlistEditorEvent) -> Uni
                     onValueChange = { onEvent(SetlistEditorEvent.NewSongLinkChanged(it)) },
                     isError = form.error == NewSongError.INVALID_YOUTUBE_LINK,
                     imeAction = ImeAction.Done,
+                    // "OK" on the keyboard adds the song: the dialog's buttons may sit under the keyboard.
+                    onImeAction = { onEvent(SetlistEditorEvent.NewSongConfirmed) },
                 )
                 form.error?.let { Text(stringResource(it.message()), color = MaterialTheme.colorScheme.error) }
             }

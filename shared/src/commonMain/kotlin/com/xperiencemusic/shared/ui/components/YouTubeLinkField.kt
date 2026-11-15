@@ -1,6 +1,7 @@
 package com.xperiencemusic.shared.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -21,6 +22,8 @@ fun YouTubeLinkField(
     isError: Boolean,
     modifier: Modifier = Modifier,
     imeAction: ImeAction = ImeAction.Next,
+    /** The keyboard's action key, when it should do more than move on (confirm a dialog). */
+    onImeAction: (() -> Unit)? = null,
 ) {
     OutlinedTextField(
         value = value,
@@ -30,6 +33,7 @@ fun YouTubeLinkField(
         isError = isError,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = imeAction),
+        keyboardActions = onImeAction?.let { action -> KeyboardActions(onAny = { action() }) } ?: KeyboardActions.Default,
         modifier = modifier.fillMaxWidth(),
     )
 }

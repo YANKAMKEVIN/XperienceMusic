@@ -41,6 +41,9 @@ import com.xperiencemusic.shared.presentation.song.VoiceTrackUi
 import com.xperiencemusic.shared.presentation.common.PlaybackStatus
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.song_links_title
+import com.xperiencemusic.shared.resources.song_youtube_open
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.layout.fillMaxWidth
 import com.xperiencemusic.shared.resources.song_recording_actions
 import com.xperiencemusic.shared.resources.song_recording_delete
 import com.xperiencemusic.shared.resources.song_recording_meta
@@ -166,5 +169,15 @@ internal fun Links(links: List<LinkUi>) {
         links.forEach { link ->
             TextButton(onClick = { uriHandler.openUri(link.url) }) { Text(link.label) }
         }
+    }
+}
+
+/** The original on YouTube, opened in the YouTube app when it is installed. */
+@Composable
+internal fun YouTubeButton(url: String) {
+    val uriHandler = LocalUriHandler.current
+    OutlinedButton(onClick = { uriHandler.openUri(url) }, modifier = Modifier.fillMaxWidth()) {
+        Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
+        Text(stringResource(Res.string.song_youtube_open))
     }
 }
