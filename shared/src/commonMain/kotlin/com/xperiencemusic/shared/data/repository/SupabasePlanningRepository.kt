@@ -41,7 +41,7 @@ class SupabasePlanningRepository(private val client: SupabaseClient,
 
     override suspend fun openMonth(monthStart: LocalDate, answerBy: LocalDate?) {
         accountCall { client.from(MONTHS).insert(ServiceMonthOpenDto(monthStart.toString(), answerBy?.toString())) }
-        reload()
+        loads.load("Planning") { reload() }
     }
 
     override suspend fun validateMonth(monthStart: LocalDate) {
@@ -50,7 +50,7 @@ class SupabasePlanningRepository(private val client: SupabaseClient,
                 filter { eq("month", monthStart.toString()) }
             }
         }
-        reload()
+        loads.load("Planning") { reload() }
     }
 
     override suspend fun answer(memberId: String, serviceDate: LocalDate, serves: Boolean) {
@@ -59,7 +59,7 @@ class SupabasePlanningRepository(private val client: SupabaseClient,
                 ServiceSignupUpsertDto(serviceDate.toString(), memberId, serves, Clock.System.now().toString()),
             ) { onConflict = "service_date,member_id" }
         }
-        reload()
+        loads.load("Planning") { reload() }
     }
 
     private suspend fun reload() {
