@@ -40,6 +40,7 @@ import com.xperiencemusic.shared.presentation.signin.SignInStep
 import com.xperiencemusic.shared.presentation.signin.SignInUiState
 import com.xperiencemusic.shared.presentation.signin.SignInViewModel
 import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.error_generic
 import com.xperiencemusic.shared.resources.signin_change_email
 import com.xperiencemusic.shared.resources.signin_checking
 import com.xperiencemusic.shared.resources.signin_code_label
@@ -196,6 +197,7 @@ private fun SignInErrorText(error: SignInError?) {
                 SignInError.CODE_NOT_SENT -> Res.string.signin_error_not_sent
                 SignInError.TOO_MANY_ATTEMPTS -> Res.string.signin_error_too_many
                 SignInError.NETWORK -> Res.string.signin_error_network
+                SignInError.UNKNOWN -> Res.string.error_generic
             },
         ),
         color = MaterialTheme.colorScheme.error,

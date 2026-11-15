@@ -30,7 +30,7 @@ data class SignInUiState(
 
 enum class SignInStep { EMAIL, CODE }
 
-enum class SignInError { EMPTY_EMAIL, INVALID_EMAIL, INVALID_CODE, CODE_NOT_SENT, TOO_MANY_ATTEMPTS, NETWORK }
+enum class SignInError { EMPTY_EMAIL, INVALID_EMAIL, INVALID_CODE, CODE_NOT_SENT, TOO_MANY_ATTEMPTS, NETWORK, UNKNOWN }
 
 sealed interface SignInEvent {
     data class EmailChanged(val email: String) : SignInEvent

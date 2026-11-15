@@ -20,4 +20,7 @@ enum class DomainError {
     /** The server could not send the sign-in e-mail (its e-mail settings, not the phone's network). */
     CODE_NOT_SENT,
     TOO_MANY_ATTEMPTS,
+
+    /** Neither a network problem nor a known domain failure (a bug, an unexpected server answer). */
+    UNKNOWN,
 }
