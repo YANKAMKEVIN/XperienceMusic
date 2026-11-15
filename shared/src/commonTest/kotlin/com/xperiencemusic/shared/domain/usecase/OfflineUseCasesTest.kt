@@ -68,7 +68,7 @@ class OfflineUseCasesTest {
     @Test
     fun `se déconnecter efface les données du téléphone même sans réseau`() = runTest {
         var cleared = false
-        val sessions = FakeSessionRepository(member(Role.MEMBER)).apply { failure = IllegalStateException("offline") }
+        val sessions = FakeSessionRepository(member(Role.MEMBER)).apply { failure = kotlinx.io.IOException("offline") }
         val result = SignOutUseCase(sessions) { cleared = true }()
         assertTrue(cleared)
         assertEquals(DomainResult.Failure(DomainError.NETWORK), result)

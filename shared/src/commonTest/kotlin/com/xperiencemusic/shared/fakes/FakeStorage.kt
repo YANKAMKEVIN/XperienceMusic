@@ -38,7 +38,7 @@ class FakeAudioCache(initial: Set<String> = emptySet()) : AudioCache {
     override fun localUrl(audioPath: String): String? = if (audioPath in cachedPaths.value) "file:///$audioPath" else null
 
     override suspend fun download(audioPath: String) {
-        if (audioPath in failing) error("network down")
+        if (audioPath in failing) throw kotlinx.io.IOException("network down")
         downloaded += audioPath
         cachedPaths.update { it + audioPath }
     }

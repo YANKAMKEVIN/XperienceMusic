@@ -129,6 +129,7 @@ class SignInViewModel(
             DomainError.INVALID_CODE -> SignInError.INVALID_CODE
             DomainError.CODE_NOT_SENT -> SignInError.CODE_NOT_SENT
             DomainError.TOO_MANY_ATTEMPTS -> SignInError.TOO_MANY_ATTEMPTS
+            DomainError.UNKNOWN -> SignInError.UNKNOWN
             else -> SignInError.NETWORK
         }
         // A refused code is cleared, so the next one is typed into empty boxes.
