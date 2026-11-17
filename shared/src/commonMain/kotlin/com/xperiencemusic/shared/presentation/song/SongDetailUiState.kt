@@ -27,6 +27,8 @@ data class SongDetailUiState(
     /** Singers record their part on the song and send it for review. */
     val canRecordVoice: Boolean = false,
     val voiceTracks: List<VoiceTrackUi> = emptyList(),
+    /** The original the band learns from: shown as a button at the top, not in [links]. */
+    val youtubeUrl: String? = null,
     val links: List<LinkUi> = emptyList(),
     val pendingDeletion: RecordingUi? = null,
     val message: SongMessage? = null,

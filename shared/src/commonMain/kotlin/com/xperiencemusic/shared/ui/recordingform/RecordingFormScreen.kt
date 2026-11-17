@@ -26,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -60,6 +61,9 @@ import com.xperiencemusic.shared.resources.recording_form_date_label
 import com.xperiencemusic.shared.resources.recording_form_error_limit
 import com.xperiencemusic.shared.resources.recording_form_error_too_large
 import com.xperiencemusic.shared.resources.recording_form_error_unreadable
+import com.xperiencemusic.shared.resources.recording_form_compressed
+import com.xperiencemusic.shared.resources.recording_form_compressing
+import com.xperiencemusic.shared.resources.recording_form_compressing_help
 import com.xperiencemusic.shared.resources.recording_form_file_meta
 import com.xperiencemusic.shared.resources.recording_form_file_title
 import com.xperiencemusic.shared.resources.recording_form_full_help
@@ -86,6 +90,7 @@ import com.xperiencemusic.shared.ui.theme.Spacing
 import com.xperiencemusic.shared.ui.theme.appSwitchColors
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
@@ -107,7 +112,10 @@ fun RecordingFormScreen(
     LaunchedEffect(rehearsalTitle) {
         rehearsalTitle?.let { viewModel.onEvent(RecordingFormEvent.DefaultTitleResolved(it)) }
     }
-    val pickFile = rememberAudioFilePicker { viewModel.onEvent(RecordingFormEvent.FilePicked(it)) }
+    val pickFile = rememberAudioFilePicker(
+        onCompressing = { viewModel.onEvent(RecordingFormEvent.FileCompressing(it)) },
+        onResult = { viewModel.onEvent(RecordingFormEvent.FilePicked(it)) },
+    )
     RecordingFormScreenContent(state = state, onEvent = viewModel::onEvent, onPickFile = pickFile, onBack = onBack)
 }
 
@@ -163,15 +171,7 @@ fun RecordingFormScreenContent(
                 onSelect = { onEvent(RecordingFormEvent.VoicePartSelected(it)) },
             )
 
-            SectionTitle(stringResource(Res.string.recording_form_file_title))
-            state.file?.let { FileCard(it) }
-            OutlinedButton(onClick = onPickFile, enabled = !state.isSaving, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(
-                        if (state.file == null) Res.string.recording_form_pick_file else Res.string.recording_form_change_file,
-                    ),
-                )
-            }
+            FileSection(state, onPickFile)
 
             if (state.voicePart != null) {
                 if (state.replacesVoice) {
@@ -269,9 +269,24 @@ private fun ErrorText(error: RecordingFormError) {
     )
 }
 
+/** The picked file (or its compression under way), and the button to pick another. */
+@Composable
+private fun FileSection(state: RecordingFormUiState, onPickFile: () -> Unit) {
+    SectionTitle(stringResource(Res.string.recording_form_file_title))
+    state.compressionProgress?.let { CompressionProgress(it) } ?: state.file?.let { FileCard(it) }
+    OutlinedButton(
+        onClick = onPickFile,
+        enabled = !state.isSaving && state.compressionProgress == null,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(stringResource(if (state.file == null) Res.string.recording_form_pick_file else Res.string.recording_form_change_file))
+    }
+}
+
 @Composable
 private fun FileCard(file: PickedFileUi) {
-    val size = rememberFormattingWords().fileSize(file.sizeBytes)
+    val words = rememberFormattingWords()
+    val size = words.fileSize(file.sizeBytes)
     AppCard {
         Text(file.name, style = MaterialTheme.typography.titleSmall)
         Text(
@@ -279,8 +294,35 @@ private fun FileCard(file: PickedFileUi) {
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        file.compressedFromBytes?.let { original ->
+            Text(
+                stringResource(Res.string.recording_form_compressed, words.fileSize(original), size),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
     }
 }
+
+/** A long rehearsal takes a while to re-encode: the member sees it moving. */
+@Composable
+private fun CompressionProgress(progress: Float) {
+    AppCard {
+        Text(
+            stringResource(Res.string.recording_form_compressing, (progress * PERCENT).roundToInt()),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().padding(top = Spacing.s))
+        Text(
+            stringResource(Res.string.recording_form_compressing_help),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = Spacing.s),
+        )
+    }
+}
+
+private const val PERCENT = 100
 
 @Composable
 private fun ReplaceChooser(state: RecordingFormUiState, onEvent: (RecordingFormEvent) -> Unit) {

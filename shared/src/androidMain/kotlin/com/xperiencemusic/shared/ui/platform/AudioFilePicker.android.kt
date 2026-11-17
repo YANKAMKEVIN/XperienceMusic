@@ -10,22 +10,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
+import com.xperiencemusic.shared.domain.model.AudioCompression
 import com.xperiencemusic.shared.domain.model.AudioFile
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-actual fun rememberAudioFilePicker(onResult: (AudioFile?) -> Unit): () -> Unit {
+actual fun rememberAudioFilePicker(onCompressing: (Float) -> Unit, onResult: (AudioFile?) -> Unit): () -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val currentOnResult = rememberUpdatedState(onResult)
+    val currentOnCompressing = rememberUpdatedState(onCompressing)
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri == null) {
             currentOnResult.value(null)
         } else {
             scope.launch {
-                val file = withContext(Dispatchers.IO) { runCatching { readAudio(context, uri) }.getOrNull() }
+                val file = withContext(Dispatchers.IO) {
+                    runCatching { readAudio(context, uri) { progress -> currentOnCompressing.value(progress) } }.getOrNull()
+                }
                 currentOnResult.value(file)
             }
         }
@@ -33,18 +38,55 @@ actual fun rememberAudioFilePicker(onResult: (AudioFile?) -> Unit): () -> Unit {
     return { launcher.launch("audio/*") }
 }
 
-private fun readAudio(context: Context, uri: Uri): AudioFile? {
+private fun readAudio(context: Context, uri: Uri, onCompressing: (Float) -> Unit): AudioFile? {
     val resolver = context.contentResolver
-    val name = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-        if (cursor.moveToFirst()) cursor.getString(0) else null
-    } ?: "audio"
+    var name = "audio"
+    var size = -1L
+    resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)?.use { cursor ->
+        if (cursor.moveToFirst()) {
+            cursor.getString(0)?.let { name = it }
+            if (!cursor.isNull(1)) size = cursor.getLong(1)
+        }
+    }
+    val duration = readDurationSeconds(context, uri)
+    AudioCompression.targetBitrate(size, duration)?.let { bitrate ->
+        compress(context, uri, name, size, duration, bitrate, onCompressing)?.let { return it }
+    }
     val bytes = resolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
     return AudioFile(
         fileName = name,
         mimeType = resolver.getType(uri) ?: "audio/mpeg",
         bytes = bytes,
-        durationSeconds = readDurationSeconds(context, uri),
+        durationSeconds = duration,
     )
+}
+
+/** Null when the phone cannot re-encode this file: it then goes as it is (or is refused if too big). */
+@Suppress("LongParameterList")
+private fun compress(
+    context: Context,
+    uri: Uri,
+    name: String,
+    size: Long,
+    duration: Int?,
+    bitrate: Int,
+    onCompressing: (Float) -> Unit,
+): AudioFile? {
+    val out = File.createTempFile("upload", ".m4a", context.cacheDir)
+    try {
+        onCompressing(0f)
+        if (!AacTranscoder.transcode(context, uri, out, bitrate, onCompressing)) return null
+        val bytes = out.readBytes().takeIf { it.isNotEmpty() && it.size < size } ?: return null
+        return AudioFile(
+            fileName = name.substringBeforeLast('.', name) + ".m4a",
+            mimeType = "audio/mp4",
+            bytes = bytes,
+            durationSeconds = duration,
+            compressedFromBytes = size,
+        )
+    } finally {
+        out.delete()
+    }
 }
 
 private fun readDurationSeconds(context: Context, uri: Uri): Int? {

@@ -12,6 +12,8 @@ data class RecordingFormUiState(
     /** Set when the take comes from a week's rehearsal; the screen spells the default name from it. */
     val rehearsalDate: LocalDate? = null,
     val file: PickedFileUi? = null,
+    /** A large file is being re-encoded before upload: from 0 to 1, null otherwise. */
+    val compressionProgress: Float? = null,
     val makeReference: Boolean = false,
     /** Who the take is for; null is the whole band, a voice stores it as that voice's track. */
     val voicePart: VoicePart? = null,
@@ -26,12 +28,21 @@ data class RecordingFormUiState(
     val isSaved: Boolean = false,
 ) {
     val canSave: Boolean
-        get() = !isLoading && !isSaving && file != null && (voicePart != null || (title.isNotBlank() && (!isFull || replaceId != null)))
+        get() {
+            val isReady = !isLoading && !isSaving && compressionProgress == null && file != null
+            return isReady && (voicePart != null || (title.isNotBlank() && (!isFull || replaceId != null)))
+        }
 
     val replacesVoice: Boolean get() = voicePart != null && voicePart in existingVoices
 }
 
-data class PickedFileUi(val name: String, val sizeBytes: Long, val durationLabel: String?)
+data class PickedFileUi(
+    val name: String,
+    val sizeBytes: Long,
+    val durationLabel: String?,
+    /** The size of the original, when it was compressed to [sizeBytes]. */
+    val compressedFromBytes: Long? = null,
+)
 
 data class ExistingRecordingUi(val id: String, val title: String, val recordedOn: LocalDate, val isReference: Boolean)
 
@@ -42,6 +53,7 @@ sealed interface RecordingFormEvent {
     /** The localized default name, applied only while the name is still empty. */
     data class DefaultTitleResolved(val title: String) : RecordingFormEvent
     data class DatePicked(val date: LocalDate) : RecordingFormEvent
+    data class FileCompressing(val progress: Float) : RecordingFormEvent
     data class FilePicked(val file: AudioFile?) : RecordingFormEvent
     data class VoicePartSelected(val voicePart: VoicePart?) : RecordingFormEvent
     data class MakeReferenceChanged(val makeReference: Boolean) : RecordingFormEvent

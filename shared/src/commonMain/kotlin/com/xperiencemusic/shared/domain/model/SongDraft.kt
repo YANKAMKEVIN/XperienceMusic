@@ -9,4 +9,6 @@ data class SongDraft(
     val key: Key,
     /** Chords may be typed in any notation; they are stored as Nashville numbers. */
     val chart: String,
+    /** The song's YouTube video, as typed; blank or null for none. */
+    val youtubeUrl: String? = null,
 )

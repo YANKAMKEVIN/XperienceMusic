@@ -8,6 +8,8 @@ import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.model.PlaybackState
 import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
+import com.xperiencemusic.shared.domain.model.YouTubeLink
+import com.xperiencemusic.shared.domain.model.youtubeUrl
 import com.xperiencemusic.shared.presentation.common.Formatting
 import com.xperiencemusic.shared.presentation.common.PlaybackStatus
 import com.xperiencemusic.shared.presentation.common.statusOf
@@ -58,7 +60,8 @@ fun deriveSongDetailState(
         canEditSong = member?.role?.can(Permission.EDIT_SONG) == true,
         canRecordVoice = member?.profile?.instrument == Instrument.SINGER,
         voiceTracks = song.voiceTracks.map { VoiceTrackUi(it.id, it.voicePart, playback.statusOf(it.id)) },
-        links = song.links.map { LinkUi(it.label, it.url) },
+        youtubeUrl = song.youtubeUrl,
+        links = song.links.filterNot { it.label == YouTubeLink.LABEL }.map { LinkUi(it.label, it.url) },
         pendingDeletion = recordings.firstOrNull { it.id == local.pendingDeletionId },
         message = local.message,
     )

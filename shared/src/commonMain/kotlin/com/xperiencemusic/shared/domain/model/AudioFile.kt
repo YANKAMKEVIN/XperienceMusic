@@ -7,6 +7,8 @@ class AudioFile(
     val bytes: ByteArray,
     /** Null when the platform could not read the duration. */
     val durationSeconds: Int?,
+    /** The size of the file the member picked, when it was re-encoded to [bytes] before upload. */
+    val compressedFromBytes: Long? = null,
 ) {
     val extension: String get() = fileName.substringAfterLast('.', missingDelimiterValue = "").lowercase()
 
