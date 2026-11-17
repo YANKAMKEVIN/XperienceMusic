@@ -1,5 +1,17 @@
 package com.xperiencemusic.shared.ui.song
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
+import coil3.compose.AsyncImage
+import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -172,12 +184,42 @@ internal fun Links(links: List<LinkUi>) {
     }
 }
 
-/** The original on YouTube, opened in the YouTube app when it is installed. */
+/**
+ * The original on YouTube: the video's picture with a play mark, opened in the YouTube app when it
+ * is installed. A link that is not a single video (no picture to show) is a plain link instead.
+ */
 @Composable
-internal fun YouTubeButton(url: String) {
+internal fun YouTubePreview(url: String, thumbnailUrl: String?, modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
-    OutlinedButton(onClick = { uriHandler.openUri(url) }, modifier = Modifier.fillMaxWidth()) {
-        Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
-        Text(stringResource(Res.string.song_youtube_open))
+    val label = stringResource(Res.string.song_youtube_open)
+    if (thumbnailUrl == null) {
+        TextButton(onClick = { uriHandler.openUri(url) }, modifier = modifier) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
+            Text(label)
+        }
+        return
+    }
+    Box(
+        modifier
+            .fillMaxWidth()
+            .aspectRatio(VIDEO_RATIO)
+            .clip(RoundedCornerShape(Radius.card))
+            // Shows while the picture loads, and offline.
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .clickable(onClickLabel = label, role = Role.Button) { uriHandler.openUri(url) }
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        // YouTube's picture is 4:3 with black bars; cropping to the video's shape removes them.
+        AsyncImage(model = thumbnailUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        Box(
+            Modifier.size(Sizes.touchTarget).background(MaterialTheme.colorScheme.scrim.copy(alpha = PLAY_MARK_ALPHA), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(Sizes.iconXl))
+        }
     }
 }
+
+private const val VIDEO_RATIO = 16f / 9f
+private const val PLAY_MARK_ALPHA = 0.6f

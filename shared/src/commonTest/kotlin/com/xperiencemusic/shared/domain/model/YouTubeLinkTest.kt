@@ -28,4 +28,30 @@ class YouTubeLinkTest {
         )
             .forEach { assertNull(YouTubeLink.normalize(it), it) }
     }
+
+    @Test
+    fun `l'identifiant de la vidéo se lit dans toutes les formes de lien`() {
+        listOf(
+            "https://youtu.be/QsjP0cZrQdk",
+            "https://youtu.be/QsjP0cZrQdk?si=abc123&t=42",
+            "https://www.youtube.com/watch?v=QsjP0cZrQdk",
+            "https://m.youtube.com/watch?feature=share&v=QsjP0cZrQdk#t=10",
+            "https://music.youtube.com/watch?v=QsjP0cZrQdk&list=PL123",
+            "https://www.youtube.com/shorts/QsjP0cZrQdk",
+            "https://www.youtube.com/embed/QsjP0cZrQdk",
+            "youtube.com/live/QsjP0cZrQdk?feature=share",
+        ).forEach { assertEquals("QsjP0cZrQdk", YouTubeLink.videoId(it), it) }
+        assertEquals("https://i.ytimg.com/vi/QsjP0cZrQdk/hqdefault.jpg", YouTubeLink.thumbnailUrl("https://youtu.be/QsjP0cZrQdk"))
+    }
+
+    @Test
+    fun `une chaîne, une playlist ou une recherche n'ont pas d'image de vidéo`() {
+        listOf(
+            "https://www.youtube.com/@hillsong",
+            "https://www.youtube.com/playlist?list=PL123",
+            "https://www.youtube.com/results?search_query=louange",
+            "https://www.youtube.com/watch?list=PL123",
+            "https://example.com/watch?v=QsjP0cZrQdk",
+        ).forEach { assertNull(YouTubeLink.thumbnailUrl(it), it) }
+    }
 }

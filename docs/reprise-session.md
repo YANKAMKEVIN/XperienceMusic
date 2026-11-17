@@ -47,6 +47,13 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     et les derniers résultats d'une recherche restaient cachés derrière le clavier.
   - **Idées non faites :** filtre par thème (il faut une colonne et réimporter les étiquettes de Rephi)
     et liste allégée (l'app charge encore les paroles de tous les chants pour afficher la liste).
+  - **Suites du 17 novembre 2026 (branche `feat/ux-follow-ups`, empilée sur `feat/library-redesign`, PR 12)** :
+    une bulle affiche la lettre sous le doigt à côté de l'index A–Z ; dans la fiche d'un chant, le bouton
+    « Écouter l'original » est remplacé par l'image de la vidéo YouTube, cliquable, au-dessus du titre
+    (Coil 3 pour charger l'image ; simple lien si l'adresse n'est pas une vidéo) ; l'onglet Progrès
+    n'affiche plus un écran à moitié chargé puis remplacé (l'écran partiel, gardé pour le hors-ligne,
+    n'apparaît que si les données ont plus de 1,5 s de retard). Vérifié sur le S24 : bulle et miniature.
+    Pas vérifié à l'écran : le clignotement de Progrès (intermittent) et l'ouverture de YouTube au clic.
   - **Importer depuis accords.app** : dans l'éditeur d'un nouveau chant, on colle le lien d'un chant
     (par exemple `accords.app/JEM414`). L'app lit cette seule page (le ChordPro intégré par Nuxt) et
     remplit titre, auteur, tonalité, paroles et accords, avec une section « Source » (copyright et

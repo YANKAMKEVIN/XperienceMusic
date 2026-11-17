@@ -96,6 +96,9 @@ kotlin {
             implementation(libs.supabase.auth)
             implementation(libs.supabase.postgrest)
             implementation(libs.supabase.storage)
+            // Remote images: the YouTube thumbnail of a song.
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)

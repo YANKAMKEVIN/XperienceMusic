@@ -61,6 +61,7 @@ fun deriveSongDetailState(
         canRecordVoice = member?.profile?.instrument == Instrument.SINGER,
         voiceTracks = song.voiceTracks.map { VoiceTrackUi(it.id, it.voicePart, playback.statusOf(it.id)) },
         youtubeUrl = song.youtubeUrl,
+        youtubeThumbnailUrl = song.youtubeUrl?.let(YouTubeLink::thumbnailUrl),
         links = song.links.filterNot { it.label == YouTubeLink.LABEL }.map { LinkUi(it.label, it.url) },
         pendingDeletion = recordings.firstOrNull { it.id == local.pendingDeletionId },
         message = local.message,

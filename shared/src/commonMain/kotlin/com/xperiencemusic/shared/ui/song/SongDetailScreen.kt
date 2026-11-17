@@ -197,6 +197,8 @@ private fun SongDetailBody(
         contentPadding = PaddingValues(start = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
         verticalArrangement = Arrangement.spacedBy(Spacing.l),
     ) {
+        // The original first: the video's picture sits right above the title.
+        state.youtubeUrl?.let { url -> item { YouTubePreview(url, state.youtubeThumbnailUrl) } }
         item { SongHero(state) }
         item { KeyAndNotation(state, onEvent) }
         item {
@@ -205,7 +207,6 @@ private fun SongDetailBody(
                 Text(stringResource(Res.string.stage_open), style = MaterialTheme.typography.titleMedium)
             }
         }
-        state.youtubeUrl?.let { url -> item { YouTubeButton(url) } }
         if (state.canRecordVoice) {
             item {
                 OutlinedButton(onClick = onRecordVoice, modifier = Modifier.fillMaxWidth()) {
