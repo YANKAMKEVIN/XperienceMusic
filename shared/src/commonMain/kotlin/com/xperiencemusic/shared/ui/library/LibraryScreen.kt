@@ -420,27 +420,33 @@ private fun AlphabetIndex(letters: String, onLetter: (Int) -> Unit, modifier: Mo
                 }
             }
         }
-        AnimatedVisibility(
-            visible = isTouched,
-            enter = fadeIn() + scaleIn(),
-            exit = fadeOut() + scaleOut(),
-            // Wider than the index: it sits to its left, level with the letter under the finger.
-            modifier = Modifier
-                .requiredSize(BUBBLE_SIZE)
-                .offset {
-                    IntOffset(
-                        x = -((BUBBLE_SIZE + INDEX_WIDTH) / 2 + Spacing.s).roundToPx(),
-                        y = (touchedLetterY - BUBBLE_SIZE.toPx() / 2f).roundToInt(),
-                    )
-                }
-                .clearAndSetSemantics {},
-        ) {
-            Box(
-                Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(touchedLetter, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onPrimary)
+        IndexBubble(touchedLetter, isVisible = isTouched, centerY = touchedLetterY)
+    }
+}
+
+/** The letter under the finger, large, to the left of the index and level with that letter. */
+@Composable
+private fun IndexBubble(letter: String, isVisible: Boolean, centerY: Float) {
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn() + scaleIn(),
+        exit = fadeOut() + scaleOut(),
+        // Wider than the index it is laid out in: the offset moves it out to the left.
+        modifier = Modifier
+            .requiredSize(BUBBLE_SIZE)
+            .offset {
+                IntOffset(
+                    x = -((BUBBLE_SIZE + INDEX_WIDTH) / 2 + Spacing.s).roundToPx(),
+                    y = (centerY - BUBBLE_SIZE.toPx() / 2f).roundToInt(),
+                )
             }
+            .clearAndSetSemantics {},
+    ) {
+        Box(
+            Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(letter, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onPrimary)
         }
     }
 }
