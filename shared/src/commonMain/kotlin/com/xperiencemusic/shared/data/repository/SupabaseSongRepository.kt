@@ -77,7 +77,7 @@ class SupabaseSongRepository(
     override suspend fun createSong(draft: SongDraft): String {
         val created = session.accountCall {
             client.from(SONGS).insert(draft.toWriteDto()) { select(Columns.list("id")) }.decodeSingle<IdDto>()
-                .also { replaceYouTubeLink(it.id, draft.youtubeUrl) }
+                .also { insertYouTubeLink(it.id, draft.youtubeUrl) }
         }
         refreshAfterWrite()
         return created.id
@@ -99,6 +99,11 @@ class SupabaseSongRepository(
                 eq("label", YouTubeLink.LABEL)
             }
         }
+        insertYouTubeLink(songId, url)
+    }
+
+    /** A new song has no link yet: there is nothing to delete first. */
+    private suspend fun insertYouTubeLink(songId: String, url: String?) {
         if (url != null) client.from(SONG_LINKS).insert(SongLinkWriteDto(songId, YouTubeLink.LABEL, url))
     }
 
