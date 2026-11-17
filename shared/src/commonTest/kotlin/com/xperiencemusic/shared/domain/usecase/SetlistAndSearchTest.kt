@@ -1,6 +1,5 @@
 package com.xperiencemusic.shared.domain.usecase
 
-import com.xperiencemusic.music.theory.Key
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Instrument
@@ -134,16 +133,28 @@ class SetlistAndSearchTest {
     }
 
     @Test
-    fun `la recherche peut se limiter à une tonalité`() = runTest {
-        val songs = songRepository(
-            song("1", "Amazing Grace", key = Key(7)),
-            song("2", "À toi la gloire", key = Key(2)),
-            song("3", "Agnus Dei", key = Key(7)),
-        )
-        val search = SearchSongsUseCase(songs)
-        assertEquals(listOf("3", "1"), search("", Key(7)).first().map { it.id })
-        assertEquals(listOf("1"), search("grace", Key(7)).first().map { it.id })
-        assertTrue(search("grace", Key(2)).first().isEmpty())
+    fun `les titres qui commencent par la recherche passent devant, puis les auteurs, puis les paroles`() = runTest {
+        val index = SearchSongsUseCase(
+            songRepository(
+                song("1", "Ô Seigneur de gloire"),
+                song("2", "Gloire à l'Agneau"),
+                song("3", "Psaume 23", artist = "Chorale Gloire"),
+                song("4", "Tu es saint", chart = "# Gloire\n[1]Tu es [5]saint\n[4]À toi la gloi[1]re, Seigneur"),
+                song("5", "Amazing Grace", chart = "[1]Amazing grace"),
+            ),
+        ).index().first()
+
+        val matches = index.search("gloire", inLyrics = true)
+        assertEquals(listOf("2", "1", "3", "4"), matches.map { it.song.id })
+        // The chords are gone from the line shown, and a section title is not lyrics.
+        assertEquals("À toi la gloire, Seigneur", matches.last().lyricLine)
+        assertEquals(listOf("2", "1", "3"), index.search("gloire").map { it.song.id })
+    }
+
+    @Test
+    fun `une apostrophe tapée au clavier trouve l'apostrophe typographique`() = runTest {
+        val search = SearchSongsUseCase(songRepository(song("1", "Gloire à l’Agneau")))
+        assertEquals(listOf("1"), search("l'agneau").first().map { it.id })
     }
 
     @Test
