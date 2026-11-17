@@ -20,7 +20,8 @@ import java.nio.ByteOrder
  */
 internal object AacTranscoder {
     private const val AAC = MediaFormat.MIMETYPE_AUDIO_AAC
-    private const val TIMEOUT_US = 10_000L
+    /** How long the loop rests when no codec had anything ready. */
+    private const val IDLE_MILLIS = 1L
     private const val MAX_AAC_SAMPLE_RATE = 48_000
     private const val ENCODER_INPUT_BYTES = 64 * 1024
     private const val BYTES_PER_SAMPLE = 2
@@ -99,22 +100,25 @@ internal object AacTranscoder {
             while (!finished) {
                 // The encoder is slower than the decoder: hold the decoder back instead of piling PCM up.
                 val hasRoom = pendingBytes < MAX_PENDING_BYTES
-                if (!extractorDone && hasRoom) feedDecoder()
-                if (!decoderDone && hasRoom) drainDecoder()
+                // Nothing waits on a codec: each step takes what is ready, so the file goes through as fast
+                // as the codecs allow (waiting on each call made it run at about the speed of playback).
+                var moved = !extractorDone && hasRoom && feedDecoder()
+                if (!decoderDone && hasRoom) moved = drainDecoder() || moved
                 encoder?.let { enc ->
-                    if (!encoderInputDone) feedEncoder(enc)
-                    drainEncoder(enc)
+                    if (!encoderInputDone) moved = feedEncoder(enc) || moved
+                    moved = drainEncoder(enc) || moved
                 }
                 // The decoder ended before ever telling its format: nothing was decoded.
                 if (decoderDone && encoder == null) return false
+                if (!moved) Thread.sleep(IDLE_MILLIS)
             }
             return true
         }
 
-        private fun feedDecoder() {
-            val index = decoder.dequeueInputBuffer(TIMEOUT_US)
-            if (index < 0) return
-            val buffer = decoder.getInputBuffer(index) ?: return
+        private fun feedDecoder(): Boolean {
+            val index = decoder.dequeueInputBuffer(0)
+            if (index < 0) return false
+            val buffer = decoder.getInputBuffer(index) ?: return false
             val size = extractor.readSampleData(buffer, 0)
             if (size < 0) {
                 decoder.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
@@ -124,10 +128,11 @@ internal object AacTranscoder {
                 reportProgress(extractor.sampleTime)
                 extractor.advance()
             }
+            return true
         }
 
-        private fun drainDecoder() {
-            val index = decoder.dequeueOutputBuffer(info, TIMEOUT_US)
+        private fun drainDecoder(): Boolean {
+            val index = decoder.dequeueOutputBuffer(info, 0)
             when {
                 index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> startEncoder(decoder.outputFormat)
                 index >= 0 -> {
@@ -143,6 +148,7 @@ internal object AacTranscoder {
                     if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) decoderDone = true
                 }
             }
+            return index >= 0 || index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED
         }
 
         private fun startEncoder(format: MediaFormat) {
@@ -178,11 +184,9 @@ internal object AacTranscoder {
             return mono
         }
 
-        private fun feedEncoder(enc: MediaCodec) {
-            if (pending.isEmpty() && !decoderDone) return
-            val index = enc.dequeueInputBuffer(TIMEOUT_US)
-            if (index < 0) return
-            val buffer = enc.getInputBuffer(index) ?: return
+        private fun feedEncoder(enc: MediaCodec): Boolean {
+            val index = if (pending.isEmpty() && !decoderDone) -1 else enc.dequeueInputBuffer(0)
+            val buffer = (if (index >= 0) enc.getInputBuffer(index) else null) ?: return false
             buffer.clear()
             while (buffer.hasRemaining() && pending.isNotEmpty()) {
                 val chunk = pending.first()
@@ -199,10 +203,11 @@ internal object AacTranscoder {
             val isLast = decoderDone && pending.isEmpty()
             enc.queueInputBuffer(index, 0, bytes, timeUs, if (isLast) MediaCodec.BUFFER_FLAG_END_OF_STREAM else 0)
             if (isLast) encoderInputDone = true
+            return true
         }
 
-        private fun drainEncoder(enc: MediaCodec) {
-            val index = enc.dequeueOutputBuffer(info, TIMEOUT_US)
+        private fun drainEncoder(enc: MediaCodec): Boolean {
+            val index = enc.dequeueOutputBuffer(info, 0)
             when {
                 index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                     muxerTrack = muxer.addTrack(enc.outputFormat)
@@ -223,6 +228,7 @@ internal object AacTranscoder {
                     }
                 }
             }
+            return index >= 0 || index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED
         }
 
         private fun reportProgress(timeUs: Long) {

@@ -355,7 +355,7 @@
     <string name="recording_form_pick_file">Choisir un fichier audio</string>
     <string name="recording_form_change_file">Changer de fichier</string>
     <string name="recording_form_file_meta">%1$s · %2$s</string>
-    <string name="recording_form_compressing">Compression du fichier… %1$d %%</string>
+    <string name="recording_form_compressing">Compression du fichier… %1$d %</string>
     <string name="recording_form_compressing_help">Le fichier est allégé pour l’envoi. Garde l’app ouverte, ça peut prendre une minute pour une répétition entière.</string>
     <string name="recording_form_compressed">Allégé de %1$s à %2$s pour l’envoi</string>
     <string name="recording_form_name_label">Nom de la version</string>
