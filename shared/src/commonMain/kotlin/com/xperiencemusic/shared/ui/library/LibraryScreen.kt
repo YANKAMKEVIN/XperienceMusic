@@ -1,5 +1,19 @@
 package com.xperiencemusic.shared.ui.library
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -352,46 +366,79 @@ private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit, endPadding:
 
 /**
  * The letters down the right edge: a tap or a slide jumps to the songs of the letter under the
- * finger. Screen readers move by the section headings instead.
+ * finger, which shows large in a bubble beside it, as in a phone's contact list. Screen readers
+ * move by the section headings instead.
  */
 @Composable
 private fun AlphabetIndex(letters: List<String>, onLetter: (Int) -> Unit, modifier: Modifier = Modifier) {
     val currentOnLetter by rememberUpdatedState(onLetter)
-    Column(
-        modifier
-            .width(INDEX_WIDTH)
-            .heightIn(max = INDEX_LETTER_HEIGHT * letters.size)
-            .fillMaxHeight()
-            .pointerInput(letters.size) {
-                var last = -1
-                fun pick(y: Float) {
-                    val index = (y / size.height * letters.size).toInt().coerceIn(0, letters.lastIndex)
-                    if (index != last) {
+    val haptics = LocalHapticFeedback.current
+    var isTouched by remember { mutableStateOf(false) }
+    // Kept after the finger lifts, so the bubble fades out with its letter.
+    var touchedLetter by remember { mutableStateOf("") }
+    var touchedLetterY by remember { mutableStateOf(0f) }
+    Box(modifier.width(INDEX_WIDTH).heightIn(max = INDEX_LETTER_HEIGHT * letters.size).fillMaxHeight()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .pointerInput(letters) {
+                    var last = -1
+                    fun pick(y: Float) {
+                        val index = (y / size.height * letters.size).toInt().coerceIn(0, letters.lastIndex)
+                        if (index == last) return
                         last = index
+                        touchedLetter = letters[index]
+                        touchedLetterY = (index + 0.5f) * size.height / letters.size
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         currentOnLetter(index)
                     }
-                }
-                awaitEachGesture {
-                    val down = awaitFirstDown()
-                    last = -1
-                    pick(down.position.y)
-                    drag(down.id) { change ->
-                        pick(change.position.y)
-                        change.consume()
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        last = -1
+                        isTouched = true
+                        pick(down.position.y)
+                        drag(down.id) { change ->
+                            pick(change.position.y)
+                            change.consume()
+                        }
+                        isTouched = false
                     }
                 }
+                .clearAndSetSemantics {},
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            letters.forEach { letter ->
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    Text(letter, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                }
             }
-            .clearAndSetSemantics {},
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        letters.forEach { letter ->
-            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                Text(letter, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+        }
+        AnimatedVisibility(
+            visible = isTouched,
+            enter = fadeIn() + scaleIn(),
+            exit = fadeOut() + scaleOut(),
+            // Wider than the index: it sits to its left, level with the letter under the finger.
+            modifier = Modifier
+                .requiredSize(BUBBLE_SIZE)
+                .offset {
+                    IntOffset(
+                        x = -((BUBBLE_SIZE + INDEX_WIDTH) / 2 + Spacing.s).roundToPx(),
+                        y = (touchedLetterY - BUBBLE_SIZE.toPx() / 2f).roundToInt(),
+                    )
+                }
+                .clearAndSetSemantics {},
+        ) {
+            Box(
+                Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(touchedLetter, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }
 }
 
+private val BUBBLE_SIZE = 64.dp
 private val SHORT_SCREEN_HEIGHT = 480.dp
 private val ROW_MIN_HEIGHT = 56.dp
 private val INDEX_WIDTH = 28.dp
