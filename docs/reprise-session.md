@@ -54,6 +54,12 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     n'affiche plus un écran à moitié chargé puis remplacé (l'écran partiel, gardé pour le hors-ligne,
     n'apparaît que si les données ont plus de 1,5 s de retard). Vérifié sur le S24 : bulle et miniature.
     Pas vérifié à l'écran : le clignotement de Progrès (intermittent) et l'ouverture de YouTube au clic.
+  - **Haut de la fiche d'un chant (17 novembre 2026, branche `feat/song-header-layout`)** : choix de Kevin,
+    variante B. L'image de la vidéo YouTube est un bandeau en haut, avec le titre et l'auteur posés
+    dessus ; sans vidéo, le titre reste seul (et un lien qui n'est pas une vidéo devient une ligne
+    « Écouter l'original »). Tonalité et notation sont regroupées dans un seul cadre. Kevin veut voir
+    le rendu sur téléphone avant de trancher définitivement : la variante A (titre d'abord, vignette
+    en petite ligne dessous) reste possible, captures des deux dans `docs/qa/2026-11-17-fiche-chant/`.
   - **Importer depuis accords.app** : dans l'éditeur d'un nouveau chant, on colle le lien d'un chant
     (par exemple `accords.app/JEM414`). L'app lit cette seule page (le ChordPro intégré par Nuxt) et
     remplit titre, auteur, tonalité, paroles et accords, avec une section « Source » (copyright et

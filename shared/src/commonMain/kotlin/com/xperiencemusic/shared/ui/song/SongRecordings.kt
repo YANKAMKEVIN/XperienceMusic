@@ -1,5 +1,15 @@
 package com.xperiencemusic.shared.ui.song
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.xperiencemusic.shared.domain.model.YouTubeLink
+import com.xperiencemusic.shared.resources.song_youtube_open_short
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.aspectRatio
@@ -184,42 +194,91 @@ internal fun Links(links: List<LinkUi>) {
     }
 }
 
-/**
- * The original on YouTube: the video's picture with a play mark, opened in the YouTube app when it
- * is installed. A link that is not a single video (no picture to show) is a plain link instead.
- */
+/** The original on YouTube as a compact row under the title: small picture, label, opened on tap. */
 @Composable
-internal fun YouTubePreview(url: String, thumbnailUrl: String?, modifier: Modifier = Modifier) {
+internal fun YouTubeRow(url: String, thumbnailUrl: String?, modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    Surface(
+        onClick = { uriHandler.openUri(url) },
+        shape = RoundedCornerShape(Radius.card),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(Modifier.padding(Spacing.s), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .width(THUMBNAIL_WIDTH)
+                    .aspectRatio(VIDEO_RATIO)
+                    .clip(RoundedCornerShape(Radius.field))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                contentAlignment = Alignment.Center,
+            ) {
+                // YouTube's picture is 4:3 with black bars; cropping to the video's shape removes them.
+                AsyncImage(
+                    model = thumbnailUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                PlayMark(Sizes.icon)
+            }
+            Column(Modifier.weight(1f).padding(horizontal = Spacing.m)) {
+                Text(stringResource(Res.string.song_youtube_open_short), style = MaterialTheme.typography.titleSmall)
+                Text(YouTubeLink.LABEL, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** The original on YouTube as the page's banner: the video's picture with the title laid over its foot. */
+@Composable
+internal fun YouTubeBanner(url: String, thumbnailUrl: String, title: String, artist: String?, modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
     val label = stringResource(Res.string.song_youtube_open)
-    if (thumbnailUrl == null) {
-        TextButton(onClick = { uriHandler.openUri(url) }, modifier = modifier) {
-            Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.padding(end = Spacing.s))
-            Text(label)
-        }
-        return
-    }
     Box(
         modifier
             .fillMaxWidth()
             .aspectRatio(VIDEO_RATIO)
             .clip(RoundedCornerShape(Radius.card))
-            // Shows while the picture loads, and offline.
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .clickable(onClickLabel = label, role = Role.Button) { uriHandler.openUri(url) }
-            .semantics { contentDescription = label },
+            .clickable(onClickLabel = label, role = Role.Button) { uriHandler.openUri(url) },
         contentAlignment = Alignment.Center,
     ) {
-        // YouTube's picture is 4:3 with black bars; cropping to the video's shape removes them.
         AsyncImage(model = thumbnailUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-        Box(
-            Modifier.size(Sizes.touchTarget).background(MaterialTheme.colorScheme.scrim.copy(alpha = PLAY_MARK_ALPHA), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(Sizes.iconXl))
+        // Darkens the foot of the picture so the title reads on any video.
+        val shade = Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = BANNER_SHADE)))
+        Box(Modifier.fillMaxSize().background(shade))
+        PlayMark(Sizes.touchTarget)
+        Column(Modifier.align(Alignment.BottomStart).padding(Spacing.m)) {
+            Text(title, style = MaterialTheme.typography.titleLarge, color = Color.White, modifier = Modifier.semantics { heading() })
+            if (artist != null) {
+                Text(
+                    artist,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = BANNER_SUBTITLE_ALPHA),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
 
+@Composable
+private fun PlayMark(size: Dp) {
+    Box(
+        Modifier.size(size).background(Color.Black.copy(alpha = PLAY_MARK_ALPHA), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(size * PLAY_ICON_SHARE))
+    }
+}
+
+private val THUMBNAIL_WIDTH = 96.dp
+private const val PLAY_ICON_SHARE = 0.6f
+private const val BANNER_SHADE = 0.85f
+private const val BANNER_SUBTITLE_ALPHA = 0.8f
 private const val VIDEO_RATIO = 16f / 9f
 private const val PLAY_MARK_ALPHA = 0.6f
