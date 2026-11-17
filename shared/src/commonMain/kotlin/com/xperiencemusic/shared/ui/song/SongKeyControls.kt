@@ -42,6 +42,7 @@ import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.presentation.song.SongDetailEvent
 import com.xperiencemusic.shared.presentation.song.SongDetailUiState
 import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.editor_key_title
 import com.xperiencemusic.shared.resources.notation_letters
 import com.xperiencemusic.shared.resources.notation_nashville
 import com.xperiencemusic.shared.resources.notation_solfege
@@ -65,60 +66,81 @@ import androidx.compose.animation.core.tween
 /** The key between − and + keeps its width as it changes ("Do" to "Fa#m"). */
 private val KEY_LABEL_MIN_WIDTH = 96.dp
 
-/** The transposer pill (− key +) over the notation switch, as in the brand mockups. */
+/** The two settings of the chart in one frame: the transposer (− key +) over the notation switch. */
 @Composable
 internal fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent) -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(Radius.card),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(Spacing.m)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(Res.string.editor_key_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f).padding(start = Spacing.s),
+                )
+                KeyStepper(state, onEvent)
+            }
+            state.originalKeyLabel?.let {
+                TextButton(
+                    onClick = { onEvent(SongDetailEvent.TransposeResetClicked) },
+                    modifier = Modifier.heightIn(min = Sizes.touchTarget),
+                ) {
+                    Text(stringResource(Res.string.song_original_key, it) + " · " + stringResource(Res.string.song_transpose_reset))
+                }
+            }
+            NotationSwitch(
+                state.notation,
+                onSelect = { onEvent(SongDetailEvent.NotationSelected(it)) },
+                Modifier.padding(top = Spacing.s),
+            )
+        }
+    }
+}
+
+@Composable
+private fun KeyStepper(state: SongDetailUiState, onEvent: (SongDetailEvent) -> Unit) {
     val transposeDown = stringResource(Res.string.cd_transpose_down)
     val transposeUp = stringResource(Res.string.cd_transpose_up)
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            shape = RoundedCornerShape(Radius.card),
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outlineVariant),
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(
+            onClick = { onEvent(SongDetailEvent.TransposeDownClicked) },
+            modifier = Modifier.semantics { contentDescription = transposeDown },
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = { onEvent(SongDetailEvent.TransposeDownClicked) },
-                    modifier = Modifier.semantics { contentDescription = transposeDown },
-                ) {
-                    Text("−", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
-                }
-                // The key rolls up when it goes higher and down when it goes lower.
-                AnimatedContent(
-                    targetState = state.transposeSemitones to state.keyLabel,
-                    transitionSpec = {
-                        val direction = if (targetState.first < initialState.first) -1 else 1
-                        (slideInVertically { it * direction } + fadeIn())
-                            .togetherWith(slideOutVertically { -it * direction } + fadeOut())
-                    },
-                    contentAlignment = Alignment.Center,
-                    label = "key",
-                    modifier = Modifier.widthIn(min = KEY_LABEL_MIN_WIDTH).clipToBounds(),
-                ) { (_, keyLabel) ->
-                    val keyDescription = stringResource(Res.string.cd_key, keyLabel)
-                    Text(
-                        keyLabel,
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.semantics {
-                            contentDescription = keyDescription
-                        },
-                    )
-                }
-                IconButton(
-                    onClick = { onEvent(SongDetailEvent.TransposeUpClicked) },
-                    modifier = Modifier.semantics { contentDescription = transposeUp },
-                ) {
-                    Text("+", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
-                }
-            }
+            Text("−", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
         }
-        state.originalKeyLabel?.let {
-            TextButton(onClick = { onEvent(SongDetailEvent.TransposeResetClicked) }, modifier = Modifier.heightIn(min = Sizes.touchTarget)) {
-                Text(stringResource(Res.string.song_original_key, it) + " · " + stringResource(Res.string.song_transpose_reset))
-            }
+        // The key rolls up when it goes higher and down when it goes lower.
+        AnimatedContent(
+            targetState = state.transposeSemitones to state.keyLabel,
+            transitionSpec = {
+                val direction = if (targetState.first < initialState.first) -1 else 1
+                (slideInVertically { it * direction } + fadeIn())
+                    .togetherWith(slideOutVertically { -it * direction } + fadeOut())
+            },
+            contentAlignment = Alignment.Center,
+            label = "key",
+            modifier = Modifier.widthIn(min = KEY_LABEL_MIN_WIDTH).clipToBounds(),
+        ) { (_, keyLabel) ->
+            val keyDescription = stringResource(Res.string.cd_key, keyLabel)
+            Text(
+                keyLabel,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.semantics {
+                    contentDescription = keyDescription
+                },
+            )
         }
-        NotationSwitch(state.notation, onSelect = { onEvent(SongDetailEvent.NotationSelected(it)) }, Modifier.padding(top = Spacing.m))
+        IconButton(
+            onClick = { onEvent(SongDetailEvent.TransposeUpClicked) },
+            modifier = Modifier.semantics { contentDescription = transposeUp },
+        ) {
+            Text("+", style = MaterialTheme.typography.titleLarge, modifier = Modifier.clearAndSetSemantics {})
+        }
     }
 }
 
