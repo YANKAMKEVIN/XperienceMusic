@@ -49,7 +49,7 @@ data class SongEditorUiState(
         get() = !isLoading && !isLeaving && savedSongId == null && !isDeleted && (draft != original || importLink.isNotBlank())
 }
 
-enum class SongImportError { NOT_A_SONG_LINK, NOT_FOUND, NETWORK }
+enum class SongImportError { NOT_A_SONG_LINK, NOT_FOUND, NETWORK, UNKNOWN }
 
 enum class SongEditorError { FORBIDDEN, MISSING_TITLE, INVALID_YOUTUBE_LINK, NETWORK }
 

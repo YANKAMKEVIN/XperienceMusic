@@ -67,7 +67,7 @@ class FakeObjectiveRecordingRepository(recordings: List<ObjectiveRecording> = em
     override fun observe(memberId: String): Flow<List<ObjectiveRecording>> = rows.map { all -> all.filter { it.memberId == memberId } }
 
     override suspend fun send(memberId: String, objectiveId: String, wav: ByteArray, seconds: Int) {
-        if (failSend) error("offline")
+        if (failSend) throw kotlinx.io.IOException("offline")
         rows.value = rows.value + ObjectiveRecording(memberId, objectiveId, "take-${rows.value.size}.wav", seconds, "2026-10-18T10:00:00Z")
     }
 }

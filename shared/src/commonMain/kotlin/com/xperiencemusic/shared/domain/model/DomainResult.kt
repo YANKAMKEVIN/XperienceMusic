@@ -23,4 +23,7 @@ enum class DomainError {
 
     /** A link that is not the kind the field expects (a YouTube address, for a song). */
     INVALID_LINK,
+
+    /** Neither a network problem nor a known domain failure (a bug, an unexpected server answer). */
+    UNKNOWN,
 }

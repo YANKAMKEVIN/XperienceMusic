@@ -79,7 +79,7 @@ class SupabaseSongRepository(
             client.from(SONGS).insert(draft.toWriteDto()) { select(Columns.list("id")) }.decodeSingle<IdDto>()
                 .also { replaceYouTubeLink(it.id, draft.youtubeUrl) }
         }
-        reload()
+        refreshAfterWrite()
         return created.id
     }
 
@@ -88,7 +88,7 @@ class SupabaseSongRepository(
             client.from(SONGS).update(draft.toWriteDto()) { filter { eq("id", id) } }
             replaceYouTubeLink(id, draft.youtubeUrl)
         }
-        reload()
+        refreshAfterWrite()
     }
 
     /** A song has one YouTube link: the previous one goes, the new one (if any) takes its place. */
@@ -109,7 +109,7 @@ class SupabaseSongRepository(
         // Rows of recordings, voice tracks and setlist entries go with the song (on delete cascade).
         session.accountCall { client.from(SONGS).delete { filter { eq("id", id) } } }
         if (audioPaths.isNotEmpty()) ignoringFailures { client.storage.from(AUDIO_BUCKET).delete(audioPaths) }
-        reload()
+        refreshAfterWrite()
     }
 
     override suspend fun addRecording(songId: String, recording: Recording, replacingId: String?) {
@@ -128,7 +128,7 @@ class SupabaseSongRepository(
                 },
             )
         }
-        reload()
+        refreshAfterWrite()
     }
 
     override suspend fun deleteRecording(songId: String, recordingId: String, newReferenceId: String?) {
@@ -143,14 +143,14 @@ class SupabaseSongRepository(
         }
         // The row is gone either way; a leftover file only costs storage.
         ignoringFailures { client.storage.from(AUDIO_BUCKET).delete(deletedPath) }
-        reload()
+        refreshAfterWrite()
     }
 
     override suspend fun setReference(songId: String, recordingId: String) {
         session.accountCall {
             client.postgrest.rpc("set_reference_recording", buildJsonObject { put("p_recording_id", recordingId) })
         }
-        reload()
+        refreshAfterWrite()
     }
 
     override suspend fun setVoiceTrack(songId: String, track: VoiceTrack) {
@@ -159,7 +159,7 @@ class SupabaseSongRepository(
                 VoiceTrackWriteDto(track.id, songId, track.voicePart.name, track.audioPath),
             ) { onConflict = "song_id,voice_part" }
         }
-        reload()
+        refreshAfterWrite()
     }
 
     private suspend fun loadIfNeeded() {
@@ -176,6 +176,13 @@ class SupabaseSongRepository(
     private fun showSnapshot() {
         snapshots.load(SNAPSHOT, ListSerializer(SongDto.serializer()))?.let { cached -> publish(cached) }
     }
+
+    /**
+     * Called after a write the server accepted: the write must stay a success even if this reload
+     * fails (network drop), or the user retries and duplicates it. The failure shows in [syncStatus]
+     * and the next refresh retries.
+     */
+    private suspend fun refreshAfterWrite() = ignoringFailures { _syncStatus.tracking { reload() } }
 
     private suspend fun reload() = loading.withLock {
         val fetched = session.accountCall {

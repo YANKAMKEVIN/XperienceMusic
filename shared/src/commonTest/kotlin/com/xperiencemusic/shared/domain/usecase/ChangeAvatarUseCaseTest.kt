@@ -46,7 +46,7 @@ class ChangeAvatarUseCaseTest {
     @Test
     fun `si le profil refuse, la photo envoyée est retirée et l'ancien avatar reste`() = runTest {
         changeAvatar.choosePreset(AvatarPreset.SINGER_BOY_1)
-        sessions.failure = IllegalStateException("offline")
+        sessions.failure = kotlinx.io.IOException("offline")
         val result = changeAvatar.usePhoto(jpeg)
         assertIs<DomainResult.Failure>(result)
         assertTrue(storage.paths.isEmpty())

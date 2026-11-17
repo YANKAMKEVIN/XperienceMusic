@@ -139,6 +139,7 @@ private fun String.withChordsPlaced(key: Key): String =
 private fun DomainError.toImportError() = when (this) {
     DomainError.INVALID_INPUT -> SongImportError.NOT_A_SONG_LINK
     DomainError.NOT_FOUND -> SongImportError.NOT_FOUND
+    DomainError.UNKNOWN -> SongImportError.UNKNOWN
     else -> SongImportError.NETWORK
 }
 

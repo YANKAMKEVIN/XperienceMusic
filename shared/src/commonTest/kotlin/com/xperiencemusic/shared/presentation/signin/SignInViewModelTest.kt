@@ -75,6 +75,18 @@ class SignInViewModelTest {
     }
 
     @Test
+    fun `une panne inattendue n'est pas présentée comme un problème de connexion`() = runTest {
+        sessions.failure = IllegalStateException("unexpected answer")
+        viewModel.onEvent(SignInEvent.EmailChanged("g@b.fr"))
+        viewModel.onEvent(SignInEvent.SubmitClicked)
+        assertEquals(SignInError.UNKNOWN, viewModel.state.value.error)
+
+        sessions.failure = kotlinx.io.IOException("offline")
+        viewModel.onEvent(SignInEvent.SubmitClicked)
+        assertEquals(SignInError.NETWORK, viewModel.state.value.error)
+    }
+
+    @Test
     fun `la flèche sans adresse explique quoi faire`() = runTest {
         viewModel.onEvent(SignInEvent.SubmitClicked)
         assertEquals(SignInError.EMPTY_EMAIL, viewModel.state.value.error)

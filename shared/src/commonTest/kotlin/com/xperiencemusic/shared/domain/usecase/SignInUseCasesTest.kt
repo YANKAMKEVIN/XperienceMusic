@@ -26,7 +26,7 @@ class SignInUseCasesTest {
 
     @Test
     fun `une panne réseau devient une erreur NETWORK`() = runTest {
-        sessions.failure = IllegalStateException("offline")
+        sessions.failure = kotlinx.io.IOException("offline")
         assertEquals(DomainResult.Failure(DomainError.NETWORK), RequestSignInCodeUseCase(sessions)("grace@band.fr"))
     }
 

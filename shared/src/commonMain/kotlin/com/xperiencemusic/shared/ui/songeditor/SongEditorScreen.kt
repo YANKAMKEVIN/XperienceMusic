@@ -309,6 +309,7 @@ private fun ImportFromLink(state: SongEditorUiState, onEvent: (SongEditorEvent) 
                         SongImportError.NOT_A_SONG_LINK -> Res.string.editor_import_not_a_link
                         SongImportError.NOT_FOUND -> Res.string.editor_import_not_found
                         SongImportError.NETWORK -> Res.string.editor_import_network
+                        SongImportError.UNKNOWN -> Res.string.error_generic
                     },
                 ),
                 style = MaterialTheme.typography.bodySmall,

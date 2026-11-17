@@ -18,7 +18,7 @@ class SyncStatusTest {
     private val setlistStatus = MutableStateFlow(SyncStatus.UP_TO_DATE)
     private val songs = object : SongRepository by songRepository() {
         override val syncStatus = songStatus
-        override suspend fun refresh() = error("offline")
+        override suspend fun refresh(): Unit = throw kotlinx.io.IOException("offline")
     }
     private val setlists = object : SetlistRepository by setlistRepository() {
         override val syncStatus = setlistStatus
