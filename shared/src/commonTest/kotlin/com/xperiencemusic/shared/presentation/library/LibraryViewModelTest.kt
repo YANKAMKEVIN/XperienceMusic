@@ -68,7 +68,7 @@ class LibraryViewModelTest {
 
     @Test
     fun `sans répertoire l'écran s'ouvre sur tout le catalogue, rangé par lettre`() = runTest {
-        val viewModel = viewModel(listOf(song("1", "Amazing Grace"), song("2", "À toi la gloire"), song("3", "Béni soit ton nom"), song("4", "10 000 raisons")))
+        val viewModel = viewModel(catalogue.take(4))
         viewModel.state.test {
             val state = expectMostRecentItem()
             assertEquals(LibraryTab.CATALOGUE, state.tab)

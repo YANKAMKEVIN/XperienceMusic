@@ -8,6 +8,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -252,7 +253,8 @@ private fun LibraryList(
         if (hasIndex) {
             val scope = rememberCoroutineScope()
             AlphabetIndex(
-                letters = letters.map { it.first },
+                // One character per section: a plain string keeps the parameter stable.
+                letters = letters.joinToString("") { it.first },
                 onLetter = { index -> scope.launch { listState.scrollToItem(letters[index].second) } },
                 modifier = Modifier.align(Alignment.CenterEnd).padding(bottom = Spacing.xxl),
             )
@@ -370,25 +372,25 @@ private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit, endPadding:
  * move by the section headings instead.
  */
 @Composable
-private fun AlphabetIndex(letters: List<String>, onLetter: (Int) -> Unit, modifier: Modifier = Modifier) {
+private fun AlphabetIndex(letters: String, onLetter: (Int) -> Unit, modifier: Modifier = Modifier) {
     val currentOnLetter by rememberUpdatedState(onLetter)
     val haptics = LocalHapticFeedback.current
     var isTouched by remember { mutableStateOf(false) }
     // Kept after the finger lifts, so the bubble fades out with its letter.
     var touchedLetter by remember { mutableStateOf("") }
-    var touchedLetterY by remember { mutableStateOf(0f) }
-    Box(modifier.width(INDEX_WIDTH).heightIn(max = INDEX_LETTER_HEIGHT * letters.size).fillMaxHeight()) {
+    var touchedLetterY by remember { mutableFloatStateOf(0f) }
+    Box(modifier.width(INDEX_WIDTH).heightIn(max = INDEX_LETTER_HEIGHT * letters.length).fillMaxHeight()) {
         Column(
             Modifier
                 .fillMaxSize()
                 .pointerInput(letters) {
                     var last = -1
                     fun pick(y: Float) {
-                        val index = (y / size.height * letters.size).toInt().coerceIn(0, letters.lastIndex)
+                        val index = (y / size.height * letters.length).toInt().coerceIn(0, letters.lastIndex)
                         if (index == last) return
                         last = index
-                        touchedLetter = letters[index]
-                        touchedLetterY = (index + 0.5f) * size.height / letters.size
+                        touchedLetter = letters[index].toString()
+                        touchedLetterY = (index + 0.5f) * size.height / letters.length
                         haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         currentOnLetter(index)
                     }
@@ -409,31 +411,42 @@ private fun AlphabetIndex(letters: List<String>, onLetter: (Int) -> Unit, modifi
         ) {
             letters.forEach { letter ->
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    Text(letter, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                    Text(
+                        letter.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                    )
                 }
             }
         }
-        AnimatedVisibility(
-            visible = isTouched,
-            enter = fadeIn() + scaleIn(),
-            exit = fadeOut() + scaleOut(),
-            // Wider than the index: it sits to its left, level with the letter under the finger.
-            modifier = Modifier
-                .requiredSize(BUBBLE_SIZE)
-                .offset {
-                    IntOffset(
-                        x = -((BUBBLE_SIZE + INDEX_WIDTH) / 2 + Spacing.s).roundToPx(),
-                        y = (touchedLetterY - BUBBLE_SIZE.toPx() / 2f).roundToInt(),
-                    )
-                }
-                .clearAndSetSemantics {},
-        ) {
-            Box(
-                Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(touchedLetter, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onPrimary)
+        IndexBubble(touchedLetter, isVisible = isTouched, centerY = touchedLetterY)
+    }
+}
+
+/** The letter under the finger, large, to the left of the index and level with that letter. */
+@Composable
+private fun IndexBubble(letter: String, isVisible: Boolean, centerY: Float) {
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn() + scaleIn(),
+        exit = fadeOut() + scaleOut(),
+        // Wider than the index it is laid out in: the offset moves it out to the left.
+        modifier = Modifier
+            .requiredSize(BUBBLE_SIZE)
+            .offset {
+                IntOffset(
+                    x = -((BUBBLE_SIZE + INDEX_WIDTH) / 2 + Spacing.s).roundToPx(),
+                    y = (centerY - BUBBLE_SIZE.toPx() / 2f).roundToInt(),
+                )
             }
+            .clearAndSetSemantics {},
+    ) {
+        Box(
+            Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(letter, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onPrimary)
         }
     }
 }
