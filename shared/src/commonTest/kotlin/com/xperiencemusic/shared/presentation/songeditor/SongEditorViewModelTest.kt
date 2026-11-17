@@ -49,6 +49,18 @@ class SongEditorViewModelTest {
     )
 
     @Test
+    fun `import places a valid video in the YouTube field and removes metadata`() = runTest {
+        page = "{t: Video test}\n{v: https://example.com/video}\n" +
+            "{tuto1: https://www.youtube.com/embed/He8GkGZUGsc}\n[C]Test"
+        val vm = viewModel(null)
+        vm.onEvent(SongEditorEvent.ImportLinkChanged("accords.app/REPHI7382"))
+        vm.onEvent(SongEditorEvent.ImportClicked)
+        assertEquals("https://www.youtube.com/embed/He8GkGZUGsc", vm.state.value.youtubeUrl)
+        assertEquals("[C]Test\n# Source\naccords.app/REPHI7382", vm.state.value.chart)
+        assertEquals(vm.state.value.youtubeUrl, vm.state.value.draft.youtubeUrl)
+    }
+
+    @Test
     fun `importer un lien remplit le nouveau chant`() = runTest {
         page = "{t: Chant d'essai}\n{st: Auteur}\n{key: Em}\n{c: © Éditeur}\n{c: Refrain}\n[Em]Gloire"
         val vm = viewModel(null)

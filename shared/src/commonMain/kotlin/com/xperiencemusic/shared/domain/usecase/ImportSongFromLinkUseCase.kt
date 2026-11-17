@@ -2,6 +2,7 @@ package com.xperiencemusic.shared.domain.usecase
 
 import com.xperiencemusic.music.chart.ChordProImport
 import com.xperiencemusic.music.theory.Key
+import com.xperiencemusic.shared.domain.model.YouTubeLink
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainException
 import com.xperiencemusic.shared.domain.model.DomainResult
@@ -14,6 +15,7 @@ data class ImportedSong(
     val key: Key?,
     /** The chart with a closing "Source" section: the credits and the page the song came from. */
     val chart: String,
+    val youtubeUrl: String? = null,
 )
 
 /**
@@ -30,6 +32,7 @@ class ImportSongFromLinkUseCase(private val pages: SongPageSource) {
             val source = listOf("# Source") + song.credits + pageUrl.removePrefix("https://")
             ImportedSong(
                 title = title,
+                youtubeUrl = song.videoUrls.firstNotNullOfOrNull { YouTubeLink.normalize(it) },
                 artist = song.artist,
                 key = song.key,
                 chart = (listOf(song.chart) + source).filter { it.isNotEmpty() }.joinToString("\n"),

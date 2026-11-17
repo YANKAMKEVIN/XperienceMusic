@@ -71,4 +71,15 @@ class ChordProImportTest {
     fun `une tonalité illisible reste vide`() {
         assertNull(ChordProImport.parse("{key: ???}\n[C]Gloire").key)
     }
+    @Test
+    fun `extracts video directives without leaking numbered metadata into lyrics`() {
+        val song = ChordProImport.parse(
+            "{v: https://www.youtube.com/embed/example}\n" +
+                "{tuto1: https://www.youtube.com/embed/example}\n" +
+                "{tuto2: https://youtu.be/other}\n{custom42: metadata}\n[C]Test",
+        )
+        assertEquals("[C]Test", song.chart)
+        assertEquals(listOf("https://www.youtube.com/embed/example", "https://youtu.be/other"), song.videoUrls)
+    }
+
 }

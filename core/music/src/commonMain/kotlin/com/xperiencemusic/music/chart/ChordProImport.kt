@@ -13,6 +13,7 @@ data class ImportedChart(
     val chart: String,
     /** Comments that are not section titles: copyright, publisher, collection number. */
     val credits: List<String>,
+    val videoUrls: List<String> = emptyList(),
 )
 
 /**
@@ -22,7 +23,7 @@ data class ImportedChart(
  */
 object ChordProImport {
     // Braces and brackets escaped everywhere: Android's ICU engine rejects a bare "}".
-    private val directive = Regex("""^\{\s*([A-Za-z_]+)\s*(?::\s*(.*?))?\s*\}$""")
+    private val directive = Regex("""^\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*(.*?))?\s*\}$""")
     private val commentNames = setOf("c", "comment", "ci", "comment_italic", "cb", "comment_box")
 
     fun parse(source: String): ImportedChart {
@@ -31,6 +32,7 @@ object ChordProImport {
         var artist: String? = null
         var key: Key? = null
         val credits = mutableListOf<String>()
+        val videoUrls = mutableListOf<String>()
         val chart = mutableListOf<String>()
         var sectionJustOpened = false
 
@@ -48,6 +50,7 @@ object ChordProImport {
                 name == "t" || name == "title" -> title = value.ifEmpty { null }
                 name == "st" || name == "subtitle" || name == "artist" -> artist = value.ifEmpty { null }
                 name == "key" -> key = Key.parse(value)
+                name == "v" || name == "tuto" || name.matches(Regex("tuto[0-9]+")) -> videoUrls += value
                 name in commentNames && value.isNotEmpty() ->
                     if (opensSection(lines, index)) {
                         chart += "# $value"
@@ -59,7 +62,7 @@ object ChordProImport {
                 name == "sob" || name == "start_of_bridge" -> if (!sectionJustOpened) chart += "# Pont"
             }
         }
-        return ImportedChart(title, artist, key, chart.joinToString("\n"), credits)
+        return ImportedChart(title, artist, key, chart.joinToString("\n"), credits, videoUrls.distinct())
     }
 
     /** True when the next meaningful line after [index] is a block start or a lyric line. */

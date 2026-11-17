@@ -86,7 +86,15 @@ class SongEditorViewModel(
             when (val result = importSong(current.importLink)) {
                 is DomainResult.Success -> _state.update {
                     val song = result.value
-                    it.copy(isImporting = false, importLink = "", importedTitle = song.title, title = song.title, artist = song.artist.orEmpty(), key = song.key ?: it.key)
+                    it.copy(
+                        isImporting = false,
+                        importLink = "",
+                        importedTitle = song.title,
+                        title = song.title,
+                        artist = song.artist.orEmpty(),
+                        youtubeUrl = song.youtubeUrl.orEmpty(),
+                        key = song.key ?: it.key,
+                    )
                         .withChart(song.chart)
                 }
                 is DomainResult.Failure -> _state.update { it.copy(isImporting = false, importError = result.error.toImportError()) }
