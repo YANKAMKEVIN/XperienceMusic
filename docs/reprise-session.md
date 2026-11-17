@@ -33,8 +33,20 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     l'enregistrement. L'Admin++ l'écoute dans « À écouter » et répond « Valider » ou « À retravailler »
     avec un commentaire.
 - **Chants.**
-  - Filtre par tonalité sous la recherche (« Toutes », puis chaque tonalité du catalogue), caché
-    tant que tous les chants sont dans la même tonalité.
+  - **Refonte de la liste (17 novembre 2026, branche `feat/library-redesign`)**, pensée pour ~2000 chants.
+    Deux onglets : « Notre répertoire » (chants d'une setlist conservée ou avec un enregistrement, rangés
+    en « Prochain service », « Chantés récemment », puis de A à Z) et « Tout » (par lettre, en-têtes
+    collants, index A–Z à droite). L'écran s'ouvre sur le répertoire s'il y en a un. Lignes compactes
+    sans carte : titre, auteur, note de musique s'il y a de l'audio. La recherche reste fixe en haut,
+    couvre tout le catalogue et lit aussi les paroles (à partir de 3 lettres).
+  - **Décision de Kevin :** la tonalité n'apparaît plus dans la liste et son filtre est supprimé
+    (elle change d'une répétition à l'autre) ; elle reste dans la fiche du chant.
+  - **Vérifié sur le S24 avec la vraie base (17 novembre 2026)** : onglets, index A–Z (tap et glissement),
+    recherche dans les paroles. Deux corrections au passage : l'app ne chargeait que les 1000 premiers
+    chants (limite de lignes de Supabase ; le chargement se fait maintenant par pages, 1987 chants),
+    et les derniers résultats d'une recherche restaient cachés derrière le clavier.
+  - **Idées non faites :** filtre par thème (il faut une colonne et réimporter les étiquettes de Rephi)
+    et liste allégée (l'app charge encore les paroles de tous les chants pour afficher la liste).
   - **Importer depuis accords.app** : dans l'éditeur d'un nouveau chant, on colle le lien d'un chant
     (par exemple `accords.app/JEM414`). L'app lit cette seule page (le ChordPro intégré par Nuxt) et
     remplit titre, auteur, tonalité, paroles et accords, avec une section « Source » (copyright et

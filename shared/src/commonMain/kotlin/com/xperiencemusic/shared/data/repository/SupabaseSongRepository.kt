@@ -24,6 +24,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -191,7 +192,17 @@ class SupabaseSongRepository(
 
     private suspend fun reload() = loading.withLock {
         val fetched = session.accountCall {
-            client.from(SONGS).select(Columns.raw(SongDto.COLUMNS)).decodeList<SongDto>()
+            // The server answers at most PAGE_SIZE rows per request: without pages, a catalogue of
+            // two thousand songs stopped at the first thousand.
+            buildList {
+                do {
+                    val page = client.from(SONGS).select(Columns.raw(SongDto.COLUMNS)) {
+                        order("id", Order.ASCENDING)
+                        range(size.toLong(), size + PAGE_SIZE - 1)
+                    }.decodeList<SongDto>()
+                    addAll(page)
+                } while (page.isNotEmpty())
+            }
         }
         publish(fetched)
         snapshots.save(SNAPSHOT, ListSerializer(SongDto.serializer()), fetched)
@@ -204,6 +215,8 @@ class SupabaseSongRepository(
 
     private companion object {
         const val SONGS = "songs"
+        /** Supabase's default row limit. A smaller server limit only costs more requests. */
+        const val PAGE_SIZE = 1000L
         const val VOICE_TRACKS = "voice_tracks"
         const val SONG_LINKS = "song_links"
         const val SNAPSHOT = "songs"
