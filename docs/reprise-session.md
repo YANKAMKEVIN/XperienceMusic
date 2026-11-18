@@ -33,7 +33,7 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     l'enregistrement. L'Admin++ l'écoute dans « À écouter » et répond « Valider » ou « À retravailler »
     avec un commentaire.
 - **Chants.**
-  - **Refonte de la liste (17 novembre 2026, branche `feat/library-redesign`)**, pensée pour ~2000 chants.
+  - **Refonte de la liste (17 novembre 2026, PR 12, fusionnée)**, pensée pour ~2000 chants.
     Deux onglets : « Notre répertoire » (chants d'une setlist conservée ou avec un enregistrement, rangés
     en « Prochain service », « Chantés récemment », puis de A à Z) et « Tout » (par lettre, en-têtes
     collants, index A–Z à droite). L'écran s'ouvre sur le répertoire s'il y en a un. Lignes compactes
@@ -47,30 +47,40 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     et les derniers résultats d'une recherche restaient cachés derrière le clavier.
   - **Idées non faites :** filtre par thème (il faut une colonne et réimporter les étiquettes de Rephi)
     et liste allégée (l'app charge encore les paroles de tous les chants pour afficher la liste).
-  - **Suites du 17 novembre 2026 (branche `feat/ux-follow-ups`, empilée sur `feat/library-redesign`, PR 12)** :
+  - **Suites du 17 novembre 2026 (PR 13, fusionnée)** :
     une bulle affiche la lettre sous le doigt à côté de l'index A–Z ; dans la fiche d'un chant, le bouton
     « Écouter l'original » est remplacé par l'image de la vidéo YouTube, cliquable, au-dessus du titre
     (Coil 3 pour charger l'image ; simple lien si l'adresse n'est pas une vidéo) ; l'onglet Progrès
     n'affiche plus un écran à moitié chargé puis remplacé (l'écran partiel, gardé pour le hors-ligne,
     n'apparaît que si les données ont plus de 1,5 s de retard). Vérifié sur le S24 : bulle et miniature.
     Pas vérifié à l'écran : le clignotement de Progrès (intermittent) et l'ouverture de YouTube au clic.
-  - **Haut de la fiche d'un chant (17 novembre 2026, branche `feat/song-header-layout`)** : choix de Kevin,
+  - **Haut de la fiche d'un chant (17 novembre 2026, PR 14, fusionnée)** : choix de Kevin,
     variante B. L'image de la vidéo YouTube est un bandeau en haut, avec le titre et l'auteur posés
     dessus ; sans vidéo, le titre reste seul (et un lien qui n'est pas une vidéo devient une ligne
     « Écouter l'original »). Tonalité et notation sont regroupées dans un seul cadre. Kevin veut voir
     le rendu sur téléphone avant de trancher définitivement : la variante A (titre d'abord, vignette
     en petite ligne dessous) reste possible, captures des deux dans `docs/qa/2026-11-17-fiche-chant/`.
+  - **Écart de transposition visible (PR 17, ouverte le 18 novembre 2026)** : sous la tonalité de la fiche,
+    « +2 demi-tons » (lu par TalkBack) ; en mode scène, « +2 · origine Ré majeur » sous la tonalité quand
+    le chant est transposé. Pas vu à l'écran.
   - **Importer depuis accords.app** : dans l'éditeur d'un nouveau chant, on colle le lien d'un chant
     (par exemple `accords.app/JEM414`). L'app lit cette seule page (le ChordPro intégré par Nuxt) et
     remplit titre, auteur, tonalité, paroles et accords, avec une section « Source » (copyright et
     lien) en bas. Seuls les liens vers un chant d'accords.app sont acceptés.
-  - **Décision :** on ne récupère pas tout le catalogue d'accords.app. Le site ne donne aucune
-    licence de réutilisation et les chants (JEM, traductions comprises) sont sous droits. Chaque
-    import est un chant choisi par un admin, source gardée. Un import complet seulement si Rephi
-    donne son accord.
+  - **Import groupé :** Kevin a confirmé le 17 novembre 2026 avoir déjà obtenu l’autorisation
+    de Rephi pour la récupération groupée. La sélection demandée est la catégorie « adoration »
+    (`https://accords.app/recherche?tags=,adoration`), puis le catalogue complet
+    (`https://accords.app/recherche?tags=`). Conserver les sources et crédits, et utiliser
+    `tools/rephi-import/` pour préparer le SQL sans écraser les chants déjà présents.
   - **Accords au-dessus des paroles** : un chant collé avec les accords sur la ligne du dessus (Word,
     PDF, WhatsApp) est converti tout seul ; tapé à la main, un bouton « Placer les accords dans les
     paroles » apparaît. Les titres « Refrain : », « Couplet 2 »… deviennent des sections.
+- **Premier chargement hors ligne (PR 16, ouverte le 18 novembre 2026)** : sans réseau ni copie sur le
+  téléphone, Chants et Semaine tournaient sans fin. Ils affichent maintenant « Impossible de charger… »
+  avec « Réessayer » ; le bandeau hors ligne n'apparaît que sur une copie à l'écran et a son propre bouton
+  « Réessayer ». Adapté à la nouvelle bibliothèque en fusionnant `main` le 18 novembre. Pas vu à l'écran.
+- **Bandeau d'échec de chargement (PR 15, fusionnée le 18 novembre 2026)** : il a sa propre surface sous la
+  barre d'état du S24 au lieu de passer sous l'horloge.
 - **Planning (4ᵉ onglet).** Vendredis (louange libre, sans setlist ni répétition) et dimanches. L'admin
   ouvre un mois, chacun répond « Je sers / Pas dispo » dans « Mes dispos », l'admin ajuste et valide.
   Rappels locaux (sans Firebase) : mois validé, veille de répétition (dimanches), veille de service,
@@ -111,6 +121,19 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     côté membres, onglet « Progrès », barre de progression sans total dans l'accueil. **Pas encore vérifié sur
     téléphone** (l'A17 a été débranché avant l'essai). Restent ouverts : pochette média sur iOS, champs en pilule
     dans l'éditeur de chant, pas d'annulation d'un passage de niveau confirmé.
+
+## Branches et PR (18 novembre 2026)
+
+- `main` contient tout jusqu'à la PR 15. Toutes les branches déjà fusionnées sont supprimées, en local
+  et sur GitHub.
+- **PR 16** (`claude/ui-sync-offline`) et **PR 17** (`claude/ui-transpose-clarity`) : fusionnables, tests,
+  `checkUiLiterals` et compilation iOS passés en local après la fusion de `main`. Le job « Tests and builds
+  (Android + iOS) » a été annulé par GitHub faute de runner macOS libre, puis relancé. À fusionner (merge
+  commit) quand la CI est verte, puis supprimer leurs branches. Le merge automatique est désactivé sur le dépôt.
+- Le worktree `~/dev/XperienceMusic-qa` est sur `main` sans branche (HEAD détaché).
+- Hors git : captures et comptes rendus de QA sous `docs/qa/` (non suivis), dossier `tools/`, et un stash
+  ancien (7 lignes dans `MainActivity.kt`, posé sur le merge de la PR 9).
+- **detekt** garde une remarque sur `main` : `SwallowedException` dans `domain/usecase/RunRemote.kt`.
 
 ## Reste à faire
 
@@ -162,7 +185,8 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
 8. **Dépôt de la répétition** (PR 5) : fusionnée le 10 novembre 2026, après un test complet sur le S24 avec la
    vraie base (envoi pour tout le groupe, lecture, setlist, piste alto). Corrigé pendant le test : l'app
    revenait sur Semaine et perdait le formulaire après un passage en arrière-plan.
-9. **Prochains chantiers** (demandés par Kevin le 10 novembre 2026) :
+9. **Prochains chantiers** (demandés par Kevin le 10 novembre 2026). Les deux premiers sont dans `main`
+   (branche `feat/quick-song-and-audio-compression`, fusionnée, supprimée le 18 novembre 2026) :
    - Compression audio dans l'app avant l'envoi : Supabase gratuit limite à 50 Mo par fichier, soit environ
      25 min avec le Dictaphone Samsung.
    - Ajout rapide d'un chant dans « Publier la setlist » (titre + lien YouTube), et un champ lien YouTube sur
