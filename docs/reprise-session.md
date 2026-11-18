@@ -124,17 +124,18 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
 
 ## Branches et PR (18 novembre 2026, soir)
 
-- `main` contient tout jusqu'à la PR 17. Toutes les branches fusionnées sont supprimées, en local et sur GitHub.
-- **PR 18** (`fix/ime-gap`, vers `main`) : la bande vide au-dessus du clavier dans les écrans poussés
+- `main` contient tout jusqu'à la PR 19 (`9da505a`). Toutes les branches fusionnées sont supprimées, en local et sur GitHub.
+- **PR 18 (fusionnée le 18 novembre 2026)** : la bande vide au-dessus du clavier dans les écrans poussés
   (« Publier la setlist » sur le S24). `MainScaffold` consomme la marge de sa barre du bas, donc
   `imePadding()` n'ajoute plus que ce que le clavier couvre au-delà. Correctif global : quelques bas
   d'écran peuvent remonter un peu.
-- **PR 19** (`feat/setlist-song-picker`, empilée sur `fix/ime-gap`) : choix de Kevin, « suggestions +
-  recherche ». Dans « Ajouter des chants », sans recherche, seulement le répertoire (par titre, avec
-  « Chanté le … ») ; une recherche couvre tout le catalogue, paroles comprises. Lignes compactes de la
-  bibliothèque (`ui/components/SongListRow.kt`), sans tonalité.
-- Les deux : tests, `checkUiLiterals`, compilation iOS et APK passent ; APK installé sur le S24, **pas encore
-  vu à l'écran**. Fusionner la 18 puis la 19 (merge commit), en repassant la 19 sur `main` avant.
+- **PR 19 (fusionnée le 18 novembre 2026)** : choix de Kevin, « suggestions + recherche ». Dans « Ajouter
+  des chants », sans recherche, seulement le répertoire (par titre, avec « Chanté le … ») ; une recherche
+  couvre tout le catalogue, paroles comprises. Lignes compactes de la bibliothèque
+  (`ui/components/SongListRow.kt`), sans tonalité.
+- Vu sur le S24 le 18 novembre au soir : plus de liste complète (répertoire vide hors chant déjà choisi,
+  donc seule l'indication de recherche), et le champ de recherche colle au clavier. Captures dans
+  `docs/qa/2026-11-18-captures/` (hors git). Pas encore vu avec un répertoire de plusieurs chants.
 - La CI macOS de GitHub manque parfois de runners : un job « Tests and builds » annulé après 15 min sans
   étape lancée se relance avec `gh run rerun <id> --failed`. Le merge automatique est désactivé sur le dépôt.
 - Le worktree `~/dev/XperienceMusic-qa` est sur `main` sans branche (HEAD détaché).
