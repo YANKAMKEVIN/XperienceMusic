@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.model.BandWeek
 import com.xperiencemusic.shared.domain.model.DomainResult
+import com.xperiencemusic.shared.domain.model.OfflineAvailability
 import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.model.SetlistSchedule
@@ -22,6 +23,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -47,18 +50,22 @@ class WeekViewModel(
 
     private val sync = combine(observeSyncStatus(), isRefreshing) { status, refreshing -> status to refreshing }
 
-    private val week = combine(observeSchedule(), selectedWeek, playback.state) { schedule, selected, playing ->
+    // Null until the phone has a copy of the setlists: the schedule publishes nothing before, and
+    // the screen would wait on it forever when the first load fails.
+    private val week: Flow<WeekUiState?> = combine(observeSchedule(), selectedWeek, playback.state) { schedule, selected, playing ->
         deriveWeekState(schedule, selected, playing.track?.audioPath?.takeIf { playing.isPlaying || playing.isLoading })
-    }
+    }.map<WeekUiState, WeekUiState?> { it }.onStart { emit(null) }
 
     val state: StateFlow<WeekUiState> = combine(
         week,
         observeCurrentMember(),
-        observeSetlistOffline(),
+        // Like the week, it waits on the schedule: nothing to download until there is a copy.
+        observeSetlistOffline().onStart { emit(OfflineAvailability(available = 0, total = 0)) },
         download,
         sync,
     ) { week, member, offline, download, (syncStatus, refreshing) ->
-        week.copy(
+        val hasFailed = syncStatus == SyncStatus.FAILED
+        (week ?: WeekUiState(isLoading = !hasFailed, hasLoadFailed = hasFailed)).copy(
             canPublish = member?.role?.can(Permission.PUBLISH_SETLIST) == true,
             me = member?.let { MemberAvatarUi(it.profile.displayName, it.avatar) },
             nextRehearsal = getToday().let { today ->
@@ -66,7 +73,7 @@ class WeekViewModel(
                 RehearsalCountdownUi(today.daysUntil(rehearsal), rehearsal)
             },
             isRefreshing = refreshing,
-            isOffline = syncStatus == SyncStatus.FAILED,
+            isOffline = week != null && hasFailed,
             offline = offline.takeIf { it.total > 0 }?.let {
                 WeekOfflineUi(
                     available = it.available,

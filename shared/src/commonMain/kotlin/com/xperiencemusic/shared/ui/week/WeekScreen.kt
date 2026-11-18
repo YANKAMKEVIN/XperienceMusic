@@ -71,6 +71,9 @@ import com.xperiencemusic.shared.resources.week_countdown_title
 import com.xperiencemusic.shared.resources.week_countdown_today
 import com.xperiencemusic.shared.resources.week_empty_text
 import com.xperiencemusic.shared.resources.week_empty_title
+import com.xperiencemusic.shared.resources.week_load_failed_title
+import com.xperiencemusic.shared.resources.first_load_failed_text
+import com.xperiencemusic.shared.resources.offline_retry
 import com.xperiencemusic.shared.resources.week_past_hint
 import com.xperiencemusic.shared.resources.week_pause_reference
 import com.xperiencemusic.shared.resources.week_play_reference
@@ -143,6 +146,19 @@ fun WeekScreenContent(
     ) {
         if (state.isLoading) {
             LoadingIndicator()
+        } else if (state.hasLoadFailed) {
+            // A list, so that pulling down still retries.
+            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(Spacing.l)) {
+                item {
+                    EmptyState(
+                        icon = XmIcons.Notes,
+                        title = stringResource(Res.string.week_load_failed_title),
+                        text = stringResource(Res.string.first_load_failed_text),
+                        actionLabel = stringResource(Res.string.offline_retry),
+                        onAction = { onEvent(WeekEvent.RefreshPulled) },
+                    )
+                }
+            }
         } else {
             WeekList(state, onEvent, onSongClick, onEditWeek, onUploadRehearsal, onAccount)
         }
@@ -166,7 +182,9 @@ private fun WeekList(
     ) {
         item { WeekHeader(setlist?.let { rememberFormattingWords().range(it.rehearsalDate, it.serviceDate) }, state.me, onAccount) }
         if (state.weeks.size > 1) item { WeekTabs(state.weeks, onSelect = { onEvent(WeekEvent.WeekSelected(it)) }) }
-        if (state.isOffline) item { OfflineBanner() }
+        if (state.isOffline) {
+            item { OfflineBanner(onRetry = { onEvent(WeekEvent.RefreshPulled) }, isRetrying = state.isRefreshing) }
+        }
         if (setlist == null) {
             item { EmptyWeek(state, onPublish = { onEditWeek(null) }) }
         } else {

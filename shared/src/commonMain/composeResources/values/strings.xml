@@ -195,7 +195,12 @@
     <string name="week_offline_error">Le téléchargement s’est interrompu. Réessaie avec du réseau, il reprendra où il s’est arrêté.</string>
     <string name="week_offline_retry">Reprendre</string>
 
-    <string name="offline_banner">Hors connexion · tu vois la dernière version enregistrée sur le téléphone. Tire vers le bas pour réessayer.</string>
+    <string name="offline_banner">Hors connexion · tu vois la dernière version enregistrée sur le téléphone.</string>
+    <string name="offline_retry">Réessayer</string>
+    <string name="offline_retrying">Connexion…</string>
+    <string name="first_load_failed_text">Pas de réseau, et rien n’est encore enregistré sur ce téléphone. Vérifie ta connexion puis réessaie.</string>
+    <string name="library_load_failed_title">Impossible de charger les chants</string>
+    <string name="week_load_failed_title">Impossible de charger la setlist</string>
 
     <!-- Library -->
     <string name="library_title">Chants</string>
