@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.shared.domain.learning.LearningCatalog
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.LearningProgress
+import com.xperiencemusic.shared.presentation.common.withLateFallback
 import com.xperiencemusic.shared.domain.usecase.GetLearningPreferencesUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveLearningProgressUseCase
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProgressViewModel(
@@ -61,7 +63,8 @@ class ProgressViewModel(
                         .withVoices(schedule.current?.songs.orEmpty(), mine)
                         .withGrowth(growth)
                         .withReviewQueue(queue)
-                }.onStart { emit(deriveProgressState(member, null)) }
+                    // Offline the server data never comes: the screen then opens on what the phone knows.
+                }.withLateFallback(LOAD_GRACE) { deriveProgressState(member, null) }
             }
         }
 
@@ -99,6 +102,11 @@ class ProgressViewModel(
         viewModelScope.launch {
             action.value = ActionState(hasError = block() is DomainResult.Failure)
         }
+    }
+
+    private companion object {
+        /** How long the loader stays before the screen opens without the server's data. */
+        val LOAD_GRACE = 1500.milliseconds
     }
 
     private data class ActionState(val isWorking: Boolean = false, val hasError: Boolean = false)

@@ -205,13 +205,22 @@
     <!-- Library -->
     <string name="library_title">Chants</string>
     <string name="search_clear">Effacer la recherche</string>
-    <string name="library_search">Rechercher un chant ou un auteur</string>
+    <string name="library_search">Titre, auteur ou paroles</string>
     <string name="library_empty">Aucun chant ne correspond à ta recherche.</string>
-    <string name="library_all_keys">Toutes</string>
     <string name="library_empty_title">La bibliothèque est vide</string>
     <string name="library_empty_admin">Ajoute les chants du groupe : paroles, accords et enregistrements de référence.</string>
     <string name="library_empty_member">Les chants ajoutés par les responsables apparaîtront ici.</string>
-    <string name="library_versions">%1$d/%2$d versions</string>
+    <string name="library_tab_repertoire">Notre répertoire · %1$d</string>
+    <string name="library_tab_catalogue">Tout · %1$d</string>
+    <string name="library_section_next">Prochain service · %1$s</string>
+    <string name="library_section_recent">Chantés récemment</string>
+    <string name="library_section_alphabetical">De A à Z</string>
+    <string name="library_section_results">Résultats · %1$d</string>
+    <string name="library_sung_on">Chanté le %1$s</string>
+    <string name="library_has_audio">Avec enregistrement</string>
+    <string name="library_repertoire_empty_title">Pas encore de répertoire</string>
+    <string name="library_repertoire_empty">Les chants de vos setlists et ceux qui ont un enregistrement apparaîtront ici.</string>
+    <string name="library_show_catalogue">Voir tous les chants</string>
 
     <!-- Song detail -->
     <string name="song_key">Tonalité : %1$s</string>
@@ -237,6 +246,8 @@
     <string name="song_delete_confirm_cancel">Annuler</string>
     <string name="song_voice_tracks_title">Pistes par voix</string>
     <string name="song_links_title">Liens</string>
+    <string name="song_youtube_open">Écouter l’original sur YouTube</string>
+    <string name="song_youtube_open_short">Écouter l’original</string>
     <string name="song_not_found">Ce chant n’existe plus.</string>
     <string name="song_not_found_text">Il a peut-être été retiré de la bibliothèque. Reviens en arrière pour retrouver les autres chants.</string>
     <string name="error_forbidden">Tu n’as pas les droits pour cette action.</string>
@@ -258,6 +269,9 @@
     <string name="editor_import_not_found">Aucun chant trouvé à cette adresse.</string>
     <string name="editor_import_network">Impossible de joindre accords.app. Vérifie ta connexion.</string>
     <string name="editor_artist_label">Auteur / compositeur (facultatif)</string>
+    <string name="youtube_link_label">Lien YouTube (facultatif)</string>
+    <string name="youtube_link_hint">https://youtu.be/…</string>
+    <string name="youtube_link_invalid">Ce n’est pas un lien YouTube. Copie l’adresse depuis « Partager » sur YouTube.</string>
     <string name="editor_key_title">Tonalité</string>
     <string name="editor_major">Majeur</string>
     <string name="editor_minor">Mineur</string>
@@ -288,6 +302,11 @@
     <string name="setlist_selected_title">Chants de la semaine (%1$d)</string>
     <string name="setlist_selected_empty">Ajoute au moins un chant ci-dessous.</string>
     <string name="setlist_add_title">Ajouter des chants</string>
+    <string name="setlist_new_song">Nouveau chant</string>
+    <string name="setlist_new_song_from_search">Créer « %1$s »</string>
+    <string name="setlist_new_song_help">Le titre et le lien YouTube suffisent. Tu pourras ajouter les paroles, les accords et la tonalité plus tard depuis la bibliothèque.</string>
+    <string name="setlist_new_song_add">Ajouter</string>
+    <string name="setlist_new_song_cancel">Annuler</string>
     <string name="setlist_move_up">Monter %1$s</string>
     <string name="setlist_move_down">Descendre %1$s</string>
     <string name="setlist_remove">Retirer %1$s</string>
@@ -351,6 +370,9 @@
     <string name="recording_form_pick_file">Choisir un fichier audio</string>
     <string name="recording_form_change_file">Changer de fichier</string>
     <string name="recording_form_file_meta">%1$s · %2$s</string>
+    <string name="recording_form_compressing">Compression du fichier… %1$d %</string>
+    <string name="recording_form_compressing_help">Le fichier est allégé pour l’envoi. Garde l’app ouverte, ça peut prendre une minute pour une répétition entière.</string>
+    <string name="recording_form_compressed">Allégé de %1$s à %2$s pour l’envoi</string>
     <string name="recording_form_name_label">Nom de la version</string>
     <string name="recording_form_name_hint">Ex. : Répétition du mardi</string>
     <string name="recording_form_date_label">Enregistrée le</string>
@@ -360,7 +382,7 @@
     <string name="recording_form_full_help">Choisis celle que la nouvelle version remplace :</string>
     <string name="recording_form_uploading">Envoi en cours…</string>
     <string name="recording_form_error_unreadable">Impossible de lire ce fichier audio.</string>
-    <string name="recording_form_error_too_large">Le fichier dépasse 50 Mo. Exporte-le en MP3 ou M4A pour l’alléger.</string>
+    <string name="recording_form_error_too_large">Le fichier dépasse 50 Mo, même allégé. Coupe-le en deux parties ou exporte-le en MP3.</string>
     <string name="recording_form_error_limit">Ce chant a déjà 3 versions : choisis celle à remplacer.</string>
     <string name="action_add_recording">Ajouter une version</string>
 

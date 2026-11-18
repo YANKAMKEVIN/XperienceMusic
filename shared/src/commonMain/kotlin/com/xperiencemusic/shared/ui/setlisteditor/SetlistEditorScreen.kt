@@ -177,6 +177,9 @@ fun SetlistEditorScreenContent(
             item(key = "add-search") {
                 SongSearchField(state.query, onQueryChange = { onEvent(SetlistEditorEvent.QueryChanged(it)) }, Modifier.animateItem())
             }
+            item(key = "new-song") {
+                NewSongButton(state.query, onClick = { onEvent(SetlistEditorEvent.NewSongClicked) }, Modifier.animateItem())
+            }
             items(state.available, key = { "available-${it.id}" }) { song ->
                 AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) }, modifier = Modifier.animateItem())
             }
@@ -210,6 +213,8 @@ fun SetlistEditorScreenContent(
             onDismiss = { isConfirmingDelete = false },
         )
     }
+
+    state.newSong?.let { NewSongDialog(it, onEvent) }
 
     editedDate?.let { which ->
         SetlistDatePicker(which, state, onEvent, onDismiss = { editedDate = null })

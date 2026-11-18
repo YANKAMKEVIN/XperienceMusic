@@ -24,6 +24,7 @@ import kotlinx.datetime.LocalDate
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertNull
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -134,5 +135,27 @@ class RecordingFormViewModelTest {
         vm.onEvent(RecordingFormEvent.FilePicked(audio))
         vm.onEvent(RecordingFormEvent.FilePicked(null))
         assertEquals("repet.mp3", vm.state.value.file?.name)
+    }
+
+    @Test
+    fun `pendant la compression on ne peut pas envoyer, puis le gain est affiché`() = runTest {
+        val vm = viewModel("empty")
+        vm.onEvent(RecordingFormEvent.TitleChanged("Répétition"))
+        vm.onEvent(RecordingFormEvent.FileCompressing(0.4f))
+        assertEquals(0.4f, vm.state.value.compressionProgress)
+        assertFalse(vm.state.value.canSave)
+        vm.onEvent(RecordingFormEvent.FilePicked(AudioFile("repet.m4a", "audio/mp4", audio.bytes, 212, compressedFromBytes = 120_000_000)))
+        assertNull(vm.state.value.compressionProgress)
+        assertEquals(120_000_000, vm.state.value.file?.compressedFromBytes)
+        assertTrue(vm.state.value.canSave)
+    }
+
+    @Test
+    fun `une compression qui échoue sans fichier le dit`() = runTest {
+        val vm = viewModel("empty")
+        vm.onEvent(RecordingFormEvent.FileCompressing(0.1f))
+        vm.onEvent(RecordingFormEvent.FilePicked(null))
+        assertNull(vm.state.value.compressionProgress)
+        assertEquals(RecordingFormError.FILE_UNREADABLE, vm.state.value.error)
     }
 }

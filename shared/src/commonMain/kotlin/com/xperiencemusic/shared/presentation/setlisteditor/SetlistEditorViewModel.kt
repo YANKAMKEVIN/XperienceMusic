@@ -9,6 +9,10 @@ import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.model.Song
+import com.xperiencemusic.shared.domain.model.SongDraft
+import com.xperiencemusic.music.theory.Key
+import com.xperiencemusic.music.theory.Mode
+import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.DeleteSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
@@ -48,6 +52,7 @@ data class SetlistDraft(
     val isConfirmingDiscard: Boolean = false,
     val isLeaving: Boolean = false,
     val today: LocalDate? = null,
+    val newSong: NewSongUi? = null,
 ) {
     val choices: SetlistChoices get() = SetlistChoices(rehearsalDate, serviceDate, message, selectedIds)
 }
@@ -69,6 +74,7 @@ class SetlistEditorViewModel(
     private val searchSongs: SearchSongsUseCase,
     private val publishSetlist: PublishSetlistUseCase,
     private val deleteSetlist: DeleteSetlistUseCase,
+    private val saveSong: SaveSongUseCase,
     suggestBandWeek: SuggestBandWeekUseCase,
     observeSchedule: ObserveSetlistScheduleUseCase,
     serviceDate: LocalDate?,
@@ -121,6 +127,11 @@ class SetlistEditorViewModel(
             is SetlistEditorEvent.MessageChanged -> draft.update { it.copy(message = event.message) }
             is SetlistEditorEvent.RehearsalDatePicked -> draft.update { it.copy(rehearsalDate = event.date, error = null) }
             is SetlistEditorEvent.ServiceDatePicked -> draft.update { it.copy(serviceDate = event.date, error = null) }
+            SetlistEditorEvent.NewSongClicked -> draft.update { it.copy(newSong = NewSongUi(title = it.query.trim())) }
+            is SetlistEditorEvent.NewSongTitleChanged -> updateNewSong { it.copy(title = event.title, error = null) }
+            is SetlistEditorEvent.NewSongLinkChanged -> updateNewSong { it.copy(youtubeUrl = event.url, error = null) }
+            SetlistEditorEvent.NewSongConfirmed -> createNewSong()
+            SetlistEditorEvent.NewSongDismissed -> draft.update { if (it.newSong?.isSaving == true) it else it.copy(newSong = null) }
             SetlistEditorEvent.PublishClicked -> publish()
             SetlistEditorEvent.DeleteConfirmed -> delete()
             SetlistEditorEvent.BackClicked -> draft.update {
@@ -128,6 +139,26 @@ class SetlistEditorViewModel(
             }
             SetlistEditorEvent.DiscardConfirmed -> draft.update { it.copy(isConfirmingDiscard = false, isLeaving = true) }
             SetlistEditorEvent.DiscardDismissed -> draft.update { it.copy(isConfirmingDiscard = false) }
+        }
+    }
+
+    private fun updateNewSong(change: (NewSongUi) -> NewSongUi) = draft.update { current ->
+        current.newSong?.let { current.copy(newSong = change(it)) } ?: current
+    }
+
+    /** Creates the song in the library (default key, no chart yet) and adds it to the week. */
+    private fun createNewSong() {
+        val form = draft.value.newSong ?: return
+        if (!form.canConfirm) return
+        updateNewSong { it.copy(isSaving = true, error = null) }
+        viewModelScope.launch {
+            val song = SongDraft(title = form.title, artist = null, key = Key(0, Mode.MAJOR), chart = "", youtubeUrl = form.youtubeUrl)
+            when (val result = saveSong(null, song)) {
+                is DomainResult.Success -> draft.update {
+                    it.copy(newSong = null, query = "", selectedIds = it.selectedIds + result.value)
+                }
+                is DomainResult.Failure -> updateNewSong { it.copy(isSaving = false, error = result.error.toNewSongError()) }
+            }
         }
     }
 
@@ -189,6 +220,7 @@ fun deriveSetlistEditorState(draft: SetlistDraft, library: List<Song>, matches: 
         isConfirmingDiscard = draft.isConfirmingDiscard,
         isLeaving = draft.isLeaving,
         dateWarning = draft.dateWarning(),
+        newSong = draft.newSong,
     )
 }
 
@@ -213,6 +245,13 @@ private fun List<String>.moved(id: String, offset: Int): List<String> {
     val to = from + offset
     if (from < 0 || to !in indices) return this
     return toMutableList().apply { add(to, removeAt(from)) }
+}
+
+private fun DomainError.toNewSongError() = when (this) {
+    DomainError.FORBIDDEN, DomainError.NOT_SIGNED_IN -> NewSongError.FORBIDDEN
+    DomainError.INVALID_INPUT -> NewSongError.MISSING_TITLE
+    DomainError.INVALID_LINK -> NewSongError.INVALID_YOUTUBE_LINK
+    else -> NewSongError.NETWORK
 }
 
 private fun DomainError.toEditorError() = when (this) {

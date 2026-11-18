@@ -7,6 +7,7 @@ import com.xperiencemusic.shared.domain.repository.SongRepository
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveRepertoireUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
 import com.xperiencemusic.shared.domain.usecase.PlaybackController
@@ -84,6 +85,7 @@ class FirstLoadOfflineTest {
         val setlists = setlistRepository()
         return LibraryViewModel(
             SearchSongsUseCase(songs),
+            ObserveRepertoireUseCase(schedule(setlists, songs), songs) { LocalDate(2026, 10, 10) },
             ObserveCurrentMemberUseCase(FakeSessionRepository(member(Role.MEMBER))),
             ObserveSyncStatusUseCase(songs, setlists),
             RefreshContentUseCase(songs, setlists),
@@ -124,7 +126,7 @@ class FirstLoadOfflineTest {
         val loaded = viewModel.state.value
         assertFalse(loaded.hasLoadFailed)
         assertFalse(loaded.isLoading)
-        assertEquals(listOf("1"), loaded.songs.map { it.id })
+        assertEquals(listOf("1"), loaded.sections.flatMap { section -> section.songs.map { it.id } })
     }
 
     @Test
@@ -144,7 +146,7 @@ class FirstLoadOfflineTest {
 
         assertTrue(viewModel.state.value.isOffline)
         assertFalse(viewModel.state.value.hasLoadFailed)
-        assertEquals(1, viewModel.state.value.songs.size)
+        assertEquals(1, viewModel.state.value.catalogueCount)
     }
 
     @Test
