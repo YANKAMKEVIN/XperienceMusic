@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.domain.model.BandWeek
+import com.xperiencemusic.shared.domain.model.Repertoire
 import com.xperiencemusic.shared.domain.model.DomainError
 import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Setlist
@@ -14,18 +15,19 @@ import com.xperiencemusic.music.theory.Key
 import com.xperiencemusic.music.theory.Mode
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.DeleteSetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveRepertoireUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
+import com.xperiencemusic.shared.domain.usecase.SongSearchIndex
+import com.xperiencemusic.shared.presentation.library.LibrarySongUi
+import com.xperiencemusic.shared.presentation.library.toLibraryItem
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -65,13 +67,13 @@ data class SetlistChoices(
     val selectedIds: List<String>,
 )
 
-@OptIn(ExperimentalCoroutinesApi::class)
 /**
  * Edits the setlist of [serviceDate] when given, otherwise prepares the first coming week that has
  * none yet, so several weeks can be sent ahead.
  */
 class SetlistEditorViewModel(
-    private val searchSongs: SearchSongsUseCase,
+    searchSongs: SearchSongsUseCase,
+    observeRepertoire: ObserveRepertoireUseCase,
     private val publishSetlist: PublishSetlistUseCase,
     private val deleteSetlist: DeleteSetlistUseCase,
     private val saveSong: SaveSongUseCase,
@@ -107,13 +109,15 @@ class SetlistEditorViewModel(
         }
     }
 
-    /** The whole library, to resolve selected songs whatever the search. */
-    private val library = searchSongs("")
-    private val matches = draft.map { it.query }.flatMapLatest { searchSongs(it) }
-
+    // The index is built once per catalogue and searched on each keystroke; it also resolves the
+    // selected songs whatever the search.
     val state: StateFlow<SetlistEditorUiState> =
-        combine(draft, library, matches, ::deriveSetlistEditorState)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), deriveSetlistEditorState(draft.value, emptyList(), emptyList()))
+        combine(draft, searchSongs.index(), observeRepertoire(), ::deriveSetlistEditorState)
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                deriveSetlistEditorState(draft.value, SongSearchIndex(emptyList()), Repertoire.EMPTY),
+            )
 
     fun onEvent(event: SetlistEditorEvent) {
         when (event) {
@@ -200,15 +204,15 @@ class SetlistEditorViewModel(
     }
 }
 
-fun deriveSetlistEditorState(draft: SetlistDraft, library: List<Song>, matches: List<Song>): SetlistEditorUiState {
-    val byId = library.associateBy { it.id }
+fun deriveSetlistEditorState(draft: SetlistDraft, index: SongSearchIndex, repertoire: Repertoire): SetlistEditorUiState {
+    val byId = index.songs.associateBy { it.id }
     return SetlistEditorUiState(
         rehearsalDate = draft.rehearsalDate,
         serviceDate = draft.serviceDate,
         message = draft.message,
         query = draft.query,
         selected = draft.selectedIds.mapNotNull { byId[it]?.toSetlistSongUi() },
-        available = matches.filterNot { it.id in draft.selectedIds }.map { it.toSetlistSongUi() },
+        available = availableSongs(draft, index, repertoire),
         isPublishing = draft.isPublishing,
         error = draft.error,
         isPublished = draft.isPublished,
@@ -222,6 +226,25 @@ fun deriveSetlistEditorState(draft: SetlistDraft, library: List<Song>, matches: 
         dateWarning = draft.dateWarning(),
         newSong = draft.newSong,
     )
+}
+
+/**
+ * What can be added. A catalogue of two thousand imported songs is too long to scroll: without a
+ * search only the repertoire is offered, with when each song was last sung; a search covers
+ * everything.
+ */
+private fun availableSongs(draft: SetlistDraft, index: SongSearchIndex, repertoire: Repertoire): List<LibrarySongUi> {
+    val selected = draft.selectedIds.toSet()
+    if (draft.query.isNotBlank()) {
+        return index.search(draft.query, inLyrics = true)
+            .filterNot { it.song.id in selected }
+            .map { it.song.toLibraryItem().copy(lyricLine = it.lyricLine) }
+    }
+    val repertoireIds = repertoire.songs.mapTo(HashSet()) { it.id }
+    // The index is sorted by title, and drops songs deleted since the setlist was published.
+    return index.songs
+        .filter { it.id in repertoireIds && it.id !in selected }
+        .map { it.toLibraryItem().copy(lastSungOn = repertoire.lastSungOn[it.id]) }
 }
 
 /** A past date already published is left alone: only a date the admin just picked is questioned. */

@@ -1,5 +1,7 @@
 package com.xperiencemusic.shared.presentation.setlisteditor
 
+import com.xperiencemusic.shared.domain.model.Repertoire
+import com.xperiencemusic.shared.domain.usecase.SongSearchIndex
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -9,7 +11,7 @@ class SetlistDateWarningTest {
     private val today = LocalDate(2026, 11, 8)
     private fun warning(rehearsal: LocalDate, service: LocalDate, original: LocalDate? = null) = deriveSetlistEditorState(
         SetlistDraft(rehearsal, service, today = today, original = original?.let { SetlistChoices(it, service, "", emptyList()) }),
-        emptyList(), emptyList(),
+        SongSearchIndex(emptyList()), Repertoire.EMPTY,
     ).dateWarning
 
     @Test

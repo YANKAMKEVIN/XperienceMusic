@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.presentation.setlisteditor
 
+import com.xperiencemusic.shared.presentation.library.LibrarySongUi
 import kotlinx.datetime.LocalDate
 
 data class SetlistEditorUiState(
@@ -9,8 +10,11 @@ data class SetlistEditorUiState(
     val query: String = "",
     /** In setlist order. */
     val selected: List<SetlistSongUi> = emptyList(),
-    /** Songs matching [query] that are not selected yet. */
-    val available: List<SetlistSongUi> = emptyList(),
+    /**
+     * Not selected yet: without a search, the repertoire (songs of a setlist or with a recording),
+     * by title; with one, the matches across the whole catalogue, lyrics included.
+     */
+    val available: List<LibrarySongUi> = emptyList(),
     val isPublishing: Boolean = false,
     val error: SetlistEditorError? = null,
     val isPublished: Boolean = false,
@@ -32,6 +36,7 @@ data class SetlistEditorUiState(
 ) {
     val canPublish: Boolean get() = !isPublishing && selected.isNotEmpty() && serviceDate >= rehearsalDate
     val hasDateConflict: Boolean get() = serviceDate < rehearsalDate
+    val isSearching: Boolean get() = query.isNotBlank()
 }
 
 enum class SetlistDateWarning { PAST_REHEARSAL, LONG_GAP }
