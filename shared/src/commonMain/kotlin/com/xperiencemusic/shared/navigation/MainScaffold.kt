@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -72,7 +73,9 @@ fun MainScaffold(onSignOut: () -> Unit, hasLoadFailure: Boolean, onRetryLoads: (
                 }
             },
         ) { padding ->
-            Row(Modifier.padding(padding)) {
+            // Consumed, so a screen's imePadding() only adds what the keyboard covers beyond the
+            // bottom bar: it used to add the whole keyboard on top of it, a blank band above the keys.
+            Row(Modifier.padding(padding).consumeWindowInsets(padding)) {
                 if (isOnTab && isLandscape) {
                     Box(
                         Modifier.fillMaxHeight().windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start)).padding(start = Spacing.s, top = Spacing.s, bottom = Spacing.s),
