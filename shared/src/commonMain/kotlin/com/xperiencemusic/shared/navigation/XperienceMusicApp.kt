@@ -7,6 +7,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.domain.usecase.LoadAvatarPhotoUseCase
 import com.xperiencemusic.shared.domain.usecase.MarkMicrophoneExplainedUseCase
@@ -65,6 +67,7 @@ fun XperienceMusicApp() {
 @Composable
 private fun AppRoot(viewModel: AppViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onEvent(AppEvent.AppForegrounded) }
     val isConfirmingSignOut by viewModel.isConfirmingSignOut.collectAsStateWithLifecycle()
     val hasLoadFailure by viewModel.hasLoadFailure.collectAsStateWithLifecycle()
     val signOut = { viewModel.onEvent(AppEvent.SignOutClicked) }

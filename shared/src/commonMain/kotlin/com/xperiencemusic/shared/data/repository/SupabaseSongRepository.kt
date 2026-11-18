@@ -8,6 +8,7 @@ import com.xperiencemusic.shared.data.mapper.toWriteDto
 import com.xperiencemusic.shared.data.remote.AUDIO_BUCKET
 import com.xperiencemusic.shared.data.remote.dto.IdDto
 import com.xperiencemusic.shared.data.remote.dto.SongDto
+import com.xperiencemusic.shared.data.remote.dto.SongLinkWriteDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
 import com.xperiencemusic.shared.data.remote.tracking
 import com.xperiencemusic.shared.data.session.SessionGuard
@@ -16,12 +17,14 @@ import com.xperiencemusic.shared.domain.model.Recording
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SongDraft
 import com.xperiencemusic.shared.domain.model.SyncStatus
+import com.xperiencemusic.shared.domain.model.YouTubeLink
 import com.xperiencemusic.shared.domain.repository.SessionResettable
 import com.xperiencemusic.shared.domain.repository.SongRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,6 +78,7 @@ class SupabaseSongRepository(
     override suspend fun createSong(draft: SongDraft): String {
         val created = session.accountCall {
             client.from(SONGS).insert(draft.toWriteDto()) { select(Columns.list("id")) }.decodeSingle<IdDto>()
+                .also { insertYouTubeLink(it.id, draft.youtubeUrl) }
         }
         refreshAfterWrite()
         return created.id
@@ -83,8 +87,25 @@ class SupabaseSongRepository(
     override suspend fun updateSong(id: String, draft: SongDraft) {
         session.accountCall {
             client.from(SONGS).update(draft.toWriteDto()) { filter { eq("id", id) } }
+            replaceYouTubeLink(id, draft.youtubeUrl)
         }
         refreshAfterWrite()
+    }
+
+    /** A song has one YouTube link: the previous one goes, the new one (if any) takes its place. */
+    private suspend fun replaceYouTubeLink(songId: String, url: String?) {
+        client.from(SONG_LINKS).delete {
+            filter {
+                eq("song_id", songId)
+                eq("label", YouTubeLink.LABEL)
+            }
+        }
+        insertYouTubeLink(songId, url)
+    }
+
+    /** A new song has no link yet: there is nothing to delete first. */
+    private suspend fun insertYouTubeLink(songId: String, url: String?) {
+        if (url != null) client.from(SONG_LINKS).insert(SongLinkWriteDto(songId, YouTubeLink.LABEL, url))
     }
 
     override suspend fun deleteSong(id: String) {
@@ -171,7 +192,17 @@ class SupabaseSongRepository(
 
     private suspend fun reload() = loading.withLock {
         val fetched = session.accountCall {
-            client.from(SONGS).select(Columns.raw(SongDto.COLUMNS)).decodeList<SongDto>()
+            // The server answers at most PAGE_SIZE rows per request: without pages, a catalogue of
+            // two thousand songs stopped at the first thousand.
+            buildList {
+                do {
+                    val page = client.from(SONGS).select(Columns.raw(SongDto.COLUMNS)) {
+                        order("id", Order.ASCENDING)
+                        range(size.toLong(), size + PAGE_SIZE - 1)
+                    }.decodeList<SongDto>()
+                    addAll(page)
+                } while (page.isNotEmpty())
+            }
         }
         publish(fetched)
         snapshots.save(SNAPSHOT, ListSerializer(SongDto.serializer()), fetched)
@@ -184,7 +215,10 @@ class SupabaseSongRepository(
 
     private companion object {
         const val SONGS = "songs"
+        /** Supabase's default row limit. A smaller server limit only costs more requests. */
+        const val PAGE_SIZE = 1000L
         const val VOICE_TRACKS = "voice_tracks"
+        const val SONG_LINKS = "song_links"
         const val SNAPSHOT = "songs"
     }
 }

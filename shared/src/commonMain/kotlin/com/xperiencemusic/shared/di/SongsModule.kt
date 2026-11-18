@@ -10,6 +10,7 @@ import com.xperiencemusic.shared.domain.usecase.ImportSongFromLinkUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveOfflineAudioUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveRepertoireUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SetReferenceRecordingUseCase
 import com.xperiencemusic.shared.domain.usecase.UploadRecordingUseCase
@@ -30,6 +31,7 @@ import org.koin.dsl.module
 val songsModule = module {
     single<SongPageSource> { AccordsAppPageSource(get()) }
     factoryOf(::SearchSongsUseCase)
+    factoryOf(::ObserveRepertoireUseCase)
     factoryOf(::ObserveSongUseCase)
     factoryOf(::SaveSongUseCase)
     factoryOf(::ImportSongFromLinkUseCase)

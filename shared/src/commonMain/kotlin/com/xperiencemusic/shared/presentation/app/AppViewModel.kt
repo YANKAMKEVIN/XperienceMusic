@@ -21,6 +21,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.xperiencemusic.shared.domain.usecase.CatchUpUseCase
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.delay
 
 sealed interface AppUiState {
     data object Loading : AppUiState
@@ -39,6 +43,9 @@ sealed interface AppEvent {
 
     /** "Réessayer" on the banner shown when some data could not be fetched. */
     data object RetryLoadsClicked : AppEvent
+
+    /** The app came (back) to the screen: what failed while it was away is fetched again. */
+    data object AppForegrounded : AppEvent
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -49,8 +56,26 @@ class AppViewModel(
     observeLoadFailure: ObserveRemoteLoadFailureUseCase,
     private val retryLoads: RetryRemoteLoadsUseCase,
     syncReminders: SyncServiceRemindersUseCase,
+    private val catchUp: CatchUpUseCase,
 ) : ViewModel() {
     init {
+        // After a failure, try again a few times on our own: the network usually comes back within
+        // seconds (a phone waking up, a lift, a tunnel). The banner still offers "Réessayer".
+        viewModelScope.launch {
+            observeSession()
+                .map { it is SessionState.Ready }
+                .distinctUntilChanged()
+                .flatMapLatest { isSignedIn -> if (isSignedIn) catchUp.failures() else flowOf(false) }
+                .collectLatest { isFailing ->
+                    if (isFailing) {
+                        for (wait in RETRY_DELAYS_MILLIS) {
+                            delay(wait)
+                            catchUp()
+                        }
+                    }
+                }
+        }
+
         // The phone's planning reminders follow the planning for as long as someone is signed in.
         observeSession()
             .map { it is SessionState.Ready }
@@ -80,6 +105,7 @@ class AppViewModel(
             AppEvent.SignOutConfirmed -> signOutNow()
             AppEvent.SignOutDismissed -> _isConfirmingSignOut.value = false
             AppEvent.RetryLoadsClicked -> viewModelScope.launch { retryLoads() }
+            AppEvent.AppForegrounded -> if (state.value == AppUiState.Ready) viewModelScope.launch { catchUp() }
         }
     }
 
@@ -88,6 +114,9 @@ class AppViewModel(
         viewModelScope.launch { signOut() }
     }
 }
+
+/** Spaced out: a dead network is not hammered, a short gap is caught within seconds. */
+private val RETRY_DELAYS_MILLIS = listOf(3_000L, 10_000L, 30_000L)
 
 /**
  * Only a member who got into the app can have something to lose (unsynced attempts, downloads):

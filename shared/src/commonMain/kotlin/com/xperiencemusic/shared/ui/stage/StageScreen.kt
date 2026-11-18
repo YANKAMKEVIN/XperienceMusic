@@ -234,10 +234,11 @@ private fun StageToolbar(state: StageUiState, onClose: () -> Unit) {
         // On stage the transposition chosen on the song page was invisible: the key now says how
         // far it is from the song's own key ("+2 · origine Ré majeur", short so the title keeps room).
         Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = Spacing.s, end = Spacing.m)) {
+            val colors = MaterialTheme.colorScheme
             Text(
                 state.keyLabel,
                 style = MaterialTheme.typography.labelLarge,
-                color = if (state.originalKeyLabel != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (state.originalKeyLabel != null) colors.onSurface else colors.onSurfaceVariant,
             )
             state.originalKeyLabel?.let { original ->
                 Text(

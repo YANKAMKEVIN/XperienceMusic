@@ -55,6 +55,14 @@ data class SongLinkDto(
 )
 
 @Serializable
+data class SongLinkWriteDto(
+    @SerialName("song_id") val songId: String,
+    val label: String,
+    val url: String,
+    val position: Int = 0,
+)
+
+@Serializable
 data class SongWriteDto(
     val title: String,
     val artist: String?,

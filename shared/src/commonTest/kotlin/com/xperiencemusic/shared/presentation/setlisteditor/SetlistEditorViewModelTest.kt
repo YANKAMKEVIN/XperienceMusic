@@ -3,9 +3,11 @@ package com.xperiencemusic.shared.presentation.setlisteditor
 import app.cash.turbine.test
 import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.Setlist
+import com.xperiencemusic.shared.domain.model.youtubeUrl
 import com.xperiencemusic.shared.domain.usecase.DeleteSetlistUseCase
 import com.xperiencemusic.shared.fakes.schedule
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
@@ -26,6 +28,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -50,6 +53,7 @@ class SetlistEditorViewModelTest {
         SearchSongsUseCase(songs),
         PublishSetlistUseCase(session, setlists),
         DeleteSetlistUseCase(session, setlists),
+        SaveSongUseCase(session, songs),
         SuggestBandWeekUseCase { today },
         schedule(setlists, songs, today),
         serviceDate,
@@ -214,6 +218,37 @@ class SetlistEditorViewModelTest {
             assertFalse(expectMostRecentItem().hasUnsavedChanges)
             viewModel.onEvent(SetlistEditorEvent.MessageChanged("Répétition à 19 h"))
             assertTrue(expectMostRecentItem().hasUnsavedChanges)
+        }
+    }
+
+    @Test
+    fun `un chant absent de la bibliothèque est créé avec son lien et ajouté à la semaine`() = runTest {
+        viewModel.onEvent(SetlistEditorEvent.QueryChanged("Je ne suis plus esclave de la peur"))
+        viewModel.state.test {
+            assertTrue(expectMostRecentItem().available.isEmpty())
+            viewModel.onEvent(SetlistEditorEvent.NewSongClicked)
+            assertEquals("Je ne suis plus esclave de la peur", expectMostRecentItem().newSong?.title)
+            viewModel.onEvent(SetlistEditorEvent.NewSongLinkChanged("https://youtu.be/QsjP0cZrQdk"))
+            viewModel.onEvent(SetlistEditorEvent.NewSongConfirmed)
+            val state = expectMostRecentItem()
+            assertNull(state.newSong)
+            assertEquals(listOf("Je ne suis plus esclave de la peur"), state.selected.map { it.title })
+            assertEquals("", state.query)
+        }
+        val created = songs.observeSongs().first().single { it.title == "Je ne suis plus esclave de la peur" }
+        assertEquals("https://youtu.be/QsjP0cZrQdk", created.youtubeUrl)
+    }
+
+    @Test
+    fun `un mauvais lien garde la fenêtre ouverte avec l'erreur`() = runTest {
+        viewModel.onEvent(SetlistEditorEvent.NewSongClicked)
+        viewModel.onEvent(SetlistEditorEvent.NewSongTitleChanged("Break every chain"))
+        viewModel.onEvent(SetlistEditorEvent.NewSongLinkChanged("pas un lien"))
+        viewModel.onEvent(SetlistEditorEvent.NewSongConfirmed)
+        viewModel.state.test {
+            val state = expectMostRecentItem()
+            assertEquals(NewSongError.INVALID_YOUTUBE_LINK, state.newSong?.error)
+            assertTrue(state.selected.isEmpty())
         }
     }
 }

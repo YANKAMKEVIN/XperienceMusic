@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -197,7 +198,7 @@ private fun SongDetailBody(
         contentPadding = PaddingValues(start = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
         verticalArrangement = Arrangement.spacedBy(Spacing.l),
     ) {
-        item { SongHero(state) }
+        songHeader(state)
         item { KeyAndNotation(state, onEvent) }
         item {
             GradientButton(onClick = onOpenStage, modifier = Modifier.fillMaxWidth()) {
@@ -247,6 +248,18 @@ private fun SongDetailBody(
     }
 }
 
+/** The video's picture carries the title; a song without one keeps the plain title, and its link a row. */
+private fun LazyListScope.songHeader(state: SongDetailUiState) {
+    val thumbnail = state.youtubeThumbnailUrl
+    val youtube = state.youtubeUrl
+    if (youtube != null && thumbnail != null) {
+        item { YouTubeBanner(youtube, thumbnail, state.title, state.artist) }
+    } else {
+        item { SongHero(state) }
+        if (youtube != null) item { YouTubeRow(youtube, thumbnail) }
+    }
+}
+
 @Composable
 private fun SongHero(state: SongDetailUiState) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -256,12 +269,15 @@ private fun SongHero(state: SongDetailUiState) {
             textAlign = TextAlign.Center,
             modifier = Modifier.semantics { heading() },
         )
-        Text(
-            listOfNotNull(state.keyHeading.ifEmpty { null }, state.artist).joinToString(" · "),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+        // The key has its own frame just below: the title only carries who wrote the song.
+        state.artist?.let { artist ->
+            Text(
+                artist,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 

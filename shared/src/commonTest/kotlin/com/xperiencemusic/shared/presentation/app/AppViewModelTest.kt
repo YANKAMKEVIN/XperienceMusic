@@ -23,6 +23,10 @@ import com.xperiencemusic.shared.fakes.member
 import com.xperiencemusic.shared.fakes.schedule
 import com.xperiencemusic.shared.fakes.setlistRepository
 import com.xperiencemusic.shared.fakes.songRepository
+import com.xperiencemusic.shared.domain.usecase.CatchUpUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
+import com.xperiencemusic.shared.domain.usecase.RefreshContentUseCase
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -50,12 +54,17 @@ class AppViewModelTest {
         listOf(ServiceSignup(LocalDate(2026, 11, 8), "me", true)),
     )
     private val reminders = FakeReminderScheduler()
+    private val songs = songRepository()
+    private val setlists = setlistRepository()
     private lateinit var viewModel: AppViewModel
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = AppViewModel(
+        viewModel = newViewModel()
+    }
+
+    private fun newViewModel() = AppViewModel(
             ObserveSessionUseCase(sessions),
             RetrySessionUseCase(sessions),
             SignOutUseCase(sessions, LocalDataStore { wipes++ }),
@@ -63,12 +72,12 @@ class AppViewModelTest {
             RetryRemoteLoadsUseCase(loads),
             SyncServiceRemindersUseCase(
                 ObservePlanningUseCase(planning, InMemoryMembersRepository(sessions), ObserveCurrentMemberUseCase(sessions)),
-                schedule(setlistRepository(), songRepository()),
+                schedule(setlists, songs),
                 reminders,
                 FakeAnnouncedMonthsStore(),
             ) { LocalDateTime(2026, 10, 28, 12, 0) },
+            CatchUpUseCase(ObserveSyncStatusUseCase(songs, setlists), loads, RefreshContentUseCase(songs, setlists)),
         )
-    }
 
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
@@ -140,5 +149,29 @@ class AppViewModelTest {
         assertEquals(states.size, states.map { it.destination }.toSet().size)
         assertEquals(AppUiState.NotInvited("a@b.fr").destination, AppUiState.NotInvited("x@y.fr").destination)
         assertNotEquals(AppUiState.SignIn.destination, AppUiState.Onboarding.destination)
+    }
+
+    @Test
+    fun `après un échec, l'app réessaie seule quelques secondes plus tard`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val vm = newViewModel()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.hasLoadFailure.collect {} }
+        loads.hasFailure.value = true
+        advanceTimeBy(2_000)
+        assertEquals(0, loads.retries)
+        advanceTimeBy(1_500)
+        assertEquals(1, loads.retries)
+        assertFalse(vm.hasLoadFailure.value)
+        // Fixed: no more attempts.
+        advanceTimeBy(60_000)
+        assertEquals(1, loads.retries)
+    }
+
+    @Test
+    fun `revenir dans l'app réessaie ce qui avait échoué`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+        loads.hasFailure.value = true
+        viewModel.onEvent(AppEvent.AppForegrounded)
+        assertEquals(1, loads.retries)
     }
 }
