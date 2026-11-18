@@ -5,6 +5,7 @@ import com.xperiencemusic.shared.domain.model.Role
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.model.youtubeUrl
 import com.xperiencemusic.shared.domain.usecase.DeleteSetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.ObserveRepertoireUseCase
 import com.xperiencemusic.shared.fakes.schedule
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
@@ -12,6 +13,7 @@ import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SuggestBandWeekUseCase
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
 import com.xperiencemusic.shared.fakes.member
+import com.xperiencemusic.shared.fakes.recording
 import com.xperiencemusic.shared.fakes.setlistRepository
 import com.xperiencemusic.shared.fakes.song
 import com.xperiencemusic.shared.fakes.songRepository
@@ -33,7 +35,13 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SetlistEditorViewModelTest {
-    private val songs = songRepository(song("a", "Alléluia"), song("b", "Béni"), song("c", "Car tu es saint"))
+    private val songs = songRepository(
+        song("a", "Alléluia"),
+        song("b", "Béni"),
+        song("c", "Car tu es saint"),
+        song("d", "Digne est l'Agneau", recordings = listOf(recording("r1", 4))),
+        song("e", "Éternel"),
+    )
     private val setlists = setlistRepository()
     private lateinit var viewModel: SetlistEditorViewModel
 
@@ -51,6 +59,7 @@ class SetlistEditorViewModelTest {
     // Monday 12 October 2026: the coming week runs from Tuesday 13 to Sunday 18.
     private fun editor(today: LocalDate = LocalDate(2026, 10, 12), serviceDate: LocalDate? = null) = SetlistEditorViewModel(
         SearchSongsUseCase(songs),
+        ObserveRepertoireUseCase(schedule(setlists, songs, today), songs) { today },
         PublishSetlistUseCase(session, setlists),
         DeleteSetlistUseCase(session, setlists),
         SaveSongUseCase(session, songs),
@@ -138,7 +147,6 @@ class SetlistEditorViewModelTest {
             viewModel.onEvent(SetlistEditorEvent.SongMovedUp("a"))
             val ordered = expectMostRecentItem()
             assertEquals(listOf("a", "c"), ordered.selected.map { it.id })
-            assertEquals(listOf("b"), ordered.available.map { it.id })
             assertTrue(ordered.canPublish)
         }
     }
@@ -249,6 +257,35 @@ class SetlistEditorViewModelTest {
             val state = expectMostRecentItem()
             assertEquals(NewSongError.INVALID_YOUTUBE_LINK, state.newSong?.error)
             assertTrue(state.selected.isEmpty())
+        }
+    }
+
+    @Test
+    fun `sans recherche seul le répertoire est proposé, avec la date où il a été chanté`() = runTest {
+        // Sung on Sunday 4 October, before "today" (12 October): in the repertoire with its date.
+        setlists.publish(Setlist("w", LocalDate(2026, 9, 29), LocalDate(2026, 10, 4), listOf("b"), null, "x"))
+        viewModel.state.test {
+            val state = expectMostRecentItem()
+            // "d" has a recording, "b" was sung; "a", "c" and "e" are only in the catalogue.
+            assertEquals(listOf("b", "d"), state.available.map { it.id })
+            assertEquals(LocalDate(2026, 10, 4), state.available.first().lastSungOn)
+
+            viewModel.onEvent(SetlistEditorEvent.SongAdded("d"))
+            assertEquals(listOf("b"), expectMostRecentItem().available.map { it.id })
+        }
+    }
+
+    @Test
+    fun `une recherche couvre tout le catalogue, sauf les chants déjà choisis`() = runTest {
+        viewModel.state.test {
+            viewModel.onEvent(SetlistEditorEvent.SongAdded("a"))
+            viewModel.onEvent(SetlistEditorEvent.QueryChanged("e"))
+            val state = expectMostRecentItem()
+            assertTrue(state.isSearching)
+            // Titles starting with "e" (accents folded) come first, then titles holding it.
+            assertEquals("e", state.available.first().id)
+            assertFalse("a" in state.available.map { it.id })
+            assertTrue("c" in state.available.map { it.id })
         }
     }
 }

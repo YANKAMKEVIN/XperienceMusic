@@ -297,6 +297,8 @@
     <string name="setlist_selected_title">Chants de la semaine (%1$d)</string>
     <string name="setlist_selected_empty">Ajoute au moins un chant ci-dessous.</string>
     <string name="setlist_add_title">Ajouter des chants</string>
+    <string name="setlist_repertoire_title">Notre répertoire</string>
+    <string name="setlist_search_hint">Cherche un titre, un auteur ou un bout des paroles dans tous les chants.</string>
     <string name="setlist_new_song">Nouveau chant</string>
     <string name="setlist_new_song_from_search">Créer « %1$s »</string>
     <string name="setlist_new_song_help">Le titre et le lien YouTube suffisent. Tu pourras ajouter les paroles, les accords et la tonalité plus tard depuis la bibliothèque.</string>

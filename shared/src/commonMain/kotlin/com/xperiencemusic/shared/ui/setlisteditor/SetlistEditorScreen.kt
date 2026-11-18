@@ -16,6 +16,14 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import com.xperiencemusic.shared.ui.components.ClearSearchButton
+import com.xperiencemusic.shared.ui.components.SongListRow
+import com.xperiencemusic.shared.presentation.library.LibrarySongUi
+import com.xperiencemusic.shared.resources.library_empty
+import com.xperiencemusic.shared.resources.library_section_results
+import com.xperiencemusic.shared.resources.setlist_repertoire_title
+import com.xperiencemusic.shared.resources.setlist_search_hint
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -180,6 +188,7 @@ fun SetlistEditorScreenContent(
             item(key = "new-song") {
                 NewSongButton(state.query, onClick = { onEvent(SetlistEditorEvent.NewSongClicked) }, Modifier.animateItem())
             }
+            item(key = "available-title") { AvailableHeader(state, Modifier.animateItem()) }
             items(state.available, key = { "available-${it.id}" }) { song ->
                 AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) }, modifier = Modifier.animateItem())
             }
@@ -368,20 +377,36 @@ private fun SelectedSongRow(
     }
 }
 
+/**
+ * Over the songs that can be added: "Notre répertoire" without a search, the count of matches
+ * with one, or what to do when there is nothing to show.
+ */
 @Composable
-private fun AvailableSongRow(song: SetlistSongUi, onAdd: () -> Unit, modifier: Modifier = Modifier) {
-    AppCard(onClick = onAdd, modifier = modifier) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(song.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                KeyPill(song.keyLabel, modifier = Modifier.padding(top = Spacing.xs))
-            }
-            Icon(
-                Icons.Filled.Add,
-                contentDescription = stringResource(Res.string.setlist_add, song.title),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
+private fun AvailableHeader(state: SetlistEditorUiState, modifier: Modifier = Modifier) {
+    val (text, isHint) = when {
+        state.isSearching && state.available.isEmpty() -> stringResource(Res.string.library_empty) to true
+        state.isSearching -> stringResource(Res.string.library_section_results, state.available.size) to false
+        state.available.isEmpty() -> stringResource(Res.string.setlist_search_hint) to true
+        else -> stringResource(Res.string.setlist_repertoire_title) to false
+    }
+    Text(
+        text,
+        style = if (isHint) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.labelLarge,
+        color = if (isHint) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
+        modifier = modifier.padding(top = Spacing.s).then(if (isHint) Modifier else Modifier.semantics { heading() }),
+    )
+}
+
+/** A compact line, as in the library: the tonality changes from one rehearsal to the next, so it is left out. */
+@Composable
+private fun AvailableSongRow(song: LibrarySongUi, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+    SongListRow(song, onClick = onAdd, modifier = modifier, startPadding = Spacing.none, endPadding = Spacing.none) {
+        Icon(
+            Icons.Filled.Add,
+            contentDescription = stringResource(Res.string.setlist_add, song.title),
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = Spacing.m),
+        )
     }
 }
 
@@ -394,7 +419,10 @@ private fun SetlistEditorScreenPreview() {
                 rehearsalDate = LocalDate(2026, 10, 13),
                 serviceDate = LocalDate(2026, 10, 18),
                 selected = listOf(SetlistSongUi("1", "À toi la gloire", "Ré majeur"), SetlistSongUi("2", "Amazing Grace", "Sol majeur")),
-                available = listOf(SetlistSongUi("3", "Holy, Holy, Holy", "Ré majeur")),
+                available = listOf(
+                    LibrarySongUi("3", "Holy, Holy, Holy", artist = "Reginald Heber", hasAudio = true, lastSungOn = LocalDate(2026, 9, 27)),
+                    LibrarySongUi("4", "Tu es digne", artist = null, hasAudio = false),
+                ),
             ),
             onEvent = {},
         )
