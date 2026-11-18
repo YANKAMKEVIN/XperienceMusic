@@ -99,6 +99,12 @@
     <string name="planning_open_title">Inscriptions ouvertes</string>
     <string name="planning_open_text">Dis pour chaque vendredi et dimanche si tu sers.</string>
     <string name="planning_open_text_by">Réponds avant le %1$s pour chaque vendredi et dimanche.</string>
+    <!-- Transposition from the song’s key: "+2 demi-tons", "−1 demi-ton". %1$s is the signed number. -->
+    <plurals name="transpose_offset">
+        <item quantity="one">%1$s demi-ton</item>
+        <item quantity="other">%1$s demi-tons</item>
+    </plurals>
+    <string name="stage_transposed">%1$s · origine %2$s</string>
     <plurals name="planning_unanswered">
         <item quantity="one">%1$d date sans ta réponse</item>
         <item quantity="other">%1$d dates sans ta réponse</item>
@@ -195,7 +201,12 @@
     <string name="week_offline_error">Le téléchargement s’est interrompu. Réessaie avec du réseau, il reprendra où il s’est arrêté.</string>
     <string name="week_offline_retry">Reprendre</string>
 
-    <string name="offline_banner">Hors connexion · tu vois la dernière version enregistrée sur le téléphone. Tire vers le bas pour réessayer.</string>
+    <string name="offline_banner">Hors connexion · tu vois la dernière version enregistrée sur le téléphone.</string>
+    <string name="offline_retry">Réessayer</string>
+    <string name="offline_retrying">Connexion…</string>
+    <string name="first_load_failed_text">Pas de réseau, et rien n’est encore enregistré sur ce téléphone. Vérifie ta connexion puis réessaie.</string>
+    <string name="library_load_failed_title">Impossible de charger les chants</string>
+    <string name="week_load_failed_title">Impossible de charger la setlist</string>
 
     <!-- Library -->
     <string name="library_title">Chants</string>
@@ -934,6 +945,7 @@
     <string name="cd_transpose_down">Baisser d’un demi-ton</string>
     <string name="cd_transpose_up">Monter d’un demi-ton</string>
     <string name="cd_key">Tonalité %1$s</string>
+    <string name="cd_key_transposed">Tonalité %1$s, transposée de %2$s</string>
     <string name="cd_exercise_target">%1$s, %2$d s</string>
     <string name="exercise_target_frequency">%1$d Hz · %2$d s</string>
     <string name="growth_review_comment_placeholder">Une réussite observée, un point précis à travailler et le prochain essai attendu.</string>

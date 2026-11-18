@@ -6,6 +6,10 @@ data class StageUiState(
     val isLoading: Boolean = true,
     val title: String = "",
     val keyLabel: String = "",
+    /** Semitones away from the song's key, as chosen on the song page; 0 when not transposed. */
+    val transposeSemitones: Int = 0,
+    /** The song's own key, shown next to [keyLabel] once the song is transposed. */
+    val originalKeyLabel: String? = null,
     val chart: List<ChartLine> = emptyList(),
     val textScale: Float = DEFAULT_SCALE,
     val isAutoScrolling: Boolean = false,

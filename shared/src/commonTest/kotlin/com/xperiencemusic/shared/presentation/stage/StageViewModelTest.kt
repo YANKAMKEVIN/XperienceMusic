@@ -63,6 +63,26 @@ class StageViewModelTest {
     }
 
     @Test
+    fun `transposée, la scène dit de combien et depuis quelle tonalité`() {
+        val transposed = deriveStageState(a, null, StageSettings(), 2, Notation.LETTERS)
+        assertEquals(2, transposed.transposeSemitones)
+        assertEquals("C", transposed.originalKeyLabel)
+
+        val down = deriveStageState(a, null, StageSettings(), -1, Notation.SOLFEGE)
+        assertEquals(-1, down.transposeSemitones)
+        assertEquals("Do majeur", down.originalKeyLabel)
+    }
+
+    @Test
+    fun `dans sa tonalité d'origine, rien n'est signalé`() {
+        val original = deriveStageState(a, null, StageSettings(), 0, Notation.SOLFEGE)
+        assertEquals(0, original.transposeSemitones)
+        assertNull(original.originalKeyLabel)
+        // A full octave lands on the same key: nothing to tell the band either.
+        assertNull(deriveStageState(a, null, StageSettings(), 12, Notation.SOLFEGE).originalKeyLabel)
+    }
+
+    @Test
     fun `taille du texte et vitesse sont bornées et partagées entre les chants`() = runTest {
         val store = StageSettingsStore()
         val songs = songRepository(a, b)
