@@ -10,6 +10,8 @@ import androidx.compose.ui.unit.dp
  * 2 dp move shows (a pill grows, a row loses its rhythm with its neighbours).
  */
 object Spacing {
+    /** No gap: a shared row laid inside a list that already pads its sides. */
+    val none = 0.dp
     val xxs = 2.dp
     val xs = 4.dp
     /** Between [xs] and [s]: the gap inside a compact pill or a dense row. */

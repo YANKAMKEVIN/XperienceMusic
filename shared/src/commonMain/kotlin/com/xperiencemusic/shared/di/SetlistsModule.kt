@@ -31,5 +31,5 @@ val setlistsModule = module {
     factoryOf(::CatchUpUseCase)
     viewModelOf(::WeekViewModel)
     // The service date is optional (null = the coming week), which the constructor DSL cannot resolve.
-    viewModel { params -> SetlistEditorViewModel(get(), get(), get(), get(), get(), get(), params.getOrNull()) }
+    viewModel { params -> SetlistEditorViewModel(get(), get(), get(), get(), get(), get(), get(), params.getOrNull()) }
 }

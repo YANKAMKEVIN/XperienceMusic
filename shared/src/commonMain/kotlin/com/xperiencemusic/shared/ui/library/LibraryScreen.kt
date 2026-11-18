@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
@@ -44,7 +43,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -69,7 +67,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xperiencemusic.shared.presentation.library.LibraryEvent
@@ -86,7 +83,6 @@ import com.xperiencemusic.shared.resources.library_empty_admin
 import com.xperiencemusic.shared.resources.library_empty_member
 import com.xperiencemusic.shared.resources.library_empty_title
 import com.xperiencemusic.shared.resources.first_load_failed_text
-import com.xperiencemusic.shared.resources.library_has_audio
 import com.xperiencemusic.shared.resources.library_load_failed_title
 import com.xperiencemusic.shared.resources.library_repertoire_empty
 import com.xperiencemusic.shared.resources.library_repertoire_empty_title
@@ -96,7 +92,6 @@ import com.xperiencemusic.shared.resources.library_section_next
 import com.xperiencemusic.shared.resources.library_section_recent
 import com.xperiencemusic.shared.resources.library_section_results
 import com.xperiencemusic.shared.resources.library_show_catalogue
-import com.xperiencemusic.shared.resources.library_sung_on
 import com.xperiencemusic.shared.resources.library_tab_catalogue
 import com.xperiencemusic.shared.resources.library_tab_repertoire
 import com.xperiencemusic.shared.resources.library_title
@@ -107,10 +102,10 @@ import com.xperiencemusic.shared.ui.components.ClearSearchButton
 import com.xperiencemusic.shared.ui.components.EmptyState
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
 import com.xperiencemusic.shared.ui.components.OfflineBanner
+import com.xperiencemusic.shared.ui.components.SongListRow
 import com.xperiencemusic.shared.ui.components.choiceState
 import com.xperiencemusic.shared.ui.format.rememberFormattingWords
 import com.xperiencemusic.shared.ui.theme.AppTheme
-import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -245,7 +240,7 @@ private fun LibraryList(
                 stickyHeader(key = "header-$sectionIndex", contentType = "header") { SectionHeader(section.header) }
                 // A song of the next service is also in the alphabetical list: the section keeps its key unique.
                 items(section.songs, key = { "$sectionIndex-${it.id}" }, contentType = { "song" }) { song ->
-                    LibrarySongRow(
+                    SongListRow(
                         song,
                         onClick = { onSongClick(song.id) },
                         endPadding = if (hasIndex) INDEX_WIDTH else Spacing.l,
@@ -336,48 +331,6 @@ private fun SectionHeader(header: LibrarySectionHeader) {
     )
 }
 
-@Composable
-private fun LibrarySongRow(song: LibrarySongUi, onClick: () -> Unit, endPadding: Dp, modifier: Modifier = Modifier) {
-    val words = rememberFormattingWords()
-    val subtitle = song.lyricLine
-        ?: listOfNotNull(
-            song.lastSungOn?.let { stringResource(Res.string.library_sung_on, words.dayAndMonth(it)) },
-            song.artist,
-        ).joinToString(" · ").ifEmpty { null }
-    Column(modifier.fillMaxWidth().clickable(onClick = onClick)) {
-        Row(
-            Modifier.heightIn(min = ROW_MIN_HEIGHT).padding(start = Spacing.l, end = endPadding, top = Spacing.s, bottom = Spacing.s),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(song.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (subtitle != null) {
-                    Text(
-                        subtitle,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-            if (song.hasAudio) {
-                Icon(
-                    XmIcons.Notes,
-                    contentDescription = stringResource(Res.string.library_has_audio),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = Spacing.m).size(Sizes.iconS),
-                )
-            }
-        }
-        HorizontalDivider(
-            Modifier.padding(start = Spacing.l, end = endPadding),
-            thickness = Sizes.hairline,
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
-    }
-}
-
 /**
  * The letters down the right edge: a tap or a slide jumps to the songs of the letter under the
  * finger, which shows large in a bubble beside it, as in a phone's contact list. Screen readers
@@ -465,7 +418,6 @@ private fun IndexBubble(letter: String, isVisible: Boolean, centerY: Float) {
 
 private val BUBBLE_SIZE = 64.dp
 private val SHORT_SCREEN_HEIGHT = 480.dp
-private val ROW_MIN_HEIGHT = 56.dp
 private val INDEX_WIDTH = 28.dp
 private val INDEX_LETTER_HEIGHT = 18.dp
 /** Under this many letters the list is short enough to scroll. */
