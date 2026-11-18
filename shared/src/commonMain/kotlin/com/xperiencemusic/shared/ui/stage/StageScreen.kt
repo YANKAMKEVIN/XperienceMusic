@@ -1,5 +1,7 @@
 package com.xperiencemusic.shared.ui.stage
 
+import com.xperiencemusic.shared.resources.stage_transposed
+import com.xperiencemusic.shared.presentation.common.signedSemitones
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
@@ -229,12 +231,24 @@ private fun StageToolbar(state: StageUiState, onClose: () -> Unit) {
                 Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        Text(
-            state.keyLabel,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(end = Spacing.m),
-        )
+        // On stage the transposition chosen on the song page was invisible: the key now says how
+        // far it is from the song's own key ("+2 · origine Ré majeur", short so the title keeps room).
+        Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = Spacing.s, end = Spacing.m)) {
+            val colors = MaterialTheme.colorScheme
+            Text(
+                state.keyLabel,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (state.originalKeyLabel != null) colors.onSurface else colors.onSurfaceVariant,
+            )
+            state.originalKeyLabel?.let { original ->
+                Text(
+                    stringResource(Res.string.stage_transposed, signedSemitones(state.transposeSemitones), original),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                )
+            }
+        }
     }
 }
 

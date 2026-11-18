@@ -82,6 +82,8 @@ import com.xperiencemusic.shared.resources.library_empty
 import com.xperiencemusic.shared.resources.library_empty_admin
 import com.xperiencemusic.shared.resources.library_empty_member
 import com.xperiencemusic.shared.resources.library_empty_title
+import com.xperiencemusic.shared.resources.first_load_failed_text
+import com.xperiencemusic.shared.resources.library_load_failed_title
 import com.xperiencemusic.shared.resources.library_repertoire_empty
 import com.xperiencemusic.shared.resources.library_repertoire_empty_title
 import com.xperiencemusic.shared.resources.library_search
@@ -93,6 +95,7 @@ import com.xperiencemusic.shared.resources.library_show_catalogue
 import com.xperiencemusic.shared.resources.library_tab_catalogue
 import com.xperiencemusic.shared.resources.library_tab_repertoire
 import com.xperiencemusic.shared.resources.library_title
+import com.xperiencemusic.shared.resources.offline_retry
 import com.xperiencemusic.shared.ui.brand.TabHeader
 import com.xperiencemusic.shared.ui.brand.XmIcons
 import com.xperiencemusic.shared.ui.components.ClearSearchButton
@@ -163,7 +166,7 @@ private fun LibraryHeader(
         verticalArrangement = Arrangement.spacedBy(if (isShort) Spacing.s else Spacing.m),
     ) {
         if (!isShort) TabHeader(stringResource(Res.string.library_title)) { addButton() }
-        if (state.isOffline) OfflineBanner()
+        if (state.isOffline) OfflineBanner(onRetry = { onEvent(LibraryEvent.RefreshPulled) }, isRetrying = state.isRefreshing)
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = state.query,
@@ -271,6 +274,15 @@ private fun letterPositions(sections: List<LibrarySectionUi>): List<Pair<String,
 @Composable
 private fun LibraryEmpty(state: LibraryUiState, onEvent: (LibraryEvent) -> Unit, onAddSong: () -> Unit, modifier: Modifier = Modifier) {
     when {
+        // Before the search: with no copy on the phone there is nothing to search in.
+        state.hasLoadFailed -> EmptyState(
+            icon = XmIcons.Book,
+            title = stringResource(Res.string.library_load_failed_title),
+            text = stringResource(Res.string.first_load_failed_text),
+            modifier = modifier,
+            actionLabel = stringResource(Res.string.offline_retry),
+            onAction = { onEvent(LibraryEvent.RefreshPulled) },
+        )
         state.isSearching -> Text(
             stringResource(Res.string.library_empty),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
