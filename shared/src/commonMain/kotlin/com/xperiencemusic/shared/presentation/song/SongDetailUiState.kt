@@ -27,6 +27,10 @@ data class SongDetailUiState(
     /** Singers record their part on the song and send it for review. */
     val canRecordVoice: Boolean = false,
     val voiceTracks: List<VoiceTrackUi> = emptyList(),
+    /** The version the band rehearses from, offered at the top of the page; null when the song has none. */
+    val reference: RecordingUi? = null,
+    /** The learning track of the member's own voice, next to [reference]; null for musicians or without a track. */
+    val myVoiceTrack: VoiceTrackUi? = null,
     /** The original the band learns from: shown above the title, not in [links]. */
     val youtubeUrl: String? = null,
     /** The picture of that video; null when the link is not a single video. */

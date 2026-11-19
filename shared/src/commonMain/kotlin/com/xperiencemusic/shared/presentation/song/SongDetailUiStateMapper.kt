@@ -41,6 +41,10 @@ fun deriveSongDetailState(
     val recordings = song.recordings
         .sortedWith(compareByDescending<Recording> { it.isReference }.thenByDescending { it.recordedOn })
         .map { it.toUi(playback.statusOf(it.id), it.audioPath in offlinePaths) }
+    val voiceTracks = song.voiceTracks.map { VoiceTrackUi(it.id, it.voicePart, playback.statusOf(it.id)) }
+    val isSinger = member?.profile?.instrument == Instrument.SINGER
+    // Null for a musician: no track is theirs.
+    val myVoicePart = member?.profile?.voicePart.takeIf { isSinger }
 
     return SongDetailUiState(
         isLoading = false,
@@ -58,8 +62,10 @@ fun deriveSongDetailState(
         maxRecordings = Song.MAX_RECORDINGS,
         canManageRecordings = member?.role?.can(Permission.MANAGE_RECORDINGS) == true,
         canEditSong = member?.role?.can(Permission.EDIT_SONG) == true,
-        canRecordVoice = member?.profile?.instrument == Instrument.SINGER,
-        voiceTracks = song.voiceTracks.map { VoiceTrackUi(it.id, it.voicePart, playback.statusOf(it.id)) },
+        canRecordVoice = isSinger,
+        voiceTracks = voiceTracks,
+        reference = recordings.firstOrNull { it.isReference },
+        myVoiceTrack = voiceTracks.firstOrNull { it.voicePart == myVoicePart },
         youtubeUrl = song.youtubeUrl,
         youtubeThumbnailUrl = song.youtubeUrl?.let(YouTubeLink::thumbnailUrl),
         links = song.links.filterNot { it.label == YouTubeLink.LABEL }.map { LinkUi(it.label, it.url) },

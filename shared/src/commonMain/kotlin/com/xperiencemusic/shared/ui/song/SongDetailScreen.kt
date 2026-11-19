@@ -206,6 +206,9 @@ private fun SongDetailBody(
                 Text(stringResource(Res.string.stage_open), style = MaterialTheme.typography.titleMedium)
             }
         }
+        if (state.reference != null || state.myVoiceTrack != null) {
+            item { QuickListen(state.reference, state.myVoiceTrack, onEvent) }
+        }
         if (state.canRecordVoice) {
             item {
                 OutlinedButton(onClick = onRecordVoice, modifier = Modifier.fillMaxWidth()) {

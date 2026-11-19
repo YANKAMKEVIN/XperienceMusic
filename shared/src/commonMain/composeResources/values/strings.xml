@@ -241,6 +241,8 @@
     <string name="song_recordings_title">Versions enregistrées (%1$d/%2$d)</string>
     <string name="song_recordings_empty">Pas encore de version enregistrée pour ce chant.</string>
     <string name="song_recording_reference">Référence</string>
+    <string name="song_listen_reference">Écouter la référence</string>
+    <string name="song_listen_my_voice">Ma voix</string>
     <string name="song_recording_offline">Sur le téléphone</string>
     <string name="song_recording_meta">%1$s · %2$s</string>
     <string name="song_recording_set_reference">Définir comme référence</string>
