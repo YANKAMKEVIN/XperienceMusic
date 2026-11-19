@@ -1,6 +1,12 @@
 package com.xperiencemusic.shared.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.IntOffset
+import androidx.navigation.NavBackStackEntry
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
@@ -123,7 +129,16 @@ private fun NavGraphBuilder.songsGraph(navController: NavHostController) {
 
 /** The stage: the chart in full screen, moving on to the week's other songs. */
 private fun NavGraphBuilder.stageGraph(navController: NavHostController) {
-    composable<StageRoute> { entry ->
+    // Which way the setlist was last walked: the next song comes in from the right, the previous from the left.
+    var isForward = true
+    val slide = tween<IntOffset>(STAGE_SLIDE_MS)
+    fun AnimatedContentTransitionScope<NavBackStackEntry>.isBetweenSongs() =
+        initialState.destination.hasRoute(StageRoute::class) && targetState.destination.hasRoute(StageRoute::class)
+    composable<StageRoute>(
+        // Only from one song of the setlist to another; opening and closing the stage keep the host's transition.
+        enterTransition = { if (isBetweenSongs()) slideInHorizontally(slide) { if (isForward) it else -it } else null },
+        exitTransition = { if (isBetweenSongs()) slideOutHorizontally(slide) { if (isForward) -it else it } else null },
+    ) { entry ->
         val route = entry.toRoute<StageRoute>()
         // "Suivant" swaps the stage for another one, so the song detail underneath may be
         // the starting song: closing replaces it with the song that was on screen.
@@ -144,7 +159,8 @@ private fun NavGraphBuilder.stageGraph(navController: NavHostController) {
             notation = Notation.valueOf(route.notation),
             lyricsOnly = route.lyricsOnly,
             onClose = closeStage,
-            onOpenSong = { nextId ->
+            onOpenSong = { nextId, forward ->
+                isForward = forward
                 // Other songs open in their own key, keeping the notation and the chords on or off.
                 navController.navigate(StageRoute(nextId, 0, route.notation, route.lyricsOnly)) {
                     popUpTo<StageRoute> { inclusive = true }
@@ -153,6 +169,8 @@ private fun NavGraphBuilder.stageGraph(navController: NavHostController) {
         )
     }
 }
+
+private const val STAGE_SLIDE_MS = 280
 
 /** The Planning tab: the month's services and the member's answers. */
 private fun NavGraphBuilder.planningGraph(navController: NavHostController) {

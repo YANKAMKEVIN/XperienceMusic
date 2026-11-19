@@ -20,6 +20,7 @@ data class StageUiState(
     /** "2 / 5" when the song is in the week's setlist, null otherwise. */
     val setlistPosition: String? = null,
     val previousSongId: String? = null,
+    val previousSongTitle: String? = null,
     val nextSongId: String? = null,
     val nextSongTitle: String? = null,
 ) {

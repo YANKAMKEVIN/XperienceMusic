@@ -43,6 +43,7 @@ class StageViewModelTest {
         val middle = deriveStageState(b, weekly, StageSettings(), 0, Notation.SOLFEGE)
         assertEquals("2 / 3", middle.setlistPosition)
         assertEquals("a", middle.previousSongId)
+        assertEquals(a.title, middle.previousSongTitle)
         assertEquals("c", middle.nextSongId)
         assertEquals(c.title, middle.nextSongTitle)
         assertNull(deriveStageState(c, weekly, StageSettings(), 0, Notation.SOLFEGE).nextSongId)

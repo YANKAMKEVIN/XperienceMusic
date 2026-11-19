@@ -94,6 +94,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.animate
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.runtime.mutableFloatStateOf
+import kotlin.math.abs
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -118,7 +125,7 @@ fun StageScreen(
     transposeSemitones: Int,
     notation: Notation,
     onClose: () -> Unit,
-    onOpenSong: (String) -> Unit,
+    onOpenSong: (songId: String, forward: Boolean) -> Unit,
     lyricsOnly: Boolean = false,
     viewModel: StageViewModel = koinViewModel(key = "stage-$songId-$transposeSemitones-$notation-$lyricsOnly") {
         parametersOf(songId, transposeSemitones, notation, lyricsOnly)
@@ -135,7 +142,7 @@ fun StageScreenContent(
     state: StageUiState,
     onEvent: (StageEvent) -> Unit,
     onClose: () -> Unit,
-    onOpenSong: (String) -> Unit,
+    onOpenSong: (songId: String, forward: Boolean) -> Unit,
 ) {
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         BoxWithConstraints(Modifier.safeDrawingPadding()) {
@@ -145,14 +152,14 @@ fun StageScreenContent(
                 Row(Modifier.fillMaxSize()) {
                     Column(Modifier.weight(1f)) {
                         StageToolbar(state, onClose)
-                        StageBody(state, onEvent, Modifier.weight(1f))
+                        StageBody(state, onEvent, onOpenSong, Modifier.weight(1f))
                     }
                     StageRail(state, onEvent, onOpenSong)
                 }
             } else {
                 Column(Modifier.fillMaxSize()) {
                     StageToolbar(state, onClose)
-                    StageBody(state, onEvent, Modifier.weight(1f))
+                    StageBody(state, onEvent, onOpenSong, Modifier.weight(1f))
                     StageControls(state, onEvent)
                     if (state.setlistPosition != null) SetlistNavigation(state, onOpenSong)
                 }
@@ -162,17 +169,97 @@ fun StageScreenContent(
 }
 
 @Composable
-private fun StageBody(state: StageUiState, onEvent: (StageEvent) -> Unit, modifier: Modifier = Modifier) {
+private fun StageBody(
+    state: StageUiState,
+    onEvent: (StageEvent) -> Unit,
+    onOpenSong: (songId: String, forward: Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val toggleScroll = { onEvent(StageEvent.AutoScrollToggled) }
     if (state.isLoading) {
         Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    } else if (state.setlistPosition == null) {
+        StageLyrics(state, toggleScroll, modifier)
     } else {
-        StageLyrics(state, onToggleScroll = { onEvent(StageEvent.AutoScrollToggled) }, modifier)
+        SetlistSwipe(state, onOpenSong, modifier) { StageLyrics(state, toggleScroll, Modifier.fillMaxSize()) }
+    }
+}
+
+/**
+ * Within a setlist, a sideways swipe on the lyrics opens the song before or after: a wide gesture
+ * instead of a button to aim at between two songs. The page follows the finger and the neighbour's
+ * title shows at the edge; let go past [SWIPE_THRESHOLD] and it opens. With no song on that side
+ * the page resists.
+ */
+@Composable
+private fun SetlistSwipe(
+    state: StageUiState,
+    onOpenSong: (songId: String, forward: Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val threshold = with(LocalDensity.current) { SWIPE_THRESHOLD.toPx() }
+    // Where the finger pulled the page: negative towards the next song.
+    var drag by remember { mutableFloatStateOf(0f) }
+    fun neighbourOf(offset: Float) = if (offset < 0) state.nextSongId else state.previousSongId
+    val dragState = rememberDraggableState { delta -> drag += delta }
+    Box(
+        modifier.fillMaxWidth().draggable(
+            state = dragState,
+            orientation = Orientation.Horizontal,
+            onDragStopped = {
+                val target = neighbourOf(drag).takeIf { abs(drag) >= threshold }
+                if (target != null) onOpenSong(target, drag < 0) else animate(drag, 0f) { value, _ -> drag = value }
+            },
+        ),
+    ) {
+        Box(
+            Modifier.fillMaxSize().graphicsLayer {
+                translationX = if (neighbourOf(drag) != null) drag else drag * SWIPE_RESISTANCE
+            },
+        ) { content() }
+        val progress = (abs(drag) / threshold).coerceIn(0f, 1f)
+        val title = if (drag < 0) state.nextSongTitle else state.previousSongTitle
+        if (title != null && progress > 0f) {
+            NeighbourHint(
+                title = title,
+                forward = drag < 0,
+                progress = progress,
+                modifier = Modifier.align(if (drag < 0) Alignment.CenterEnd else Alignment.CenterStart),
+            )
+        }
+    }
+}
+
+/** The song a swipe is about to open, at the edge it comes from; it lights up once letting go will open it. */
+@Composable
+private fun NeighbourHint(title: String, forward: Boolean, progress: Float, modifier: Modifier = Modifier) {
+    val isArmed = progress >= 1f
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        shape = RoundedCornerShape(Radius.card),
+        color = if (isArmed) colors.secondaryContainer else colors.surfaceContainerHigh,
+        contentColor = if (isArmed) colors.onSecondaryContainer else colors.onSurface,
+        border = BorderStroke(Sizes.hairline, colors.outlineVariant),
+        modifier = modifier.padding(horizontal = Spacing.s).widthIn(max = NEIGHBOUR_HINT_WIDTH).alpha(progress),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = Spacing.m, vertical = Spacing.s)) {
+            if (!forward) Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
+            Column(Modifier.weight(1f, fill = false).padding(horizontal = Spacing.xs)) {
+                Text(
+                    stringResource(if (forward) Res.string.stage_next else Res.string.stage_previous),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+                Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            if (forward) Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+        }
     }
 }
 
 /** Landscape: every control in a column of compact buttons beside the lyrics. */
 @Composable
-private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpenSong: (String) -> Unit) {
+private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpenSong: (songId: String, forward: Boolean) -> Unit) {
     val textSmaller = stringResource(Res.string.stage_text_smaller)
     val textBigger = stringResource(Res.string.stage_text_bigger)
     Column(
@@ -215,14 +302,14 @@ private fun StageRail(state: StageUiState, onEvent: (StageEvent) -> Unit, onOpen
         if (state.setlistPosition != null) {
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 StageButton(
-                    onClick = { state.previousSongId?.let(onOpenSong) },
+                    onClick = { state.previousSongId?.let { onOpenSong(it, false) } },
                     modifier = Modifier.weight(1f).alpha(if (state.previousSongId != null) 1f else 0.4f),
                     compact = true,
                 ) {
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.stage_previous))
                 }
                 StageButton(
-                    onClick = { state.nextSongId?.let(onOpenSong) },
+                    onClick = { state.nextSongId?.let { onOpenSong(it, true) } },
                     modifier = Modifier.weight(1f).alpha(if (state.nextSongId != null) 1f else 0.4f),
                     compact = true,
                 ) {
@@ -443,20 +530,20 @@ private fun StageLyrics(state: StageUiState, onToggleScroll: () -> Unit, modifie
 }
 
 @Composable
-private fun SetlistNavigation(state: StageUiState, onOpenSong: (String) -> Unit) {
+private fun SetlistNavigation(state: StageUiState, onOpenSong: (songId: String, forward: Boolean) -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(Spacing.s),
         modifier = Modifier.fillMaxWidth().padding(start = Spacing.l, end = Spacing.l, bottom = Spacing.s),
     ) {
         StageButton(
-            onClick = { state.previousSongId?.let(onOpenSong) },
+            onClick = { state.previousSongId?.let { onOpenSong(it, false) } },
             modifier = Modifier.weight(1f).alpha(if (state.previousSongId != null) 1f else 0.4f),
         ) {
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
             Text(stringResource(Res.string.stage_previous), style = MaterialTheme.typography.labelLarge, maxLines = 1)
         }
         StageButton(
-            onClick = { state.nextSongId?.let(onOpenSong) },
+            onClick = { state.nextSongId?.let { onOpenSong(it, true) } },
             modifier = Modifier.weight(1f).alpha(if (state.nextSongId != null) 1f else 0.4f),
         ) {
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
@@ -477,6 +564,11 @@ private fun SetlistNavigation(state: StageUiState, onOpenSong: (String) -> Unit)
 }
 
 private const val TICK_MS = 50L
+/** How far the lyrics are pulled sideways before letting go opens the neighbouring song. */
+private val SWIPE_THRESHOLD = 96.dp
+/** How little the page follows the finger when there is no song on that side. */
+private const val SWIPE_RESISTANCE = 0.2f
+private val NEIGHBOUR_HINT_WIDTH = 220.dp
 /** The play or pause mark in the middle of the lyrics after a tap, and how long it stays. */
 private val TAP_MARK_SIZE = 88.dp
 private const val TAP_MARK_MS = 650L
@@ -502,7 +594,7 @@ private fun StageScreenPreview() {
             ),
             onEvent = {},
             onClose = {},
-            onOpenSong = {},
+            onOpenSong = { _, _ -> },
         )
     }
 }
@@ -527,7 +619,7 @@ private fun StageScreenLandscapePreview() {
             ),
             onEvent = {},
             onClose = {},
-            onOpenSong = {},
+            onOpenSong = { _, _ -> },
         )
     }
 }

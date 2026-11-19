@@ -90,6 +90,7 @@ fun deriveStageState(
         scrollSpeed = settings.scrollSpeed,
         setlistPosition = if (index >= 0) "${index + 1} / ${order.size}" else null,
         previousSongId = if (index > 0) order[index - 1] else null,
+        previousSongTitle = if (index > 0) songs[index - 1].title else null,
         nextSongId = if (index >= 0) order.getOrNull(index + 1) else null,
         nextSongTitle = if (index >= 0) songs.getOrNull(index + 1)?.title else null,
     )
