@@ -45,6 +45,9 @@ import com.xperiencemusic.shared.resources.player_background
 import com.xperiencemusic.shared.resources.player_error
 import com.xperiencemusic.shared.resources.player_forward
 import com.xperiencemusic.shared.resources.player_pause
+import com.xperiencemusic.shared.resources.player_next
+import com.xperiencemusic.shared.resources.player_previous
+import com.xperiencemusic.shared.resources.player_queue_position
 import com.xperiencemusic.shared.resources.player_play
 import com.xperiencemusic.shared.resources.player_position
 import com.xperiencemusic.shared.resources.player_rewind
@@ -101,6 +104,15 @@ fun PlayerContent(state: MiniPlayerUiState, onEvent: (MiniPlayerEvent) -> Unit) 
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = Spacing.s).semantics { heading() },
         )
+        state.queuePosition?.let { position ->
+            val description = stringResource(Res.string.player_queue_position, position)
+            Text(
+                position,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = Spacing.xs).semantics { contentDescription = description },
+            )
+        }
         Spacer(Modifier.height(Spacing.xxl))
         XmMonogram(size = MONOGRAM_SIZE)
         BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT))
@@ -127,25 +139,43 @@ fun PlayerContent(state: MiniPlayerUiState, onEvent: (MiniPlayerEvent) -> Unit) 
             Spacer(Modifier.weight(1f))
             Text(state.durationLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        // With a setlist, previous and next frame the controls and the row spreads to make room.
+        val hasQueue = state.queuePosition != null
         Row(
-            horizontalArrangement = Arrangement.spacedBy(Spacing.xl),
+            horizontalArrangement = if (hasQueue) Arrangement.SpaceBetween else Arrangement.spacedBy(Spacing.xl),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = Spacing.l),
+            modifier = Modifier.padding(top = Spacing.l).then(if (hasQueue) Modifier.fillMaxWidth() else Modifier),
         ) {
             val rewind = stringResource(Res.string.player_rewind)
             val forward = stringResource(Res.string.player_forward)
+            val sideButton = if (hasQueue) Sizes.touchTarget else Sizes.rowMin
+            if (hasQueue) {
+                // Never disabled: on the first song it still restarts the track.
+                IconButton(onClick = { onEvent(MiniPlayerEvent.PreviousClicked) }, modifier = Modifier.size(sideButton)) {
+                    Icon(PlayerIcons.SkipPrevious, contentDescription = stringResource(Res.string.player_previous))
+                }
+            }
             IconButton(
                 onClick = { onEvent(MiniPlayerEvent.RewindClicked) },
-                modifier = Modifier.size(Sizes.rowMin).semantics { contentDescription = rewind },
+                modifier = Modifier.size(sideButton).semantics { contentDescription = rewind },
             ) {
                 Text("−10", style = MaterialTheme.typography.titleMedium)
             }
             BigPlayButton(state, onClick = { onEvent(MiniPlayerEvent.PlayPauseClicked) })
             IconButton(
                 onClick = { onEvent(MiniPlayerEvent.ForwardClicked) },
-                modifier = Modifier.size(Sizes.rowMin).semantics { contentDescription = forward },
+                modifier = Modifier.size(sideButton).semantics { contentDescription = forward },
             ) {
                 Text("+10", style = MaterialTheme.typography.titleMedium)
+            }
+            if (hasQueue) {
+                IconButton(
+                    onClick = { onEvent(MiniPlayerEvent.NextClicked) },
+                    enabled = state.hasNext,
+                    modifier = Modifier.size(sideButton),
+                ) {
+                    Icon(PlayerIcons.SkipNext, contentDescription = stringResource(Res.string.player_next))
+                }
             }
         }
         Text(

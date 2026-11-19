@@ -7,6 +7,8 @@ import com.xperiencemusic.shared.presentation.common.statusOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlin.test.assertNull
 
 class MiniPlayerUiStateTest {
     private val track = PlaybackTrack("r1", "Répétition", "À toi la gloire", "p")
@@ -22,6 +24,18 @@ class MiniPlayerUiStateTest {
         assertEquals("1:25", ui.positionLabel)
         assertEquals("3:32", ui.durationLabel)
         assertEquals(85f / 212f, ui.progress, 0.001f)
+    }
+
+    @Test
+    fun `dans une setlist le lecteur dit où on en est`() {
+        val second = PlaybackState(track, isPlaying = true, queueIndex = 1, queueSize = 5).toMiniPlayerUiState()
+        assertEquals("2 / 5", second.queuePosition)
+        assertTrue(second.hasPrevious)
+        assertTrue(second.hasNext)
+
+        val alone = PlaybackState(track, isPlaying = true, queueSize = 1).toMiniPlayerUiState()
+        assertNull(alone.queuePosition)
+        assertFalse(alone.hasNext)
     }
 
     @Test

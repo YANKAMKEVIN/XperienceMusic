@@ -58,6 +58,8 @@ sealed interface WeekEvent {
     data object RefreshPulled : WeekEvent
     data class WeekSelected(val serviceDate: LocalDate) : WeekEvent
     data class PlayReferenceClicked(val songId: String) : WeekEvent
+    /** Every reference of the week being looked at, one after the other. */
+    data object PlayAllClicked : WeekEvent
 }
 
 data class WeekSetlistUi(
@@ -67,7 +69,10 @@ data class WeekSetlistUi(
     val message: String?,
     val publishedBy: String,
     val songs: List<WeekSongUi>,
-)
+) {
+    /** "Tout écouter" is worth a button from two references on. */
+    val canPlayAll: Boolean get() = songs.count { it.hasReference } > 1
+}
 
 data class WeekSongUi(
     val id: String,

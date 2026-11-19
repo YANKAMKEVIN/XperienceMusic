@@ -77,6 +77,62 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun `une setlist s'enchaîne toute seule jusqu'au dernier chant`() = runTest {
+        val controller = controllerWith()
+        controller.playAll(listOf(reference, acoustic))
+        assertEquals("r1", controller.state.value.track?.id)
+        assertEquals(0, controller.state.value.queueIndex)
+        assertEquals(2, controller.state.value.queueSize)
+        assertTrue(controller.state.value.hasNext)
+
+        player.finish()
+        assertEquals("r2", controller.state.value.track?.id)
+        assertTrue(controller.state.value.isPlaying)
+        assertFalse(controller.state.value.hasNext)
+
+        // The last one ends like a single track: loaded, stopped, ready to start over.
+        player.finish()
+        assertEquals("r2", controller.state.value.track?.id)
+        assertFalse(controller.state.value.isPlaying)
+        assertEquals(2, player.played.size)
+    }
+
+    @Test
+    fun `suivant et précédent parcourent la setlist`() = runTest {
+        val controller = controllerWith()
+        controller.playAll(listOf(reference, acoustic))
+        controller.next()
+        assertEquals("r2", controller.state.value.track?.id)
+        controller.next()
+        assertEquals("r2", controller.state.value.track?.id, "nothing after the last track")
+
+        // Well into the track, "previous" starts it over; pressed again at once, it goes back.
+        player.seekTo(40_000)
+        controller.previous()
+        assertEquals("r2", controller.state.value.track?.id)
+        assertEquals(0, player.state.value.positionMs)
+        controller.previous()
+        assertEquals("r1", controller.state.value.track?.id)
+        assertFalse(controller.state.value.hasPrevious)
+    }
+
+    @Test
+    fun `toucher un chant de la setlist en cours y saute sans la quitter`() = runTest {
+        val third = PlaybackTrack("r3", "Référence", "Ta lumière", "songs/s2/r3.m4a")
+        val controller = controllerWith()
+        controller.playAll(listOf(reference, acoustic, third))
+        controller.playOrToggle(third)
+        assertEquals(2, controller.state.value.queueIndex)
+        assertEquals(3, controller.state.value.queueSize)
+
+        // A track from elsewhere plays alone again.
+        controller.playOrToggle(PlaybackTrack("v1", "Alto", "Ta lumière", "voices/v1.m4a"))
+        assertEquals(1, controller.state.value.queueSize)
+        player.finish()
+        assertEquals("v1", controller.state.value.track?.id)
+    }
+
+    @Test
     fun `fermer arrête tout`() = runTest {
         val controller = controllerWith()
         controller.playOrToggle(reference)

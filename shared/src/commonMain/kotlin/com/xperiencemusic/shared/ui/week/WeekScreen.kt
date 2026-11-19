@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import com.xperiencemusic.shared.ui.theme.Radius
+import com.xperiencemusic.shared.resources.week_play_all
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Column
@@ -206,11 +207,20 @@ private fun WeekList(
                 item { BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT)) }
             }
             item {
-                Text(
-                    stringResource(Res.string.week_setlist_count, setlist.songs.size),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(top = Spacing.s).semantics { heading() },
-                )
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Spacing.s)) {
+                    Text(
+                        stringResource(Res.string.week_setlist_count, setlist.songs.size),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f).semantics { heading() },
+                    )
+                    // The whole setlist in one go, for the car or the bus: no phone to take out between songs.
+                    if (setlist.canPlayAll) {
+                        TextButton(onClick = { onEvent(WeekEvent.PlayAllClicked) }) {
+                            Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(Sizes.iconM))
+                            Text(stringResource(Res.string.week_play_all), modifier = Modifier.padding(start = Spacing.xs))
+                        }
+                    }
+                }
             }
             items(setlist.songs, key = { it.id }) { song ->
                 WeekSongRow(

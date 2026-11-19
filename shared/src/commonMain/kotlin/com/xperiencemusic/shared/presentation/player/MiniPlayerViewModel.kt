@@ -25,6 +25,8 @@ class MiniPlayerViewModel(private val playback: PlaybackController) : ViewModel(
             MiniPlayerEvent.CloseClicked -> playback.stop()
             MiniPlayerEvent.RewindClicked -> skip(-SKIP_MS)
             MiniPlayerEvent.ForwardClicked -> skip(SKIP_MS)
+            MiniPlayerEvent.PreviousClicked -> playback.previous()
+            MiniPlayerEvent.NextClicked -> playback.next()
         }
     }
 
@@ -52,5 +54,8 @@ fun PlaybackState.toMiniPlayerUiState(): MiniPlayerUiState {
         progress = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f,
         positionLabel = Formatting.duration((positionMs / 1000).toInt()),
         durationLabel = if (durationMs > 0) Formatting.duration((durationMs / 1000).toInt()) else "",
+        queuePosition = if (queueSize > 1) "${queueIndex + 1} / $queueSize" else null,
+        hasPrevious = hasPrevious,
+        hasNext = hasNext,
     )
 }

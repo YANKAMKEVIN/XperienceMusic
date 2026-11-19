@@ -19,4 +19,11 @@ data class PlaybackState(
     /** Zero until the player knows it. */
     val durationMs: Long = 0,
     val hasError: Boolean = false,
-)
+    /** Where [track] stands in the list being played through (a setlist); 0 for a single track. */
+    val queueIndex: Int = 0,
+    /** How many tracks play one after the other; 1 for a single track, 0 when nothing is loaded. */
+    val queueSize: Int = 0,
+) {
+    val hasPrevious: Boolean get() = queueIndex > 0
+    val hasNext: Boolean get() = queueIndex < queueSize - 1
+}

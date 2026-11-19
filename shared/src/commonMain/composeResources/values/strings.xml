@@ -339,6 +339,7 @@
     <string name="week_past">Passée</string>
     <string name="week_ahead">À venir</string>
     <string name="week_setlist_count">Setlist · %1$d chants</string>
+    <string name="week_play_all">Tout écouter</string>
     <string name="week_play_reference">Écouter la référence de %1$s</string>
     <string name="week_pause_reference">Mettre en pause %1$s</string>
     <string name="week_past_hint">Semaine passée · gardée pour mémoire</string>
@@ -407,6 +408,9 @@
     <string name="player_collapse">Réduire le lecteur</string>
     <string name="player_rewind">Reculer de 10 secondes</string>
     <string name="player_forward">Avancer de 10 secondes</string>
+    <string name="player_previous">Revenir au début ou au chant précédent</string>
+    <string name="player_next">Chant suivant</string>
+    <string name="player_queue_position">Chant %1$s de la setlist</string>
     <string name="player_background">Continue écran éteint et hors connexion</string>
 
     <!-- Members -->

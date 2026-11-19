@@ -8,6 +8,7 @@ import com.xperiencemusic.shared.domain.model.OfflineAvailability
 import com.xperiencemusic.shared.domain.model.Permission
 import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.model.SetlistSchedule
+import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.model.SyncStatus
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
@@ -93,14 +94,23 @@ class WeekViewModel(
             WeekEvent.RefreshPulled -> refresh()
             is WeekEvent.WeekSelected -> selectedWeek.value = event.serviceDate
             is WeekEvent.PlayReferenceClicked -> playReference(event.songId)
+            WeekEvent.PlayAllClicked -> playAll()
+        }
+    }
+
+    /** The references of the week on screen, in the setlist's order; songs without one are skipped. */
+    private fun playAll() {
+        val songIds = state.value.setlist?.songs?.map { it.id } ?: return
+        viewModelScope.launch {
+            val songs = observeSchedule().first().weeks.flatMap { it.songs }.associateBy { it.id }
+            playback.playAll(songIds.mapNotNull { songs[it]?.referenceTrack() })
         }
     }
 
     private fun playReference(songId: String) {
         viewModelScope.launch {
             val song = observeSchedule().firstSong(songId) ?: return@launch
-            val reference = song.referenceRecording ?: return@launch
-            playback.playOrToggle(PlaybackTrack(reference.id, reference.title, song.title, reference.audioPath))
+            playback.playOrToggle(song.referenceTrack() ?: return@launch)
         }
     }
 
@@ -126,3 +136,6 @@ class WeekViewModel(
 
 private suspend fun Flow<SetlistSchedule>.firstSong(id: String) =
     first().weeks.firstNotNullOfOrNull { weekly -> weekly.songs.firstOrNull { it.id == id } }
+
+private fun Song.referenceTrack(): PlaybackTrack? =
+    referenceRecording?.let { PlaybackTrack(it.id, it.title, title, it.audioPath) }
