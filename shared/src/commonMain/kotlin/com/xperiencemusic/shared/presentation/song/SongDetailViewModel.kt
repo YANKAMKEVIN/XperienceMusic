@@ -35,8 +35,10 @@ class SongDetailViewModel(
     private val local = MutableStateFlow(SongDetailLocalState())
     private val song = observeSong(songId)
 
-    // The notation is the musician's, not the song's: it comes from the phone's settings.
-    private val choices = combine(local, display.notation) { local, notation -> local.copy(notation = notation) }
+    // How the chart is read is the musician's choice, not the song's: it comes from the phone's settings.
+    private val choices = combine(local, display.notation, display.lyricsOnly) { local, notation, lyricsOnly ->
+        local.copy(notation = notation, lyricsOnly = lyricsOnly)
+    }
 
     val state: StateFlow<SongDetailUiState> =
         combine(song, observeCurrentMember(), choices, playback.state, observeOfflineAudio(), ::deriveSongDetailState)
@@ -48,6 +50,7 @@ class SongDetailViewModel(
             SongDetailEvent.TransposeDownClicked -> transpose(-1)
             SongDetailEvent.TransposeResetClicked -> local.update { it.copy(transposeSemitones = 0) }
             is SongDetailEvent.NotationSelected -> display.selectNotation(event.notation)
+            is SongDetailEvent.LyricsOnlyChanged -> display.setLyricsOnly(event.lyricsOnly)
             is SongDetailEvent.SetReferenceClicked -> launchAction { setReferenceRecording(songId, event.recordingId) }
             is SongDetailEvent.DeleteClicked -> local.update { it.copy(pendingDeletionId = event.recordingId) }
             SongDetailEvent.DeleteDismissed -> local.update { it.copy(pendingDeletionId = null) }

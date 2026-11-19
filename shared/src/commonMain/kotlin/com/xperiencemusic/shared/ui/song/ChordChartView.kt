@@ -19,10 +19,13 @@ import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.chart.ChartSegment
 import com.xperiencemusic.shared.ui.theme.Spacing
 
-/** Lyrics with each chord printed above the syllable it falls on; lines wrap between words. */
+/**
+ * Lyrics with each chord printed above the syllable it falls on; lines wrap between words.
+ * With [lyricsOnly] the chords go: plain lines of text, twice as many on a screen, for singers.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale: Float = 1f) {
+fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale: Float = 1f, lyricsOnly: Boolean = false) {
     val body = MaterialTheme.typography.bodyLarge.scaled(scale)
     val section = MaterialTheme.typography.labelLarge.scaled(scale)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs * scale)) {
@@ -37,6 +40,9 @@ fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale:
                 is ChartLine.Lyrics ->
                     if (line.segments.isEmpty()) {
                         Spacer(Modifier.height(Spacing.s))
+                    } else if (lyricsOnly) {
+                        // A line of chords alone (an intro) has nothing to sing: it is left out.
+                        line.lyricsOnly()?.let { Text(it, style = body) }
                     } else {
                         // Wraps between words only: "Ressus-" never ends a line with "cité" on the next.
                         FlowRow {

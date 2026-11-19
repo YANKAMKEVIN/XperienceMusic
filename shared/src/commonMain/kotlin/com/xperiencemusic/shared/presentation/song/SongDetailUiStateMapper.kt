@@ -14,10 +14,12 @@ import com.xperiencemusic.shared.presentation.common.Formatting
 import com.xperiencemusic.shared.presentation.common.PlaybackStatus
 import com.xperiencemusic.shared.presentation.common.statusOf
 
-/** The choices made on the screen. Only [notation] outlives it (see [ChartDisplayStore]). */
+/** The choices made on the screen. [notation] and [lyricsOnly] outlive it (see [ChartDisplayStore]). */
 data class SongDetailLocalState(
     val transposeSemitones: Int = 0,
     val notation: Notation = Notation.NASHVILLE,
+    /** Null while the member never chose: singers then read the words alone, musicians the chords. */
+    val lyricsOnly: Boolean? = null,
     val pendingDeletionId: String? = null,
     val message: SongMessage? = null,
 )
@@ -56,6 +58,7 @@ fun deriveSongDetailState(
         },
         originalKeyLabel = song.key.label(keyNotation).takeIf { displayedKey != song.key },
         notation = local.notation,
+        lyricsOnly = local.lyricsOnly ?: isSinger,
         transposeSemitones = local.transposeSemitones,
         chart = ChordChart.render(song.chart, displayedKey, local.notation),
         recordings = recordings,

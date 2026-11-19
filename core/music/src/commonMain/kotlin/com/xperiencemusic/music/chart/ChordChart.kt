@@ -82,6 +82,13 @@ sealed interface ChartLine {
             return words
         }
 
+        /**
+         * The words alone, for a singer who does not read the chords; null for a line that only
+         * carries chords (an intro, an instrumental bar). Spaces left around a chord are tidied.
+         */
+        fun lyricsOnly(): String? =
+            segments.joinToString("") { it.lyric }.replace(SPACES, " ").trim().takeIf { it.isNotEmpty() }
+
         /** One piece per word: the chord goes with the first word of its fragment. */
         private fun pieces(): List<ChartSegment> = segments.flatMap { segment ->
             val tokens = WORD.findAll(segment.lyric).map { it.value }.filter { it.isNotEmpty() }.toList().ifEmpty { listOf("") }
@@ -96,6 +103,7 @@ sealed interface ChartLine {
 
         private companion object {
             val WORD = Regex("""\S*\s*""")
+            val SPACES = Regex("""\s+""")
             const val CLOSING = "!?:;»…"
             const val OPENING = "«"
 

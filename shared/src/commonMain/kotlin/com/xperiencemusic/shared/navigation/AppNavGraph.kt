@@ -80,8 +80,8 @@ private fun NavGraphBuilder.songsGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() },
             onEdit = { navController.navigate(SongEditorRoute(songId)) },
             onAddRecording = { navController.navigate(RecordingFormRoute(songId)) },
-            onOpenStage = { transpose, notation ->
-                navController.navigate(StageRoute(songId, transpose, notation.name))
+            onOpenStage = { transpose, notation, lyricsOnly ->
+                navController.navigate(StageRoute(songId, transpose, notation.name, lyricsOnly))
             },
             onRecordVoice = { navController.navigate(VoiceRecordRoute(songId)) },
         )
@@ -142,10 +142,11 @@ private fun NavGraphBuilder.stageGraph(navController: NavHostController) {
             songId = route.songId,
             transposeSemitones = route.transposeSemitones,
             notation = Notation.valueOf(route.notation),
+            lyricsOnly = route.lyricsOnly,
             onClose = closeStage,
             onOpenSong = { nextId ->
-                // Other songs open in their own key, keeping the notation.
-                navController.navigate(StageRoute(nextId, 0, route.notation)) {
+                // Other songs open in their own key, keeping the notation and the chords on or off.
+                navController.navigate(StageRoute(nextId, 0, route.notation, route.lyricsOnly)) {
                     popUpTo<StageRoute> { inclusive = true }
                 }
             },

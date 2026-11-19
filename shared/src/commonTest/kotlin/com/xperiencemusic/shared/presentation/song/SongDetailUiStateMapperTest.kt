@@ -79,6 +79,17 @@ class SongDetailUiStateMapperTest {
     }
 
     @Test
+    fun `sans choix, un chantre lit les paroles seules et un musicien les accords`() {
+        assertTrue(deriveSongDetailState(sample, member(instrument = Instrument.SINGER), SongDetailLocalState()).lyricsOnly)
+        assertFalse(deriveSongDetailState(sample, member(instrument = Instrument.PIANO), SongDetailLocalState()).lyricsOnly)
+        // Once chosen, the choice wins over the role.
+        val singerWithChords = deriveSongDetailState(sample, member(), SongDetailLocalState(lyricsOnly = false))
+        assertFalse(singerWithChords.lyricsOnly)
+        val pianistWithout = deriveSongDetailState(sample, member(instrument = Instrument.PIANO), SongDetailLocalState(lyricsOnly = true))
+        assertTrue(pianistWithout.lyricsOnly)
+    }
+
+    @Test
     fun `un chant absent donne l'état introuvable`() {
         assertTrue(deriveSongDetailState(null, member(), SongDetailLocalState()).isMissing)
     }

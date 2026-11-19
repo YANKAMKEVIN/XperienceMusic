@@ -94,4 +94,13 @@ class ChordChartTest {
         val words = (ChordChart.render("Gloire [5][4]à toi", doMajeur, Notation.SOLFEGE).single() as ChartLine.Lyrics).words()
         assertEquals(listOf(ChartSegment("Sol", ""), ChartSegment("Fa", "à ")), words[1])
     }
+
+    @Test
+    fun `lyricsOnly rend les paroles sans accords ni césure`() {
+        fun textOf(source: String) = (ChordChart.render(source, doMajeur, Notation.SOLFEGE).single() as ChartLine.Lyrics).lyricsOnly()
+        assertEquals("Tu es saint, Seigneur", textOf("[1]Tu es [5]saint, [6m]Sei[4]gneur"))
+        assertEquals("Gloire à toi", textOf("Gloire [5] [4]à toi [1]"))
+        // An intro only carries chords: nothing to sing, nothing to show.
+        assertEquals(null, textOf("[1] [4] [5]"))
+    }
 }

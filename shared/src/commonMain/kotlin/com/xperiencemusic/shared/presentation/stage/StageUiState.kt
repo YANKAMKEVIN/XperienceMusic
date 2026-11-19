@@ -11,6 +11,8 @@ data class StageUiState(
     /** The song's own key, shown next to [keyLabel] once the song is transposed. */
     val originalKeyLabel: String? = null,
     val chart: List<ChartLine> = emptyList(),
+    /** The words without the chords, as chosen on the song page. */
+    val lyricsOnly: Boolean = false,
     val textScale: Float = DEFAULT_SCALE,
     val isAutoScrolling: Boolean = false,
     /** Pixels per second, roughly; the screen converts to its own density. */

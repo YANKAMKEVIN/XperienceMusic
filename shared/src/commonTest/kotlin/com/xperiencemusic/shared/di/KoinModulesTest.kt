@@ -112,7 +112,7 @@ class KoinModulesTest {
             koin.get<SongEditorViewModel> { parametersOf(null) },
             koin.get<SongEditorViewModel> { parametersOf("song") },
             koin.get<RecordingFormViewModel> { parametersOf("song") },
-            koin.get<StageViewModel> { parametersOf("song", 0, Notation.NASHVILLE) },
+            koin.get<StageViewModel> { parametersOf("song", 0, Notation.NASHVILLE, false) },
             koin.get<PlanningViewModel>(),
             koin.get<AvailabilityViewModel> { parametersOf(date) },
             koin.get<ServiceDetailViewModel> { parametersOf(date) },

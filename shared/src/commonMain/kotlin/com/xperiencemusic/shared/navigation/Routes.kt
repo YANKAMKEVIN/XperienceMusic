@@ -54,9 +54,12 @@ data class VoiceRecordRoute(val songId: String)
 @Serializable
 data object VoiceReviewRoute
 
-/** [notation] is a [com.xperiencemusic.music.theory.Notation] name; routes only carry simple types. */
+/**
+ * [notation] is a [com.xperiencemusic.music.theory.Notation] name; routes only carry simple types.
+ * [lyricsOnly] hides the chords, as chosen on the song page.
+ */
 @Serializable
-data class StageRoute(val songId: String, val transposeSemitones: Int, val notation: String)
+data class StageRoute(val songId: String, val transposeSemitones: Int, val notation: String, val lyricsOnly: Boolean = false)
 
 @Serializable
 data object MembersRoute

@@ -5,6 +5,7 @@ import com.xperiencemusic.shared.data.local.FileDevicePreferences
 import com.xperiencemusic.shared.fakes.FakeFileStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class ChartDisplayStoreTest {
     @Test
@@ -24,5 +25,14 @@ class ChartDisplayStoreTest {
         val files = FakeFileStore()
         FileDevicePreferences(files).write("chart.notation", "TABLATURE")
         assertEquals(Notation.NASHVILLE, ChartDisplayStore(FileDevicePreferences(files)).notation.value)
+    }
+
+    @Test
+    fun `paroles seules reste indécis tant que le membre n'a pas choisi, puis est retenu`() {
+        val files = FakeFileStore()
+        val store = ChartDisplayStore(FileDevicePreferences(files))
+        assertNull(store.lyricsOnly.value)
+        store.setLyricsOnly(false)
+        assertEquals(false, ChartDisplayStore(FileDevicePreferences(files)).lyricsOnly.value)
     }
 }

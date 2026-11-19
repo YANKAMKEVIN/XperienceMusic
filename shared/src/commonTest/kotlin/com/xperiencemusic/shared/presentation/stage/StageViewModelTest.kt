@@ -87,12 +87,12 @@ class StageViewModelTest {
         val store = StageSettingsStore()
         val songs = songRepository(a, b)
         val weeklyUseCase = schedule(setlistRepository(), songs)
-        val first = StageViewModel("a", 0, Notation.NASHVILLE, ObserveSongUseCase(songs), weeklyUseCase, store)
+        val first = StageViewModel("a", 0, Notation.NASHVILLE, false, ObserveSongUseCase(songs), weeklyUseCase, store)
         repeat(20) { first.onEvent(StageEvent.TextBiggerClicked) }
         first.onEvent(StageEvent.AutoScrollToggled)
         repeat(20) { first.onEvent(StageEvent.SlowerClicked) }
 
-        val second = StageViewModel("b", 0, Notation.NASHVILLE, ObserveSongUseCase(songs), weeklyUseCase, store)
+        val second = StageViewModel("b", 0, Notation.NASHVILLE, false, ObserveSongUseCase(songs), weeklyUseCase, store)
         assertEquals(StageUiState.MAX_SCALE, store.settings.value.textScale)
         assertEquals(StageUiState.MIN_SPEED, store.settings.value.scrollSpeed)
         assertEquals(true, store.settings.value.isAutoScrolling)

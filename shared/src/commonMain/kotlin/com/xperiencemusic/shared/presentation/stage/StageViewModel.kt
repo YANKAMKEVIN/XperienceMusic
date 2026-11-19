@@ -28,13 +28,14 @@ class StageSettingsStore {
 }
 
 /**
- * Full-screen lyrics for performing. [transposeSemitones] and [notation] come from the song page
- * the musician opened the stage from.
+ * Full-screen lyrics for performing. [transposeSemitones], [notation] and [lyricsOnly] come from
+ * the song page the musician opened the stage from.
  */
 class StageViewModel(
     songId: String,
     private val transposeSemitones: Int,
     private val notation: Notation,
+    private val lyricsOnly: Boolean,
     observeSong: ObserveSongUseCase,
     observeSchedule: ObserveSetlistScheduleUseCase,
     store: StageSettingsStore,
@@ -44,6 +45,7 @@ class StageViewModel(
     val state: StateFlow<StageUiState> =
         combine(observeSong(songId), observeSchedule(), settings) { song, schedule, settings ->
             deriveStageState(song, song?.let { schedule.weekOf(it.id) }, settings, transposeSemitones, notation)
+                .copy(lyricsOnly = lyricsOnly)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StageUiState())
 
     fun onEvent(event: StageEvent) {

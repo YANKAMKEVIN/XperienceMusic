@@ -119,8 +119,9 @@ fun StageScreen(
     notation: Notation,
     onClose: () -> Unit,
     onOpenSong: (String) -> Unit,
-    viewModel: StageViewModel = koinViewModel(key = "stage-$songId-$transposeSemitones-$notation") {
-        parametersOf(songId, transposeSemitones, notation)
+    lyricsOnly: Boolean = false,
+    viewModel: StageViewModel = koinViewModel(key = "stage-$songId-$transposeSemitones-$notation-$lyricsOnly") {
+        parametersOf(songId, transposeSemitones, notation, lyricsOnly)
     },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -415,7 +416,7 @@ private fun StageLyrics(state: StageUiState, onToggleScroll: () -> Unit, modifie
                 .padding(horizontal = Spacing.l)
                 .padding(top = Spacing.s),
         ) {
-            ChordChartView(state.chart, scale = state.textScale)
+            ChordChartView(state.chart, scale = state.textScale, lyricsOnly = state.lyricsOnly)
             // Room so the last line can scroll up to eye level.
             Spacer(Modifier.height(LYRICS_END_ROOM))
         }

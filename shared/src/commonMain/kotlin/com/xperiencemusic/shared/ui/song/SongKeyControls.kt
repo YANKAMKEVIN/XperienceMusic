@@ -15,6 +15,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Switch
+import com.xperiencemusic.shared.resources.song_lyrics_only
+import com.xperiencemusic.shared.ui.theme.appSwitchColors
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.clip
@@ -108,7 +112,29 @@ internal fun KeyAndNotation(state: SongDetailUiState, onEvent: (SongDetailEvent)
                 onSelect = { onEvent(SongDetailEvent.NotationSelected(it)) },
                 Modifier.padding(top = Spacing.s),
             )
+            LyricsOnlySwitch(state.lyricsOnly, onChange = { onEvent(SongDetailEvent.LyricsOnlyChanged(it)) })
         }
+    }
+}
+
+/** For those who only sing: the chords go, here and on stage. */
+@Composable
+private fun LyricsOnlySwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(top = Spacing.s)
+            .heightIn(min = Sizes.touchTarget)
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
+            .padding(start = Spacing.s),
+    ) {
+        Text(
+            stringResource(Res.string.song_lyrics_only),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(checked = checked, onCheckedChange = null, colors = appSwitchColors())
     }
 }
 
