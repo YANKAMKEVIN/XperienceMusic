@@ -30,6 +30,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import com.xperiencemusic.shared.domain.model.LearningPreferences
+import com.xperiencemusic.shared.domain.usecase.GetLearningPreferencesUseCase
+import com.xperiencemusic.shared.fakes.FakeLearningSessionStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -37,6 +40,7 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExerciseViewModelTest {
+    private val comfort = FakeLearningSessionStore()
     // Tenor comfort note is Sol3 (55); a fifth above is Ré4 (62).
     private val exercise = Exercise("fifth", 1, 1, "Quinte", "Tiens la quinte.", ExerciseCheck.HoldNote(7, 1.0))
     private val exercises = InMemoryExerciseRepository(listOf(exercise))
@@ -60,7 +64,19 @@ class ExerciseViewModelTest {
             CompleteExerciseUseCase(sessions, repository, today),
             PlayReferenceNoteUseCase(PlayLocalAudioUseCase(FakeFileStore(), player, playback)),
             playback,
+            GetLearningPreferencesUseCase(comfort),
         )
+    }
+
+    @Test
+    fun `avec « Réduire les animations », la réussite ne bouge pas et ne vibre pas`() = runTest {
+        assertEquals(CelebrationUi(isAnimated = true, vibrates = true), viewModel(FakeMicrophone(emptyList())).state.value.celebration)
+
+        comfort.savePreferences("me", LearningPreferences(reduceMotion = true))
+        assertEquals(CelebrationUi(isAnimated = false, vibrates = false), viewModel(FakeMicrophone(emptyList())).state.value.celebration)
+
+        comfort.savePreferences("me", LearningPreferences(haptics = false))
+        assertEquals(CelebrationUi(isAnimated = true, vibrates = false), viewModel(FakeMicrophone(emptyList())).state.value.celebration)
     }
 
     @Test

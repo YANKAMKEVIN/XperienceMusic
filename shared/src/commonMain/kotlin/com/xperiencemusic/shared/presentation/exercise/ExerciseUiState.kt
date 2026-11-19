@@ -16,10 +16,15 @@ data class ExerciseUiState(
     /** The daily warm-up: it keeps the streak but has no status. */
     val isWarmUp: Boolean = false,
     val isChallenge: Boolean = false,
+    /** The member's comfort settings: whether a success may move and vibrate. */
+    val celebration: CelebrationUi = CelebrationUi(),
 ) {
     /** The microphone is on: the screen keeps the live gauge and a way to stop, little else. */
     val isListening: Boolean get() = check != null && phase == ExercisePhase.LISTENING
 }
+
+/** How a success is celebrated. With "Réduire les animations" nothing moves and nothing vibrates. */
+data class CelebrationUi(val isAnimated: Boolean = true, val vibrates: Boolean = true)
 
 data class AutomaticCheckUi(
     /** The note to sing now: the only one for a hold, the current one in a sequence. */
