@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.ui.brand
 
+import com.xperiencemusic.shared.ui.theme.AppTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -39,13 +40,14 @@ fun BrandWordmark(
     ) {
         Text(
             stringResource(Res.string.brand_wordmark_top),
-            style = TextStyle(fontSize = fontSize, fontWeight = FontWeight.Black, letterSpacing = 0.04.em),
+            style = TextStyle(fontFamily = AppTheme.titleFont, fontSize = fontSize, fontWeight = FontWeight.Black, letterSpacing = 0.04.em),
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
             stringResource(Res.string.brand_wordmark_bottom),
             style = TextStyle(
                 brush = BrandColors.horizontalGradient,
+                fontFamily = AppTheme.titleFont,
                 fontSize = fontSize * 0.62f,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.62.em,
