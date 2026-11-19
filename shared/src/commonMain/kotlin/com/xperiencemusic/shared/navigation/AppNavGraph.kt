@@ -1,7 +1,12 @@
 package com.xperiencemusic.shared.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
@@ -40,10 +45,50 @@ import com.xperiencemusic.shared.ui.voice.VoiceReviewScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
 import kotlinx.datetime.LocalDate
 
-/** Every screen of the signed-in app, tabs and pushed screens alike. */
+/**
+ * Every screen of the signed-in app, tabs and pushed screens alike. The movement says where one is
+ * going: tabs cross-fade (another section, same level), a pushed screen slides in from the side
+ * and back out (down into a detail), and the stage grows out of the song page.
+ */
 @Composable
 internal fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit, modifier: Modifier = Modifier) {
-    NavHost(navController, startDestination = WeekRoute, modifier = modifier) {
+    NavHost(
+        navController,
+        startDestination = WeekRoute,
+        modifier = modifier,
+        enterTransition = {
+            when {
+                isTabSwitch() -> fadeIn(tween(TAB_FADE_MS))
+                targetState.isStage() -> scaleIn(tween(STAGE_MS), initialScale = STAGE_SCALE) + fadeIn(tween(STAGE_MS))
+                // The stage closed on another song than the one it opened from: that page takes its place.
+                initialState.isStage() -> fadeIn(tween(STAGE_MS))
+                else -> slideIntoContainer(SlideDirection.Start, tween(PUSH_MS)) + fadeIn(tween(PUSH_MS))
+            }
+        },
+        exitTransition = {
+            when {
+                isTabSwitch() -> fadeOut(tween(TAB_FADE_MS))
+                targetState.isStage() -> fadeOut(tween(STAGE_MS))
+                initialState.isStage() -> scaleOut(tween(STAGE_MS), targetScale = STAGE_SCALE) + fadeOut(tween(STAGE_MS))
+                // The screen underneath only steps aside a little, and dims.
+                else -> slideOutOfContainer(SlideDirection.Start, tween(PUSH_MS)) { it / UNDERNEATH_SHARE } + fadeOut(tween(PUSH_MS))
+            }
+        },
+        popEnterTransition = {
+            when {
+                isTabSwitch() -> fadeIn(tween(TAB_FADE_MS))
+                initialState.isStage() -> fadeIn(tween(STAGE_MS))
+                else -> slideIntoContainer(SlideDirection.End, tween(PUSH_MS)) { it / UNDERNEATH_SHARE } + fadeIn(tween(PUSH_MS))
+            }
+        },
+        popExitTransition = {
+            when {
+                isTabSwitch() -> fadeOut(tween(TAB_FADE_MS))
+                initialState.isStage() -> scaleOut(tween(STAGE_MS), targetScale = STAGE_SCALE) + fadeOut(tween(STAGE_MS))
+                else -> slideOutOfContainer(SlideDirection.End, tween(PUSH_MS)) + fadeOut(tween(PUSH_MS))
+            }
+        },
+    ) {
         weekGraph(navController)
         songsGraph(navController)
         planningGraph(navController)
@@ -52,6 +97,19 @@ internal fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit,
         accountGraph(navController, onSignOut)
     }
 }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch() =
+    isTab(initialState.destination) && isTab(targetState.destination)
+
+private fun NavBackStackEntry.isStage() = destination.hasRoute(StageRoute::class)
+
+private const val TAB_FADE_MS = 220
+private const val PUSH_MS = 300
+private const val STAGE_MS = 260
+/** The stage starts from nine tenths of the screen: enough to read as "growing", not as a jump. */
+private const val STAGE_SCALE = 0.9f
+/** How little the screen underneath moves while another slides over it: a quarter of the width. */
+private const val UNDERNEATH_SHARE = 4
 
 private fun NavHostController.openSong(id: String) = navigate(SongRoute(id))
 
