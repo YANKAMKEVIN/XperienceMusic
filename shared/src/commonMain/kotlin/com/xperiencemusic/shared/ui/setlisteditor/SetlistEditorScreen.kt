@@ -190,7 +190,7 @@ fun SetlistEditorScreenContent(
             }
             item(key = "available-title") { AvailableHeader(state, Modifier.animateItem()) }
             items(state.available, key = { "available-${it.id}" }) { song ->
-                AvailableSongRow(song, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) }, modifier = Modifier.animateItem())
+                AvailableSongRow(song, state.query, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) }, modifier = Modifier.animateItem())
             }
             if (state.isEditing) {
                 item(key = "delete") {
@@ -399,8 +399,8 @@ private fun AvailableHeader(state: SetlistEditorUiState, modifier: Modifier = Mo
 
 /** A compact line, as in the library: the tonality changes from one rehearsal to the next, so it is left out. */
 @Composable
-private fun AvailableSongRow(song: LibrarySongUi, onAdd: () -> Unit, modifier: Modifier = Modifier) {
-    SongListRow(song, onClick = onAdd, modifier = modifier, startPadding = Spacing.none, endPadding = Spacing.none) {
+private fun AvailableSongRow(song: LibrarySongUi, query: String, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+    SongListRow(song, onClick = onAdd, modifier = modifier, startPadding = Spacing.none, endPadding = Spacing.none, highlight = query) {
         Icon(
             Icons.Filled.Add,
             contentDescription = stringResource(Res.string.setlist_add, song.title),

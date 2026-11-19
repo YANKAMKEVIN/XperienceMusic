@@ -14,7 +14,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.remember
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import com.xperiencemusic.shared.presentation.common.lyricExcerpt
+import com.xperiencemusic.shared.presentation.common.searchMatches
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.xperiencemusic.shared.presentation.library.LibrarySongUi
@@ -39,10 +46,12 @@ internal fun SongListRow(
     modifier: Modifier = Modifier,
     startPadding: Dp = Spacing.l,
     endPadding: Dp = Spacing.l,
+    /** The search that found this song: its letters stand out in the title and in the line below. */
+    highlight: String = "",
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val words = rememberFormattingWords()
-    val subtitle = song.lyricLine
+    val subtitle = song.lyricLine?.let { lyricExcerpt(it, highlight) }
         ?: listOfNotNull(
             song.lastSungOn?.let { stringResource(Res.string.library_sung_on, words.dayAndMonth(it)) },
             song.artist,
@@ -53,10 +62,21 @@ internal fun SongListRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
-                Text(song.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                // Among some 2000 songs, what was typed shows at a glance why a result is there:
+                // bold in the title, violet in the lyric line or the author.
+                Text(
+                    highlighted(song.title, highlight, SpanStyle(fontWeight = FontWeight.Bold)),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 if (subtitle != null) {
                     Text(
-                        subtitle,
+                        highlighted(
+                            subtitle,
+                            highlight,
+                            SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold),
+                        ),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -81,5 +101,15 @@ internal fun SongListRow(
         )
     }
 }
+
+/** [text] with [style] on the letters [query] matched; the plain text when there is nothing to show. */
+@Composable
+private fun highlighted(text: String, query: String, style: SpanStyle): AnnotatedString =
+    remember(text, query, style) {
+        buildAnnotatedString {
+            append(text)
+            searchMatches(text, query).forEach { addStyle(style, it.first, it.last + 1) }
+        }
+    }
 
 private val ROW_MIN_HEIGHT = 56.dp

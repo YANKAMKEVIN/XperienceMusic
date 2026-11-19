@@ -244,6 +244,7 @@ private fun LibraryList(
                         song,
                         onClick = { onSongClick(song.id) },
                         endPadding = if (hasIndex) INDEX_WIDTH else Spacing.l,
+                        highlight = state.query,
                     )
                 }
             }
