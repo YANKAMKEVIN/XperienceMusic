@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import com.xperiencemusic.shared.ui.theme.Radius
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Column
@@ -189,6 +192,8 @@ private fun WeekList(
             item { EmptyWeek(state, onPublish = { onEditWeek(null) }) }
         } else {
             item { DatesRow(setlist) }
+            // Read before the songs: under them, the week's instruction was missed at the foot of the list.
+            setlist.message?.let { message -> item { MessageCard(message, setlist.publishedBy) } }
             if (setlist.timing == WeekTiming.PAST) {
                 item {
                     Text(
@@ -215,7 +220,6 @@ private fun WeekList(
                     onPlay = { onEvent(WeekEvent.PlayReferenceClicked(song.id)) },
                 )
             }
-            setlist.message?.let { message -> item { MessageCard(message, setlist.publishedBy) } }
             if (setlist.timing != WeekTiming.PAST) {
                 state.offline?.let { item { OfflineCard(it, onDownload = { onEvent(WeekEvent.DownloadClicked) }) } }
             }
@@ -326,16 +330,28 @@ private fun DateCard(label: String, date: String, modifier: Modifier = Modifier)
     }
 }
 
+/** The leader's word for the week: tinted and signed with their circle, so it does not read as a song row. */
 @Composable
 private fun MessageCard(message: String, publishedBy: String) {
-    AppCard {
-        Text(message, style = MaterialTheme.typography.bodyMedium)
-        Text(
-            stringResource(Res.string.week_published_by, publishedBy),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = Spacing.s),
-        )
+    Surface(
+        shape = RoundedCornerShape(Radius.card),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        border = BorderStroke(Sizes.hairline, AppTheme.colors.cardEdge),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(Modifier.padding(Spacing.l), horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
+            // Only the name travels with a setlist: the circle shows the leader's initials.
+            MemberAvatar(MemberAvatarUi(publishedBy, avatar = null), size = Sizes.avatarS)
+            Column(Modifier.weight(1f)) {
+                Text(message, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    stringResource(Res.string.week_published_by, publishedBy),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = AppTheme.colors.onCardMuted,
+                    modifier = Modifier.padding(top = Spacing.s),
+                )
+            }
+        }
     }
 }
 
