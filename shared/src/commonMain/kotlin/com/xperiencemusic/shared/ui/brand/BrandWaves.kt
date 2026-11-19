@@ -1,10 +1,13 @@
 package com.xperiencemusic.shared.ui.brand
 
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
@@ -25,20 +28,28 @@ import kotlin.math.sin
 /**
  * Luminous sound waves: a few thin sine lines, brighter in the middle, drifting slowly.
  * Decorative only; frozen in previews.
+ *
+ * With [isActive] false the lines slow down and settle almost flat, then pick up again: in the
+ * player they move with the music, so play and pause read at a glance from the whole screen.
  */
 @Composable
-fun BrandWaves(modifier: Modifier = Modifier) {
-    val phase = if (!LocalInspectionMode.current) {
-        val transition = rememberInfiniteTransition()
-        val value by transition.animateFloat(
-            initialValue = 0f,
-            targetValue = (2 * PI).toFloat(),
-            animationSpec = infiniteRepeatable(tween(9_000, easing = LinearEasing), RepeatMode.Restart),
-        )
-        value
-    } else {
-        0.6f
+fun BrandWaves(modifier: Modifier = Modifier, isActive: Boolean = true) {
+    val energy by animateFloatAsState(if (isActive) 1f else 0f, tween(SETTLE_MS, easing = LinearEasing), label = "waves-energy")
+    var phase by remember { mutableFloatStateOf(STILL_PHASE) }
+    val isMoving = energy > 0f && !LocalInspectionMode.current
+    val currentEnergy by rememberUpdatedState(energy)
+    // Nothing runs while the lines rest: the drift only ticks as long as there is energy left.
+    LaunchedEffect(isMoving) {
+        if (!isMoving) return@LaunchedEffect
+        var last = withFrameNanos { it }
+        while (true) {
+            val now = withFrameNanos { it }
+            // Whole turns: the lines' speeds are whole numbers, so wrapping at a turn does not jump.
+            phase = (phase + (now - last) / NANOS_PER_SECOND * TURN / DRIFT_SECONDS * currentEnergy) % TURN
+            last = now
+        }
     }
+    val swell = REST_SWELL + (1f - REST_SWELL) * energy
     // Offscreen so the edge fade can mask the lines without painting over the background.
     Canvas(modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }) {
         val mid = size.height / 2
@@ -52,7 +63,7 @@ fun BrandWaves(modifier: Modifier = Modifier) {
                 val envelope = sin(PI * t).toFloat()
                 val y = mid + line.offset * size.height +
                     sin(t * line.frequency * 2 * PI + phase * line.speed + index).toFloat() *
-                    line.amplitude * size.height * (0.35f + 0.65f * envelope)
+                    line.amplitude * swell * size.height * (0.35f + 0.65f * envelope)
                 if (step == 0) path.moveTo(x, y) else path.lineTo(x, y)
             }
             drawPath(
@@ -72,6 +83,18 @@ fun BrandWaves(modifier: Modifier = Modifier) {
         )
     }
 }
+
+/** A full turn, 2π. */
+private const val TURN = 6.2831855f
+/** One turn of the slowest line, at full energy. */
+private const val DRIFT_SECONDS = 9f
+private const val NANOS_PER_SECOND = 1_000_000_000f
+/** Where the lines stand in previews, and where they start. */
+private const val STILL_PHASE = 0.6f
+/** How long the lines take to settle, or to pick up again. */
+private const val SETTLE_MS = 900
+/** What is left of the lines' height at rest: almost flat, still a wave. */
+private const val REST_SWELL = 0.12f
 
 private class WaveLine(
     val offset: Float,

@@ -1,6 +1,10 @@
 package com.xperiencemusic.shared.ui.player
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -81,6 +85,9 @@ import com.xperiencemusic.shared.presentation.common.PlaybackStatus
 
 private val MONOGRAM_SIZE = 140.dp
 private val WAVES_HEIGHT = 96.dp
+/** The monogram's beat while playing: three hundredths larger, in and out in under two seconds. */
+private const val BEAT_SCALE = 1.03f
+private const val BEAT_MS = 850
 private val PLAY_BUTTON_SIZE = 80.dp
 private val PLAY_LOADER_SIZE = 28.dp
 /** Material's play arrow has more air in its box than the pause glyph: drawn larger to match. */
@@ -134,8 +141,9 @@ fun PlayerContent(state: MiniPlayerUiState, onEvent: (MiniPlayerEvent) -> Unit) 
             )
         }
         Spacer(Modifier.height(Spacing.xxl))
-        XmMonogram(size = MONOGRAM_SIZE)
-        BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT))
+        val isSounding = state.isPlaying && !state.isLoading
+        BeatingMonogram(isSounding)
+        BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT), isActive = isSounding)
         if (state.hasError) {
             Text(stringResource(Res.string.player_error), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
         }
@@ -207,6 +215,29 @@ fun PlayerContent(state: MiniPlayerUiState, onEvent: (MiniPlayerEvent) -> Unit) 
             modifier = Modifier.padding(top = Spacing.xl),
         )
     }
+}
+
+/** The monogram breathes, barely, while the music plays, and comes to rest with it. */
+@Composable
+private fun BeatingMonogram(isPlaying: Boolean) {
+    val beat = remember { Animatable(1f) }
+    LaunchedEffect(isPlaying) {
+        if (!isPlaying) {
+            beat.animateTo(1f, tween(BEAT_MS))
+            return@LaunchedEffect
+        }
+        while (true) {
+            beat.animateTo(BEAT_SCALE, tween(BEAT_MS, easing = FastOutSlowInEasing))
+            beat.animateTo(1f, tween(BEAT_MS, easing = FastOutSlowInEasing))
+        }
+    }
+    XmMonogram(
+        Modifier.graphicsLayer {
+            scaleX = beat.value
+            scaleY = beat.value
+        },
+        size = MONOGRAM_SIZE,
+    )
 }
 
 /** Where the looped passage sits in the track, under the position bar: A alone is a dot, A to B a segment. */
