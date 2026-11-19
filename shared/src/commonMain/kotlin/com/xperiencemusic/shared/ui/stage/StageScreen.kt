@@ -148,7 +148,10 @@ fun StageScreenContent(
         BoxWithConstraints(Modifier.safeDrawingPadding()) {
             // On a music stand the phone lies sideways: the controls move to a narrow rail on the
             // right so the lyrics keep the whole height.
-            if (maxWidth > maxHeight) {
+            val isLandscape = maxWidth > maxHeight
+            // Each way of holding the phone has its own text size and speed.
+            LaunchedEffect(isLandscape) { onEvent(StageEvent.OrientationChanged(isLandscape)) }
+            if (isLandscape) {
                 Row(Modifier.fillMaxSize()) {
                     Column(Modifier.weight(1f)) {
                         StageToolbar(state, onClose)

@@ -46,4 +46,6 @@ sealed interface StageEvent {
     data object AutoScrollToggled : StageEvent
     data object FasterClicked : StageEvent
     data object SlowerClicked : StageEvent
+    /** The phone was turned: upright and lying on the stand each keep their text size and speed. */
+    data class OrientationChanged(val isLandscape: Boolean) : StageEvent
 }

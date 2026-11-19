@@ -43,7 +43,7 @@ val songsModule = module {
     factoryOf(::DeleteRecordingUseCase)
     factoryOf(::SetReferenceRecordingUseCase)
     factoryOf(::ObserveOfflineAudioUseCase)
-    single { StageSettingsStore() }
+    single { StageSettingsStore(get()) }
     single { ChartDisplayStore(get()) }
     viewModelOf(::LibraryViewModel)
     viewModelOf(::SongDetailViewModel)
