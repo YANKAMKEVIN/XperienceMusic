@@ -18,6 +18,7 @@ import platform.AVFAudio.setActive
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemStatusFailed
+import platform.AVFoundation.AVPlayerTimeControlStatusPaused
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
 import platform.AVFoundation.currentItem
@@ -25,6 +26,7 @@ import platform.AVFoundation.currentTime
 import platform.AVFoundation.duration
 import platform.AVFoundation.pause
 import platform.AVFoundation.play
+import platform.AVFoundation.rate
 import platform.AVFoundation.seekToTime
 import platform.AVFoundation.timeControlStatus
 import platform.CoreMedia.CMTimeGetSeconds
@@ -61,6 +63,9 @@ class IosAudioPlayer : AudioPlayer {
     private var isSeeking = false
     private var playWhenSeeked = false
 
+    /** The practice speed; AVPlayer keeps the pitch by default. */
+    private var speed = NORMAL_SPEED
+
     init {
         registerRemoteCommands()
     }
@@ -77,7 +82,7 @@ class IosAudioPlayer : AudioPlayer {
         val newPlayer = AVPlayer(playerItem = AVPlayerItem(uRL = nsUrl))
         player = newPlayer
         _state.value = AudioPlayerState(isBuffering = true)
-        newPlayer.play()
+        start(newPlayer)
         ticker = scope.launch {
             while (isActive) {
                 sample(newPlayer)
@@ -95,7 +100,7 @@ class IosAudioPlayer : AudioPlayer {
         val current = player ?: return
         // Seeks are asynchronous: playing before the seek lands, at the end of the item, would
         // stop again at once (replaying a finished recording did nothing).
-        if (isSeeking) playWhenSeeked = true else current.play()
+        if (isSeeking) playWhenSeeked = true else start(current)
         sample(current)
     }
 
@@ -106,10 +111,23 @@ class IosAudioPlayer : AudioPlayer {
             isSeeking = false
             if (playWhenSeeked && player === current) {
                 playWhenSeeked = false
-                current.play()
+                start(current)
             }
         }
         _state.value = _state.value.copy(positionMs = positionMs, hasEnded = false)
+    }
+
+    override fun setSpeed(speed: Float) {
+        this.speed = speed
+        val current = player ?: return
+        // A rate set on a paused player would start it: paused, the speed applies at the next start.
+        if (current.timeControlStatus != AVPlayerTimeControlStatusPaused) current.rate = speed
+    }
+
+    /** `play()` always starts at the normal speed: the practice speed is set again right after. */
+    private fun start(target: AVPlayer) {
+        target.play()
+        if (speed != NORMAL_SPEED) target.rate = speed
     }
 
     override fun stop() {
@@ -152,7 +170,7 @@ class IosAudioPlayer : AudioPlayer {
             MPMediaItemPropertyArtist to info.subtitle,
             MPMediaItemPropertyPlaybackDuration to durationMs / MILLIS_PER_SECOND,
             MPNowPlayingInfoPropertyElapsedPlaybackTime to positionMs / MILLIS_PER_SECOND,
-            MPNowPlayingInfoPropertyPlaybackRate to if (isPlaying) 1.0 else 0.0,
+            MPNowPlayingInfoPropertyPlaybackRate to if (isPlaying) speed.toDouble() else 0.0,
         )
     }
 
@@ -191,5 +209,6 @@ class IosAudioPlayer : AudioPlayer {
         const val MILLIS_PER_SECOND = 1000.0
         const val TIMESCALE = 600
         const val END_TOLERANCE_MS = 300
+        const val NORMAL_SPEED = 1f
     }
 }

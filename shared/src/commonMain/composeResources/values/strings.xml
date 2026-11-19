@@ -413,6 +413,16 @@
     <string name="player_previous">Revenir au début ou au chant précédent</string>
     <string name="player_next">Chant suivant</string>
     <string name="player_queue_position">Chant %1$s de la setlist</string>
+    <string name="player_speed_normal" translatable="false">1×</string>
+    <string name="player_speed_slow">0,75×</string>
+    <string name="player_speed_slow_on">Vitesse ralentie, revenir à la vitesse normale</string>
+    <string name="player_speed_slow_off">Ralentir la lecture pour travailler</string>
+    <string name="player_loop_none">Boucle A–B</string>
+    <string name="player_loop_start">A %1$s · poser B</string>
+    <string name="player_loop_running">Boucle %1$s – %2$s</string>
+    <string name="player_loop_mark_start">Répéter un passage : marquer son début ici</string>
+    <string name="player_loop_mark_end">Marquer ici la fin du passage à répéter</string>
+    <string name="player_loop_clear">Arrêter de répéter le passage de %1$s à %2$s</string>
     <string name="player_background">Continue écran éteint et hors connexion</string>
 
     <!-- Members -->

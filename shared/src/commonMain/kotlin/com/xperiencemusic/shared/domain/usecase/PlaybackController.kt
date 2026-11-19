@@ -40,7 +40,16 @@ class PlaybackController(
         val index: Int = 0,
     )
 
-    val state: StateFlow<PlaybackState> = combine(session, player.state) { session, player ->
+    /** How the track is worked on; the loop belongs to the track, the speed lasts until the player closes. */
+    private data class Practice(
+        val speed: Float = PlaybackState.NORMAL_SPEED,
+        val loopStartMs: Long? = null,
+        val loopEndMs: Long? = null,
+    )
+
+    private val practice = MutableStateFlow(Practice())
+
+    val state: StateFlow<PlaybackState> = combine(session, player.state, practice) { session, player, practice ->
         PlaybackState(
             track = session.track,
             isPlaying = session.track != null && player.isPlaying,
@@ -50,6 +59,9 @@ class PlaybackController(
             hasError = session.hasError || (session.track != null && !session.isResolving && player.hasError),
             queueIndex = session.index,
             queueSize = session.queue.size,
+            speed = practice.speed,
+            loopStartMs = practice.loopStartMs,
+            loopEndMs = practice.loopEndMs,
         )
     }.stateIn(scope, SharingStarted.Eagerly, PlaybackState())
 
@@ -58,11 +70,54 @@ class PlaybackController(
         scope.launch {
             player.state.map { it.hasEnded }.distinctUntilChanged().collect { hasEnded ->
                 val current = session.value
-                if (hasEnded && !current.isResolving && current.index < current.queue.lastIndex) {
+                // A passage being looped keeps its track: the loop below takes it back to its start.
+                if (hasEnded && !current.isResolving && !isLooping && current.index < current.queue.lastIndex) {
                     load(current.queue, current.index + 1)
                 }
             }
         }
+        // The A-B loop: reaching B (or the end of the track) goes back to A and keeps playing.
+        scope.launch {
+            player.state.collect { playing ->
+                val loop = practice.value
+                val start = loop.loopStartMs
+                val end = loop.loopEndMs
+                if (session.value.track != null && start != null && end != null && (playing.positionMs >= end || playing.hasEnded)) {
+                    player.seekTo(start)
+                    if (playing.hasEnded) player.resume()
+                }
+            }
+        }
+    }
+
+    private val isLooping: Boolean get() = practice.value.let { it.loopStartMs != null && it.loopEndMs != null }
+
+    /** Switches between the recording's tempo and the slow one, at the same pitch. */
+    fun toggleSpeed() {
+        if (session.value.track == null) return
+        val next = if (practice.value.speed < PlaybackState.NORMAL_SPEED) PlaybackState.NORMAL_SPEED else PlaybackState.SLOW_SPEED
+        practice.update { it.copy(speed = next) }
+        player.setSpeed(next)
+    }
+
+    /**
+     * The loop button, pressed up to three times: marks A where the track is, then B (the passage
+     * then repeats), then removes the loop. A "B" too close to A, or before it, is ignored.
+     */
+    fun stepLoop() {
+        val current = state.value
+        if (current.track == null || current.isLoading) return
+        val position = current.positionMs
+        val before = practice.value
+        val after = when {
+            before.loopStartMs == null -> before.copy(loopStartMs = position)
+            before.loopEndMs == null ->
+                if (position - before.loopStartMs >= MIN_LOOP_MS) before.copy(loopEndMs = position) else before
+            else -> before.copy(loopStartMs = null, loopEndMs = null)
+        }
+        practice.value = after
+        // B was just marked: the passage starts over at once, which also shows the loop is on.
+        if (before.loopEndMs == null && after.loopEndMs != null) after.loopStartMs?.let(player::seekTo)
     }
 
     /**
@@ -110,6 +165,8 @@ class PlaybackController(
         val track = queue[index]
         loading?.cancel()
         player.stop()
+        // A passage belongs to its recording: another track starts without the loop.
+        practice.update { it.copy(loopStartMs = null, loopEndMs = null) }
         session.value = Session(track = track, isResolving = true, queue = queue, index = index)
         loading = scope.launch {
             try {
@@ -149,10 +206,16 @@ class PlaybackController(
         loading?.cancel()
         player.stop()
         session.value = Session()
+        // The player is shared with the exercises and the voice recorder: they get the normal speed back.
+        practice.value = Practice()
+        player.setSpeed(PlaybackState.NORMAL_SPEED)
     }
 
     private companion object {
         /** Past this point "previous" restarts the track instead of leaving it. */
         const val RESTART_THRESHOLD_MS = 3_000L
+
+        /** Shorter than this, a loop is a stutter: the second press is taken for a slip. */
+        const val MIN_LOOP_MS = 1_000L
     }
 }

@@ -17,6 +17,9 @@ interface AudioPlayer {
 
     fun seekTo(positionMs: Long)
 
+    /** 1 is the recording's own tempo; below, slower at the same pitch. Kept until changed again. */
+    fun setSpeed(speed: Float)
+
     fun stop()
 }
 

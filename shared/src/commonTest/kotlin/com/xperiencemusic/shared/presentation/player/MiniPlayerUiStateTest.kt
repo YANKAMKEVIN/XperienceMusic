@@ -39,6 +39,22 @@ class MiniPlayerUiStateTest {
     }
 
     @Test
+    fun `la boucle est située dans la piste, entière ou à moitié posée`() {
+        val playing = PlaybackState(track, isPlaying = true, positionMs = 50_000, durationMs = 200_000)
+        assertNull(playing.toMiniPlayerUiState().loop)
+
+        val started = playing.copy(loopStartMs = 42_000).toMiniPlayerUiState().loop!!
+        assertEquals("0:42", started.startLabel)
+        assertEquals(0.21f, started.startFraction, 0.001f)
+        assertFalse(started.isRunning)
+
+        val running = playing.copy(loopStartMs = 42_000, loopEndMs = 55_000, speed = PlaybackState.SLOW_SPEED).toMiniPlayerUiState()
+        assertEquals("0:55", running.loop?.endLabel)
+        assertTrue(running.loop!!.isRunning)
+        assertTrue(running.isSlowed)
+    }
+
+    @Test
     fun `le statut de lecture de chaque élément`() {
         val playing = PlaybackState(track, isPlaying = true)
         assertEquals(PlaybackStatus.PLAYING, playing.statusOf("r1"))

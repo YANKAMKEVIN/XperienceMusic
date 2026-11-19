@@ -15,7 +15,21 @@ data class MiniPlayerUiState(
     val queuePosition: String? = null,
     val hasPrevious: Boolean = false,
     val hasNext: Boolean = false,
+    /** Playing at the slow tempo, to work on a part. */
+    val isSlowed: Boolean = false,
+    /** The passage played over and over, or its start alone while the end is not marked yet. */
+    val loop: LoopUi? = null,
 )
+
+/** [endLabel] and [endFraction] are null until B is marked: the loop only runs with both. */
+data class LoopUi(
+    val startLabel: String,
+    val startFraction: Float,
+    val endLabel: String? = null,
+    val endFraction: Float? = null,
+) {
+    val isRunning: Boolean get() = endFraction != null
+}
 
 sealed interface MiniPlayerEvent {
     data object PlayPauseClicked : MiniPlayerEvent
@@ -25,4 +39,7 @@ sealed interface MiniPlayerEvent {
     data object ForwardClicked : MiniPlayerEvent
     data object PreviousClicked : MiniPlayerEvent
     data object NextClicked : MiniPlayerEvent
+    data object SpeedClicked : MiniPlayerEvent
+    /** Marks A, then B, then removes the loop. */
+    data object LoopClicked : MiniPlayerEvent
 }

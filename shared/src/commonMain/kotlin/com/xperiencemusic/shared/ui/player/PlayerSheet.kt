@@ -1,6 +1,23 @@
 package com.xperiencemusic.shared.ui.player
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import com.xperiencemusic.shared.presentation.player.LoopUi
+import com.xperiencemusic.shared.resources.player_loop_clear
+import com.xperiencemusic.shared.resources.player_loop_mark_end
+import com.xperiencemusic.shared.resources.player_loop_mark_start
+import com.xperiencemusic.shared.resources.player_loop_none
+import com.xperiencemusic.shared.resources.player_loop_running
+import com.xperiencemusic.shared.resources.player_loop_start
+import com.xperiencemusic.shared.resources.player_speed_normal
+import com.xperiencemusic.shared.resources.player_speed_slow
+import com.xperiencemusic.shared.resources.player_speed_slow_off
+import com.xperiencemusic.shared.resources.player_speed_slow_on
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -68,6 +85,9 @@ private val PLAY_BUTTON_SIZE = 80.dp
 private val PLAY_LOADER_SIZE = 28.dp
 /** Material's play arrow has more air in its box than the pause glyph: drawn larger to match. */
 private val PLAY_GLYPH_SIZE = 40.dp
+/** The looped passage under the position bar, inset like the bar's own track. */
+private val LOOP_BAR_HEIGHT = 4.dp
+private val LOOP_BAR_INSET = 8.dp
 
 /** The full player: the recording, the brand waves, and the controls to learn a part. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -134,6 +154,7 @@ fun PlayerContent(state: MiniPlayerUiState, onEvent: (MiniPlayerEvent) -> Unit) 
             ),
             modifier = Modifier.padding(top = Spacing.l).semantics { contentDescription = positionDescription },
         )
+        state.loop?.let { LoopBar(it) }
         Row(Modifier.fillMaxWidth()) {
             Text(state.positionLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.weight(1f))
@@ -178,11 +199,72 @@ fun PlayerContent(state: MiniPlayerUiState, onEvent: (MiniPlayerEvent) -> Unit) 
                 }
             }
         }
+        PracticeControls(state, onEvent)
         Text(
             stringResource(Res.string.player_background),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = Spacing.xl),
+        )
+    }
+}
+
+/** Where the looped passage sits in the track, under the position bar: A alone is a dot, A to B a segment. */
+@Composable
+private fun LoopBar(loop: LoopUi) {
+    val brush = BrandColors.horizontalGradient
+    Canvas(Modifier.fillMaxWidth().padding(horizontal = LOOP_BAR_INSET).height(LOOP_BAR_HEIGHT)) {
+        val start = size.width * loop.startFraction
+        val end = loop.endFraction?.let { size.width * it }
+        val radius = size.height / 2
+        if (end == null) {
+            drawCircle(brush, radius, Offset(start, radius))
+        } else {
+            drawRoundRect(brush, Offset(start, 0f), Size((end - start).coerceAtLeast(size.height), size.height), CornerRadius(radius))
+        }
+    }
+}
+
+/** To learn a part: the slow tempo, and a passage played over and over. */
+@Composable
+private fun PracticeControls(state: MiniPlayerUiState, onEvent: (MiniPlayerEvent) -> Unit) {
+    val loop = state.loop
+    val speedDescription = stringResource(if (state.isSlowed) Res.string.player_speed_slow_on else Res.string.player_speed_slow_off)
+    val loopDescription = when {
+        loop == null -> stringResource(Res.string.player_loop_mark_start)
+        loop.endLabel == null -> stringResource(Res.string.player_loop_mark_end)
+        else -> stringResource(Res.string.player_loop_clear, loop.startLabel, loop.endLabel)
+    }
+    val chipColors = FilterChipDefaults.filterChipColors(
+        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+        selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    )
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s, Alignment.CenterHorizontally),
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.l),
+    ) {
+        FilterChip(
+            selected = state.isSlowed,
+            onClick = { onEvent(MiniPlayerEvent.SpeedClicked) },
+            label = { Text(stringResource(if (state.isSlowed) Res.string.player_speed_slow else Res.string.player_speed_normal)) },
+            colors = chipColors,
+            modifier = Modifier.semantics { contentDescription = speedDescription },
+        )
+        FilterChip(
+            selected = loop?.isRunning == true,
+            onClick = { onEvent(MiniPlayerEvent.LoopClicked) },
+            enabled = state.durationLabel.isNotEmpty(),
+            label = {
+                Text(
+                    when {
+                        loop == null -> stringResource(Res.string.player_loop_none)
+                        loop.endLabel == null -> stringResource(Res.string.player_loop_start, loop.startLabel)
+                        else -> stringResource(Res.string.player_loop_running, loop.startLabel, loop.endLabel)
+                    },
+                )
+            },
+            colors = chipColors,
+            modifier = Modifier.semantics { contentDescription = loopDescription },
         )
     }
 }
