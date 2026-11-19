@@ -18,6 +18,7 @@ import com.xperiencemusic.shared.domain.usecase.UploadVoiceTrackUseCase
 import com.xperiencemusic.shared.presentation.library.LibraryViewModel
 import com.xperiencemusic.shared.presentation.recordingform.RecordingFormViewModel
 import com.xperiencemusic.shared.presentation.rehearsal.RehearsalUploadViewModel
+import com.xperiencemusic.shared.presentation.song.ChartDisplayStore
 import com.xperiencemusic.shared.presentation.song.SongDetailViewModel
 import com.xperiencemusic.shared.presentation.songeditor.SongEditorViewModel
 import com.xperiencemusic.shared.presentation.stage.StageSettingsStore
@@ -43,6 +44,7 @@ val songsModule = module {
     factoryOf(::SetReferenceRecordingUseCase)
     factoryOf(::ObserveOfflineAudioUseCase)
     single { StageSettingsStore() }
+    single { ChartDisplayStore(get()) }
     viewModelOf(::LibraryViewModel)
     viewModelOf(::SongDetailViewModel)
     // The rehearsal date is optional (null = a take added from the song), which the constructor DSL cannot resolve.

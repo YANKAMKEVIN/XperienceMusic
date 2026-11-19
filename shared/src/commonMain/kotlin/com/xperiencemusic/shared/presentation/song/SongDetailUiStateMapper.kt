@@ -14,7 +14,7 @@ import com.xperiencemusic.shared.presentation.common.Formatting
 import com.xperiencemusic.shared.presentation.common.PlaybackStatus
 import com.xperiencemusic.shared.presentation.common.statusOf
 
-/** Screen-local choices that are not stored anywhere. */
+/** The choices made on the screen. Only [notation] outlives it (see [ChartDisplayStore]). */
 data class SongDetailLocalState(
     val transposeSemitones: Int = 0,
     val notation: Notation = Notation.NASHVILLE,
