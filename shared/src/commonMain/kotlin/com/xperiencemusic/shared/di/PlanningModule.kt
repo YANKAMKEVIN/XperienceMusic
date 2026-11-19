@@ -19,6 +19,8 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
+import com.xperiencemusic.shared.domain.usecase.ObserveTabAlertsUseCase
+import com.xperiencemusic.shared.presentation.tabs.TabAlertsViewModel
 import org.koin.dsl.module
 import kotlin.time.Clock
 
@@ -32,11 +34,13 @@ val planningModule = module {
         }
     }
     factoryOf(::ObservePlanningUseCase)
+    factoryOf(::ObserveTabAlertsUseCase)
     factoryOf(::AnswerServiceUseCase)
     factoryOf(::AdjustServiceUseCase)
     factoryOf(::OpenPlanningMonthUseCase)
     factoryOf(::ValidatePlanningMonthUseCase)
     viewModelOf(::PlanningViewModel)
+    viewModelOf(::TabAlertsViewModel)
     viewModel { params -> AvailabilityViewModel(params.get<LocalDate>(), get(), get(), get()) }
     viewModel { params -> ServiceDetailViewModel(params.get<LocalDate>(), get(), get(), get(), get()) }
 }
