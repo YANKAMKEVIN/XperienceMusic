@@ -26,6 +26,15 @@ class FakeAudioPlayer : AudioPlayer {
 
     override fun seekTo(positionMs: Long) = state.update { it.copy(positionMs = positionMs, hasEnded = false) }
 
+    var playbackSpeed = 1f
+
+    override fun setSpeed(speed: Float) {
+        playbackSpeed = speed
+    }
+
+    /** Playback reaching [positionMs] on its own. */
+    fun advanceTo(positionMs: Long) = state.update { it.copy(positionMs = positionMs) }
+
     override fun stop() {
         stopCount++
         state.value = AudioPlayerState()

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,6 +50,9 @@ private val BAR_HEIGHT = 68.dp
 private val RAIL_WIDTH = 64.dp
 /** The selected capsule's sides: a touch wider than the icon-only tabs, around its label. */
 private val SELECTED_TAB_PADDING = 18.dp
+/** The dot of a tab where something waits, and how far it sits off the icon's corner. */
+private val ALERT_DOT_SIZE = 10.dp
+private val ALERT_DOT_SHIFT = 3.dp
 
 /**
  * One tab of the floating bar. [label] is the short name shown in the capsule; screen readers say
@@ -60,6 +64,8 @@ data class FloatingTab(
     val isSelected: Boolean,
     val onClick: () -> Unit,
     val description: String = label,
+    /** Something waits for the member behind this tab: a dot on its icon until it is dealt with. */
+    val hasAlert: Boolean = false,
 )
 
 /**
@@ -125,7 +131,21 @@ private fun TabItem(tab: FloatingTab, showsLabel: Boolean = true) {
             }
             .padding(horizontal = if (tab.isSelected) SELECTED_TAB_PADDING else Spacing.l),
     ) {
-        Icon(tab.icon, contentDescription = null, tint = content, modifier = Modifier.size(Sizes.iconL))
+        Box {
+            Icon(tab.icon, contentDescription = null, tint = content, modifier = Modifier.size(Sizes.iconL))
+            // On the tab itself the screen already says what is expected: the dot is for the others.
+            if (tab.hasAlert && !tab.isSelected) {
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = ALERT_DOT_SHIFT, y = -ALERT_DOT_SHIFT)
+                        .size(ALERT_DOT_SIZE)
+                        .background(BrandColors.gradient, CircleShape)
+                        // A ring of the bar's colour detaches the dot from the icon's strokes.
+                        .border(Sizes.strokeMedium, colors.surfaceContainerHigh, CircleShape),
+                )
+            }
+        }
         AnimatedVisibility(
             visible = tab.isSelected && showsLabel,
             enter = expandHorizontally(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(),

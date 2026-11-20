@@ -2,7 +2,10 @@ package com.xperiencemusic.shared.presentation.song
 
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.theory.Notation
+import com.xperiencemusic.shared.domain.model.Instrument
 import com.xperiencemusic.shared.domain.model.Role
+import com.xperiencemusic.shared.domain.model.VoicePart
+import com.xperiencemusic.shared.domain.model.VoiceTrack
 import com.xperiencemusic.shared.fakes.member
 import com.xperiencemusic.shared.fakes.recording
 import com.xperiencemusic.shared.fakes.song
@@ -56,6 +59,34 @@ class SongDetailUiStateMapperTest {
     fun `seuls les admins voient la gestion des versions`() {
         assertFalse(deriveSongDetailState(sample, member(Role.MEMBER), SongDetailLocalState()).canManageRecordings)
         assertTrue(deriveSongDetailState(sample, member(Role.CONTENT_ADMIN), SongDetailLocalState()).canManageRecordings)
+    }
+
+    @Test
+    fun `la référence et la piste de sa voix sont proposées en haut de la fiche`() {
+        val withTracks = sample.copy(
+            voiceTracks = listOf(VoiceTrack("vs", VoicePart.SOPRANO, "demo://vs"), VoiceTrack("va", VoicePart.ALTO, "demo://va")),
+        )
+        val alto = deriveSongDetailState(withTracks, member(voicePart = VoicePart.ALTO), SongDetailLocalState())
+        assertEquals("ref", alto.reference?.id)
+        assertEquals("va", alto.myVoiceTrack?.id)
+
+        // A tenor has no track on this song, and a pianist has no voice at all.
+        assertNull(deriveSongDetailState(withTracks, member(voicePart = VoicePart.TENOR), SongDetailLocalState()).myVoiceTrack)
+        val pianist = member(instrument = Instrument.PIANO, voicePart = VoicePart.ALTO)
+        assertNull(deriveSongDetailState(withTracks, pianist, SongDetailLocalState()).myVoiceTrack)
+
+        assertNull(deriveSongDetailState(song(), member(), SongDetailLocalState()).reference)
+    }
+
+    @Test
+    fun `sans choix, un chantre lit les paroles seules et un musicien les accords`() {
+        assertTrue(deriveSongDetailState(sample, member(instrument = Instrument.SINGER), SongDetailLocalState()).lyricsOnly)
+        assertFalse(deriveSongDetailState(sample, member(instrument = Instrument.PIANO), SongDetailLocalState()).lyricsOnly)
+        // Once chosen, the choice wins over the role.
+        val singerWithChords = deriveSongDetailState(sample, member(), SongDetailLocalState(lyricsOnly = false))
+        assertFalse(singerWithChords.lyricsOnly)
+        val pianistWithout = deriveSongDetailState(sample, member(instrument = Instrument.PIANO), SongDetailLocalState(lyricsOnly = true))
+        assertTrue(pianistWithout.lyricsOnly)
     }
 
     @Test

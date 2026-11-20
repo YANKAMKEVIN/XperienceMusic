@@ -1,6 +1,17 @@
 package com.xperiencemusic.shared.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.IntOffset
+import androidx.navigation.NavBackStackEntry
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
@@ -34,10 +45,50 @@ import com.xperiencemusic.shared.ui.voice.VoiceReviewScreen
 import com.xperiencemusic.shared.ui.week.WeekScreen
 import kotlinx.datetime.LocalDate
 
-/** Every screen of the signed-in app, tabs and pushed screens alike. */
+/**
+ * Every screen of the signed-in app, tabs and pushed screens alike. The movement says where one is
+ * going: tabs cross-fade (another section, same level), a pushed screen slides in from the side
+ * and back out (down into a detail), and the stage grows out of the song page.
+ */
 @Composable
 internal fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit, modifier: Modifier = Modifier) {
-    NavHost(navController, startDestination = WeekRoute, modifier = modifier) {
+    NavHost(
+        navController,
+        startDestination = WeekRoute,
+        modifier = modifier,
+        enterTransition = {
+            when {
+                isTabSwitch() -> fadeIn(tween(TAB_FADE_MS))
+                targetState.isStage() -> scaleIn(tween(STAGE_MS), initialScale = STAGE_SCALE) + fadeIn(tween(STAGE_MS))
+                // The stage closed on another song than the one it opened from: that page takes its place.
+                initialState.isStage() -> fadeIn(tween(STAGE_MS))
+                else -> slideIntoContainer(SlideDirection.Start, tween(PUSH_MS)) + fadeIn(tween(PUSH_MS))
+            }
+        },
+        exitTransition = {
+            when {
+                isTabSwitch() -> fadeOut(tween(TAB_FADE_MS))
+                targetState.isStage() -> fadeOut(tween(STAGE_MS))
+                initialState.isStage() -> scaleOut(tween(STAGE_MS), targetScale = STAGE_SCALE) + fadeOut(tween(STAGE_MS))
+                // The screen underneath only steps aside a little, and dims.
+                else -> slideOutOfContainer(SlideDirection.Start, tween(PUSH_MS)) { it / UNDERNEATH_SHARE } + fadeOut(tween(PUSH_MS))
+            }
+        },
+        popEnterTransition = {
+            when {
+                isTabSwitch() -> fadeIn(tween(TAB_FADE_MS))
+                initialState.isStage() -> fadeIn(tween(STAGE_MS))
+                else -> slideIntoContainer(SlideDirection.End, tween(PUSH_MS)) { it / UNDERNEATH_SHARE } + fadeIn(tween(PUSH_MS))
+            }
+        },
+        popExitTransition = {
+            when {
+                isTabSwitch() -> fadeOut(tween(TAB_FADE_MS))
+                initialState.isStage() -> scaleOut(tween(STAGE_MS), targetScale = STAGE_SCALE) + fadeOut(tween(STAGE_MS))
+                else -> slideOutOfContainer(SlideDirection.End, tween(PUSH_MS)) + fadeOut(tween(PUSH_MS))
+            }
+        },
+    ) {
         weekGraph(navController)
         songsGraph(navController)
         planningGraph(navController)
@@ -46,6 +97,19 @@ internal fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit,
         accountGraph(navController, onSignOut)
     }
 }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch() =
+    isTab(initialState.destination) && isTab(targetState.destination)
+
+private fun NavBackStackEntry.isStage() = destination.hasRoute(StageRoute::class)
+
+private const val TAB_FADE_MS = 220
+private const val PUSH_MS = 300
+private const val STAGE_MS = 260
+/** The stage starts from nine tenths of the screen: enough to read as "growing", not as a jump. */
+private const val STAGE_SCALE = 0.9f
+/** How little the screen underneath moves while another slides over it: a quarter of the width. */
+private const val UNDERNEATH_SHARE = 4
 
 private fun NavHostController.openSong(id: String) = navigate(SongRoute(id))
 
@@ -80,8 +144,8 @@ private fun NavGraphBuilder.songsGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() },
             onEdit = { navController.navigate(SongEditorRoute(songId)) },
             onAddRecording = { navController.navigate(RecordingFormRoute(songId)) },
-            onOpenStage = { transpose, notation ->
-                navController.navigate(StageRoute(songId, transpose, notation.name))
+            onOpenStage = { transpose, notation, lyricsOnly ->
+                navController.navigate(StageRoute(songId, transpose, notation.name, lyricsOnly))
             },
             onRecordVoice = { navController.navigate(VoiceRecordRoute(songId)) },
         )
@@ -123,7 +187,16 @@ private fun NavGraphBuilder.songsGraph(navController: NavHostController) {
 
 /** The stage: the chart in full screen, moving on to the week's other songs. */
 private fun NavGraphBuilder.stageGraph(navController: NavHostController) {
-    composable<StageRoute> { entry ->
+    // Which way the setlist was last walked: the next song comes in from the right, the previous from the left.
+    var isForward = true
+    val slide = tween<IntOffset>(STAGE_SLIDE_MS)
+    fun AnimatedContentTransitionScope<NavBackStackEntry>.isBetweenSongs() =
+        initialState.destination.hasRoute(StageRoute::class) && targetState.destination.hasRoute(StageRoute::class)
+    composable<StageRoute>(
+        // Only from one song of the setlist to another; opening and closing the stage keep the host's transition.
+        enterTransition = { if (isBetweenSongs()) slideInHorizontally(slide) { if (isForward) it else -it } else null },
+        exitTransition = { if (isBetweenSongs()) slideOutHorizontally(slide) { if (isForward) -it else it } else null },
+    ) { entry ->
         val route = entry.toRoute<StageRoute>()
         // "Suivant" swaps the stage for another one, so the song detail underneath may be
         // the starting song: closing replaces it with the song that was on screen.
@@ -142,16 +215,20 @@ private fun NavGraphBuilder.stageGraph(navController: NavHostController) {
             songId = route.songId,
             transposeSemitones = route.transposeSemitones,
             notation = Notation.valueOf(route.notation),
+            lyricsOnly = route.lyricsOnly,
             onClose = closeStage,
-            onOpenSong = { nextId ->
-                // Other songs open in their own key, keeping the notation.
-                navController.navigate(StageRoute(nextId, 0, route.notation)) {
+            onOpenSong = { nextId, forward ->
+                isForward = forward
+                // Other songs open in their own key, keeping the notation and the chords on or off.
+                navController.navigate(StageRoute(nextId, 0, route.notation, route.lyricsOnly)) {
                     popUpTo<StageRoute> { inclusive = true }
                 }
             },
         )
     }
 }
+
+private const val STAGE_SLIDE_MS = 280
 
 /** The Planning tab: the month's services and the member's answers. */
 private fun NavGraphBuilder.planningGraph(navController: NavHostController) {

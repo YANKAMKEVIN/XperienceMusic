@@ -89,6 +89,8 @@
     <string name="tab_progress">Ma progression</string>
     <string name="tab_progress_short">Progrès</string>
     <string name="tab_planning">Planning</string>
+    <string name="tab_planning_alert">Planning, des dates attendent ta réponse</string>
+    <string name="tab_progress_alert">Ma progression, une voix est à retravailler</string>
     <string name="remote_load_failed">Actualisation impossible. Les données peuvent être incomplètes ou anciennes.</string>
     <string name="remote_load_retry">Réessayer</string>
 
@@ -238,9 +240,13 @@
     <string name="notation_solfege">Do · Ré · Mi</string>
     <string name="notation_letters">C · D · E</string>
     <string name="song_chart_title">Paroles et accords</string>
+    <string name="song_lyrics_title">Paroles</string>
+    <string name="song_lyrics_only">Paroles seules</string>
     <string name="song_recordings_title">Versions enregistrées (%1$d/%2$d)</string>
     <string name="song_recordings_empty">Pas encore de version enregistrée pour ce chant.</string>
     <string name="song_recording_reference">Référence</string>
+    <string name="song_listen_reference">Écouter la référence</string>
+    <string name="song_listen_my_voice">Ma voix</string>
     <string name="song_recording_offline">Sur le téléphone</string>
     <string name="song_recording_meta">%1$s · %2$s</string>
     <string name="song_recording_set_reference">Définir comme référence</string>
@@ -337,6 +343,7 @@
     <string name="week_past">Passée</string>
     <string name="week_ahead">À venir</string>
     <string name="week_setlist_count">Setlist · %1$d chants</string>
+    <string name="week_play_all">Tout écouter</string>
     <string name="week_play_reference">Écouter la référence de %1$s</string>
     <string name="week_pause_reference">Mettre en pause %1$s</string>
     <string name="week_past_hint">Semaine passée · gardée pour mémoire</string>
@@ -405,6 +412,19 @@
     <string name="player_collapse">Réduire le lecteur</string>
     <string name="player_rewind">Reculer de 10 secondes</string>
     <string name="player_forward">Avancer de 10 secondes</string>
+    <string name="player_previous">Revenir au début ou au chant précédent</string>
+    <string name="player_next">Chant suivant</string>
+    <string name="player_queue_position">Chant %1$s de la setlist</string>
+    <string name="player_speed_normal" translatable="false">1×</string>
+    <string name="player_speed_slow">0,75×</string>
+    <string name="player_speed_slow_on">Vitesse ralentie, revenir à la vitesse normale</string>
+    <string name="player_speed_slow_off">Ralentir la lecture pour travailler</string>
+    <string name="player_loop_none">Boucle A–B</string>
+    <string name="player_loop_start">A %1$s · poser B</string>
+    <string name="player_loop_running">Boucle %1$s – %2$s</string>
+    <string name="player_loop_mark_start">Répéter un passage : marquer son début ici</string>
+    <string name="player_loop_mark_end">Marquer ici la fin du passage à répéter</string>
+    <string name="player_loop_clear">Arrêter de répéter le passage de %1$s à %2$s</string>
     <string name="player_background">Continue écran éteint et hors connexion</string>
 
     <!-- Members -->

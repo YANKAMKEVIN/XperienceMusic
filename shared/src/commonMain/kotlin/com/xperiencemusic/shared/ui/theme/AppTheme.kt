@@ -1,5 +1,7 @@
 package com.xperiencemusic.shared.ui.theme
 
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -60,12 +62,15 @@ private val shapes = Shapes(
 )
 
 private val LocalAppColors = staticCompositionLocalOf { darkAppColors }
+private val LocalTitleFont = staticCompositionLocalOf<FontFamily> { FontFamily.Default }
 
 /** Dark only: the app is mostly used in dim rehearsal rooms and churches. */
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalAppColors provides darkAppColors) {
-        MaterialTheme(colorScheme = colors, shapes = shapes, content = content)
+    val titleFont = brandFontFamily()
+    val typography = remember(titleFont) { appTypography(titleFont) }
+    CompositionLocalProvider(LocalAppColors provides darkAppColors, LocalTitleFont provides titleFont) {
+        MaterialTheme(colorScheme = colors, shapes = shapes, typography = typography, content = content)
     }
 }
 
@@ -74,4 +79,8 @@ object AppTheme {
     /** Status and card colours Material's scheme has no slot for. */
     val colors: AppColors
         @Composable @ReadOnlyComposable get() = LocalAppColors.current
+
+    /** The brand's title face, for the few titles drawn outside Material's scale (the wordmark, large numbers). */
+    val titleFont: FontFamily
+        @Composable @ReadOnlyComposable get() = LocalTitleFont.current
 }

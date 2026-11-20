@@ -17,6 +17,9 @@ import androidx.navigation.NavHostController
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.tab_library
 import com.xperiencemusic.shared.resources.tab_planning
+import com.xperiencemusic.shared.resources.tab_planning_alert
+import com.xperiencemusic.shared.resources.tab_progress_alert
+import com.xperiencemusic.shared.domain.usecase.TabAlerts
 import com.xperiencemusic.shared.resources.tab_progress
 import com.xperiencemusic.shared.resources.tab_progress_short
 import com.xperiencemusic.shared.resources.tab_week
@@ -33,27 +36,39 @@ private data class Tab(
     val label: StringResource,
     val icon: ImageVector,
     val shortLabel: StringResource = label,
+    /** Read instead of [label] while the tab carries a dot. */
+    val alertLabel: StringResource? = null,
+    val hasAlert: (TabAlerts) -> Boolean = { false },
 )
 
 private val tabs = listOf(
     Tab(WeekRoute, WeekRoute::class, Res.string.tab_week, XmIcons.Notes),
     Tab(LibraryRoute, LibraryRoute::class, Res.string.tab_library, XmIcons.Book),
-    Tab(PlanningRoute, PlanningRoute::class, Res.string.tab_planning, XmIcons.Calendar),
-    Tab(ProgressRoute, ProgressRoute::class, Res.string.tab_progress, XmIcons.Bars, Res.string.tab_progress_short),
+    Tab(PlanningRoute, PlanningRoute::class, Res.string.tab_planning, XmIcons.Calendar, alertLabel = Res.string.tab_planning_alert) { it.planning },
+    Tab(
+        ProgressRoute, ProgressRoute::class, Res.string.tab_progress, XmIcons.Bars, Res.string.tab_progress_short,
+        alertLabel = Res.string.tab_progress_alert,
+    ) { it.progress },
 )
 
 /** Whether [destination] is one of the four tabs (rather than a screen pushed over them). */
 internal fun isTab(destination: NavDestination?): Boolean = tabs.any { tab -> destination?.hasRoute(tab.routeClass) == true }
 
-/** The four tabs, as the floating bar at the bottom or, with [asRail], the rail on the left. */
+/**
+ * The four tabs, as the floating bar at the bottom or, with [asRail], the rail on the left.
+ * [alerts] puts a dot on the tabs where something waits for the member.
+ */
 @Composable
-internal fun TabBar(navController: NavHostController, destination: NavDestination?, asRail: Boolean = false) {
+internal fun TabBar(navController: NavHostController, destination: NavDestination?, alerts: TabAlerts, asRail: Boolean = false) {
     val items = tabs.map { tab ->
+        val isSelected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true
+        val hasAlert = tab.hasAlert(alerts) && !isSelected
         FloatingTab(
             label = stringResource(tab.shortLabel),
-            description = stringResource(tab.label),
+            description = stringResource(if (hasAlert && tab.alertLabel != null) tab.alertLabel else tab.label),
             icon = tab.icon,
-            isSelected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true,
+            isSelected = isSelected,
+            hasAlert = hasAlert,
             onClick = {
                 navController.navigate(tab.route) {
                     popUpTo(navController.graph.findStartDestination().id) { saveState = true }

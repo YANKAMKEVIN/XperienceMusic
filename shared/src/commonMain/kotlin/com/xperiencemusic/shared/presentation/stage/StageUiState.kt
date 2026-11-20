@@ -11,6 +11,8 @@ data class StageUiState(
     /** The song's own key, shown next to [keyLabel] once the song is transposed. */
     val originalKeyLabel: String? = null,
     val chart: List<ChartLine> = emptyList(),
+    /** The words without the chords, as chosen on the song page. */
+    val lyricsOnly: Boolean = false,
     val textScale: Float = DEFAULT_SCALE,
     val isAutoScrolling: Boolean = false,
     /** Pixels per second, roughly; the screen converts to its own density. */
@@ -18,6 +20,7 @@ data class StageUiState(
     /** "2 / 5" when the song is in the week's setlist, null otherwise. */
     val setlistPosition: String? = null,
     val previousSongId: String? = null,
+    val previousSongTitle: String? = null,
     val nextSongId: String? = null,
     val nextSongTitle: String? = null,
 ) {
@@ -43,4 +46,6 @@ sealed interface StageEvent {
     data object AutoScrollToggled : StageEvent
     data object FasterClicked : StageEvent
     data object SlowerClicked : StageEvent
+    /** The phone was turned: upright and lying on the stand each keep their text size and speed. */
+    data class OrientationChanged(val isLandscape: Boolean) : StageEvent
 }

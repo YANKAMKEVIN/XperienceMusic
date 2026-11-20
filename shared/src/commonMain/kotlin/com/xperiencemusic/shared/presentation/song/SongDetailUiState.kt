@@ -17,6 +17,8 @@ data class SongDetailUiState(
     /** Set only while the song is transposed away from its original key. */
     val originalKeyLabel: String? = null,
     val notation: Notation = Notation.NASHVILLE,
+    /** The chart without its chords, for those who only sing. */
+    val lyricsOnly: Boolean = false,
     /** Offset from the original key, passed on to the stage mode. */
     val transposeSemitones: Int = 0,
     val chart: List<ChartLine> = emptyList(),
@@ -27,6 +29,10 @@ data class SongDetailUiState(
     /** Singers record their part on the song and send it for review. */
     val canRecordVoice: Boolean = false,
     val voiceTracks: List<VoiceTrackUi> = emptyList(),
+    /** The version the band rehearses from, offered at the top of the page; null when the song has none. */
+    val reference: RecordingUi? = null,
+    /** The learning track of the member's own voice, next to [reference]; null for musicians or without a track. */
+    val myVoiceTrack: VoiceTrackUi? = null,
     /** The original the band learns from: shown above the title, not in [links]. */
     val youtubeUrl: String? = null,
     /** The picture of that video; null when the link is not a single video. */
@@ -61,6 +67,7 @@ sealed interface SongDetailEvent {
     data object TransposeDownClicked : SongDetailEvent
     data object TransposeResetClicked : SongDetailEvent
     data class NotationSelected(val notation: Notation) : SongDetailEvent
+    data class LyricsOnlyChanged(val lyricsOnly: Boolean) : SongDetailEvent
     data class SetReferenceClicked(val recordingId: String) : SongDetailEvent
     data class DeleteClicked(val recordingId: String) : SongDetailEvent
     data object DeleteConfirmed : SongDetailEvent

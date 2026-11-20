@@ -12,6 +12,7 @@ import com.xperiencemusic.shared.domain.model.ExerciseStatus
 import com.xperiencemusic.shared.domain.model.SingingProgress
 import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.usecase.CompleteExerciseUseCase
+import com.xperiencemusic.shared.domain.usecase.GetLearningPreferencesUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSingerPathUseCase
 import com.xperiencemusic.shared.domain.usecase.PlayReferenceNoteUseCase
@@ -43,6 +44,7 @@ class ExerciseViewModel(
     private val completeExercise: CompleteExerciseUseCase,
     private val playReferenceNote: PlayReferenceNoteUseCase,
     private val playback: PlaybackController,
+    private val getLearningPreferences: GetLearningPreferencesUseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ExerciseUiState())
     val state: StateFlow<ExerciseUiState> = _state.asStateFlow()
@@ -54,6 +56,11 @@ class ExerciseViewModel(
         observeCurrentMember()
             .filterNotNull()
             .flatMapLatest { member ->
+                // The same comfort settings as the guided path: calm motion also keeps the phone still.
+                val comfort = getLearningPreferences(member.id)
+                _state.update {
+                    it.copy(celebration = CelebrationUi(isAnimated = !comfort.reduceMotion, vibrates = comfort.haptics && !comfort.reduceMotion))
+                }
                 val voicePart = member.profile.voicePart ?: VoicePart.ALTO
                 observeSingerPath(member.id).map { path ->
                     val step = path.steps.firstOrNull { it.progress.exercise.id == exerciseId }

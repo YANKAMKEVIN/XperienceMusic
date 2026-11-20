@@ -30,12 +30,18 @@ class SongDetailViewModel(
     private val deleteRecording: DeleteRecordingUseCase,
     private val playback: PlaybackController,
     observeOfflineAudio: ObserveOfflineAudioUseCase,
+    private val display: ChartDisplayStore,
 ) : ViewModel() {
     private val local = MutableStateFlow(SongDetailLocalState())
     private val song = observeSong(songId)
 
+    // How the chart is read is the musician's choice, not the song's: it comes from the phone's settings.
+    private val choices = combine(local, display.notation, display.lyricsOnly) { local, notation, lyricsOnly ->
+        local.copy(notation = notation, lyricsOnly = lyricsOnly)
+    }
+
     val state: StateFlow<SongDetailUiState> =
-        combine(song, observeCurrentMember(), local, playback.state, observeOfflineAudio(), ::deriveSongDetailState)
+        combine(song, observeCurrentMember(), choices, playback.state, observeOfflineAudio(), ::deriveSongDetailState)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongDetailUiState())
 
     fun onEvent(event: SongDetailEvent) {
@@ -43,7 +49,8 @@ class SongDetailViewModel(
             SongDetailEvent.TransposeUpClicked -> transpose(+1)
             SongDetailEvent.TransposeDownClicked -> transpose(-1)
             SongDetailEvent.TransposeResetClicked -> local.update { it.copy(transposeSemitones = 0) }
-            is SongDetailEvent.NotationSelected -> local.update { it.copy(notation = event.notation) }
+            is SongDetailEvent.NotationSelected -> display.selectNotation(event.notation)
+            is SongDetailEvent.LyricsOnlyChanged -> display.setLyricsOnly(event.lyricsOnly)
             is SongDetailEvent.SetReferenceClicked -> launchAction { setReferenceRecording(songId, event.recordingId) }
             is SongDetailEvent.DeleteClicked -> local.update { it.copy(pendingDeletionId = event.recordingId) }
             SongDetailEvent.DeleteDismissed -> local.update { it.copy(pendingDeletionId = null) }

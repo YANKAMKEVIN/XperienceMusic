@@ -28,6 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.xperiencemusic.shared.presentation.tabs.TabAlertsViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.remote_load_failed
 import com.xperiencemusic.shared.resources.remote_load_retry
@@ -51,6 +54,7 @@ fun MainScaffold(onSignOut: () -> Unit, hasLoadFailure: Boolean, onRetryLoads: (
     val isOnStage = destination?.hasRoute(StageRoute::class) == true
     // Recording a voice: the guide plays in the earphones, a player card would only be in the way.
     val isRecordingVoice = destination?.hasRoute(VoiceRecordRoute::class) == true
+    val alerts by koinViewModel<TabAlertsViewModel>().state.collectAsStateWithLifecycle()
 
     // Landscape keeps the content's height: the tabs move to a rail on the left, the player slims down.
     BoxWithConstraints {
@@ -69,7 +73,7 @@ fun MainScaffold(onSignOut: () -> Unit, hasLoadFailure: Boolean, onRetryLoads: (
                         .padding(start = Spacing.l, end = Spacing.l, top = if (isLandscape) Spacing.xs else Spacing.s, bottom = if (isLandscape) Spacing.xs else Spacing.m),
                 ) {
                     if (!isRecordingVoice) MiniPlayer(compact = isLandscape)
-                    if (isOnTab && !isLandscape) TabBar(navController, destination)
+                    if (isOnTab && !isLandscape) TabBar(navController, destination, alerts)
                 }
             },
         ) { padding ->
@@ -80,7 +84,7 @@ fun MainScaffold(onSignOut: () -> Unit, hasLoadFailure: Boolean, onRetryLoads: (
                     Box(
                         Modifier.fillMaxHeight().windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start)).padding(start = Spacing.s, top = Spacing.s, bottom = Spacing.s),
                         contentAlignment = Alignment.Center,
-                    ) { TabBar(navController, destination, asRail = true) }
+                    ) { TabBar(navController, destination, alerts, asRail = true) }
                 }
                 Box(Modifier.weight(1f)) {
                     AppNavHost(navController, onSignOut)

@@ -64,6 +64,7 @@ import com.xperiencemusic.shared.resources.action_edit_song
 import com.xperiencemusic.shared.resources.error_forbidden
 import com.xperiencemusic.shared.resources.error_generic
 import com.xperiencemusic.shared.resources.song_chart_title
+import com.xperiencemusic.shared.resources.song_lyrics_title
 import com.xperiencemusic.shared.resources.song_delete_confirm_cancel
 import com.xperiencemusic.shared.resources.song_delete_confirm_ok
 import com.xperiencemusic.shared.resources.song_delete_confirm_text
@@ -93,7 +94,7 @@ fun SongDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onAddRecording: () -> Unit,
-    onOpenStage: (transposeSemitones: Int, notation: Notation) -> Unit,
+    onOpenStage: (transposeSemitones: Int, notation: Notation, lyricsOnly: Boolean) -> Unit,
     onRecordVoice: () -> Unit = {},
     viewModel: SongDetailViewModel = koinViewModel(key = songId) { parametersOf(songId) },
 ) {
@@ -104,7 +105,7 @@ fun SongDetailScreen(
         onBack = onBack,
         onEdit = onEdit,
         onAddRecording = onAddRecording,
-        onOpenStage = { onOpenStage(state.transposeSemitones, state.notation) },
+        onOpenStage = { onOpenStage(state.transposeSemitones, state.notation, state.lyricsOnly) },
         onRecordVoice = onRecordVoice,
     )
 }
@@ -206,6 +207,9 @@ private fun SongDetailBody(
                 Text(stringResource(Res.string.stage_open), style = MaterialTheme.typography.titleMedium)
             }
         }
+        if (state.reference != null || state.myVoiceTrack != null) {
+            item { QuickListen(state.reference, state.myVoiceTrack, onEvent) }
+        }
         if (state.canRecordVoice) {
             item {
                 OutlinedButton(onClick = onRecordVoice, modifier = Modifier.fillMaxWidth()) {
@@ -216,8 +220,11 @@ private fun SongDetailBody(
         }
         item {
             AppCard {
-                SectionTitle(stringResource(Res.string.song_chart_title), Modifier.padding(bottom = Spacing.s))
-                ChordChartView(state.chart)
+                SectionTitle(
+                    stringResource(if (state.lyricsOnly) Res.string.song_lyrics_title else Res.string.song_chart_title),
+                    Modifier.padding(bottom = Spacing.s),
+                )
+                ChordChartView(state.chart, lyricsOnly = state.lyricsOnly)
             }
         }
         item {

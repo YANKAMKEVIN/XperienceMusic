@@ -76,4 +76,39 @@ class WeekViewModelTest {
             assertFalse(after.isDownloading)
         }
     }
+
+    @Test
+    fun `tout écouter enchaîne les références dans l'ordre de la setlist`() = runTest {
+        val songs = songRepository(
+            song("s1", "Alléluia", recordings = listOf(recording("a", 1, true))),
+            song("s2", "Béni"),
+            song("s3", "Car tu es saint", recordings = listOf(recording("b", 2), recording("c", 3, true))),
+        )
+        val setlists = setlistRepository().apply {
+            publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("s3", "s2", "s1"), null, "x"))
+        }
+        val schedule = schedule(setlists, songs)
+        val player = FakeAudioPlayer()
+        val playback = PlaybackController(player, { it }, CoroutineScope(UnconfinedTestDispatcher()))
+        val viewModel = WeekViewModel(
+            schedule,
+            ObserveCurrentMemberUseCase(FakeSessionRepository(member(Role.MEMBER))),
+            ObserveSetlistOfflineUseCase(schedule, cache),
+            DownloadSetlistUseCase(schedule, cache),
+            ObserveSyncStatusUseCase(songs, setlists),
+            RefreshContentUseCase(songs, setlists),
+            playback,
+            GetTodayUseCase { LocalDate(2026, 10, 10) },
+        )
+        viewModel.state.test {
+            assertTrue(expectMostRecentItem().setlist!!.canPlayAll)
+            viewModel.onEvent(WeekEvent.PlayAllClicked)
+            // The song without a recording is skipped: two tracks, the setlist's first one playing.
+            assertEquals("c", playback.state.value.track?.id)
+            assertEquals(2, playback.state.value.queueSize)
+            player.finish()
+            assertEquals("a", playback.state.value.track?.id)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }

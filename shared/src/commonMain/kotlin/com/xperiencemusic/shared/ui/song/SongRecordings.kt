@@ -34,7 +34,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.CircularProgressIndicator
+import com.xperiencemusic.shared.resources.player_pause
+import com.xperiencemusic.shared.resources.player_play
+import com.xperiencemusic.shared.resources.song_listen_my_voice
+import com.xperiencemusic.shared.resources.song_listen_reference
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -114,6 +121,59 @@ internal fun RecordingRow(recording: RecordingUi, canManage: Boolean, onEvent: (
             }
             if (canManage) RecordingMenu(recording, onEvent)
         }
+    }
+}
+
+/**
+ * Listening is what a member does most before a rehearsal: the reference, and the track of their
+ * own voice, start from the top of the page. The full list of versions stays under the chart.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun QuickListen(reference: RecordingUi?, myVoiceTrack: VoiceTrackUi?, onEvent: (SongDetailEvent) -> Unit) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+        verticalArrangement = Arrangement.spacedBy(Spacing.s),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        reference?.let { recording ->
+            ListenButton(
+                label = stringResource(Res.string.song_listen_reference),
+                itemLabel = recording.title,
+                status = recording.playback,
+                onClick = { onEvent(SongDetailEvent.PlayRecordingClicked(recording.id)) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+        myVoiceTrack?.let { track ->
+            val voice = track.voicePart.label()
+            ListenButton(
+                label = stringResource(Res.string.song_listen_my_voice),
+                itemLabel = voice,
+                status = track.playback,
+                onClick = { onEvent(SongDetailEvent.PlayVoiceTrackClicked(track.id, voice)) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ListenButton(label: String, itemLabel: String, status: PlaybackStatus, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val isPlaying = status == PlaybackStatus.PLAYING
+    val description = stringResource(if (isPlaying) Res.string.player_pause else Res.string.player_play, itemLabel)
+    OutlinedButton(
+        onClick = onClick,
+        border = BorderStroke(Sizes.hairline, MaterialTheme.colorScheme.outline),
+        contentPadding = PaddingValues(horizontal = Spacing.m),
+        modifier = modifier.height(Sizes.actionHeight).semantics { contentDescription = description },
+    ) {
+        if (status == PlaybackStatus.LOADING) {
+            CircularProgressIndicator(strokeWidth = Sizes.stroke, modifier = Modifier.size(Sizes.iconS))
+        } else {
+            Icon(if (isPlaying) PauseIcon else Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(Sizes.iconM))
+        }
+        Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = Spacing.s))
     }
 }
 

@@ -108,6 +108,11 @@ class AndroidAudioPlayer(
         publishPosition()
     }
 
+    override fun setSpeed(speed: Float) {
+        // ExoPlayer keeps the pitch and carries the speed over to the next item.
+        player.setPlaybackSpeed(speed)
+    }
+
     override fun stop() {
         ticker?.cancel()
         player.stop()

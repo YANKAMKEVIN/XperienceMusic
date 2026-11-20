@@ -1,10 +1,12 @@
 package com.xperiencemusic.shared.di
 
 import com.xperiencemusic.shared.data.local.DeviceDataStore
+import com.xperiencemusic.shared.data.local.FileDevicePreferences
 import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.local.SystemDateProvider
 import com.xperiencemusic.shared.data.remote.RemoteLoadMonitor
 import com.xperiencemusic.shared.domain.repository.DateProvider
+import com.xperiencemusic.shared.domain.repository.DevicePreferences
 import com.xperiencemusic.shared.domain.repository.LocalDataStore
 import com.xperiencemusic.shared.domain.repository.RemoteLoadStatus
 import com.xperiencemusic.shared.domain.repository.SessionResettable
@@ -22,6 +24,7 @@ val coreModule = module {
     single { HttpClient() }
     single<DateProvider> { SystemDateProvider() }
     single { SnapshotStore(get()) }
+    single<DevicePreferences> { FileDevicePreferences(get()) }
     single { RemoteLoadMonitor() }.resetAtSignOut() bind RemoteLoadStatus::class
     // Every definition bound to SessionResettable drops its account data at sign-out.
     single<LocalDataStore> { DeviceDataStore(get(), get(), get(), get()) { getAll<SessionResettable>() } }

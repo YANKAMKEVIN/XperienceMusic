@@ -1,5 +1,13 @@
 package com.xperiencemusic.shared.ui.exercise
 
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import com.xperiencemusic.shared.ui.progress.SuccessBurst
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -43,7 +51,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -285,27 +292,32 @@ private fun TunerScale() {
 
 @Composable
 private fun SucceededCard(state: ExerciseUiState, onEvent: (ExerciseEvent) -> Unit) {
+    // Once per success: turning the phone does not celebrate again.
+    var wasCelebrated by rememberSaveable { mutableStateOf(false) }
+    val isAnimated = remember { state.celebration.isAnimated && !wasCelebrated }
+    val haptics = LocalHapticFeedback.current
+    LaunchedEffect(Unit) {
+        if (!wasCelebrated && state.celebration.vibrates) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        wasCelebrated = true
+    }
     AppCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            SuccessBurst(animated = isAnimated)
+            Text(stringResource(Res.string.exercise_success_title), style = MaterialTheme.typography.titleLarge)
             Text(
-                stringResource(Res.string.exercise_success_title),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(start = Spacing.s),
+                stringResource(
+                    when {
+                        state.isWarmUp -> Res.string.exercise_success_warmup
+                        state.isChallenge -> Res.string.exercise_success_challenge
+                        else -> Res.string.exercise_success_text
+                    },
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = Spacing.s),
             )
-        }
-        Text(
-            stringResource(
-                when {
-                    state.isWarmUp -> Res.string.exercise_success_warmup
-                    state.isChallenge -> Res.string.exercise_success_challenge
-                    else -> Res.string.exercise_success_text
-                },
-            ),
-            modifier = Modifier.padding(top = Spacing.s),
-        )
-        OutlinedButton(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.padding(top = Spacing.m)) {
-            Text(stringResource(Res.string.exercise_retry))
+            OutlinedButton(onClick = { onEvent(ExerciseEvent.StartClicked) }, modifier = Modifier.padding(top = Spacing.m)) {
+                Text(stringResource(Res.string.exercise_retry))
+            }
         }
     }
 }

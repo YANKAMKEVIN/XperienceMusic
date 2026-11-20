@@ -2,6 +2,11 @@ package com.xperiencemusic.shared.ui.progress
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Icon
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -79,6 +84,71 @@ private val EQUALIZER_BAR = 4.dp
 /** The focus card's eyebrow and title keep clear of the equalizer in the top corner. */
 private val EYEBROW_END_CLEARANCE = 72.dp
 private val TITLE_END_CLEARANCE = 56.dp
+
+/**
+ * A step validated at the microphone took real effort: the tick lands with a bounce in a violet to
+ * blue halo while a few sparks fly off. When not [animated] ("Réduire les animations") only the
+ * tick shows, at rest.
+ */
+@Composable
+internal fun SuccessBurst(animated: Boolean, modifier: Modifier = Modifier) {
+    val pop = remember { Animatable(if (animated) 0f else 1f) }
+    val flight = remember { Animatable(if (animated) 0f else 1f) }
+    LaunchedEffect(animated) {
+        if (!animated) return@LaunchedEffect
+        launch { pop.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) }
+        launch { flight.animateTo(1f, tween(BURST_MS, easing = FastOutSlowInEasing)) }
+    }
+    Box(modifier.size(BURST_SIZE), contentAlignment = Alignment.Center) {
+        if (animated) {
+            Canvas(Modifier.size(BURST_SIZE)) {
+                val travel = flight.value
+                val reach = size.minDimension / 2
+                // The halo opens with the sparks and stays behind the tick, soft.
+                drawCircle(
+                    Brush.radialGradient(
+                        0f to BrandColors.Purple.copy(alpha = 0.5f),
+                        0.6f to BrandColors.Blue.copy(alpha = 0.22f),
+                        1f to Color.Transparent,
+                        radius = reach * (0.55f + 0.2f * travel),
+                    ),
+                    radius = reach * (0.55f + 0.2f * travel),
+                )
+                // Sparks: short strokes leaving the tick, thinning out as they go.
+                val sparkColors = listOf(BrandColors.Purple, BrandColors.onGradient, BrandColors.Blue)
+                repeat(SPARK_COUNT) { i ->
+                    val angle = (2 * PI * i / SPARK_COUNT + SPARK_TILT).toFloat()
+                    val from = reach * (0.5f + 0.38f * travel)
+                    val to = from + reach * 0.14f * (1f - travel * 0.6f)
+                    drawLine(
+                        color = sparkColors[i % sparkColors.size].copy(alpha = (1f - travel) * (if (i % 2 == 0) 1f else 0.7f)),
+                        start = Offset(center.x + from * cos(angle), center.y + from * sin(angle)),
+                        end = Offset(center.x + to * cos(angle), center.y + to * sin(angle)),
+                        strokeWidth = SPARK_STROKE.toPx(),
+                        cap = StrokeCap.Round,
+                    )
+                }
+            }
+        }
+        Icon(
+            Icons.Filled.CheckCircle,
+            contentDescription = null,
+            tint = AppTheme.colors.success,
+            modifier = Modifier.size(BURST_TICK).graphicsLayer {
+                scaleX = pop.value
+                scaleY = pop.value
+            },
+        )
+    }
+}
+
+private val BURST_SIZE = 120.dp
+private val BURST_TICK = 56.dp
+private val SPARK_STROKE = 2.5.dp
+private const val SPARK_COUNT = 10
+/** Tilts the ring of sparks so none points straight up or sideways. */
+private const val SPARK_TILT = 0.31
+private const val BURST_MS = 900
 
 /** "Réduire les animations", provided by the progress screen and read by its moving parts. */
 internal val LocalCalmMotion = staticCompositionLocalOf { false }

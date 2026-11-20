@@ -16,6 +16,9 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
+import app.cash.turbine.test
+import com.xperiencemusic.shared.data.local.FileDevicePreferences
+import com.xperiencemusic.shared.fakes.FakeFileStore
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -43,6 +46,7 @@ class StageViewModelTest {
         val middle = deriveStageState(b, weekly, StageSettings(), 0, Notation.SOLFEGE)
         assertEquals("2 / 3", middle.setlistPosition)
         assertEquals("a", middle.previousSongId)
+        assertEquals(a.title, middle.previousSongTitle)
         assertEquals("c", middle.nextSongId)
         assertEquals(c.title, middle.nextSongTitle)
         assertNull(deriveStageState(c, weekly, StageSettings(), 0, Notation.SOLFEGE).nextSongId)
@@ -84,21 +88,69 @@ class StageViewModelTest {
 
     @Test
     fun `taille du texte et vitesse sont bornées et partagées entre les chants`() = runTest {
-        val store = StageSettingsStore()
+        val store = StageSettingsStore(FileDevicePreferences(FakeFileStore()))
         val songs = songRepository(a, b)
         val weeklyUseCase = schedule(setlistRepository(), songs)
-        val first = StageViewModel("a", 0, Notation.NASHVILLE, ObserveSongUseCase(songs), weeklyUseCase, store)
+        val first = StageViewModel("a", 0, Notation.NASHVILLE, false, ObserveSongUseCase(songs), weeklyUseCase, store)
         repeat(20) { first.onEvent(StageEvent.TextBiggerClicked) }
         first.onEvent(StageEvent.AutoScrollToggled)
         repeat(20) { first.onEvent(StageEvent.SlowerClicked) }
 
-        val second = StageViewModel("b", 0, Notation.NASHVILLE, ObserveSongUseCase(songs), weeklyUseCase, store)
-        assertEquals(StageUiState.MAX_SCALE, store.settings.value.textScale)
-        assertEquals(StageUiState.MIN_SPEED, store.settings.value.scrollSpeed)
-        assertEquals(true, store.settings.value.isAutoScrolling)
-        assertEquals(1, StageUiState(scrollSpeed = store.settings.value.scrollSpeed).speedLevel)
+        val second = StageViewModel("b", 0, Notation.NASHVILLE, false, ObserveSongUseCase(songs), weeklyUseCase, store)
+        assertEquals(StageUiState.MAX_SCALE, store.portrait.value.textScale)
+        assertEquals(StageUiState.MIN_SPEED, store.portrait.value.scrollSpeed)
+        assertEquals(true, store.portrait.value.isAutoScrolling)
+        assertEquals(1, StageUiState(scrollSpeed = store.portrait.value.scrollSpeed).speedLevel)
         assertEquals(12, StageUiState.MAX_LEVEL)
         second.onEvent(StageEvent.TextSmallerClicked)
-        assertEquals(StageUiState.MAX_SCALE - StageUiState.SCALE_STEP, store.settings.value.textScale, 0.001f)
+        assertEquals(StageUiState.MAX_SCALE - StageUiState.SCALE_STEP, store.portrait.value.textScale, 0.001f)
+    }
+
+    @Test
+    fun `le pupitre est retrouvé au redémarrage, à part pour le portrait et le paysage`() = runTest {
+        val files = FakeFileStore()
+        val songs = songRepository(a)
+        val weeklyUseCase = schedule(setlistRepository(), songs)
+        fun stage(store: StageSettingsStore) =
+            StageViewModel("a", 0, Notation.NASHVILLE, false, ObserveSongUseCase(songs), weeklyUseCase, store)
+
+        val viewModel = stage(StageSettingsStore(FileDevicePreferences(files)))
+        viewModel.onEvent(StageEvent.TextBiggerClicked)
+        viewModel.onEvent(StageEvent.OrientationChanged(isLandscape = true))
+        repeat(2) { viewModel.onEvent(StageEvent.TextSmallerClicked) }
+        viewModel.onEvent(StageEvent.FasterClicked)
+        viewModel.onEvent(StageEvent.AutoScrollToggled)
+
+        // The app restarts: both stands come back as they were set, and nothing is scrolling.
+        val restarted = StageSettingsStore(FileDevicePreferences(files))
+        assertEquals(StageUiState.DEFAULT_SCALE + StageUiState.SCALE_STEP, restarted.portrait.value.textScale, 0.001f)
+        assertEquals(StageUiState.DEFAULT_SPEED, restarted.portrait.value.scrollSpeed)
+        assertEquals(StageUiState.DEFAULT_SCALE - 2 * StageUiState.SCALE_STEP, restarted.landscape.value.textScale, 0.001f)
+        assertEquals(StageUiState.DEFAULT_SPEED + StageUiState.SPEED_STEP, restarted.landscape.value.scrollSpeed)
+        assertEquals(false, restarted.landscape.value.isAutoScrolling)
+
+        stage(restarted).state.test {
+            assertEquals(StageUiState.DEFAULT_SCALE + StageUiState.SCALE_STEP, expectMostRecentItem().textScale, 0.001f)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `tourner le téléphone garde le défilement en cours`() = runTest {
+        val store = StageSettingsStore(FileDevicePreferences(FakeFileStore()))
+        val songs = songRepository(a)
+        val viewModel = StageViewModel("a", 0, Notation.NASHVILLE, false, ObserveSongUseCase(songs), schedule(setlistRepository(), songs), store)
+        viewModel.onEvent(StageEvent.AutoScrollToggled)
+        viewModel.onEvent(StageEvent.OrientationChanged(isLandscape = true))
+        assertEquals(true, store.landscape.value.isAutoScrolling)
+    }
+
+    @Test
+    fun `un réglage illisible revient à la valeur par défaut`() {
+        val preferences = FileDevicePreferences(FakeFileStore()).apply {
+            write("stage.portrait.textScale", "12")
+            write("stage.portrait.scrollSpeed", "vite")
+        }
+        assertEquals(StageSettings(), StageSettingsStore(preferences).portrait.value)
     }
 }

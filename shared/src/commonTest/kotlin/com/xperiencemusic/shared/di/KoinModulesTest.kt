@@ -34,6 +34,7 @@ import com.xperiencemusic.shared.presentation.members.MembersViewModel
 import com.xperiencemusic.shared.presentation.onboarding.OnboardingViewModel
 import com.xperiencemusic.shared.presentation.planning.AvailabilityViewModel
 import com.xperiencemusic.shared.presentation.planning.PlanningViewModel
+import com.xperiencemusic.shared.presentation.tabs.TabAlertsViewModel
 import com.xperiencemusic.shared.presentation.planning.ServiceDetailViewModel
 import com.xperiencemusic.shared.presentation.player.MiniPlayerViewModel
 import com.xperiencemusic.shared.presentation.profile.ProfileViewModel
@@ -112,8 +113,9 @@ class KoinModulesTest {
             koin.get<SongEditorViewModel> { parametersOf(null) },
             koin.get<SongEditorViewModel> { parametersOf("song") },
             koin.get<RecordingFormViewModel> { parametersOf("song") },
-            koin.get<StageViewModel> { parametersOf("song", 0, Notation.NASHVILLE) },
+            koin.get<StageViewModel> { parametersOf("song", 0, Notation.NASHVILLE, false) },
             koin.get<PlanningViewModel>(),
+            koin.get<TabAlertsViewModel>(),
             koin.get<AvailabilityViewModel> { parametersOf(date) },
             koin.get<ServiceDetailViewModel> { parametersOf(date) },
             koin.get<ProgressViewModel>(),
@@ -127,7 +129,7 @@ class KoinModulesTest {
             koin.get<MembersViewModel>(),
             koin.get<MiniPlayerViewModel>(),
         )
-        assertEquals(27, viewModels.size)
+        assertEquals(28, viewModels.size)
     }
 
     @Test
