@@ -190,6 +190,29 @@ class SupabaseSongCatalogueTest {
         assertEquals(listOf("song-00002", "song-00005"), withChart.sorted())
     }
 
+    @Test
+    fun `avant la migration des thèmes, la liste se charge sans thèmes`() = runTest {
+        val table = FakeSongTable(count = 5, hasThemesColumn = false)
+
+        val songs = repository(table).observeSongs().first()
+
+        assertEquals(5, songs.size)
+        assertTrue(songs.all { it.themes.isEmpty() })
+        assertTrue("id,themes" in table.selects, "the themes were asked for: ${table.selects}")
+    }
+
+    @Test
+    fun `après la migration, chaque chant a ses thèmes, gardés hors ligne`() = runTest {
+        val table = FakeSongTable(count = 4, hasThemesColumn = true)
+        val songs = repository(table).observeSongs().first()
+        assertEquals(listOf("song-00002", "song-00004"), songs.filter { "adoration" in it.themes }.map { it.id }.sorted())
+
+        table.offline = true
+        val offline = repository(table).observeSongs().first()
+
+        assertEquals(listOf("adoration"), offline.first { it.id == "song-00002" }.themes)
+    }
+
     private companion object {
         /** Supabase's default row limit, as the app's pages assume. */
         const val SERVER_ROW_LIMIT = 1000

@@ -37,6 +37,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.FilterChip
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -94,6 +98,8 @@ import com.xperiencemusic.shared.resources.library_section_results
 import com.xperiencemusic.shared.resources.library_show_catalogue
 import com.xperiencemusic.shared.resources.library_tab_catalogue
 import com.xperiencemusic.shared.resources.library_tab_repertoire
+import com.xperiencemusic.shared.resources.library_theme_all
+import com.xperiencemusic.shared.resources.library_themes
 import com.xperiencemusic.shared.resources.library_title
 import com.xperiencemusic.shared.resources.offline_retry
 import com.xperiencemusic.shared.ui.brand.TabHeader
@@ -183,6 +189,39 @@ private fun LibraryHeader(
         }
         // A search covers every song, whatever the tab.
         if (!state.isSearching && state.catalogueCount > 0) LibraryTabs(state, onEvent)
+        // Hidden until the themes are imported (see docs/supabase-setup.md).
+        if (state.themes.isNotEmpty()) ThemeFilter(state, onEvent)
+    }
+}
+
+/** One chip per theme, in a row that scrolls sideways: there can be a few dozen. */
+@Composable
+private fun ThemeFilter(state: LibraryUiState, onEvent: (LibraryEvent) -> Unit) {
+    val selected = state.selectedTheme
+    val label = stringResource(Res.string.library_themes)
+    val all = stringResource(Res.string.library_theme_all)
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+        modifier = Modifier.fillMaxWidth().semantics { contentDescription = label }.selectableGroup(),
+    ) {
+        item(key = "all") {
+            FilterChip(
+                selected = selected == null,
+                onClick = { onEvent(LibraryEvent.ThemeSelected(null)) },
+                label = { Text(all) },
+                modifier = Modifier.choiceState(selected == null),
+            )
+        }
+        items(state.themes, key = { it }) { theme ->
+            val isSelected = theme == selected
+            FilterChip(
+                selected = isSelected,
+                // A second tap on the chosen theme shows every song again.
+                onClick = { onEvent(LibraryEvent.ThemeSelected(theme.takeUnless { isSelected })) },
+                label = { Text(theme.replaceFirstChar { it.uppercaseChar() }, maxLines = 1) },
+                modifier = Modifier.choiceState(isSelected),
+            )
+        }
     }
 }
 
@@ -471,6 +510,8 @@ private fun LibraryScreenCataloguePreview() {
                         listOf(LibrarySongUi("$index", "$letter comme chant", "Jeunesse en Mission", hasAudio = index == 0)),
                     )
                 },
+                themes = listOf("adoration", "croix", "louange", "noël"),
+                selectedTheme = "adoration",
             ),
             onEvent = {},
             onSongClick = {},

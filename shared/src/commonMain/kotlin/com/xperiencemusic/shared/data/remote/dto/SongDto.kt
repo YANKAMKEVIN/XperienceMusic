@@ -21,11 +21,27 @@ data class SongDto(
     val recordings: List<RecordingDto> = emptyList(),
     @SerialName("voice_tracks") val voiceTracks: List<VoiceTrackDto> = emptyList(),
     @SerialName("song_links") val links: List<SongLinkDto> = emptyList(),
+    /** Fetched apart (see [SongThemesDto]): the column only exists once its migration is applied. */
+    val themes: List<String> = emptyList(),
 ) {
     companion object {
         /** Every column the list shows, the chart excepted. */
         const val LIST_COLUMNS =
             "id, title, artist, key_tonic, key_mode, recordings(*), voice_tracks(*), song_links(*)"
+    }
+}
+
+/**
+ * The themes of one song (`songs.themes`, added by the migration `20261121000000_song_themes`).
+ * Asked for apart from the list, so the list still loads on a database without the column.
+ */
+@Serializable
+data class SongThemesDto(
+    val id: String,
+    val themes: List<String>? = null,
+) {
+    companion object {
+        const val COLUMNS = "id, themes"
     }
 }
 

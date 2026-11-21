@@ -10,6 +10,7 @@ import com.xperiencemusic.shared.data.remote.allPages
 import com.xperiencemusic.shared.data.remote.dto.IdDto
 import com.xperiencemusic.shared.data.remote.dto.SongDto
 import com.xperiencemusic.shared.data.remote.dto.SongLinkWriteDto
+import com.xperiencemusic.shared.data.remote.dto.SongThemesDto
 import com.xperiencemusic.shared.data.remote.ignoringFailures
 import com.xperiencemusic.shared.data.remote.tracking
 import com.xperiencemusic.shared.data.session.SessionGuard
@@ -228,8 +229,12 @@ class SupabaseSongRepository private constructor(
                 }.decodeList<SongDto>()
             }
         }
-        publish(fetched)
-        snapshots.save(SNAPSHOT, ListSerializer(SongDto.serializer()), fetched)
+        // Without the themes (no migration yet, or a failed request) the list loads all the same:
+        // it keeps the themes it had, or none, and the app hides its theme filter.
+        val themes = client.songThemes(session) ?: songs.value?.mapValues { it.value.themes }.orEmpty()
+        val withThemes = fetched.map { it.copy(themes = themes[it.id].orEmpty()) }
+        publish(withThemes)
+        snapshots.save(SNAPSHOT, ListSerializer(SongDto.serializer()), withThemes)
         hasRefreshed = true
     }
 
@@ -244,4 +249,23 @@ class SupabaseSongRepository private constructor(
         const val SONG_LINKS = "song_links"
         const val SNAPSHOT = "songs"
     }
+}
+
+/**
+ * The themes of every song by id, or null when they cannot be read: before the migration
+ * `20261121000000_song_themes` the column does not exist and the server refuses the request.
+ */
+private suspend fun SupabaseClient.songThemes(session: SessionGuard): Map<String, List<String>>? {
+    var themes: Map<String, List<String>>? = null
+    ignoringFailures {
+        themes = session.accountCall {
+            allPages { from, to ->
+                from("songs").select(Columns.raw(SongThemesDto.COLUMNS)) {
+                    order("id", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<SongThemesDto>()
+            }
+        }.associate { it.id to it.themes.orEmpty() }
+    }
+    return themes
 }

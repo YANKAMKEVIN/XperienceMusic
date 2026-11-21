@@ -47,6 +47,9 @@ do $$ begin
     end;
     update public.songs set title = 'hacked';
     assert (select title from public.songs) = 'À toi la gloire', 'member updates are filtered out by RLS';
+    assert (select themes from public.songs) = '{}', 'song themes start empty';
+    update public.songs set themes = array['hacked'];
+    assert (select themes from public.songs) = '{}', 'members cannot set song themes';
     insert into public.exercise_progress (exercise_id, status) values ('b-breath', 'SUBMITTED');
     begin
         insert into public.exercise_progress (exercise_id, status) values ('b-scale', 'TO_REWORK');
@@ -424,6 +427,19 @@ end $$;
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000f');
 do $$ begin
     assert (select count(*) from storage.objects where bucket_id = 'avatars') = 0, 'uninvited accounts see no photo';
+end $$;
+
+-- Song themes (members cannot set them: see the member checks), written by content admins.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+do $$ begin
+    update public.songs set themes = array['adoration', 'louange'] where title = 'À toi la gloire';
+    assert (select themes from public.songs where title = 'À toi la gloire') = array['adoration', 'louange'],
+        'content admins set themes';
+    begin
+        update public.songs set themes = array[null] where title = 'À toi la gloire';
+        assert false, 'a theme cannot be null';
+    exception when check_violation then null;
+    end;
 end $$;
 
 reset role;

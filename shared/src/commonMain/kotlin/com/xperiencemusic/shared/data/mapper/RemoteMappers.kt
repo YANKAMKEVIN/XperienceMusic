@@ -78,6 +78,7 @@ fun SongDto.toDomain(chart: String? = this.chart) = Song(
         enumOrNull<VoicePart>(track.voicePart)?.let { VoiceTrack(track.id, it, track.storagePath) }
     },
     links = links.sortedBy { it.position }.map { SongLink(it.label, it.url) },
+    themes = themes,
 )
 
 fun SongDraft.toWriteDto() = SongWriteDto(

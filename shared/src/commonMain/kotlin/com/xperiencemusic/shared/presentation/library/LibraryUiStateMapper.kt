@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.presentation.library
 import com.xperiencemusic.shared.domain.model.Repertoire
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.usecase.SongSearchIndex
+import com.xperiencemusic.shared.domain.usecase.foldForSearch
 
 /** How many songs "recently sung" lists: a glance, the rest is in the alphabetical list. */
 private const val RECENT_SONGS = 8
@@ -12,34 +13,54 @@ fun Song.toLibraryItem(): LibrarySongUi =
 
 /**
  * The list of the library. A search covers the whole catalogue whatever the tab; [chosenTab] is
- * null until the user picks one, which opens the repertoire when the band has one.
+ * null until the user picks one, which opens the repertoire when the band has one. [chosenTheme]
+ * narrows the tabs and the search to the songs of that theme; it is ignored once no song has it.
  */
-fun libraryContent(index: SongSearchIndex, repertoire: Repertoire, query: String, chosenTab: LibraryTab?): LibraryUiState {
+fun libraryContent(
+    index: SongSearchIndex,
+    repertoire: Repertoire,
+    query: String,
+    chosenTab: LibraryTab?,
+    chosenTheme: String? = null,
+): LibraryUiState {
+    val themes = index.songs.flatMapTo(HashSet()) { it.themes }.sortedBy { it.foldForSearch() }
+    val theme = chosenTheme?.takeIf { it in themes }
+    val inTheme = { song: Song -> theme == null || theme in song.themes }
     val repertoireIds = repertoire.songs.mapTo(HashSet()) { it.id }
     // The index is sorted by title, and drops songs deleted since the setlist was published.
-    val repertoireSongs = index.songs.filter { it.id in repertoireIds }
-    val tab = chosenTab ?: if (repertoireSongs.isEmpty()) LibraryTab.CATALOGUE else LibraryTab.REPERTOIRE
+    val allRepertoireSongs = index.songs.filter { it.id in repertoireIds }
+    val repertoireSongs = allRepertoireSongs.filter(inTheme)
+    val catalogue = index.songs.filter(inTheme)
+    val tab = chosenTab ?: if (allRepertoireSongs.isEmpty()) LibraryTab.CATALOGUE else LibraryTab.REPERTOIRE
     val sections = when {
         query.isNotBlank() -> index.search(query, inLyrics = true)
+            .filter { inTheme(it.song) }
             .map { it.song.toLibraryItem().copy(lyricLine = it.lyricLine) }
             .let { if (it.isEmpty()) emptyList() else listOf(LibrarySectionUi(LibrarySectionHeader.Results(it.size), it)) }
-        tab == LibraryTab.REPERTOIRE -> repertoireSections(repertoire, repertoireSongs)
-        else -> alphabeticalSections(index.songs)
+        tab == LibraryTab.REPERTOIRE -> repertoireSections(repertoire, repertoireSongs, inTheme)
+        else -> alphabeticalSections(catalogue)
     }
     return LibraryUiState(
         query = query,
         tab = tab,
         repertoireCount = repertoireSongs.size,
-        catalogueCount = index.songs.size,
+        catalogueCount = catalogue.size,
         isLoading = false,
         sections = sections,
+        themes = themes,
+        selectedTheme = theme,
     )
 }
 
-private fun repertoireSections(repertoire: Repertoire, sortedSongs: List<Song>): List<LibrarySectionUi> = buildList {
-    val nextIds = repertoire.nextServiceSongs.mapTo(HashSet()) { it.id }
+private fun repertoireSections(
+    repertoire: Repertoire,
+    sortedSongs: List<Song>,
+    inTheme: (Song) -> Boolean,
+): List<LibrarySectionUi> = buildList {
+    val nextSongs = repertoire.nextServiceSongs.filter(inTheme)
+    val nextIds = nextSongs.mapTo(HashSet()) { it.id }
     repertoire.nextService?.takeIf { nextIds.isNotEmpty() }?.let { date ->
-        add(LibrarySectionUi(LibrarySectionHeader.NextService(date), repertoire.nextServiceSongs.map { it.toLibraryItem() }))
+        add(LibrarySectionUi(LibrarySectionHeader.NextService(date), nextSongs.map { it.toLibraryItem() }))
     }
     val recent = sortedSongs
         .mapNotNull { song -> repertoire.lastSungOn[song.id]?.takeIf { song.id !in nextIds }?.let { song to it } }

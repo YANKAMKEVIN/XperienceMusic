@@ -30,6 +30,7 @@ class LibraryViewModel(
     private val query = MutableStateFlow("")
     /** Null until the user picks a tab. */
     private val chosenTab = MutableStateFlow<LibraryTab?>(null)
+    private val chosenTheme = MutableStateFlow<String?>(null)
     private val isRefreshing = MutableStateFlow(false)
     private val lyrics = LyricsOnDemand(searchSongs)
 
@@ -37,7 +38,7 @@ class LibraryViewModel(
     // copy of the songs: the catalogue publishes nothing before, and the screen would wait on it
     // forever when the first load fails.
     private val content: Flow<LibraryUiState?> =
-        combine(searchSongs.index(), observeRepertoire(), query, chosenTab, ::libraryContent)
+        combine(searchSongs.index(), observeRepertoire(), query, chosenTab, chosenTheme, ::libraryContent)
             .map<LibraryUiState, LibraryUiState?> { it }
             .onStart { emit(null) }
 
@@ -63,6 +64,7 @@ class LibraryViewModel(
                 if (lyrics.shouldLoad(event.query)) viewModelScope.launch { lyrics.load() }
             }
             is LibraryEvent.TabSelected -> chosenTab.value = event.tab
+            is LibraryEvent.ThemeSelected -> chosenTheme.value = event.theme
             LibraryEvent.RefreshPulled -> refresh()
         }
     }

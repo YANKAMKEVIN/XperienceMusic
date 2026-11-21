@@ -18,6 +18,8 @@ data class Song(
     /** Learning tracks per voice. They do not count towards [MAX_RECORDINGS]. */
     val voiceTracks: List<VoiceTrack>,
     val links: List<SongLink>,
+    /** Its themes (adoration, louange…), imported from Rephi's tags; empty until they are. */
+    val themes: List<String> = emptyList(),
 ) {
     val referenceRecording: Recording? get() = recordings.firstOrNull { it.isReference }
 
