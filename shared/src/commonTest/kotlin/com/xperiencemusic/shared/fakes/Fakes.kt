@@ -77,7 +77,7 @@ fun song(
     title: String = "Chant",
     artist: String? = null,
     recordings: List<Recording> = emptyList(),
-    chart: String = "[1]Gloire",
+    chart: String? = "[1]Gloire",
     key: Key = Key(0),
 ) = Song(id, title, artist, key, chart, recordings, emptyList(), emptyList())
 

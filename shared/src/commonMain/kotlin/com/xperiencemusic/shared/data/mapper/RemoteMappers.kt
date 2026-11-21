@@ -66,7 +66,8 @@ fun MemberProfile.toUpdateDto() = ProfileUpdateDto(
     level = level.name,
 )
 
-fun SongDto.toDomain() = Song(
+/** [chart] is null while the song's chart is not on the phone yet. */
+fun SongDto.toDomain(chart: String? = this.chart) = Song(
     id = id,
     title = title,
     artist = artist,
@@ -77,6 +78,7 @@ fun SongDto.toDomain() = Song(
         enumOrNull<VoicePart>(track.voicePart)?.let { VoiceTrack(track.id, it, track.storagePath) }
     },
     links = links.sortedBy { it.position }.map { SongLink(it.label, it.url) },
+    themes = themes,
 )
 
 fun SongDraft.toWriteDto() = SongWriteDto(

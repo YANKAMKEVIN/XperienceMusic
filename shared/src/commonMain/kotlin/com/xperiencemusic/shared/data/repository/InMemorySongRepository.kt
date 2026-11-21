@@ -27,6 +27,11 @@ class InMemorySongRepository(initialSongs: List<Song>) : SongRepository {
 
     override suspend fun song(id: String): Song? = songs.value[id]
 
+    /** Every chart is already in memory. */
+    override suspend fun loadLyrics() = Unit
+
+    override suspend fun loadCharts(ids: Collection<String>) = Unit
+
     override suspend fun createSong(draft: SongDraft): String {
         val id = "song-${songs.value.size + 1}-${draft.title.hashCode().toUInt()}"
         songs.update { all ->

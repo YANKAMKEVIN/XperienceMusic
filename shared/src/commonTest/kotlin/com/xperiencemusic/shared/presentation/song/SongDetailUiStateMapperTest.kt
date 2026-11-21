@@ -41,6 +41,13 @@ class SongDetailUiStateMapperTest {
     }
 
     @Test
+    fun `sans paroles sur le téléphone, la fiche dit qu'elles se chargent`() {
+        val loading = deriveSongDetailState(sample.copy(chart = null), member(), SongDetailLocalState())
+        assertTrue(loading.isChartLoading)
+        assertFalse(deriveSongDetailState(sample, member(), SongDetailLocalState()).isChartLoading)
+    }
+
+    @Test
     fun `en Nashville la tonalité reste écrite en solfège`() {
         val state = deriveSongDetailState(sample, member(), SongDetailLocalState())
         assertEquals("Do majeur", state.keyLabel)

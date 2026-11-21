@@ -220,6 +220,8 @@
     <string name="library_empty_member">Les chants ajoutés par les responsables apparaîtront ici.</string>
     <string name="library_tab_repertoire">Notre répertoire · %1$d</string>
     <string name="library_tab_catalogue">Tout · %1$d</string>
+    <string name="library_theme_all">Tous les thèmes</string>
+    <string name="library_themes">Thèmes</string>
     <string name="library_section_next">Prochain service · %1$s</string>
     <string name="library_section_recent">Chantés récemment</string>
     <string name="library_section_alphabetical">De A à Z</string>
@@ -241,6 +243,7 @@
     <string name="notation_letters">C · D · E</string>
     <string name="song_chart_title">Paroles et accords</string>
     <string name="song_lyrics_title">Paroles</string>
+    <string name="song_chart_loading">Les paroles se chargent… La première fois, il faut du réseau.</string>
     <string name="song_lyrics_only">Paroles seules</string>
     <string name="song_recordings_title">Versions enregistrées (%1$d/%2$d)</string>
     <string name="song_recordings_empty">Pas encore de version enregistrée pour ce chant.</string>

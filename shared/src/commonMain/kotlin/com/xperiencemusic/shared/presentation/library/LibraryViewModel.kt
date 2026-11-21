@@ -8,6 +8,7 @@ import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveRepertoireUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
 import com.xperiencemusic.shared.domain.usecase.RefreshContentUseCase
+import com.xperiencemusic.shared.domain.usecase.LyricsOnDemand
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,13 +30,15 @@ class LibraryViewModel(
     private val query = MutableStateFlow("")
     /** Null until the user picks a tab. */
     private val chosenTab = MutableStateFlow<LibraryTab?>(null)
+    private val chosenTheme = MutableStateFlow<String?>(null)
     private val isRefreshing = MutableStateFlow(false)
+    private val lyrics = LyricsOnDemand(searchSongs)
 
     // The index is built once per catalogue, not once per keystroke. Null until the phone has a
     // copy of the songs: the catalogue publishes nothing before, and the screen would wait on it
     // forever when the first load fails.
     private val content: Flow<LibraryUiState?> =
-        combine(searchSongs.index(), observeRepertoire(), query, chosenTab, ::libraryContent)
+        combine(searchSongs.index(), observeRepertoire(), query, chosenTab, chosenTheme, ::libraryContent)
             .map<LibraryUiState, LibraryUiState?> { it }
             .onStart { emit(null) }
 
@@ -56,8 +59,12 @@ class LibraryViewModel(
 
     fun onEvent(event: LibraryEvent) {
         when (event) {
-            is LibraryEvent.QueryChanged -> query.value = event.query
+            is LibraryEvent.QueryChanged -> {
+                query.value = event.query
+                if (lyrics.shouldLoad(event.query)) viewModelScope.launch { lyrics.load() }
+            }
             is LibraryEvent.TabSelected -> chosenTab.value = event.tab
+            is LibraryEvent.ThemeSelected -> chosenTheme.value = event.theme
             LibraryEvent.RefreshPulled -> refresh()
         }
     }

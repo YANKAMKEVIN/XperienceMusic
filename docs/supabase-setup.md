@@ -34,6 +34,7 @@ seuls les nouveaux fichiers sont à exécuter :
 | `20261018020000_learning_feedback_and_recordings.sql` | variantes, indices et prises audio privées rattachées aux compétences |
 | `20261018030000_objective_recording_history.sql` | garde l'historique de toutes les prises envoyées ; un membre ne peut plus les effacer |
 | `20261019000000_objective_recordings_any_objective.sql` | les prises peuvent appuyer n'importe quel objectif du programme (pas seulement piano-c1 à c5), et renvoyer la même prise ne plante plus |
+| `20261121000000_song_themes.sql` | les thèmes des chants (colonne `themes`, vide par défaut) pour le filtre par thème : voir l'[étape 6](#6-thèmes-des-chants) |
 
 ## 3. T'inviter comme Admin++
 
@@ -98,6 +99,50 @@ supabase.publishableKey=sb_publishable_xxxxxxxx
 ```
 
 Reconstruis l'app : elle passe automatiquement du mode démo à Supabase.
+
+## 6. Thèmes des chants
+
+L'app montre un filtre par thème dans Chants dès qu'au moins un chant a un thème. Avant la
+migration, ou tant que rien n'est importé, le filtre reste caché et l'app marche comme avant.
+Rien de tout cela n'a été exécuté sur la base : c'est à toi de le faire, dans cet ordre.
+
+1. **Migration.** SQL Editor → New query : colle
+   [`supabase/migrations/20261121000000_song_themes.sql`](../supabase/migrations/20261121000000_song_themes.sql)
+   puis **Run**. Elle ajoute la colonne `themes` (liste de textes, vide par défaut) à `songs` ;
+   les règles d'accès des chants s'y appliquent (membres en lecture, admins contenu en écriture).
+2. **Fichier d'étiquettes.** Le dépôt ne contient pas d'export des étiquettes de Rephi : prépare
+   un CSV, un JSON ou un JSON Lines avec, par chant, son lien ou code accords.app (par exemple
+   `accords.app/JEM414`, comme dans la section « Source » des chants importés) et ses étiquettes.
+   Exemple de CSV :
+
+   ```csv
+   source;tags
+   https://accords.app/JEM414;Adoration, Louange
+   ```
+
+   Pour les chants saisis à la main (sans lien accords.app), une colonne de titre suffit, avec
+   `--match title` (et `--artist-column` pour départager deux titres identiques).
+3. **Préparer le SQL**, sur ton ordinateur (Python 3, sans dépendance ; le script ne se connecte à
+   aucune base) :
+
+   ```bash
+   python3 supabase/scripts/song_themes_import.py etiquettes.csv --output themes.sql
+   ```
+
+   Options utiles : `--source-column`, `--tags-column`, `--tag-separator "|"`,
+   `--only adoration,louange` pour ne garder que certains thèmes, `--rename louanges=louange`,
+   `--replace` pour remplacer les thèmes déjà posés (par défaut, ils s'ajoutent). Le script
+   affiche le nombre de chants et la liste des thèmes : relis-la avant d'aller plus loin.
+4. **Exécuter `themes.sql`** dans le SQL Editor. Tout se fait dans une transaction ; à la fin,
+   deux résultats : le nombre de chants qui ont un thème, et les lignes du fichier qui n'ont
+   trouvé aucun chant (à corriger dans le fichier puis relancer : c'est sans risque, les thèmes
+   déjà posés ne sont pas dupliqués).
+5. Dans l'app, tire la liste des chants vers le bas pour recharger : les thèmes apparaissent sous
+   les onglets.
+
+Pour retirer tous les thèmes : `update public.songs set themes = '{}';` (le filtre disparaît).
+
+Le script a ses tests : `python3 -m unittest discover -s supabase/scripts`.
 
 ## Ce que garantit le serveur
 

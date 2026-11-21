@@ -16,6 +16,10 @@ data class LibraryUiState(
     val isOffline: Boolean = false,
     /** The first load failed and the phone has no copy yet: nothing to show but a way to retry. */
     val hasLoadFailed: Boolean = false,
+    /** The themes of the catalogue, A to Z; empty (and the filter hidden) while no song has one. */
+    val themes: List<String> = emptyList(),
+    /** The theme the lists and the search are narrowed to; null for every song. */
+    val selectedTheme: String? = null,
 ) {
     val isSearching: Boolean get() = query.isNotBlank()
 }
@@ -52,5 +56,7 @@ data class LibrarySongUi(
 sealed interface LibraryEvent {
     data class QueryChanged(val query: String) : LibraryEvent
     data class TabSelected(val tab: LibraryTab) : LibraryEvent
+    /** Null shows every theme again. */
+    data class ThemeSelected(val theme: String?) : LibraryEvent
     data object RefreshPulled : LibraryEvent
 }

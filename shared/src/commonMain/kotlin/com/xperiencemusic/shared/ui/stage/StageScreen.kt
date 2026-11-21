@@ -506,7 +506,7 @@ private fun StageLyrics(state: StageUiState, onToggleScroll: () -> Unit, modifie
                 .padding(horizontal = Spacing.l)
                 .padding(top = Spacing.s),
         ) {
-            ChordChartView(state.chart, scale = state.textScale, lyricsOnly = state.lyricsOnly)
+            ChordChartView(state.chart, scale = state.textScale, lyricsOnly = state.lyricsOnly, isLoading = state.isChartLoading)
             // Room so the last line can scroll up to eye level.
             Spacer(Modifier.height(LYRICS_END_ROOM))
         }

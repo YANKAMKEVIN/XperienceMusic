@@ -45,8 +45,24 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     recherche dans les paroles. Deux corrections au passage : l'app ne chargeait que les 1000 premiers
     chants (limite de lignes de Supabase ; le chargement se fait maintenant par pages, 1987 chants),
     et les derniers résultats d'une recherche restaient cachés derrière le clavier.
-  - **Idées non faites :** filtre par thème (il faut une colonne et réimporter les étiquettes de Rephi)
-    et liste allégée (l'app charge encore les paroles de tous les chants pour afficher la liste).
+  - **Filtre par thème (21 novembre 2026, branche `claude/suite`, pas encore vu à l'écran)** : migration
+    `20261121000000_song_themes.sql` (colonne `songs.themes`, liste de textes vide par défaut) et script
+    `supabase/scripts/song_themes_import.py` qui prépare le SQL des étiquettes à partir d'un CSV/JSON
+    (lien accords.app ou titre), sans jamais se connecter à la base. **À faire par Kevin** : appliquer
+    la migration puis l'import (étapes dans `docs/supabase-setup.md`, étape 6). Dans Chants, une rangée
+    de thèmes apparaît sous les onglets dès qu'un chant en a un ; elle restreint les onglets et la
+    recherche. Avant la migration, l'app lit les thèmes à part, ignore l'échec et cache le filtre.
+  - **Liste allégée (21 novembre 2026, branche `claude/suite`, pas encore vue à l'écran)** : la liste ne
+    charge plus que titre, auteur, tonalité, versions, pistes et liens (toujours par pages de 1000) ; les
+    paroles d'un chant arrivent quand on ouvre sa fiche (« Les paroles se chargent… » en attendant, s'il
+    n'en a pas de copie). La première recherche de 3 lettres ou plus charge toutes les paroles une fois
+    par session (par pages aussi) : les titres trouvés s'affichent tout de suite, les paroles dès
+    qu'elles arrivent. Choix : recherche sur le téléphone plutôt que `ilike` ou plein texte côté serveur,
+    car les accords sont collés dans les mots (`Sei[2]gneur`) et les accents doivent être ignorés comme
+    avant ; ça marche aussi hors ligne et sans changer la base. « Télécharger » la semaine charge aussi
+    les paroles de ses chants, pour le mode scène hors ligne. Les paroles déjà lues restent sur le
+    téléphone (`snapshots/song_charts.json`) ; la copie d'une version précédente garde les siennes.
+    L'éditeur attend les paroles avant d'ouvrir un chant, pour ne jamais les effacer.
   - **Suites du 17 novembre 2026 (PR 13, fusionnée)** :
     une bulle affiche la lettre sous le doigt à côté de l'index A–Z ; dans la fiche d'un chant, le bouton
     « Écouter l'original » est remplacé par l'image de la vidéo YouTube, cliquable, au-dessus du titre

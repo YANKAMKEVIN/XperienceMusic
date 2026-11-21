@@ -22,6 +22,8 @@ data class SongDetailUiState(
     /** Offset from the original key, passed on to the stage mode. */
     val transposeSemitones: Int = 0,
     val chart: List<ChartLine> = emptyList(),
+    /** The chart is not on the phone yet: it is fetched when the page opens, which needs the network. */
+    val isChartLoading: Boolean = false,
     val recordings: List<RecordingUi> = emptyList(),
     val maxRecordings: Int = 0,
     val canManageRecordings: Boolean = false,

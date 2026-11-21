@@ -35,7 +35,8 @@ class SongEditorViewModel(
     init {
         if (songId != null) {
             viewModelScope.launch {
-                val song = observeSong(songId).filterNotNull().first()
+                // Never edit a song whose chart is not loaded yet: saving would erase its lyrics.
+                val song = observeSong(songId).filterNotNull().first { it.chart != null }
                 _state.update {
                     it.copy(
                         isLoading = false,
@@ -44,7 +45,7 @@ class SongEditorViewModel(
                         youtubeUrl = song.youtubeUrl.orEmpty(),
                         key = song.key,
                     )
-                        .withChart(song.chart)
+                        .withChart(song.chart.orEmpty())
                         .let { loaded -> loaded.copy(original = loaded.draft) }
                 }
             }

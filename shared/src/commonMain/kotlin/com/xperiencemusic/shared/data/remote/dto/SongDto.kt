@@ -4,7 +4,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** A song with its recordings, voice tracks and links, as returned by the embedded select. */
+/**
+ * A song of the list with its recordings, voice tracks and links, as returned by the embedded
+ * select. The list leaves the chart out ([chart] is null): the lyrics of two thousand songs are
+ * most of the catalogue's weight, and they are fetched apart (see [SongChartDto]).
+ */
 @Serializable
 data class SongDto(
     val id: String,
@@ -12,13 +16,43 @@ data class SongDto(
     val artist: String? = null,
     @SerialName("key_tonic") val keyTonic: Int,
     @SerialName("key_mode") val keyMode: String,
-    val chart: String,
+    /** Only in the copies saved on the phone by earlier versions of the app, which held the charts. */
+    val chart: String? = null,
     val recordings: List<RecordingDto> = emptyList(),
     @SerialName("voice_tracks") val voiceTracks: List<VoiceTrackDto> = emptyList(),
     @SerialName("song_links") val links: List<SongLinkDto> = emptyList(),
+    /** Fetched apart (see [SongThemesDto]): the column only exists once its migration is applied. */
+    val themes: List<String> = emptyList(),
 ) {
     companion object {
-        const val COLUMNS = "*, recordings(*), voice_tracks(*), song_links(*)"
+        /** Every column the list shows, the chart excepted. */
+        const val LIST_COLUMNS =
+            "id, title, artist, key_tonic, key_mode, recordings(*), voice_tracks(*), song_links(*)"
+    }
+}
+
+/**
+ * The themes of one song (`songs.themes`, added by the migration `20261121000000_song_themes`).
+ * Asked for apart from the list, so the list still loads on a database without the column.
+ */
+@Serializable
+data class SongThemesDto(
+    val id: String,
+    val themes: List<String>? = null,
+) {
+    companion object {
+        const val COLUMNS = "id, themes"
+    }
+}
+
+/** The chart of one song, fetched when its page opens or when a search reads the lyrics. */
+@Serializable
+data class SongChartDto(
+    val id: String,
+    val chart: String,
+) {
+    companion object {
+        const val COLUMNS = "id, chart"
     }
 }
 
