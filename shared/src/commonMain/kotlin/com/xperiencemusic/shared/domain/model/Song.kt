@@ -8,8 +8,12 @@ data class Song(
     val title: String,
     val artist: String?,
     val key: Key,
-    /** ChordPro-style chart with chords stored as Nashville numbers (see `ChordChart`). */
-    val chart: String,
+    /**
+     * ChordPro-style chart with chords stored as Nashville numbers (see `ChordChart`). Null while
+     * it is not on the phone yet: the list of songs is loaded without the charts, and a song's
+     * chart arrives when its page opens (or when a search reads the lyrics).
+     */
+    val chart: String?,
     val recordings: List<Recording>,
     /** Learning tracks per voice. They do not count towards [MAX_RECORDINGS]. */
     val voiceTracks: List<VoiceTrack>,

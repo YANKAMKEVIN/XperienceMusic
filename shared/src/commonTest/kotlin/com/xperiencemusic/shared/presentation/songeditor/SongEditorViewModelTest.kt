@@ -9,6 +9,7 @@ import com.xperiencemusic.shared.domain.usecase.ImportSongFromLinkUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSongUseCase
 import com.xperiencemusic.shared.domain.usecase.SaveSongUseCase
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
+import com.xperiencemusic.shared.fakes.LazyChartsSongRepository
 import com.xperiencemusic.shared.fakes.member
 import com.xperiencemusic.shared.fakes.song
 import com.xperiencemusic.shared.fakes.songRepository
@@ -127,6 +128,24 @@ class SongEditorViewModelTest {
         assertEquals("Gloire", state.title)
         val chords = (state.preview.single() as ChartLine.Lyrics).segments.map { it.chord }
         assertEquals(listOf("Do", "Sol"), chords)
+    }
+
+    @Test
+    fun `modifier attend les paroles avant d'ouvrir le chant, pour ne jamais les effacer`() = runTest {
+        val lazy = LazyChartsSongRepository(song(id = "s1", title = "Gloire", chart = "[1]Gloire [5]à toi"))
+        val vm = SongEditorViewModel(
+            "s1",
+            ObserveSongUseCase(lazy),
+            SaveSongUseCase(sessions, lazy),
+            DeleteSongUseCase(sessions, lazy),
+            ImportSongFromLinkUseCase { page },
+        )
+        assertTrue(vm.state.value.isLoading)
+
+        lazy.loadCharts(listOf("s1"))
+
+        assertFalse(vm.state.value.isLoading)
+        assertEquals("[1]Gloire [5]à toi", vm.state.value.chart)
     }
 
     @Test

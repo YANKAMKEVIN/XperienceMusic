@@ -18,6 +18,7 @@ import com.xperiencemusic.shared.domain.usecase.DeleteSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveRepertoireUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.PublishSetlistUseCase
+import com.xperiencemusic.shared.domain.usecase.LyricsOnDemand
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.domain.usecase.SongSearchIndex
 import com.xperiencemusic.shared.presentation.library.LibrarySongUi
@@ -81,6 +82,7 @@ class SetlistEditorViewModel(
     observeSchedule: ObserveSetlistScheduleUseCase,
     serviceDate: LocalDate?,
 ) : ViewModel() {
+    private val lyrics = LyricsOnDemand(searchSongs)
     private val draft = MutableStateFlow(
         suggestBandWeek().let { SetlistDraft(rehearsalDate = it.rehearsalDate, serviceDate = it.serviceDate, today = suggestBandWeek.today()) },
     )
@@ -121,7 +123,10 @@ class SetlistEditorViewModel(
 
     fun onEvent(event: SetlistEditorEvent) {
         when (event) {
-            is SetlistEditorEvent.QueryChanged -> draft.update { it.copy(query = event.query) }
+            is SetlistEditorEvent.QueryChanged -> {
+                draft.update { it.copy(query = event.query) }
+                if (lyrics.shouldLoad(event.query)) viewModelScope.launch { lyrics.load() }
+            }
             is SetlistEditorEvent.SongAdded -> draft.update {
                 if (event.id in it.selectedIds) it else it.copy(selectedIds = it.selectedIds + event.id, query = "")
             }

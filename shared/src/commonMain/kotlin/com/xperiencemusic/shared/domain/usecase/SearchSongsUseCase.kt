@@ -1,5 +1,6 @@
 package com.xperiencemusic.shared.domain.usecase
 
+import com.xperiencemusic.shared.domain.model.DomainResult
 import com.xperiencemusic.shared.domain.model.Song
 import com.xperiencemusic.shared.domain.repository.SongRepository
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +14,43 @@ class SearchSongsUseCase(private val songs: SongRepository) {
 
     /** The catalogue ready to be searched many times, lyrics included: build it once, query it on each keystroke. */
     fun index(): Flow<SongSearchIndex> = songs.observeSongs().map(::SongSearchIndex)
+
+    /**
+     * The list of songs comes without the lyrics. The first search long enough to read them (see
+     * [SongSearchIndex.readsLyrics]) calls this, which fetches every chart once per app session:
+     * the matches in the titles show at once, those in the lyrics as soon as the charts arrive and
+     * [index] emits again.
+     *
+     * Why not a search on the server (`ilike` or full text)? The charts hold the chords inside the
+     * words (`Sei[2]gneur`) and the accents as typed: only the phone strips the chords and folds
+     * the accents the way the search always has. It also keeps working offline from the copy on
+     * the phone, and needs no change to the database.
+     */
+    suspend fun loadLyrics(): DomainResult<Unit> = runRemote { songs.loadLyrics() }
+}
+
+/**
+ * Asks [SearchSongsUseCase.loadLyrics] once, on the first query that reads the lyrics; again on a
+ * later query when it failed (no network).
+ */
+class LyricsOnDemand(private val searchSongs: SearchSongsUseCase) {
+    private var state = State.NOT_ASKED
+
+    /**
+     * True when [query] needs the lyrics and they were not asked for yet: the caller then calls
+     * [load]. The next queries answer false meanwhile, so one fetch runs at a time.
+     */
+    fun shouldLoad(query: String): Boolean {
+        if (state == State.ASKED || !SongSearchIndex.readsLyrics(query)) return false
+        state = State.ASKED
+        return true
+    }
+
+    suspend fun load() {
+        if (searchSongs.loadLyrics() is DomainResult.Failure) state = State.NOT_ASKED
+    }
+
+    private enum class State { NOT_ASKED, ASKED }
 }
 
 /** A song found by a search; [lyricLine] is the line that matched when neither the title nor the artist did. */
@@ -26,7 +64,7 @@ class SongSearchIndex(songs: List<Song>) {
     private class Entry(val song: Song) {
         val title = song.title.foldForSearch()
         val artist = song.artist.orEmpty().foldForSearch()
-        val lyrics by lazy { song.chart.lyricLines().joinToString("\n") { it.foldForSearch() } }
+        val lyrics by lazy { song.chart.orEmpty().lyricLines().joinToString("\n") { it.foldForSearch() } }
     }
 
     private val entries = songs.map(::Entry).sortedBy { it.title.trim() }
@@ -56,11 +94,14 @@ class SongSearchIndex(songs: List<Song>) {
     }
 
     private fun Song.lyricLine(needle: String): String? =
-        chart.lyricLines().firstOrNull { needle in it.foldForSearch() }?.trim()
+        chart.orEmpty().lyricLines().firstOrNull { needle in it.foldForSearch() }?.trim()
 
     companion object {
         /** Shorter words are in nearly every song. */
         private const val MIN_LYRICS_QUERY = 3
+
+        /** Whether a search for [query] also reads the lyrics. */
+        fun readsLyrics(query: String): Boolean = query.trim().foldForSearch().length >= MIN_LYRICS_QUERY
 
         /** The first character of [title] as the search reads it, in upper case; a space when it is empty. */
         fun firstLetter(title: String): Char = title.trim().foldForSearch().firstOrNull()?.uppercaseChar() ?: ' '

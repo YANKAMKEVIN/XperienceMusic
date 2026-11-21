@@ -100,7 +100,7 @@ class FirstLoadOfflineTest {
             schedule,
             ObserveCurrentMemberUseCase(FakeSessionRepository(member(Role.MEMBER))),
             ObserveSetlistOfflineUseCase(schedule, cache),
-            DownloadSetlistUseCase(schedule, cache),
+            DownloadSetlistUseCase(schedule, cache, songs),
             ObserveSyncStatusUseCase(songs, setlists),
             RefreshContentUseCase(songs, setlists),
             PlaybackController(FakeAudioPlayer(), { it }, CoroutineScope(UnconfinedTestDispatcher())),

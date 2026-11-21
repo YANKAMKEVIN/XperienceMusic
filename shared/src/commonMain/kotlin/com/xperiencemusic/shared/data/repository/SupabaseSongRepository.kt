@@ -6,6 +6,7 @@ import com.xperiencemusic.shared.data.local.SnapshotStore
 import com.xperiencemusic.shared.data.mapper.toDomain
 import com.xperiencemusic.shared.data.mapper.toWriteDto
 import com.xperiencemusic.shared.data.remote.AUDIO_BUCKET
+import com.xperiencemusic.shared.data.remote.allPages
 import com.xperiencemusic.shared.data.remote.dto.IdDto
 import com.xperiencemusic.shared.data.remote.dto.SongDto
 import com.xperiencemusic.shared.data.remote.dto.SongLinkWriteDto
@@ -19,6 +20,7 @@ import com.xperiencemusic.shared.domain.model.SongDraft
 import com.xperiencemusic.shared.domain.model.SyncStatus
 import com.xperiencemusic.shared.domain.model.YouTubeLink
 import com.xperiencemusic.shared.domain.repository.SessionResettable
+import com.xperiencemusic.shared.domain.repository.SongChartLoader
 import com.xperiencemusic.shared.domain.repository.SongRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -30,9 +32,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.ListSerializer
@@ -40,39 +45,58 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 /**
- * The whole library is small (a band's repertoire), so it is fetched in one query and kept in
- * memory; every change reloads it. Offline-first: the last fetched copy is shown at once and
- * refreshed from the server once per app session, and kept as is when there is no network.
+ * The list of songs (titles, keys, recordings, links: no charts) is fetched page by page and kept
+ * in memory; every change reloads it. The charts, most of the catalogue's weight, are fetched apart:
+ * one song's when its page opens, every song's the first time a search reads the lyrics, and those
+ * of the weeks downloaded ahead. Offline-first: the last fetched copies (list and charts) are shown
+ * at once and refreshed from the server once per app session, and kept as is without network.
  */
-class SupabaseSongRepository(
+class SupabaseSongRepository private constructor(
     private val client: SupabaseClient,
     private val snapshots: SnapshotStore,
-) : SongRepository, SessionResettable {
-    private val session = SessionGuard()
+    private val session: SessionGuard,
+    private val chartStore: SupabaseSongCharts,
+) : SongRepository, SessionResettable, SongChartLoader by chartStore {
+    constructor(client: SupabaseClient, snapshots: SnapshotStore) : this(client, snapshots, SessionGuard())
+
+    private constructor(client: SupabaseClient, snapshots: SnapshotStore, session: SessionGuard) :
+        this(client, snapshots, session, SupabaseSongCharts(client, snapshots, session))
 
     override fun resetSession() {
         session.reset()
         songs.value = null
+        chartStore.reset()
         hasRefreshed = false
     }
 
-    private val songs = MutableStateFlow<Map<String, Song>?>(null)
+    private val songs = MutableStateFlow<Map<String, SongDto>?>(null)
     private val loading = Mutex()
     private var hasRefreshed = false
     private val _syncStatus = MutableStateFlow(SyncStatus.IDLE)
     override val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
-    override suspend fun refresh() = _syncStatus.tracking { reload() }
+    override suspend fun refresh() {
+        // A pull-to-refresh also renews the lyrics, the next time a search needs them.
+        chartStore.markStale()
+        _syncStatus.tracking { reload() }
+    }
 
     override fun observeSongs(): Flow<List<Song>> =
-        songs.onStart { showSnapshotThenRefresh() }.filterNotNull().map { it.values.toList() }
+        combine(songs.onStart { showSnapshotThenRefresh() }.filterNotNull(), chartStore.charts) { list, charts ->
+            list.values.map { it.toDomain(charts[it.id]) }
+        }
 
-    override fun observeSong(id: String): Flow<Song?> =
-        songs.onStart { showSnapshotThenRefresh() }.filterNotNull().map { it[id] }
+    override fun observeSong(id: String): Flow<Song?> = channelFlow {
+        // The chart is fetched alongside: the copy on the phone, if any, shows meanwhile.
+        launch { ignoringFailures { chartStore.loadCharts(listOf(id)) } }
+        combine(songs.onStart { showSnapshotThenRefresh() }.filterNotNull(), chartStore.charts) { list, charts ->
+            list[id]?.toDomain(charts[id])
+        }.collect { send(it) }
+    }.distinctUntilChanged()
 
     override suspend fun song(id: String): Song? {
         loadIfNeeded()
-        return songs.value?.get(id)
+        return songs.value?.get(id)?.toDomain(chartStore.charts.value[id])
     }
 
     override suspend fun createSong(draft: SongDraft): String {
@@ -80,6 +104,7 @@ class SupabaseSongRepository(
             client.from(SONGS).insert(draft.toWriteDto()) { select(Columns.list("id")) }.decodeSingle<IdDto>()
                 .also { insertYouTubeLink(it.id, draft.youtubeUrl) }
         }
+        chartStore.put(created.id, draft.chart)
         refreshAfterWrite()
         return created.id
     }
@@ -89,6 +114,7 @@ class SupabaseSongRepository(
             client.from(SONGS).update(draft.toWriteDto()) { filter { eq("id", id) } }
             replaceYouTubeLink(id, draft.youtubeUrl)
         }
+        chartStore.put(id, draft.chart)
         refreshAfterWrite()
     }
 
@@ -110,11 +136,12 @@ class SupabaseSongRepository(
 
     override suspend fun deleteSong(id: String) {
         val audioPaths = songs.value?.get(id)?.let { song ->
-            song.recordings.map { it.audioPath } + song.voiceTracks.map { it.audioPath }
+            song.recordings.map { it.storagePath } + song.voiceTracks.map { it.storagePath }
         }.orEmpty()
         // Rows of recordings, voice tracks and setlist entries go with the song (on delete cascade).
         session.accountCall { client.from(SONGS).delete { filter { eq("id", id) } } }
         if (audioPaths.isNotEmpty()) ignoringFailures { client.storage.from(AUDIO_BUCKET).delete(audioPaths) }
+        chartStore.put(id, null)
         refreshAfterWrite()
     }
 
@@ -180,7 +207,9 @@ class SupabaseSongRepository(
 
 
     private fun showSnapshot() {
-        snapshots.load(SNAPSHOT, ListSerializer(SongDto.serializer()))?.let { cached -> publish(cached) }
+        val cached = snapshots.load(SNAPSHOT, ListSerializer(SongDto.serializer())) ?: return
+        chartStore.restore(cached)
+        publish(cached)
     }
 
     /**
@@ -192,16 +221,11 @@ class SupabaseSongRepository(
 
     private suspend fun reload() = loading.withLock {
         val fetched = session.accountCall {
-            // The server answers at most PAGE_SIZE rows per request: without pages, a catalogue of
-            // two thousand songs stopped at the first thousand.
-            buildList {
-                do {
-                    val page = client.from(SONGS).select(Columns.raw(SongDto.COLUMNS)) {
-                        order("id", Order.ASCENDING)
-                        range(size.toLong(), size + PAGE_SIZE - 1)
-                    }.decodeList<SongDto>()
-                    addAll(page)
-                } while (page.isNotEmpty())
+            allPages { from, to ->
+                client.from(SONGS).select(Columns.raw(SongDto.LIST_COLUMNS)) {
+                    order("id", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<SongDto>()
             }
         }
         publish(fetched)
@@ -210,13 +234,12 @@ class SupabaseSongRepository(
     }
 
     private fun publish(dtos: List<SongDto>) {
-        songs.value = dtos.associate { it.id to it.toDomain() }
+        // The charts are kept apart (see [SupabaseSongCharts]): the list holds none.
+        songs.value = dtos.associate { it.id to it.copy(chart = null) }
     }
 
     private companion object {
         const val SONGS = "songs"
-        /** Supabase's default row limit. A smaller server limit only costs more requests. */
-        const val PAGE_SIZE = 1000L
         const val VOICE_TRACKS = "voice_tracks"
         const val SONG_LINKS = "song_links"
         const val SNAPSHOT = "songs"

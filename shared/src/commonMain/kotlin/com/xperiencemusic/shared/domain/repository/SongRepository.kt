@@ -12,16 +12,22 @@ import kotlinx.coroutines.flow.StateFlow
  * Recording changes are single operations so a backend can apply them atomically. The use cases
  * decide what each operation does (which recording becomes the reference…); the backend re-checks.
  */
-interface SongRepository {
+interface SongRepository : SongChartLoader {
     val syncStatus: StateFlow<SyncStatus>
 
     /** Fetches the latest data from the server; throws when it cannot be reached. */
     suspend fun refresh()
 
+    /**
+     * The catalogue. A song's chart is null until it is on the phone: the list is loaded without
+     * the charts (see [SongChartLoader]).
+     */
     fun observeSongs(): Flow<List<Song>>
 
+    /** One song; observing it also fetches its chart, shown from the phone's copy meanwhile. */
     fun observeSong(id: String): Flow<Song?>
 
+    /** One song, its chart left as [observeSongs] has it. */
     suspend fun song(id: String): Song?
 
     /** Returns the new song's id. */

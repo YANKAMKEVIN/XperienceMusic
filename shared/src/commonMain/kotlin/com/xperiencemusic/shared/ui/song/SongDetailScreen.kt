@@ -224,7 +224,7 @@ private fun SongDetailBody(
                     stringResource(if (state.lyricsOnly) Res.string.song_lyrics_title else Res.string.song_chart_title),
                     Modifier.padding(bottom = Spacing.s),
                 )
-                ChordChartView(state.chart, lyricsOnly = state.lyricsOnly)
+                ChordChartView(state.chart, lyricsOnly = state.lyricsOnly, isLoading = state.isChartLoading)
             }
         }
         item {

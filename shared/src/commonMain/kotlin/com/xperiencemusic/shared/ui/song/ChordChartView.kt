@@ -17,16 +17,30 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.chart.ChartSegment
+import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.song_chart_loading
 import com.xperiencemusic.shared.ui.theme.Spacing
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Lyrics with each chord printed above the syllable it falls on; lines wrap between words.
  * With [lyricsOnly] the chords go: plain lines of text, twice as many on a screen, for singers.
  */
 @OptIn(ExperimentalLayoutApi::class)
+/** [isLoading]: the chart is not on the phone yet, which a line says in place of [lines]. */
 @Composable
-fun ChordChartView(lines: List<ChartLine>, modifier: Modifier = Modifier, scale: Float = 1f, lyricsOnly: Boolean = false) {
+fun ChordChartView(
+    lines: List<ChartLine>,
+    modifier: Modifier = Modifier,
+    scale: Float = 1f,
+    lyricsOnly: Boolean = false,
+    isLoading: Boolean = false,
+) {
     val body = MaterialTheme.typography.bodyLarge.scaled(scale)
+    if (isLoading) {
+        Text(stringResource(Res.string.song_chart_loading), modifier, style = body, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        return
+    }
     val section = MaterialTheme.typography.labelLarge.scaled(scale)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs * scale)) {
         lines.forEach { line ->

@@ -10,6 +10,7 @@ import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.model.VoiceTrack
 import com.xperiencemusic.shared.fakes.FakeAudioCache
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
+import com.xperiencemusic.shared.fakes.LazyChartsSongRepository
 import com.xperiencemusic.shared.fakes.member
 import com.xperiencemusic.shared.fakes.recording
 import com.xperiencemusic.shared.fakes.schedule
@@ -48,20 +49,44 @@ class OfflineUseCasesTest {
 
     @Test
     fun `télécharger ne reprend que ce qui manque`() = runTest {
-        val result = DownloadSetlistUseCase(weekly(), cache)()
+        val result = DownloadSetlistUseCase(weekly(), cache, songs)()
         assertIs<DomainResult.Success<Unit>>(result)
         assertEquals(listOf("demo://b", "demo://v", "demo://c"), cache.downloaded)
         assertTrue(ObserveSetlistOfflineUseCase(weekly(), cache)().first().isComplete)
     }
 
     @Test
+    fun `télécharger charge aussi les paroles des chants de la semaine, pour le mode scène hors ligne`() = runTest {
+        val lazy = LazyChartsSongRepository(song("s1"), song("s2"), song("other"))
+        val setlists = setlistRepository().apply {
+            publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("s1", "s2"), null, "x"))
+        }
+
+        DownloadSetlistUseCase(schedule(setlists, lazy), cache, lazy)()
+
+        assertEquals(listOf(listOf("s1", "s2")), lazy.chartLoads.map { it.toList() })
+        assertEquals(setOf("s1", "s2"), lazy.observeSongs().first().filter { it.chart != null }.map { it.id }.toSet())
+    }
+
+    @Test
+    fun `sans réseau pour les paroles, le téléchargement échoue et pourra reprendre`() = runTest {
+        val lazy = LazyChartsSongRepository(song("s1", recordings = listOf(recording("b", 2)))).apply { isOffline = true }
+        val setlists = setlistRepository().apply {
+            publish(Setlist("w", LocalDate(2026, 10, 13), LocalDate(2026, 10, 18), listOf("s1"), null, "x"))
+        }
+
+        assertEquals(DomainResult.Failure(DomainError.NETWORK), DownloadSetlistUseCase(schedule(setlists, lazy), cache, lazy)())
+        assertTrue(cache.downloaded.isEmpty())
+    }
+
+    @Test
     fun `une coupure arrête le téléchargement et la reprise continue`() = runTest {
         cache.failing += "demo://v"
-        assertEquals(DomainResult.Failure(DomainError.NETWORK), DownloadSetlistUseCase(weekly(), cache)())
+        assertEquals(DomainResult.Failure(DomainError.NETWORK), DownloadSetlistUseCase(weekly(), cache, songs)())
         assertEquals(listOf("demo://b"), cache.downloaded)
 
         cache.failing.clear()
-        DownloadSetlistUseCase(weekly(), cache)()
+        DownloadSetlistUseCase(weekly(), cache, songs)()
         assertEquals(listOf("demo://b", "demo://v", "demo://c"), cache.downloaded)
     }
 
