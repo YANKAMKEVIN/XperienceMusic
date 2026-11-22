@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.ui.account.AccountScreen
+import com.xperiencemusic.shared.ui.help.HelpScreen
 import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.exercise.ExerciseScreen
 import com.xperiencemusic.shared.ui.learning.AssessmentScreen
@@ -294,7 +295,7 @@ private fun NavGraphBuilder.learningGraph(navController: NavHostController) {
     composable<PianoScaleCoachRoute> { PianoScaleScreen(onBack = { navController.popBackStack() }) }
 }
 
-/** The member's account, profile and, for admins, the band's members. */
+/** The member's account, profile, help and, for admins, the band's members. */
 private fun NavGraphBuilder.accountGraph(navController: NavHostController, onSignOut: () -> Unit) {
     composable<AccountRoute> {
         AccountScreen(
@@ -303,9 +304,11 @@ private fun NavGraphBuilder.accountGraph(navController: NavHostController, onSig
             onReview = { navController.navigate(VoiceReviewRoute) },
             onValidate = { navController.navigate(GrowthReviewRoute) },
             onManageMembers = { navController.navigate(MembersRoute) },
+            onHelp = { navController.navigate(HelpRoute) },
             onSignOut = onSignOut,
         )
     }
     composable<ProfileRoute> { ProfileScreen(onBack = { navController.popBackStack() }) }
     composable<MembersRoute> { MembersScreen(onBack = { navController.popBackStack() }) }
+    composable<HelpRoute> { HelpScreen(onBack = { navController.popBackStack() }) }
 }

@@ -46,6 +46,46 @@ val generateSupabaseConfig by tasks.registering {
     }
 }
 
+// The in-app help ("Aide", from "Mon compte") is generated from docs/aide/*.md: those Markdown files are its
+// single source. Edit them, never the generated object. Blocks between <!-- hors-app --> and <!-- /hors-app -->
+// stay on GitHub only (see HelpMarkdown).
+val helpPages = mapOf(
+    "MEMBERS" to rootProject.file("docs/aide/membres.md"),
+    "LEADERS" to rootProject.file("docs/aide/responsable.md"),
+)
+
+val generateHelpPages by tasks.registering {
+    val outputDir = layout.buildDirectory.dir("generated/helpPages/kotlin")
+    inputs.files(helpPages.values).withPropertyName("pages").withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(outputDir)
+    val pages = helpPages
+    doLast {
+        fun literal(text: String): String = buildString {
+            append('"')
+            text.replace("\r", "").forEach { c ->
+                when (c) {
+                    '\\' -> append("\\\\")
+                    '"' -> append("\\\"")
+                    '$' -> append("\\$")
+                    '\n' -> append("\\n")
+                    else -> append(c)
+                }
+            }
+            append('"')
+        }
+        val constants = pages.entries.joinToString("\n\n") { (name, file) ->
+            "    /** docs/aide/${file.name} */\n    const val $name: String = ${literal(file.readText())}"
+        }
+        val file = outputDir.get().file("com/xperiencemusic/shared/data/help/HelpSources.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            "package com.xperiencemusic.shared.data.help\n\n" +
+                "// Generated from docs/aide by :shared:generateHelpPages. Do not edit.\n" +
+                "internal object HelpSources {\n$constants\n}\n",
+        )
+    }
+}
+
 kotlin {
     listOf(
         iosArm64(),
@@ -112,6 +152,7 @@ kotlin {
         }
         commonMain {
             kotlin.srcDir(generateSupabaseConfig)
+            kotlin.srcDir(generateHelpPages)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

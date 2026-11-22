@@ -26,6 +26,7 @@ import com.xperiencemusic.shared.platform.NotificationScheduler
 import com.xperiencemusic.shared.presentation.account.AccountViewModel
 import com.xperiencemusic.shared.presentation.app.AppViewModel
 import com.xperiencemusic.shared.presentation.exercise.ExerciseViewModel
+import com.xperiencemusic.shared.presentation.help.HelpViewModel
 import com.xperiencemusic.shared.presentation.learning.AssessmentViewModel
 import com.xperiencemusic.shared.presentation.learning.LearningViewModel
 import com.xperiencemusic.shared.presentation.learning.PianoScaleViewModel
@@ -128,8 +129,9 @@ class KoinModulesTest {
             koin.get<VoiceReviewViewModel>(),
             koin.get<MembersViewModel>(),
             koin.get<MiniPlayerViewModel>(),
+            koin.get<HelpViewModel>(),
         )
-        assertEquals(28, viewModels.size)
+        assertEquals(29, viewModels.size)
     }
 
     @Test

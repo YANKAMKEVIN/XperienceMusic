@@ -1,8 +1,12 @@
 # Aide : Xperience Music pour le responsable des chants
 
+<!-- Source unique de l'écran « Aide » de l'app (Mon compte › Aide), compilée par :shared:generateHelpPages.
+     Ce qui est entre « hors-app » et « /hors-app » ne reste que sur GitHub. Markdown simple seulement :
+     titres #, ##, ###, paragraphes, listes « - » ou « 1. », **gras**, `code` et liens (seul le texte reste dans l'app). -->
+
 Cette page s'adresse aux responsables : **Admin contenu** (chants, versions, setlists) et **Admin++** (en plus :
 membres, exercices, voix et niveaux). Tout ce que voit un membre est décrit dans
-[l'aide des membres](membres.md).
+[l'aide des membres](membres.md) (onglet « Membres » de l'écran Aide).
 
 ## Publier la setlist de la semaine
 
@@ -58,4 +62,6 @@ compresse l'audio avant l'envoi (la limite est de 50 Mo par fichier).
 - La tonalité n'apparaît pas dans la liste des chants, car elle change d'une répétition à l'autre. La setlist
   montre celle de la fiche du chant : si le groupe chante un chant dans une autre tonalité, change-la dans
   l'éditeur du chant.
+<!-- hors-app -->
 - Pour les réglages du serveur (Supabase, e-mails, migrations), voir [la mise en place](../supabase-setup.md).
+<!-- /hors-app -->

@@ -1,7 +1,15 @@
 # Aide : Xperience Music pour les membres
 
-Cette page explique l'app à un membre du groupe de louange (chantre ou musicien). Pour publier les setlists
-et gérer les chants, voir [l'aide du responsable](responsable.md).
+<!-- Source unique de l'écran « Aide » de l'app (Mon compte › Aide), compilée par :shared:generateHelpPages.
+     Ce qui est entre « hors-app » et « /hors-app » ne reste que sur GitHub. Markdown simple seulement :
+     titres #, ##, ###, paragraphes, listes « - » ou « 1. », **gras**, `code` et liens (seul le texte reste dans l'app). -->
+
+Cette page explique l'app à un membre du groupe de louange (chantre ou musicien).
+
+<!-- hors-app -->
+Elle se lit aussi dans l'app : « Mon compte » (ton avatar en haut de Semaine) › « Aide ». Pour publier les
+setlists et gérer les chants, voir [l'aide du responsable](responsable.md).
+<!-- /hors-app -->
 
 ## Se connecter
 

@@ -188,7 +188,12 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
    - Version Android release signée et numéro de version, pour diffuser l'APK au groupe.
    - Pages d'aide : une pour les membres, une pour le responsable des chants. **Première version le
      22 novembre 2026** (branche `claude/suite-3`) : `docs/aide/membres.md` et `docs/aide/responsable.md`,
-     liées depuis le README. Reste à choisir où les publier (app, site GitHub Pages, PDF).
+     liées depuis le README. **Publiées dans l'app le 22 novembre 2026** (décision de Kevin, branche
+     `claude/suite-3`, pas vu à l'écran) : écran « Aide » ouvert depuis Mon compte. Un membre lit sa page ;
+     Admin contenu et Admin++ ont deux onglets, « Responsables » (ouvert d'abord) et « Membres ». Source
+     unique : les fichiers de `docs/aide`, compilés dans l'app par `:shared:generateHelpPages`
+     (`HelpMarkdown` lit leur Markdown simple ; ce qui est entre `<!-- hors-app -->` et
+     `<!-- /hors-app -->` reste sur GitHub).
    - Ligne « Cette semaine tu sers… › » en haut de Semaine. **Faite le 22 novembre 2026** (branche
      `claude/suite-3`, pas vue à l'écran) : une carte sous l'en-tête quand le membre a répondu « Je sers »
      pour le vendredi ou le dimanche de la semaine ; elle ouvre l'équipe de son prochain service et dit

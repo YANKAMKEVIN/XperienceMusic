@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Badge
@@ -79,6 +80,7 @@ import com.xperiencemusic.shared.resources.Res
 import com.xperiencemusic.shared.resources.account_avatar_label
 import com.xperiencemusic.shared.resources.account_change_avatar
 import com.xperiencemusic.shared.resources.account_edit_profile
+import com.xperiencemusic.shared.resources.account_help
 import com.xperiencemusic.shared.resources.account_members
 import com.xperiencemusic.shared.resources.account_review
 import com.xperiencemusic.shared.resources.account_role_line
@@ -118,6 +120,7 @@ fun AccountScreen(
     onReview: () -> Unit,
     onValidate: () -> Unit,
     onManageMembers: () -> Unit,
+    onHelp: () -> Unit,
     onSignOut: () -> Unit,
     viewModel: AccountViewModel = koinViewModel(),
 ) {
@@ -133,6 +136,7 @@ fun AccountScreen(
         onReview = onReview,
         onValidate = onValidate,
         onManageMembers = onManageMembers,
+        onHelp = onHelp,
         onSignOut = onSignOut,
     )
 }
@@ -149,6 +153,7 @@ fun AccountScreenContent(
     onReview: () -> Unit,
     onValidate: () -> Unit,
     onManageMembers: () -> Unit,
+    onHelp: () -> Unit,
     onSignOut: () -> Unit,
 ) {
     val snackbar = remember { SnackbarHostState() }
@@ -195,6 +200,7 @@ fun AccountScreenContent(
             }
             if (state.canReview || state.canManageMembers) Tools(state, onReview, onValidate, onManageMembers)
             AppCard(Modifier.fillMaxWidth()) {
+                MenuRow(Icons.Filled.Info, stringResource(Res.string.account_help), onClick = onHelp)
                 MenuRow(
                     icon = Icons.AutoMirrored.Filled.ExitToApp,
                     text = stringResource(Res.string.session_sign_out),
@@ -338,6 +344,6 @@ private fun AccountScreenPreview() = AppTheme {
             ),
         ).copy(toReviewCount = 3),
         onEvent = {}, onPickPhoto = {}, onBack = {}, onEditProfile = {}, onReview = {}, onValidate = {},
-        onManageMembers = {}, onSignOut = {},
+        onManageMembers = {}, onHelp = {}, onSignOut = {},
     )
 }

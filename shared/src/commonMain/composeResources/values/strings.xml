@@ -447,6 +447,13 @@
     <string name="account_validate">Objectifs à valider</string>
     <string name="account_members">Membres du groupe</string>
     <string name="account_role_line">%1$s · %2$s</string>
+    <string name="account_help">Aide</string>
+    <!-- Help ("Aide"): the pages themselves come from docs/aide, see :shared:generateHelpPages -->
+    <string name="help_title">Aide</string>
+    <string name="help_tab_leaders">Responsables</string>
+    <string name="help_tab_members">Membres</string>
+    <string name="help_bullet">•</string>
+    <string name="help_step_number">%1$d.</string>
     <string name="avatar_sheet_title">Ton avatar</string>
     <string name="avatar_import_photo">Importer une photo</string>
     <string name="avatar_presets_title">Ou choisis un avatar</string>
