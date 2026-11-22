@@ -2,6 +2,8 @@ package com.xperiencemusic.shared.fakes
 
 import com.xperiencemusic.music.theory.Key
 import com.xperiencemusic.shared.data.repository.InMemoryExerciseRepository
+import com.xperiencemusic.shared.data.repository.InMemoryMembersRepository
+import com.xperiencemusic.shared.data.repository.InMemoryPlanningRepository
 import com.xperiencemusic.shared.data.repository.InMemorySetlistRepository
 import com.xperiencemusic.shared.data.repository.InMemorySongRepository
 import com.xperiencemusic.shared.domain.model.DomainError
@@ -18,6 +20,8 @@ import com.xperiencemusic.shared.domain.model.VoicePart
 import com.xperiencemusic.shared.domain.repository.SessionRepository
 import com.xperiencemusic.shared.domain.repository.SetlistRepository
 import com.xperiencemusic.shared.domain.repository.SongRepository
+import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.ObservePlanningUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -94,3 +98,9 @@ fun schedule(
 
 fun exerciseRepository(vararg exercises: com.xperiencemusic.shared.domain.model.Exercise) =
     InMemoryExerciseRepository(exercises.toList())
+
+/** The planning as [sessions]' member sees it, empty unless [planning] holds months and answers. */
+fun observePlanning(
+    sessions: SessionRepository = FakeSessionRepository(member()),
+    planning: InMemoryPlanningRepository = InMemoryPlanningRepository(),
+) = ObservePlanningUseCase(planning, InMemoryMembersRepository(sessions), ObserveCurrentMemberUseCase(sessions))

@@ -81,3 +81,7 @@ data object ProfileRoute
 /** "Mon compte", from the member's circle at the top of Semaine. */
 @Serializable
 data object AccountRoute
+
+/** "Aide", from "Mon compte": the pages of docs/aide for the member's role. */
+@Serializable
+data object HelpRoute

@@ -25,11 +25,10 @@ fun searchMatches(text: String, query: String): List<IntRange> {
  * starts a few words before it, behind an ellipsis.
  */
 fun lyricExcerpt(line: String, query: String, lead: Int = EXCERPT_LEAD): String {
-    val start = searchMatches(line, query).firstOrNull()?.first ?: return line
-    if (start <= lead) return line
+    val start = searchMatches(line, query).firstOrNull()?.first?.takeIf { it > lead } ?: return line
     // Back to the start of a word, so the excerpt does not open in the middle of one.
-    val from = line.lastIndexOf(' ', start - lead).takeIf { it >= 0 }?.plus(1) ?: return line
-    return if (from == 0) line else "…" + line.substring(from)
+    val from = line.lastIndexOf(' ', start - lead).takeIf { it >= 0 }?.plus(1)
+    return if (from == null || from == 0) line else "…" + line.substring(from)
 }
 
 /** About what fits before the match on a phone, at the size of a row's second line. */

@@ -44,7 +44,13 @@ private data class Tab(
 private val tabs = listOf(
     Tab(WeekRoute, WeekRoute::class, Res.string.tab_week, XmIcons.Notes),
     Tab(LibraryRoute, LibraryRoute::class, Res.string.tab_library, XmIcons.Book),
-    Tab(PlanningRoute, PlanningRoute::class, Res.string.tab_planning, XmIcons.Calendar, alertLabel = Res.string.tab_planning_alert) { it.planning },
+    Tab(
+        PlanningRoute,
+        PlanningRoute::class,
+        Res.string.tab_planning,
+        XmIcons.Calendar,
+        alertLabel = Res.string.tab_planning_alert,
+    ) { it.planning },
     Tab(
         ProgressRoute, ProgressRoute::class, Res.string.tab_progress, XmIcons.Bars, Res.string.tab_progress_short,
         alertLabel = Res.string.tab_progress_alert,

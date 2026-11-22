@@ -2,6 +2,8 @@ package com.xperiencemusic.shared.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.xperiencemusic.music.theory.Notation
 import com.xperiencemusic.shared.ui.account.AccountScreen
+import com.xperiencemusic.shared.ui.help.HelpScreen
 import com.xperiencemusic.shared.ui.components.SystemBackHandler
 import com.xperiencemusic.shared.ui.exercise.ExerciseScreen
 import com.xperiencemusic.shared.ui.learning.AssessmentScreen
@@ -56,38 +59,10 @@ internal fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit,
         navController,
         startDestination = WeekRoute,
         modifier = modifier,
-        enterTransition = {
-            when {
-                isTabSwitch() -> fadeIn(tween(TAB_FADE_MS))
-                targetState.isStage() -> scaleIn(tween(STAGE_MS), initialScale = STAGE_SCALE) + fadeIn(tween(STAGE_MS))
-                // The stage closed on another song than the one it opened from: that page takes its place.
-                initialState.isStage() -> fadeIn(tween(STAGE_MS))
-                else -> slideIntoContainer(SlideDirection.Start, tween(PUSH_MS)) + fadeIn(tween(PUSH_MS))
-            }
-        },
-        exitTransition = {
-            when {
-                isTabSwitch() -> fadeOut(tween(TAB_FADE_MS))
-                targetState.isStage() -> fadeOut(tween(STAGE_MS))
-                initialState.isStage() -> scaleOut(tween(STAGE_MS), targetScale = STAGE_SCALE) + fadeOut(tween(STAGE_MS))
-                // The screen underneath only steps aside a little, and dims.
-                else -> slideOutOfContainer(SlideDirection.Start, tween(PUSH_MS)) { it / UNDERNEATH_SHARE } + fadeOut(tween(PUSH_MS))
-            }
-        },
-        popEnterTransition = {
-            when {
-                isTabSwitch() -> fadeIn(tween(TAB_FADE_MS))
-                initialState.isStage() -> fadeIn(tween(STAGE_MS))
-                else -> slideIntoContainer(SlideDirection.End, tween(PUSH_MS)) { it / UNDERNEATH_SHARE } + fadeIn(tween(PUSH_MS))
-            }
-        },
-        popExitTransition = {
-            when {
-                isTabSwitch() -> fadeOut(tween(TAB_FADE_MS))
-                initialState.isStage() -> scaleOut(tween(STAGE_MS), targetScale = STAGE_SCALE) + fadeOut(tween(STAGE_MS))
-                else -> slideOutOfContainer(SlideDirection.End, tween(PUSH_MS)) + fadeOut(tween(PUSH_MS))
-            }
-        },
+        enterTransition = { enter() },
+        exitTransition = { exit() },
+        popEnterTransition = { popEnter() },
+        popExitTransition = { popExit() },
     ) {
         weekGraph(navController)
         songsGraph(navController)
@@ -96,6 +71,34 @@ internal fun AppNavHost(navController: NavHostController, onSignOut: () -> Unit,
         learningGraph(navController)
         accountGraph(navController, onSignOut)
     }
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.enter(): EnterTransition = when {
+    isTabSwitch() -> fadeIn(tween(TAB_FADE_MS))
+    targetState.isStage() -> scaleIn(tween(STAGE_MS), initialScale = STAGE_SCALE) + fadeIn(tween(STAGE_MS))
+    // The stage closed on another song than the one it opened from: that page takes its place.
+    initialState.isStage() -> fadeIn(tween(STAGE_MS))
+    else -> slideIntoContainer(SlideDirection.Start, tween(PUSH_MS)) + fadeIn(tween(PUSH_MS))
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.exit(): ExitTransition = when {
+    isTabSwitch() -> fadeOut(tween(TAB_FADE_MS))
+    targetState.isStage() -> fadeOut(tween(STAGE_MS))
+    initialState.isStage() -> scaleOut(tween(STAGE_MS), targetScale = STAGE_SCALE) + fadeOut(tween(STAGE_MS))
+    // The screen underneath only steps aside a little, and dims.
+    else -> slideOutOfContainer(SlideDirection.Start, tween(PUSH_MS)) { it / UNDERNEATH_SHARE } + fadeOut(tween(PUSH_MS))
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.popEnter(): EnterTransition = when {
+    isTabSwitch() -> fadeIn(tween(TAB_FADE_MS))
+    initialState.isStage() -> fadeIn(tween(STAGE_MS))
+    else -> slideIntoContainer(SlideDirection.End, tween(PUSH_MS)) { it / UNDERNEATH_SHARE } + fadeIn(tween(PUSH_MS))
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.popExit(): ExitTransition = when {
+    isTabSwitch() -> fadeOut(tween(TAB_FADE_MS))
+    initialState.isStage() -> scaleOut(tween(STAGE_MS), targetScale = STAGE_SCALE) + fadeOut(tween(STAGE_MS))
+    else -> slideOutOfContainer(SlideDirection.End, tween(PUSH_MS)) + fadeOut(tween(PUSH_MS))
 }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch() =
@@ -121,6 +124,7 @@ private fun NavGraphBuilder.weekGraph(navController: NavHostController) {
             onEditWeek = { date -> navController.navigate(SetlistEditorRoute(date?.toString())) },
             onUploadRehearsal = { date -> navController.navigate(RehearsalUploadRoute(date.toString())) },
             onAccount = { navController.navigate(AccountRoute) },
+            onOpenService = { date -> navController.navigate(ServiceRoute(date.toString())) },
         )
     }
     composable<SetlistEditorRoute> { entry ->
@@ -291,7 +295,7 @@ private fun NavGraphBuilder.learningGraph(navController: NavHostController) {
     composable<PianoScaleCoachRoute> { PianoScaleScreen(onBack = { navController.popBackStack() }) }
 }
 
-/** The member's account, profile and, for admins, the band's members. */
+/** The member's account, profile, help and, for admins, the band's members. */
 private fun NavGraphBuilder.accountGraph(navController: NavHostController, onSignOut: () -> Unit) {
     composable<AccountRoute> {
         AccountScreen(
@@ -300,9 +304,11 @@ private fun NavGraphBuilder.accountGraph(navController: NavHostController, onSig
             onReview = { navController.navigate(VoiceReviewRoute) },
             onValidate = { navController.navigate(GrowthReviewRoute) },
             onManageMembers = { navController.navigate(MembersRoute) },
+            onHelp = { navController.navigate(HelpRoute) },
             onSignOut = onSignOut,
         )
     }
     composable<ProfileRoute> { ProfileScreen(onBack = { navController.popBackStack() }) }
     composable<MembersRoute> { MembersScreen(onBack = { navController.popBackStack() }) }
+    composable<HelpRoute> { HelpScreen(onBack = { navController.popBackStack() }) }
 }

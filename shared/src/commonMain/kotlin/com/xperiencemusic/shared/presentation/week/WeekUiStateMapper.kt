@@ -1,7 +1,11 @@
 package com.xperiencemusic.shared.presentation.week
 
+import com.xperiencemusic.shared.domain.model.BandWeek
 import com.xperiencemusic.shared.domain.model.SetlistSchedule
 import com.xperiencemusic.shared.domain.model.WeeklySetlist
+import com.xperiencemusic.shared.domain.model.monthStart
+import com.xperiencemusic.shared.domain.model.serviceKind
+import com.xperiencemusic.shared.domain.usecase.Planning
 import com.xperiencemusic.shared.presentation.common.shortLabel
 import kotlinx.datetime.LocalDate
 
@@ -48,3 +52,20 @@ private fun WeeklySetlist.toUi(timing: WeekTiming, playingRecordingPath: String?
         )
     },
 )
+
+/**
+ * The services the signed-in member said "je sers" for, from [today] to the Sunday of the band week
+ * (the Friday drops out once it is behind). Confirmed once every month concerned is validated.
+ */
+fun deriveServingThisWeek(planning: Planning, today: LocalDate): ServingThisWeekUi? {
+    val myId = planning.me?.id ?: return null
+    val sunday = BandWeek.startingFrom(today).serviceDate
+    val dates = planning.signups
+        .filter { it.memberId == myId && it.serves && it.serviceDate in today..sunday && it.serviceDate.serviceKind() != null }
+        .map { it.serviceDate }
+        .distinct()
+        .sorted()
+    if (dates.isEmpty()) return null
+    val validated = planning.months.filter { it.isValidated }.map { it.monthStart }.toSet()
+    return ServingThisWeekUi(dates, isConfirmed = dates.all { it.monthStart() in validated })
+}

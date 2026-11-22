@@ -30,6 +30,12 @@ Multiplatform et Compose Multiplatform.
 - Android : `./gradlew :androidApp:installDebug`
 - iOS : ouvrir `iosApp/iosApp.xcodeproj` dans Xcode
 
+Guides d'utilisation : [pour les membres](docs/aide/membres.md) et
+[pour le responsable des chants](docs/aide/responsable.md). Ces deux fichiers sont aussi la source de
+l'écran « Aide » de l'app (Mon compte › Aide) : `:shared:generateHelpPages` les compile dans l'app à
+chaque build. Un membre lit sa page ; les responsables lisent la leur et celle des membres. On ne les
+modifie qu'à cet endroit, en Markdown simple (le haut de chaque fichier dit ce qui est lu).
+
 Sans configuration, l'app tourne en **mode démo** (données locales, code de connexion
 `123456`). Pour la brancher sur le vrai serveur : [docs/supabase-setup.md](docs/supabase-setup.md).
 

@@ -17,6 +17,7 @@ val featureModules: List<Module> = listOf(
     voiceModule,
     membersModule,
     playerModule,
+    helpModule,
 )
 
 /**

@@ -13,6 +13,7 @@ import com.xperiencemusic.shared.domain.model.SyncStatus
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
+import com.xperiencemusic.shared.domain.usecase.ObservePlanningUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistScheduleUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSyncStatusUseCase
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -41,6 +43,7 @@ class WeekViewModel(
     private val refreshContent: RefreshContentUseCase,
     private val playback: PlaybackController,
     private val getToday: GetTodayUseCase,
+    observePlanning: ObservePlanningUseCase,
 ) : ViewModel() {
     private val download = MutableStateFlow(DownloadState())
     private val isRefreshing = MutableStateFlow(false)
@@ -49,7 +52,15 @@ class WeekViewModel(
 
     private data class DownloadState(val isRunning: Boolean = false, val hasFailed: Boolean = false)
 
-    private val sync = combine(observeSyncStatus(), isRefreshing) { status, refreshing -> status to refreshing }
+    // A hint above the setlist: without the planning (offline, not loaded yet), the line is simply absent.
+    private val serving: Flow<ServingThisWeekUi?> = observePlanning()
+        .map<_, ServingThisWeekUi?> { deriveServingThisWeek(it, getToday()) }
+        .onStart { emit(null) }
+        .catch { emit(null) }
+
+    private data class SyncState(val status: SyncStatus, val isRefreshing: Boolean, val serving: ServingThisWeekUi?)
+
+    private val sync = combine(observeSyncStatus(), isRefreshing, serving, ::SyncState)
 
     // Null until the phone has a copy of the setlists: the schedule publishes nothing before, and
     // the screen would wait on it forever when the first load fails.
@@ -64,8 +75,8 @@ class WeekViewModel(
         observeSetlistOffline().onStart { emit(OfflineAvailability(available = 0, total = 0)) },
         download,
         sync,
-    ) { week, member, offline, download, (syncStatus, refreshing) ->
-        val hasFailed = syncStatus == SyncStatus.FAILED
+    ) { week, member, offline, download, sync ->
+        val hasFailed = sync.status == SyncStatus.FAILED
         (week ?: WeekUiState(isLoading = !hasFailed, hasLoadFailed = hasFailed)).copy(
             canPublish = member?.role?.can(Permission.PUBLISH_SETLIST) == true,
             me = member?.let { MemberAvatarUi(it.profile.displayName, it.avatar) },
@@ -73,7 +84,8 @@ class WeekViewModel(
                 val rehearsal = BandWeek.nextRehearsal(today)
                 RehearsalCountdownUi(today.daysUntil(rehearsal), rehearsal)
             },
-            isRefreshing = refreshing,
+            isRefreshing = sync.isRefreshing,
+            serving = sync.serving,
             isOffline = week != null && hasFailed,
             offline = offline.takeIf { it.total > 0 }?.let {
                 WeekOfflineUi(

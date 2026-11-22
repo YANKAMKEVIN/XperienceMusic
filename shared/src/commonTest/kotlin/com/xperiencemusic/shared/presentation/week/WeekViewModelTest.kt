@@ -1,7 +1,10 @@
 package com.xperiencemusic.shared.presentation.week
 
 import app.cash.turbine.test
+import com.xperiencemusic.shared.data.repository.InMemoryPlanningRepository
+import com.xperiencemusic.shared.domain.model.PlanningMonth
 import com.xperiencemusic.shared.domain.model.Role
+import com.xperiencemusic.shared.domain.model.ServiceSignup
 import com.xperiencemusic.shared.domain.model.Setlist
 import com.xperiencemusic.shared.domain.usecase.DownloadSetlistUseCase
 import com.xperiencemusic.shared.domain.usecase.GetTodayUseCase
@@ -11,6 +14,7 @@ import com.xperiencemusic.shared.domain.usecase.RefreshContentUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveCurrentMemberUseCase
 import com.xperiencemusic.shared.domain.usecase.ObserveSetlistOfflineUseCase
 import com.xperiencemusic.shared.fakes.FakeAudioPlayer
+import com.xperiencemusic.shared.fakes.observePlanning
 import com.xperiencemusic.shared.fakes.schedule
 import kotlinx.coroutines.CoroutineScope
 import com.xperiencemusic.shared.fakes.FakeAudioCache
@@ -32,6 +36,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -60,6 +65,7 @@ class WeekViewModelTest {
             RefreshContentUseCase(songs, setlists),
             PlaybackController(FakeAudioPlayer(), { it }, CoroutineScope(UnconfinedTestDispatcher())),
             GetTodayUseCase { LocalDate(2026, 10, 10) },
+            observePlanning(),
         )
         viewModel.state.test {
             val before = expectMostRecentItem().offline!!
@@ -99,6 +105,7 @@ class WeekViewModelTest {
             RefreshContentUseCase(songs, setlists),
             playback,
             GetTodayUseCase { LocalDate(2026, 10, 10) },
+            observePlanning(),
         )
         viewModel.state.test {
             assertTrue(expectMostRecentItem().setlist!!.canPlayAll)
@@ -108,6 +115,37 @@ class WeekViewModelTest {
             assertEquals(2, playback.state.value.queueSize)
             player.finish()
             assertEquals("a", playback.state.value.track?.id)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `la semaine annonce les services où je sers dès que je réponds`() = runTest {
+        val songs = songRepository()
+        val setlists = setlistRepository()
+        val schedule = schedule(setlists, songs)
+        val sessions = FakeSessionRepository(member(Role.MEMBER))
+        val planning = InMemoryPlanningRepository(listOf(PlanningMonth(LocalDate(2026, 10, 1), null, false)))
+        val viewModel = WeekViewModel(
+            schedule,
+            ObserveCurrentMemberUseCase(sessions),
+            ObserveSetlistOfflineUseCase(schedule, cache),
+            DownloadSetlistUseCase(schedule, cache, songs),
+            ObserveSyncStatusUseCase(songs, setlists),
+            RefreshContentUseCase(songs, setlists),
+            PlaybackController(FakeAudioPlayer(), { it }, CoroutineScope(UnconfinedTestDispatcher())),
+            // Wednesday 14 Oct.: Friday 16 and Sunday 18 are ahead.
+            GetTodayUseCase { LocalDate(2026, 10, 14) },
+            observePlanning(sessions, planning),
+        )
+        viewModel.state.test {
+            assertNull(expectMostRecentItem().serving, "no answer yet: no line")
+            planning.answer("me", LocalDate(2026, 10, 18), serves = true)
+            val serving = expectMostRecentItem().serving!!
+            assertEquals(listOf(LocalDate(2026, 10, 18)), serving.dates)
+            assertFalse(serving.isConfirmed, "the month is still open")
+            planning.validateMonth(LocalDate(2026, 10, 1))
+            assertTrue(expectMostRecentItem().serving!!.isConfirmed)
             cancelAndIgnoreRemainingEvents()
         }
     }

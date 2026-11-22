@@ -48,8 +48,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -150,7 +152,8 @@ fun StageScreenContent(
             // right so the lyrics keep the whole height.
             val isLandscape = maxWidth > maxHeight
             // Each way of holding the phone has its own text size and speed.
-            LaunchedEffect(isLandscape) { onEvent(StageEvent.OrientationChanged(isLandscape)) }
+            val currentOnEvent by rememberUpdatedState(onEvent)
+            LaunchedEffect(isLandscape) { currentOnEvent(StageEvent.OrientationChanged(isLandscape)) }
             if (isLandscape) {
                 Row(Modifier.fillMaxSize()) {
                     Column(Modifier.weight(1f)) {
@@ -448,21 +451,7 @@ private fun StageButton(
 private fun StageLyrics(state: StageUiState, onToggleScroll: () -> Unit, modifier: Modifier = Modifier) {
     val scroll = rememberScrollState()
     val density = LocalDensity.current
-    LaunchedEffect(state.isAutoScrolling, state.scrollSpeed) {
-        if (!state.isAutoScrolling) return@LaunchedEffect
-        val pixelsPerTick = with(density) { state.scrollSpeed.dp.toPx() } * TICK_MS / 1000f
-        while (scroll.value < scroll.maxValue) {
-            try {
-                scroll.animateScrollBy(pixelsPerTick)
-                delay(TICK_MS)
-            } catch (interrupted: CancellationException) {
-                // A finger took the page over, which used to end the auto-scroll for good while
-                // the button still said it was running. Wait for the hand (and its fling) to finish.
-                ensureActive()
-                snapshotFlow { scroll.isScrollInProgress }.first { !it }
-            }
-        }
-    }
+    AutoScroll(scroll, state.isAutoScrolling, state.scrollSpeed)
     // How many taps: each one shows the play or pause mark for a moment.
     var taps by remember { mutableIntStateOf(0) }
     var showsTapMark by remember { mutableStateOf(false) }
@@ -510,24 +499,54 @@ private fun StageLyrics(state: StageUiState, onToggleScroll: () -> Unit, modifie
             // Room so the last line can scroll up to eye level.
             Spacer(Modifier.height(LYRICS_END_ROOM))
         }
-        AnimatedVisibility(
-            visible = showsTapMark,
-            enter = fadeIn(tween(TAP_MARK_FADE_MS)) + scaleIn(tween(TAP_MARK_FADE_MS), initialScale = 0.8f),
-            exit = fadeOut(tween(TAP_MARK_FADE_MS * 2)),
-            modifier = Modifier.align(Alignment.Center),
-        ) {
-            Box(
-                Modifier.size(TAP_MARK_SIZE).background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                // What the tap just did: the scroll runs (play) or holds (pause).
-                Icon(
-                    if (state.isAutoScrolling) Icons.Filled.PlayArrow else PauseIcon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(Sizes.iconXxl),
-                )
+        TapMark(visible = showsTapMark, isAutoScrolling = state.isAutoScrolling, modifier = Modifier.align(Alignment.Center))
+    }
+}
+
+/**
+ * Scrolls [scroll] at [speed] while [isRunning]. A hand on the page cancels one step: that is no
+ * error to keep, the scroll carries on once the hand lets go.
+ */
+@Suppress("SwallowedException")
+@Composable
+private fun AutoScroll(scroll: ScrollState, isRunning: Boolean, speed: Int) {
+    val density = LocalDensity.current
+    LaunchedEffect(isRunning, speed) {
+        if (!isRunning) return@LaunchedEffect
+        val pixelsPerTick = with(density) { speed.dp.toPx() } * TICK_MS / 1000f
+        while (scroll.value < scroll.maxValue) {
+            try {
+                scroll.animateScrollBy(pixelsPerTick)
+                delay(TICK_MS)
+            } catch (interrupted: CancellationException) {
+                // A finger took the page over, which used to end the auto-scroll for good while
+                // the button still said it was running. Wait for the hand (and its fling) to finish.
+                ensureActive()
+                snapshotFlow { scroll.isScrollInProgress }.first { !it }
             }
+        }
+    }
+}
+
+/** What a tap on the page just did, for a moment: the scroll runs (play) or holds (pause). */
+@Composable
+private fun TapMark(visible: Boolean, isAutoScrolling: Boolean, modifier: Modifier = Modifier) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(TAP_MARK_FADE_MS)) + scaleIn(tween(TAP_MARK_FADE_MS), initialScale = 0.8f),
+        exit = fadeOut(tween(TAP_MARK_FADE_MS * 2)),
+        modifier = modifier,
+    ) {
+        Box(
+            Modifier.size(TAP_MARK_SIZE).background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                if (isAutoScrolling) Icons.Filled.PlayArrow else PauseIcon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(Sizes.iconXxl),
+            )
         }
     }
 }

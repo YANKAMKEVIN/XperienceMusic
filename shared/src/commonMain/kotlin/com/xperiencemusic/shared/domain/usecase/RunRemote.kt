@@ -12,7 +12,11 @@ import kotlin.coroutines.cancellation.CancellationException
  * [DomainException]; I/O failures (no network, timeout: the HTTP client reports them as
  * [IOException]s) are network problems; anything else is unexpected, logged and reported as
  * [DomainError.UNKNOWN].
+ *
+ * The I/O exception is not kept on purpose: "no network" is all the screens need, and logging every
+ * dropped connection would only drown the unexpected failures.
  */
+@Suppress("SwallowedException")
 internal suspend fun <T> runRemote(block: suspend () -> T): DomainResult<T> =
     try {
         DomainResult.Success(block())

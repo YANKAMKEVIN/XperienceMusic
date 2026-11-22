@@ -190,7 +190,12 @@ fun SetlistEditorScreenContent(
             }
             item(key = "available-title") { AvailableHeader(state, Modifier.animateItem()) }
             items(state.available, key = { "available-${it.id}" }) { song ->
-                AvailableSongRow(song, state.query, onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) }, modifier = Modifier.animateItem())
+                AvailableSongRow(
+                    song,
+                    state.query,
+                    onAdd = { onEvent(SetlistEditorEvent.SongAdded(song.id)) },
+                    modifier = Modifier.animateItem(),
+                )
             }
             if (state.isEditing) {
                 item(key = "delete") {
