@@ -136,7 +136,8 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     de `docs/qa/2026-10-30-qa-s24.md`. Choix de Kevin : barre d'onglets latérale en paysage, « le responsable »
     côté membres, onglet « Progrès », barre de progression sans total dans l'accueil. **Pas encore vérifié sur
     téléphone** (l'A17 a été débranché avant l'essai). Restent ouverts : pochette média sur iOS, champs en pilule
-    dans l'éditeur de chant, pas d'annulation d'un passage de niveau confirmé.
+    dans l'éditeur de chant, pas d'annulation d'un passage de niveau confirmé (**tranché par Kevin le
+    22 novembre 2026** : pas d'annulation, on corrige le niveau à la main dans « Membres du groupe »).
 
 ## Branches et PR (18 novembre 2026, soir)
 
@@ -194,10 +195,13 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
      unique : les fichiers de `docs/aide`, compilés dans l'app par `:shared:generateHelpPages`
      (`HelpMarkdown` lit leur Markdown simple ; ce qui est entre `<!-- hors-app -->` et
      `<!-- /hors-app -->` reste sur GitHub).
+   - Point de l'onglet Progrès : **tranché par Kevin le 22 novembre 2026**, il reste jusqu'au nouvel envoi
+     (comportement actuel gardé, rien à coder).
    - Ligne « Cette semaine tu sers… › » en haut de Semaine. **Faite le 22 novembre 2026** (branche
      `claude/suite-3`, pas vue à l'écran) : une carte sous l'en-tête quand le membre a répondu « Je sers »
      pour le vendredi ou le dimanche de la semaine ; elle ouvre l'équipe de son prochain service et dit
-     « Équipe à confirmer par les responsables » tant que le mois n'est pas validé.
+     « Équipe à confirmer par les responsables » tant que le mois n'est pas validé. **Confirmé par Kevin
+     le 22 novembre 2026** : l'appui ouvre bien le détail du service (pas l'onglet Planning).
 6. **Avatars et « Mon compte »** (PR 7, branche `feat/member-avatar`). La migration
    `20261110000000_member_avatars.sql` est appliquée sur Supabase le 10 novembre 2026. Testé sur le S24 :
    avatar dans Semaine, Mon compte, avatar dessiné, import de photo, retrait. Fusionnée le 10 novembre 2026.
@@ -227,7 +231,8 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
      25 min avec le Dictaphone Samsung.
    - Ajout rapide d'un chant dans « Publier la setlist » (titre + lien YouTube), et un champ lien YouTube sur
      la fiche du chant. Aujourd'hui, une bibliothèque vide bloque la publication.
-   - En option : coller le message WhatsApp entier pour créer la setlist.
+   - En option : coller le message WhatsApp entier pour créer la setlist. **En attente** : Kevin enverra des
+     exemples de vrais messages du groupe ; rien à faire avant.
    - QA : toujours rejouer la vraie semaine sur la vraie base, bibliothèque vide, avec une sortie de l'app en
      cours de route.
 
