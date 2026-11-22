@@ -59,7 +59,8 @@ class ExerciseViewModel(
                 // The same comfort settings as the guided path: calm motion also keeps the phone still.
                 val comfort = getLearningPreferences(member.id)
                 _state.update {
-                    it.copy(celebration = CelebrationUi(isAnimated = !comfort.reduceMotion, vibrates = comfort.haptics && !comfort.reduceMotion))
+                    val animated = !comfort.reduceMotion
+                    it.copy(celebration = CelebrationUi(isAnimated = animated, vibrates = comfort.haptics && animated))
                 }
                 val voicePart = member.profile.voicePart ?: VoicePart.ALTO
                 observeSingerPath(member.id).map { path ->

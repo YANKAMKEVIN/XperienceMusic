@@ -8,6 +8,7 @@
     <ID>ComposableParamOrder:LearningKeyboard.kt:@Composable private fun PianoKey</ID>
     <ID>ComposableParamOrder:PianoScaleScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun PianoScaleScreenContent</ID>
     <ID>CompositionLocalAllowlist:AppTheme.kt:private val LocalAppColors = staticCompositionLocalOf { darkAppColors }</ID>
+    <ID>CompositionLocalAllowlist:AppTheme.kt:private val LocalTitleFont = staticCompositionLocalOf&lt;FontFamily&gt; { FontFamily.Default }</ID>
     <ID>CompositionLocalAllowlist:MemberAvatar.kt:/** * Provided once at the root of the app (see `XperienceMusicApp`); without it (previews) every * photo falls back to the initials. */ val LocalAvatarPhotoLoader = staticCompositionLocalOf { AvatarPhotoLoader { null } }</ID>
     <ID>CompositionLocalAllowlist:MicrophoneIntro.kt:/** Provided once at the root of the app; null (previews, tests) never shows the explanation. */ val LocalMicrophoneIntro = staticCompositionLocalOf&lt;MicrophoneIntro?&gt; { null }</ID>
     <ID>CompositionLocalAllowlist:ProgressMotion.kt:/** "Réduire les animations", provided by the progress screen and read by its moving parts. */ internal val LocalCalmMotion = staticCompositionLocalOf { false }</ID>

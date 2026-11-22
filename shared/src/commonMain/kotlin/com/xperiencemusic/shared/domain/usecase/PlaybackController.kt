@@ -3,6 +3,7 @@ package com.xperiencemusic.shared.domain.usecase
 import com.xperiencemusic.shared.domain.model.PlaybackState
 import com.xperiencemusic.shared.domain.model.PlaybackTrack
 import com.xperiencemusic.shared.domain.repository.AudioPlayer
+import com.xperiencemusic.shared.domain.repository.AudioPlayerState
 import com.xperiencemusic.shared.domain.repository.AudioUrlProvider
 import com.xperiencemusic.shared.domain.repository.NowPlaying
 import com.xperiencemusic.shared.domain.repository.SessionResettable
@@ -38,7 +39,10 @@ class PlaybackController(
         val hasError: Boolean = false,
         val queue: List<PlaybackTrack> = emptyList(),
         val index: Int = 0,
-    )
+    ) {
+        /** The track after this one, once this one has settled. */
+        val hasNextToLoad: Boolean get() = !isResolving && index < queue.lastIndex
+    }
 
     /** How the track is worked on; the loop belongs to the track, the speed lasts until the player closes. */
     private data class Practice(
@@ -71,7 +75,7 @@ class PlaybackController(
             player.state.map { it.hasEnded }.distinctUntilChanged().collect { hasEnded ->
                 val current = session.value
                 // A passage being looped keeps its track: the loop below takes it back to its start.
-                if (hasEnded && !current.isResolving && !isLooping && current.index < current.queue.lastIndex) {
+                if (hasEnded && !isLooping && current.hasNextToLoad) {
                     load(current.queue, current.index + 1)
                 }
             }
@@ -80,9 +84,9 @@ class PlaybackController(
         scope.launch {
             player.state.collect { playing ->
                 val loop = practice.value
-                val start = loop.loopStartMs
-                val end = loop.loopEndMs
-                if (session.value.track != null && start != null && end != null && (playing.positionMs >= end || playing.hasEnded)) {
+                val start = loop.loopStartMs ?: return@collect
+                val end = loop.loopEndMs ?: return@collect
+                if (session.value.track != null && playing.isPast(end)) {
                     player.seekTo(start)
                     if (playing.hasEnded) player.resume()
                 }
@@ -219,3 +223,6 @@ class PlaybackController(
         const val MIN_LOOP_MS = 1_000L
     }
 }
+
+/** The playback reached [endMs], or the end of the track if the passage runs to it. */
+private fun AudioPlayerState.isPast(endMs: Long): Boolean = positionMs >= endMs || hasEnded

@@ -52,7 +52,8 @@ val songsModule = module {
     viewModel { params -> RehearsalUploadViewModel(params.get(), get()) }
     // The song id is optional (null = new song), which the constructor DSL cannot resolve.
     viewModel { params -> SongEditorViewModel(params.getOrNull<String>(), get(), get(), get(), get()) }
-    viewModel { (songId: String, transpose: Int, notation: Notation, lyricsOnly: Boolean) ->
-        StageViewModel(songId, transpose, notation, lyricsOnly, get(), get(), get())
+    // Song id, transposition, notation and "paroles seules", in the order StageScreen passes them.
+    viewModel { params ->
+        StageViewModel(params.get<String>(0), params.get<Int>(1), params.get<Notation>(2), params.get<Boolean>(3), get(), get(), get())
     }
 }

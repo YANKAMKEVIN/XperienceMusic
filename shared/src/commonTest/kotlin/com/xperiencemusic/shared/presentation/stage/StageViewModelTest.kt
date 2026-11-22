@@ -139,7 +139,9 @@ class StageViewModelTest {
     fun `tourner le téléphone garde le défilement en cours`() = runTest {
         val store = StageSettingsStore(FileDevicePreferences(FakeFileStore()))
         val songs = songRepository(a)
-        val viewModel = StageViewModel("a", 0, Notation.NASHVILLE, false, ObserveSongUseCase(songs), schedule(setlistRepository(), songs), store)
+        val viewModel = StageViewModel(
+            "a", 0, Notation.NASHVILLE, false, ObserveSongUseCase(songs), schedule(setlistRepository(), songs), store,
+        )
         viewModel.onEvent(StageEvent.AutoScrollToggled)
         viewModel.onEvent(StageEvent.OrientationChanged(isLandscape = true))
         assertEquals(true, store.landscape.value.isAutoScrolling)

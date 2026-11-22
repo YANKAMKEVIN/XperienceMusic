@@ -56,15 +56,19 @@ class SongDetailViewModel(
             SongDetailEvent.DeleteDismissed -> local.update { it.copy(pendingDeletionId = null) }
             SongDetailEvent.DeleteConfirmed -> confirmDeletion()
             SongDetailEvent.MessageShown -> local.update { it.copy(message = null) }
-            is SongDetailEvent.PlayRecordingClicked -> play { current ->
-                current.recordings.firstOrNull { it.id == event.recordingId }
-                    ?.let { PlaybackTrack(it.id, it.title, current.title, it.audioPath) }
-            }
-            is SongDetailEvent.PlayVoiceTrackClicked -> play { current ->
-                current.voiceTracks.firstOrNull { it.id == event.trackId }
-                    ?.let { PlaybackTrack(it.id, event.title, current.title, it.audioPath) }
-            }
+            is SongDetailEvent.PlayRecordingClicked -> playRecording(event.recordingId)
+            is SongDetailEvent.PlayVoiceTrackClicked -> playVoiceTrack(event.trackId, event.title)
         }
+    }
+
+    private fun playRecording(recordingId: String) = play { current ->
+        current.recordings.firstOrNull { it.id == recordingId }
+            ?.let { PlaybackTrack(it.id, it.title, current.title, it.audioPath) }
+    }
+
+    private fun playVoiceTrack(trackId: String, title: String) = play { current ->
+        current.voiceTracks.firstOrNull { it.id == trackId }
+            ?.let { PlaybackTrack(it.id, title, current.title, it.audioPath) }
     }
 
     private fun play(trackOf: (Song) -> PlaybackTrack?) {
