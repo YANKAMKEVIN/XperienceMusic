@@ -73,9 +73,9 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   - **Haut de la fiche d'un chant (17 novembre 2026, PR 14, fusionnée)** : choix de Kevin,
     variante B. L'image de la vidéo YouTube est un bandeau en haut, avec le titre et l'auteur posés
     dessus ; sans vidéo, le titre reste seul (et un lien qui n'est pas une vidéo devient une ligne
-    « Écouter l'original »). Tonalité et notation sont regroupées dans un seul cadre. Kevin veut voir
-    le rendu sur téléphone avant de trancher définitivement : la variante A (titre d'abord, vignette
-    en petite ligne dessous) reste possible, captures des deux dans `docs/qa/2026-11-17-fiche-chant/`.
+    « Écouter l'original »). Tonalité et notation sont regroupées dans un seul cadre. **Tranché
+    par Kevin le 21 novembre 2026 : on garde cette variante (B).** La variante A (titre d'abord, vignette
+    en petite ligne dessous) est abandonnée.
   - **Écart de transposition visible (PR 17, fusionnée le 18 novembre 2026)** : sous la tonalité de la fiche,
     « +2 demi-tons » (lu par TalkBack) ; en mode scène, « +2 · origine Ré majeur » sous la tonalité quand
     le chant est transposé. Pas vu à l'écran.
@@ -157,7 +157,9 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
 - Le worktree `~/dev/XperienceMusic-qa` est sur `main` sans branche (HEAD détaché).
 - Hors git : captures et comptes rendus de QA sous `docs/qa/` (non suivis), dossier `tools/`, et un stash
   ancien (7 lignes dans `MainActivity.kt`, posé sur le merge de la PR 9).
-- **detekt** garde une remarque sur `main` : `SwallowedException` dans `domain/usecase/RunRemote.kt`.
+- **detekt** repasse au vert (22 novembre 2026, branche `claude/suite-3`) : les 15 remarques laissées par les
+  fusions de novembre sont corrigées sans changer le comportement ; les trois écarts voulus (`runRemote`, le
+  défilement du mode scène, la police des titres) sont justifiés dans le code ou dans la baseline.
 
 ## Reste à faire
 
@@ -184,8 +186,13 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
    - Notifications quand une setlist est publiée (Firebase).
    - Test sur un vrai iPhone (il faut un compte Apple Developer pour TestFlight).
    - Version Android release signée et numéro de version, pour diffuser l'APK au groupe.
-   - Pages d'aide : une pour les membres, une pour le responsable des chants.
-   - Ligne « Cette semaine tu sers… › » en haut de Semaine.
+   - Pages d'aide : une pour les membres, une pour le responsable des chants. **Première version le
+     22 novembre 2026** (branche `claude/suite-3`) : `docs/aide/membres.md` et `docs/aide/responsable.md`,
+     liées depuis le README. Reste à choisir où les publier (app, site GitHub Pages, PDF).
+   - Ligne « Cette semaine tu sers… › » en haut de Semaine. **Faite le 22 novembre 2026** (branche
+     `claude/suite-3`, pas vue à l'écran) : une carte sous l'en-tête quand le membre a répondu « Je sers »
+     pour le vendredi ou le dimanche de la semaine ; elle ouvre l'équipe de son prochain service et dit
+     « Équipe à confirmer par les responsables » tant que le mois n'est pas validé.
 6. **Avatars et « Mon compte »** (PR 7, branche `feat/member-avatar`). La migration
    `20261110000000_member_avatars.sql` est appliquée sur Supabase le 10 novembre 2026. Testé sur le S24 :
    avatar dans Semaine, Mon compte, avatar dessiné, import de photo, retrait. Fusionnée le 10 novembre 2026.
