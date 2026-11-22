@@ -30,6 +30,9 @@ Multiplatform et Compose Multiplatform.
 - Android : `./gradlew :androidApp:installDebug`
 - iOS : ouvrir `iosApp/iosApp.xcodeproj` dans Xcode
 
+Guides d'utilisation : [pour les membres](docs/aide/membres.md) et
+[pour le responsable des chants](docs/aide/responsable.md).
+
 Sans configuration, l'app tourne en **mode démo** (données locales, code de connexion
 `123456`). Pour la brancher sur le vrai serveur : [docs/supabase-setup.md](docs/supabase-setup.md).
 
