@@ -121,6 +121,7 @@ private fun NavGraphBuilder.weekGraph(navController: NavHostController) {
             onEditWeek = { date -> navController.navigate(SetlistEditorRoute(date?.toString())) },
             onUploadRehearsal = { date -> navController.navigate(RehearsalUploadRoute(date.toString())) },
             onAccount = { navController.navigate(AccountRoute) },
+            onOpenService = { date -> navController.navigate(ServiceRoute(date.toString())) },
         )
     }
     composable<SetlistEditorRoute> { entry ->

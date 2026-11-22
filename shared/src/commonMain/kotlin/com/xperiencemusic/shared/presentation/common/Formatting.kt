@@ -33,7 +33,8 @@ data class FormattingWords(
         require(months.size == 12 && shortMonths.size == 12) { "12 months expected" }
     }
 
-    private fun weekday(date: LocalDate) = weekdays[date.dayOfWeek.ordinal]
+    /** "vendredi" */
+    fun weekday(date: LocalDate): String = weekdays[date.dayOfWeek.ordinal]
     private fun shortMonth(date: LocalDate) = shortMonths[date.month.ordinal]
 
     /** "mardi 14 oct." */

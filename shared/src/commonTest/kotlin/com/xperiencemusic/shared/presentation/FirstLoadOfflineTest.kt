@@ -15,6 +15,7 @@ import com.xperiencemusic.shared.domain.usecase.RefreshContentUseCase
 import com.xperiencemusic.shared.domain.usecase.SearchSongsUseCase
 import com.xperiencemusic.shared.fakes.FakeAudioCache
 import com.xperiencemusic.shared.fakes.FakeAudioPlayer
+import com.xperiencemusic.shared.fakes.observePlanning
 import com.xperiencemusic.shared.fakes.FakeSessionRepository
 import com.xperiencemusic.shared.fakes.member
 import com.xperiencemusic.shared.fakes.schedule
@@ -105,6 +106,7 @@ class FirstLoadOfflineTest {
             RefreshContentUseCase(songs, setlists),
             PlaybackController(FakeAudioPlayer(), { it }, CoroutineScope(UnconfinedTestDispatcher())),
             GetTodayUseCase { LocalDate(2026, 10, 10) },
+            observePlanning(),
         )
     }
 

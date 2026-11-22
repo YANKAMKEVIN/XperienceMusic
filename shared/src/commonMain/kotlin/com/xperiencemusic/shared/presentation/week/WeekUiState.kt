@@ -23,10 +23,20 @@ data class WeekUiState(
     val nextRehearsal: RehearsalCountdownUi? = null,
     /** The signed-in member, shown top right as the way into their account. */
     val me: MemberAvatarUi? = null,
+    /** The member's own services this week, as a line at the top; null when they serve none. */
+    val serving: ServingThisWeekUi? = null,
 ) {
     /** Admins edit a week whose service is still ahead; past weeks stay as they were. */
     val canEditSelected: Boolean get() = canPublish && setlist != null && setlist.timing != WeekTiming.PAST
 }
+
+/** "Cette semaine tu sers vendredi et dimanche ›" */
+data class ServingThisWeekUi(
+    /** The Friday and Sunday still ahead this week, today included, in order; never empty. */
+    val dates: List<LocalDate>,
+    /** False while a month is still open: the leaders can change the team until they validate it. */
+    val isConfirmed: Boolean,
+)
 
 enum class WeekTiming { PAST, CURRENT, AHEAD }
 

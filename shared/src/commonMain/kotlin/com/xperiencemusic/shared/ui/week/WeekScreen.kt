@@ -85,6 +85,12 @@ import com.xperiencemusic.shared.resources.week_prepare_next
 import com.xperiencemusic.shared.resources.week_published_by
 import com.xperiencemusic.shared.resources.week_setlist_count
 import com.xperiencemusic.shared.resources.week_this_week
+import com.xperiencemusic.shared.resources.week_serving_one
+import com.xperiencemusic.shared.resources.week_serving_open
+import com.xperiencemusic.shared.resources.week_serving_pending
+import com.xperiencemusic.shared.resources.week_serving_two
+import com.xperiencemusic.shared.presentation.week.ServingThisWeekUi
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import com.xperiencemusic.shared.resources.week_title
 import com.xperiencemusic.shared.resources.account_open
 import com.xperiencemusic.shared.presentation.common.MemberAvatarUi
@@ -120,6 +126,7 @@ fun WeekScreen(
     onEditWeek: (LocalDate?) -> Unit,
     onUploadRehearsal: (LocalDate) -> Unit,
     onAccount: () -> Unit,
+    onOpenService: (LocalDate) -> Unit = {},
     viewModel: WeekViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -130,6 +137,7 @@ fun WeekScreen(
         onEditWeek = onEditWeek,
         onUploadRehearsal = onUploadRehearsal,
         onAccount = onAccount,
+        onOpenService = onOpenService,
     )
 }
 
@@ -142,6 +150,7 @@ fun WeekScreenContent(
     onEditWeek: (LocalDate?) -> Unit,
     onUploadRehearsal: (LocalDate) -> Unit = {},
     onAccount: () -> Unit = {},
+    onOpenService: (LocalDate) -> Unit = {},
 ) {
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
@@ -164,7 +173,7 @@ fun WeekScreenContent(
                 }
             }
         } else {
-            WeekList(state, onEvent, onSongClick, onEditWeek, onUploadRehearsal, onAccount)
+            WeekList(state, onEvent, onSongClick, onEditWeek, onUploadRehearsal, onAccount, onOpenService)
         }
     }
 }
@@ -175,8 +184,9 @@ private fun WeekList(
     onEvent: (WeekEvent) -> Unit,
     onSongClick: (String) -> Unit,
     onEditWeek: (LocalDate?) -> Unit,
-    onUploadRehearsal: (LocalDate) -> Unit = {},
+    onUploadRehearsal: (LocalDate) -> Unit,
     onAccount: () -> Unit,
+    onOpenService: (LocalDate) -> Unit,
 ) {
     val setlist = state.setlist
     LazyColumn(
@@ -185,10 +195,9 @@ private fun WeekList(
         modifier = Modifier.fillMaxSize(),
     ) {
         item { WeekHeader(setlist?.let { rememberFormattingWords().range(it.rehearsalDate, it.serviceDate) }, state.me, onAccount) }
+        state.serving?.let { serving -> item { ServingLine(serving, onOpen = { onOpenService(serving.dates.first()) }) } }
         if (state.weeks.size > 1) item { WeekTabs(state.weeks, onSelect = { onEvent(WeekEvent.WeekSelected(it)) }) }
-        if (state.isOffline) {
-            item { OfflineBanner(onRetry = { onEvent(WeekEvent.RefreshPulled) }, isRetrying = state.isRefreshing) }
-        }
+        if (state.isOffline) item { OfflineBanner(onRetry = { onEvent(WeekEvent.RefreshPulled) }, isRetrying = state.isRefreshing) }
         if (setlist == null) {
             item { EmptyWeek(state, onPublish = { onEditWeek(null) }) }
         } else {
@@ -280,6 +289,31 @@ private fun WeekHeader(rangeLabel: String?, me: MemberAvatarUi?, onAccount: () -
             ) {
                 MemberAvatar(me, size = Sizes.avatarS)
             }
+        }
+    }
+}
+
+/** Where the member is expected this week; opens the team of their next service. */
+@Composable
+private fun ServingLine(serving: ServingThisWeekUi, onOpen: () -> Unit) {
+    val words = rememberFormattingWords()
+    val days = serving.dates.map(words::weekday)
+    val text = if (days.size == 1) {
+        stringResource(Res.string.week_serving_one, days[0])
+    } else {
+        stringResource(Res.string.week_serving_two, days[0], days[1])
+    }
+    AppCard(onClick = onOpen) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(text, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    stringResource(if (serving.isConfirmed) Res.string.week_serving_open else Res.string.week_serving_pending),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -460,6 +494,7 @@ private fun WeekScreenPreview() {
                     ),
                 ),
                 offline = WeekOfflineUi(available = 2, total = 6, isComplete = false, isDownloading = false, hasError = false),
+                serving = ServingThisWeekUi(listOf(LocalDate(2026, 10, 16), LocalDate(2026, 10, 18)), isConfirmed = true),
             ),
             onEvent = {},
             onSongClick = {},
