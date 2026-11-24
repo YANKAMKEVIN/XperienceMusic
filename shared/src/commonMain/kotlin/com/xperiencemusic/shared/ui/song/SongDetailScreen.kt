@@ -63,6 +63,7 @@ import com.xperiencemusic.shared.resources.action_back
 import com.xperiencemusic.shared.resources.action_edit_song
 import com.xperiencemusic.shared.resources.error_forbidden
 import com.xperiencemusic.shared.resources.error_generic
+import com.xperiencemusic.shared.resources.song_chart_add
 import com.xperiencemusic.shared.resources.song_chart_title
 import com.xperiencemusic.shared.resources.song_lyrics_title
 import com.xperiencemusic.shared.resources.song_delete_confirm_cancel
@@ -163,7 +164,7 @@ fun SongDetailScreenContent(
                     text = stringResource(Res.string.song_not_found_text),
                     modifier = Modifier.align(Alignment.Center).padding(horizontal = Spacing.l),
                 )
-                else -> SongDetailBody(state, onEvent, onAddRecording, onOpenStage, onRecordVoice)
+                else -> SongDetailBody(state, onEvent, onAddRecording, onOpenStage, onRecordVoice, onEdit)
             }
         }
     }
@@ -194,6 +195,7 @@ private fun SongDetailBody(
     onAddRecording: () -> Unit,
     onOpenStage: () -> Unit,
     onRecordVoice: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(start = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
@@ -225,6 +227,9 @@ private fun SongDetailBody(
                     Modifier.padding(bottom = Spacing.s),
                 )
                 ChordChartView(state.chart, lyricsOnly = state.lyricsOnly, isLoading = state.isChartLoading)
+                if (state.canEditSong && !state.isChartLoading && state.chart.none { it.hasContent() }) {
+                    TextButton(onClick = onEdit) { Text(stringResource(Res.string.song_chart_add)) }
+                }
             }
         }
         item {

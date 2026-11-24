@@ -152,6 +152,27 @@ class SetlistAndSearchTest {
     }
 
     @Test
+    fun `des mots dans le désordre ou séparés trouvent le chant, après les correspondances exactes`() = runTest {
+        val index = SearchSongsUseCase(
+            songRepository(
+                song("1", "Je ne suis plus esclave de la peur"),
+                song("2", "Esclave peur", artist = "Anonyme"),
+                song("3", "Enfant de Dieu", chart = "[1]Je ne suis plus es[4]clave\n[5]de la peur, je suis enfant de Dieu"),
+                song("4", "Sans peur"),
+            ),
+        ).index().first()
+
+        assertEquals(listOf("2", "1"), index.search("esclave peur").map { it.song.id })
+        // Neither holds "peur esclave" as typed: both come by their words, in title order.
+        assertEquals(listOf("2", "1"), index.search("peur esclave").map { it.song.id })
+        val inLyrics = index.search("dieu peur", inLyrics = true)
+        assertEquals(listOf("3"), inLyrics.map { it.song.id })
+        // The line shown is the one holding the most words of the search.
+        assertEquals("de la peur, je suis enfant de Dieu", inLyrics.single().lyricLine)
+        assertEquals(emptyList(), index.search("esclave joie", inLyrics = true))
+    }
+
+    @Test
     fun `une apostrophe tapée au clavier trouve l'apostrophe typographique`() = runTest {
         val search = SearchSongsUseCase(songRepository(song("1", "Gloire à l’Agneau")))
         assertEquals(listOf("1"), search("l'agneau").first().map { it.id })

@@ -150,6 +150,14 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   venir (une fois par mois affiché ; l'en-tête et la bannière sont alors au-dessus, il faut remonter pour les voir),
   et une date passée sans équipe dit « Personne n'a servi ». Ce n'était pas un bug : « validé, 2 dates incomplètes »
   ne compte que les dates à venir.
+- **PR 21 et 22 fusionnées le 24 novembre 2026.** Branche `fix/songs-first-look` (même jour), après un tour de
+  l'onglet Chants sur le S24 : en chiffres Nashville, le chiffre de l'accord est levé (« 1⁴/5 », « 4² » au lieu de
+  « 14/5 », « 42 ») à l'affichage seulement, le stockage ne change pas ; la recherche trouve aussi les mots séparés
+  ou dans le désordre (« peur esclave »), après les correspondances exactes ; une fiche sans paroles le dit et
+  propose « Ajouter les paroles » aux responsables. Tests verts, **pas encore vu sur le S24** (téléphone verrouillé) :
+  vérifier surtout le rendu des chiffres levés. Les chantres ont déjà « Paroles seules » par défaut
+  (`SongDetailUiStateMapper`, `local.lyricsOnly ?: isSinger`). Restent : auteurs en double dans le catalogue
+  (« Sylvain Freymond - Sylvain Freymond »), pas de tolérance aux fautes de frappe dans la recherche, écoute non testée.
 - **PR 18 (fusionnée le 18 novembre 2026)** : la bande vide au-dessus du clavier dans les écrans poussés
   (« Publier la setlist » sur le S24). `MainScaffold` consomme la marge de sa barre du bas, donc
   `imePadding()` n'ajoute plus que ce que le clavier couvre au-delà. Correctif global : quelques bas

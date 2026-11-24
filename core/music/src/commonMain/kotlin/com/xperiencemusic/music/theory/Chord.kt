@@ -15,6 +15,18 @@ data class Chord(
         return rootText + suffix + bassText
     }
 
+    /**
+     * [render] for the eye. In Nashville numbers a figure of the chord glued to its degree read as
+     * one number ("14/5" for a 1 with a fourth, "42" for a 4 with a second): it is raised, as
+     * Nashville charts are written by hand ("1⁴/5", "4²"). Stored charts keep the plain [render].
+     */
+    fun display(key: Key, notation: Notation): String {
+        if (notation != Notation.NASHVILLE) return render(key, notation)
+        val figures = suffix.takeWhile { it.isDigit() }
+        val raised = figures.map { SUPERSCRIPTS[it.digitToInt()] }.joinToString("") + suffix.drop(figures.length)
+        return copy(suffix = raised).render(key, notation)
+    }
+
     private fun degreeText(degree: ScaleDegree, key: Key, notation: Notation): String =
         if (notation == Notation.NASHVILLE) {
             degree.toString()
@@ -23,6 +35,7 @@ data class Chord(
         }
 
     companion object {
+        private const val SUPERSCRIPTS = "⁰¹²³⁴⁵⁶⁷⁸⁹"
         private val nashvillePattern = Regex("""^([b#♭♯]?)([1-7])(.*)$""")
 
         /**
