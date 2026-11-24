@@ -161,6 +161,10 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
 - **detekt** repasse au vert (22 novembre 2026, branche `claude/suite-3`) : les 15 remarques laissées par les
   fusions de novembre sont corrigées sans changer le comportement ; les trois écarts voulus (`runRemote`, le
   défilement du mode scène, la police des titres) sont justifiés dans le code ou dans la baseline.
+- **PR 21 (ouverte le 24 novembre 2026, branche `chore/compiler-warnings`)** : les avertissements du compilateur
+  Kotlin dans `shared` sont supprimés (trois `!!` et deux `?.` inutiles, import `IOException` déprécié dans deux
+  tests), sans changer le comportement. Reste un avertissement Gradle : Coil 3.3.0 demande Skiko 0.9.4.2 alors que
+  Compose impose 0.144.6 ; à régler en alignant la version de Coil sur celle de Compose.
 
 ## Reste à faire
 
