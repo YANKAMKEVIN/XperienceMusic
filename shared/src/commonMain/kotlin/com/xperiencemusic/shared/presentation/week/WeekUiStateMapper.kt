@@ -28,13 +28,16 @@ fun deriveWeekState(schedule: SetlistSchedule, selected: LocalDate?, playingReco
                 serviceDate = weekly.setlist.serviceDate,
                 timing = timingOf(i),
                 isSelected = i == index,
+                isLastPublished = schedule.isLastPublished(i),
             )
         },
-        setlist = schedule.weeks.getOrNull(index)?.toUi(timingOf(index), playingRecordingPath),
+        setlist = schedule.weeks.getOrNull(index)?.toUi(timingOf(index), playingRecordingPath, schedule.isLastPublished(index)),
     )
 }
 
-private fun WeeklySetlist.toUi(timing: WeekTiming, playingRecordingPath: String?) = WeekSetlistUi(
+private fun SetlistSchedule.isLastPublished(index: Int) = isCurrentOver && index == currentIndex
+
+private fun WeeklySetlist.toUi(timing: WeekTiming, playingRecordingPath: String?, isLastPublished: Boolean) = WeekSetlistUi(
     serviceDate = setlist.serviceDate,
     timing = timing,
     rehearsalDate = setlist.rehearsalDate,
@@ -51,6 +54,7 @@ private fun WeeklySetlist.toUi(timing: WeekTiming, playingRecordingPath: String?
             isPlaying = reference != null && reference.audioPath == playingRecordingPath,
         )
     },
+    isLastPublished = isLastPublished,
 )
 
 /**

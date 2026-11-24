@@ -75,6 +75,7 @@ import com.xperiencemusic.shared.resources.week_countdown_title
 import com.xperiencemusic.shared.resources.week_countdown_today
 import com.xperiencemusic.shared.resources.week_empty_text
 import com.xperiencemusic.shared.resources.week_empty_title
+import com.xperiencemusic.shared.resources.week_last_published_hint
 import com.xperiencemusic.shared.resources.week_load_failed_title
 import com.xperiencemusic.shared.resources.first_load_failed_text
 import com.xperiencemusic.shared.resources.offline_retry
@@ -110,6 +111,7 @@ import com.xperiencemusic.shared.ui.theme.AppTheme
 import com.xperiencemusic.shared.ui.theme.Sizes
 import com.xperiencemusic.shared.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import com.xperiencemusic.shared.ui.components.LoadingIndicator
@@ -212,13 +214,22 @@ private fun WeekList(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+            } else if (setlist.isLastPublished) {
+                // Without it, last week's setlist read as this week's: nothing else said it was already sung.
+                item {
+                    Text(
+                        stringResource(Res.string.week_last_published_hint),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             } else {
                 item { BrandWaves(Modifier.fillMaxWidth().height(WAVES_HEIGHT)) }
             }
             item {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Spacing.s)) {
                     Text(
-                        stringResource(Res.string.week_setlist_count, setlist.songs.size),
+                        pluralStringResource(Res.plurals.week_setlist_count, setlist.songs.size, setlist.songs.size),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f).semantics { heading() },
                     )
@@ -331,7 +342,8 @@ private fun WeekTabs(weeks: List<WeekTabUi>, onSelect: (LocalDate) -> Unit) {
                 selected = week.isSelected,
                 onClick = { onSelect(week.serviceDate) },
                 label = {
-                    Text(if (week.timing == WeekTiming.CURRENT) stringResource(Res.string.week_this_week) else words.shortDayAndDate(week.serviceDate))
+                    val isThisWeek = week.timing == WeekTiming.CURRENT && !week.isLastPublished
+                    Text(if (isThisWeek) stringResource(Res.string.week_this_week) else words.shortDayAndDate(week.serviceDate))
                 },
                 colors = FilterChipDefaults.filterChipColors(
                     labelColor = if (week.timing == WeekTiming.PAST) {

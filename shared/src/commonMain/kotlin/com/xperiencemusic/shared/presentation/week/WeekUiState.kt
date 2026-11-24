@@ -53,6 +53,8 @@ data class WeekTabUi(
     val serviceDate: LocalDate,
     val timing: WeekTiming,
     val isSelected: Boolean,
+    /** The current week when its service is behind us: named by its date, not "Cette semaine". */
+    val isLastPublished: Boolean = false,
 )
 
 data class WeekOfflineUi(
@@ -79,6 +81,8 @@ data class WeekSetlistUi(
     val message: String?,
     val publishedBy: String,
     val songs: List<WeekSongUi>,
+    /** Nothing is published for this week yet: this is the last setlist, already sung. */
+    val isLastPublished: Boolean = false,
 ) {
     /** "Tout écouter" is worth a button from two references on. */
     val canPlayAll: Boolean get() = songs.count { it.hasReference } > 1
