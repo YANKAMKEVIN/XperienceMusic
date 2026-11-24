@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -16,7 +17,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -81,11 +85,23 @@ fun PlanningScreenContent(
             onEvent(PlanningEvent.ErrorShown)
         }
     }
+    val listState = rememberLazyListState()
+    // Late in the month the list opened on services already sung: start on the next one instead.
+    // Once per month shown, so coming back from a service keeps the place.
+    var positionedMonth by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(state.monthStart, state.isLoading) {
+        val month = state.monthStart?.toString()
+        if (state.isLoading || month == null || positionedMonth == month) return@LaunchedEffect
+        val firstComing = state.services.indexOfFirst { !it.isPast }
+        listState.scrollToItem(if (firstComing > 0) firstComing + ITEMS_BEFORE_SERVICES else 0)
+        positionedMonth = month
+    }
     Box(Modifier.fillMaxSize()) {
         if (state.isLoading) {
             LoadingIndicator()
         } else {
             LazyColumn(
+                state = listState,
                 contentPadding = PaddingValues(start = Spacing.l, top = Spacing.l, end = Spacing.l, bottom = Spacing.xxl),
                 verticalArrangement = Arrangement.spacedBy(Spacing.m),
             ) {
@@ -158,6 +174,9 @@ private fun ValidateMonthDialog(monthLabel: String, validation: MonthValidationU
         },
     )
 }
+
+/** The header and the month banner, above the service cards in the list. */
+private const val ITEMS_BEFORE_SERVICES = 2
 
 /** The old month leaves quickly, then the new one arrives: title, banner and cards share this beat. */
 internal val monthFadeOut = tween<Float>(90)

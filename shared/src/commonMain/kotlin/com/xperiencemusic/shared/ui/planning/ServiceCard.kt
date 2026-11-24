@@ -32,6 +32,7 @@ import com.xperiencemusic.shared.resources.planning_complete
 import com.xperiencemusic.shared.resources.planning_friday
 import com.xperiencemusic.shared.resources.planning_missing
 import com.xperiencemusic.shared.resources.planning_nobody
+import com.xperiencemusic.shared.resources.planning_nobody_past
 import com.xperiencemusic.shared.resources.planning_not_available
 import com.xperiencemusic.shared.resources.planning_sunday
 import com.xperiencemusic.shared.resources.planning_to_answer
@@ -72,7 +73,7 @@ internal fun ServiceCard(card: ServiceCardUi, onClick: () -> Unit, modifier: Mod
                 }
                 if (card.serving.isEmpty()) {
                     Text(
-                        stringResource(Res.string.planning_nobody),
+                        stringResource(if (card.isPast) Res.string.planning_nobody_past else Res.string.planning_nobody),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = Spacing.xs),

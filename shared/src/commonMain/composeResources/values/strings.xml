@@ -150,6 +150,7 @@
     <string name="planning_not_available">Pas dispo</string>
     <string name="planning_to_answer">À répondre</string>
     <string name="planning_nobody">Personne pour l’instant</string>
+    <string name="planning_nobody_past">Personne n’a servi</string>
     <string name="planning_missing">Manque : %1$s</string>
     <string name="planning_complete">Équipe complète</string>
     <string name="planning_count">%1$d inscrits</string>
