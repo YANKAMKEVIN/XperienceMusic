@@ -57,7 +57,7 @@ fun deriveAvailabilityState(planning: Planning, monthStart: LocalDate, today: Lo
         isLoading = false,
         monthStart = monthStart,
         answerBy = month?.answerBy?.takeIf { isOpen },
-        isPastDeadline = isOpen && month?.answerBy?.let { it < today } == true,
+        isPastDeadline = isOpen && month.answerBy?.let { it < today } == true,
         instrument = me?.profile?.instrument,
         voicePart = me?.profile?.voicePart,
         canAnswer = month != null && (isOpen || canPlan),

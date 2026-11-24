@@ -219,7 +219,7 @@ internal object AacTranscoder {
                     val hasAudio = buffer != null && info.size > 0 && !isConfig
                     if (hasAudio && muxerTrack >= 0) {
                         buffer.position(info.offset).limit(info.offset + info.size)
-                        muxer.writeSampleData(muxerTrack, buffer!!, info)
+                        muxer.writeSampleData(muxerTrack, buffer, info)
                     }
                     enc.releaseOutputBuffer(index, false)
                     if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {

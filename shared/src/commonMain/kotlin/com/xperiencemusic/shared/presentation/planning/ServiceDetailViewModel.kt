@@ -71,7 +71,7 @@ fun deriveServiceDetail(planning: Planning, schedule: SetlistSchedule, date: Loc
             onboarded.sortedWith(compareBy({ it.instrument?.ordinal ?: Int.MAX_VALUE }, { it.voicePart?.ordinal ?: 0 }, { it.displayName }))
                 .map { member ->
                     RosterRowUi(
-                        ServingUi(member.id, member.displayName.orEmpty(), member.instrument, member.voicePart, member.id == me?.id),
+                        ServingUi(member.id, member.displayName.orEmpty(), member.instrument, member.voicePart, member.id == me.id),
                         planning.signups.firstOrNull { it.serviceDate == date && it.memberId == member.id }?.serves,
                     )
                 }
