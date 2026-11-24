@@ -49,8 +49,8 @@ internal fun transcodeToAac(source: NSURL, out: NSURL, bitrate: Int, onProgress:
     val started = reading != null && writing != null &&
         reading.first.startReading() && writing.first.startWriting()
     if (!started) return false
-    val (reader, output) = reading!!
-    val (writer, input) = writing!!
+    val (reader, output) = reading
+    val (writer, input) = writing
     writer.startSessionAtSourceTime(CMTimeMake(value = 0, timescale = 1))
     val total = CMTimeGetSeconds(asset.duration).takeIf { it.isFinite() && it > 0 }
     val copied = copySamples(output, input, total, onProgress) && reader.status == AVAssetReaderStatusCompleted
