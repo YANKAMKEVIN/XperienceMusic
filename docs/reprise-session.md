@@ -142,6 +142,14 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
 ## Branches et PR (18 novembre 2026, soir)
 
 - `main` contient tout jusqu'à la PR 19 (`9da505a`). Toutes les branches fusionnées sont supprimées, en local et sur GitHub.
+- **Branche `fix/week-first-look` (24 novembre 2026)**, avant le premier partage de l'app : sans setlist pour la
+  semaine en cours, Semaine montre toujours la dernière publiée, mais l'annonce (« Dernière setlist publiée · rien
+  encore pour cette semaine ») et sa pastille porte sa date au lieu de « Cette semaine » ; « 1 chant » s'accorde ;
+  le compteur hors ligne dit qu'il compte des enregistrements. Vu sur le S24. Pas encore testé : l'accueil d'un
+  nouveau compte (code à 6 chiffres, 4 questions). Planning : le mois s'ouvre maintenant sur la prochaine date à
+  venir (une fois par mois affiché ; l'en-tête et la bannière sont alors au-dessus, il faut remonter pour les voir),
+  et une date passée sans équipe dit « Personne n'a servi ». Ce n'était pas un bug : « validé, 2 dates incomplètes »
+  ne compte que les dates à venir.
 - **PR 18 (fusionnée le 18 novembre 2026)** : la bande vide au-dessus du clavier dans les écrans poussés
   (« Publier la setlist » sur le S24). `MainScaffold` consomme la marge de sa barre du bas, donc
   `imePadding()` n'ajoute plus que ce que le clavier couvre au-delà. Correctif global : quelques bas

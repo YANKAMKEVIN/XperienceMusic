@@ -26,7 +26,12 @@ data class WeeklySetlist(
  * The setlists around today, by service date. The current week is the next service still ahead
  * (or the last one when none is planned yet); the ones after it were sent in advance.
  */
-data class SetlistSchedule(val weeks: List<WeeklySetlist>, val currentIndex: Int) {
+data class SetlistSchedule(
+    val weeks: List<WeeklySetlist>,
+    val currentIndex: Int,
+    /** True when no service is ahead: the current week is only the last one published, already sung. */
+    val isCurrentOver: Boolean = false,
+) {
     val current: WeeklySetlist? get() = weeks.getOrNull(currentIndex)
 
     /** The current week and those sent ahead: what to download before rehearsing. */
@@ -49,7 +54,7 @@ data class SetlistSchedule(val weeks: List<WeeklySetlist>, val currentIndex: Int
         fun of(weeks: List<WeeklySetlist>, today: LocalDate): SetlistSchedule {
             val sorted = weeks.sortedBy { it.setlist.serviceDate }
             val next = sorted.indexOfFirst { it.setlist.serviceDate >= today }
-            return SetlistSchedule(sorted, if (next >= 0) next else sorted.lastIndex)
+            return SetlistSchedule(sorted, if (next >= 0) next else sorted.lastIndex, isCurrentOver = next < 0 && sorted.isNotEmpty())
         }
     }
 }

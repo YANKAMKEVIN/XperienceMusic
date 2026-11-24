@@ -150,6 +150,7 @@
     <string name="planning_not_available">Pas dispo</string>
     <string name="planning_to_answer">À répondre</string>
     <string name="planning_nobody">Personne pour l’instant</string>
+    <string name="planning_nobody_past">Personne n’a servi</string>
     <string name="planning_missing">Manque : %1$s</string>
     <string name="planning_complete">Équipe complète</string>
     <string name="planning_count">%1$d inscrits</string>
@@ -196,7 +197,7 @@
 
     <string name="week_offline_title">Écouter hors connexion</string>
     <string name="week_offline_text">%1$d enregistrements à garder sur le téléphone, pour répéter sans réseau.</string>
-    <string name="week_offline_partial">%1$d sur %2$d déjà sur le téléphone</string>
+    <string name="week_offline_partial">Enregistrements sur le téléphone : %1$d sur %2$d</string>
     <string name="week_offline_download">Télécharger</string>
     <string name="week_offline_downloading">Téléchargement… %1$d/%2$d</string>
     <string name="week_offline_done">Hors connexion · %1$d enregistrements sur le téléphone</string>
@@ -349,7 +350,11 @@
     <string name="week_serving_open">Voir l’équipe</string>
     <string name="week_past">Passée</string>
     <string name="week_ahead">À venir</string>
-    <string name="week_setlist_count">Setlist · %1$d chants</string>
+    <plurals name="week_setlist_count">
+        <item quantity="one">Setlist · %1$d chant</item>
+        <item quantity="other">Setlist · %1$d chants</item>
+    </plurals>
+    <string name="week_last_published_hint">Dernière setlist publiée · rien encore pour cette semaine</string>
     <string name="week_play_all">Tout écouter</string>
     <string name="week_play_reference">Écouter la référence de %1$s</string>
     <string name="week_pause_reference">Mettre en pause %1$s</string>
