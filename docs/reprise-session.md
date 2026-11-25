@@ -139,10 +139,13 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
     dans l'éditeur de chant, pas d'annulation d'un passage de niveau confirmé (**tranché par Kevin le
     22 novembre 2026** : pas d'annulation, on corrige le niveau à la main dans « Membres du groupe »).
 
-## Branches et PR (18 novembre 2026, soir)
+## Branches et PR (24 novembre 2026, soir)
 
-- `main` contient tout jusqu'à la PR 19 (`9da505a`). Toutes les branches fusionnées sont supprimées, en local et sur GitHub.
-- **Branche `fix/week-first-look` (24 novembre 2026)**, avant le premier partage de l'app : sans setlist pour la
+- `main` contient tout jusqu'à la PR 23 (`677cea4`). Toutes les branches fusionnées sont supprimées, en local et sur GitHub.
+- **Premier partage de l'app (24 novembre 2026)** : l'APK debug de `main` (`XperienceMusic-0.1.0.apk`, PR 23 comprise) est dans
+  le dossier Download du S24 et dans `~/Downloads` du Mac, pour envoi par WhatsApp. Accès sur invitation : inviter chaque
+  personne avant. Captures du tour de l'app dans `docs/qa/2026-11-24-captures/` (hors git).
+- **PR 22 (fusionnée le 24 novembre 2026)**, avant le premier partage de l'app : sans setlist pour la
   semaine en cours, Semaine montre toujours la dernière publiée, mais l'annonce (« Dernière setlist publiée · rien
   encore pour cette semaine ») et sa pastille porte sa date au lieu de « Cette semaine » ; « 1 chant » s'accorde ;
   le compteur hors ligne dit qu'il compte des enregistrements. Vu sur le S24. Pas encore testé : l'accueil d'un
@@ -150,12 +153,11 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
   venir (une fois par mois affiché ; l'en-tête et la bannière sont alors au-dessus, il faut remonter pour les voir),
   et une date passée sans équipe dit « Personne n'a servi ». Ce n'était pas un bug : « validé, 2 dates incomplètes »
   ne compte que les dates à venir.
-- **PR 21 et 22 fusionnées le 24 novembre 2026.** Branche `fix/songs-first-look` (même jour), après un tour de
+- **PR 23 (fusionnée le 24 novembre 2026)**, après un tour de
   l'onglet Chants sur le S24 : en chiffres Nashville, le chiffre de l'accord est levé (« 1⁴/5 », « 4² » au lieu de
   « 14/5 », « 42 ») à l'affichage seulement, le stockage ne change pas ; la recherche trouve aussi les mots séparés
   ou dans le désordre (« peur esclave »), après les correspondances exactes ; une fiche sans paroles le dit et
-  propose « Ajouter les paroles » aux responsables. Tests verts, **pas encore vu sur le S24** (téléphone verrouillé) :
-  vérifier surtout le rendu des chiffres levés. Les chantres ont déjà « Paroles seules » par défaut
+  propose « Ajouter les paroles » aux responsables. Vu sur le S24 : chiffres levés nets, recherche et message en place. Les chantres ont déjà « Paroles seules » par défaut
   (`SongDetailUiStateMapper`, `local.lyricsOnly ?: isSinger`). Restent : auteurs en double dans le catalogue
   (« Sylvain Freymond - Sylvain Freymond »), pas de tolérance aux fautes de frappe dans la recherche, écoute non testée.
 - **PR 18 (fusionnée le 18 novembre 2026)** : la bande vide au-dessus du clavier dans les écrans poussés
@@ -177,10 +179,11 @@ Tout est enregistré dans git (voir `git log` pour le dernier commit).
 - **detekt** repasse au vert (22 novembre 2026, branche `claude/suite-3`) : les 15 remarques laissées par les
   fusions de novembre sont corrigées sans changer le comportement ; les trois écarts voulus (`runRemote`, le
   défilement du mode scène, la police des titres) sont justifiés dans le code ou dans la baseline.
-- **PR 21 (ouverte le 24 novembre 2026, branche `chore/compiler-warnings`)** : les avertissements du compilateur
+- **PR 21 (fusionnée le 24 novembre 2026)** : les avertissements du compilateur
   Kotlin dans `shared` sont supprimés (trois `!!` et deux `?.` inutiles, import `IOException` déprécié dans deux
   tests), sans changer le comportement. Reste un avertissement Gradle : Coil 3.3.0 demande Skiko 0.9.4.2 alors que
-  Compose impose 0.144.6 ; à régler en alignant la version de Coil sur celle de Compose.
+  Compose impose 0.144.6. Coil 3.5.0 s'aligne mais exige Kotlin 2.4 (essayé, iOS ne compile plus en 2.3.21) : à régler
+  avec la montée de Kotlin, pas avant.
 
 ## Reste à faire
 
