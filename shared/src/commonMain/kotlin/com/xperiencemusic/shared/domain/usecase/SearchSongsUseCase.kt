@@ -74,18 +74,24 @@ class SongSearchIndex(songs: List<Song>) {
 
     /**
      * Titles starting with [query] first, then titles holding it, then artists, then, with
-     * [inLyrics], lyrics; each group by title.
+     * [inLyrics], lyrics; each group by title. After them, the songs that hold every word of
+     * [query] apart or in another order ("peur esclave"): what people remember of a song is rarely
+     * its exact wording.
      */
     fun search(query: String, inLyrics: Boolean = false): List<SongMatch> {
         val needle = query.trim().foldForSearch()
         if (needle.isEmpty()) return songs.map { SongMatch(it) }
         val searchLyrics = inLyrics && needle.length >= MIN_LYRICS_QUERY
+        val words = needle.split(' ').filter { it.isNotEmpty() }.distinct()
         val ranked = entries.mapNotNull { entry ->
             when {
                 entry.title.startsWith(needle) -> 0 to SongMatch(entry.song)
                 needle in entry.title -> 1 to SongMatch(entry.song)
                 needle in entry.artist -> 2 to SongMatch(entry.song)
                 searchLyrics && needle in entry.lyrics -> 3 to SongMatch(entry.song, entry.song.lyricLine(needle))
+                words.size < 2 -> null
+                words.all { it in entry.title || it in entry.artist } -> 4 to SongMatch(entry.song)
+                searchLyrics && words.all { it in entry.lyrics } -> 5 to SongMatch(entry.song, entry.song.lyricLine(words))
                 else -> null
             }
         }
@@ -95,6 +101,13 @@ class SongSearchIndex(songs: List<Song>) {
 
     private fun Song.lyricLine(needle: String): String? =
         chart.orEmpty().lyricLines().firstOrNull { needle in it.foldForSearch() }?.trim()
+
+    /** The line holding the most of [words], the first one on a tie. */
+    private fun Song.lyricLine(words: List<String>): String? =
+        chart.orEmpty().lyricLines()
+            .map { line -> line to line.foldForSearch().let { folded -> words.count { it in folded } } }
+            .filter { it.second > 0 }
+            .maxByOrNull { it.second }?.first?.trim()
 
     companion object {
         /** Shorter words are in nearly every song. */

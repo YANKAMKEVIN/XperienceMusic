@@ -42,7 +42,7 @@ object ChordChart {
             val lyric = line.substring(cursor, match.range.first)
             if (pendingChord != null || lyric.isNotEmpty()) segments += ChartSegment(pendingChord, lyric)
             val token = match.groupValues[1]
-            pendingChord = Chord.parse(token, key)?.render(key, notation) ?: token
+            pendingChord = Chord.parse(token, key)?.display(key, notation) ?: token
             cursor = match.range.last + 1
         }
         val tail = line.substring(cursor)

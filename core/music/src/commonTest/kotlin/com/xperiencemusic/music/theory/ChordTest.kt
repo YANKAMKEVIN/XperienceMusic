@@ -40,6 +40,19 @@ class ChordTest {
     }
 
     @Test
+    fun `display détache le chiffre de l'accord du degré en Nashville`() {
+        val sus = Chord(ScaleDegree(1), "4", bass = ScaleDegree(5))
+        assertEquals("1⁴/5", sus.display(doMajeur, Notation.NASHVILLE))
+        assertEquals("4²", Chord(ScaleDegree(4), "2").display(doMajeur, Notation.NASHVILLE))
+        assertEquals("5⁷sus4", Chord(ScaleDegree(5), "7sus4").display(doMajeur, Notation.NASHVILLE))
+        assertEquals("6m7", Chord(ScaleDegree(6), "m7").display(doMajeur, Notation.NASHVILLE))
+        // Only the reading changes: the stored form and the note names stay as they were.
+        assertEquals("14/5", sus.render(doMajeur, Notation.NASHVILLE))
+        assertEquals("Do4/Sol", sus.display(doMajeur, Notation.SOLFEGE))
+        assertEquals(sus, Chord.parse(sus.render(doMajeur, Notation.NASHVILLE), doMajeur))
+    }
+
+    @Test
     fun `render transpose en changeant simplement de tonalité`() {
         val chord = Chord(ScaleDegree(4))
         assertEquals("Fa", chord.render(doMajeur, Notation.SOLFEGE))

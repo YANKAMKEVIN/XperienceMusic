@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.xperiencemusic.music.chart.ChartLine
 import com.xperiencemusic.music.chart.ChartSegment
 import com.xperiencemusic.shared.resources.Res
+import com.xperiencemusic.shared.resources.song_chart_empty
 import com.xperiencemusic.shared.resources.song_chart_loading
 import com.xperiencemusic.shared.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -27,6 +28,9 @@ import org.jetbrains.compose.resources.stringResource
  * With [lyricsOnly] the chords go: plain lines of text, twice as many on a screen, for singers.
  */
 @OptIn(ExperimentalLayoutApi::class)
+/** False for the blank lines an empty chart is made of. */
+internal fun ChartLine.hasContent(): Boolean = this is ChartLine.Section || (this is ChartLine.Lyrics && segments.isNotEmpty())
+
 /** [isLoading]: the chart is not on the phone yet, which a line says in place of [lines]. */
 @Composable
 fun ChordChartView(
@@ -39,6 +43,11 @@ fun ChordChartView(
     val body = MaterialTheme.typography.bodyLarge.scaled(scale)
     if (isLoading) {
         Text(stringResource(Res.string.song_chart_loading), modifier, style = body, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        return
+    }
+    // A song added with its title and a link only: say so, an empty card read as a failure.
+    if (lines.none { it.hasContent() }) {
+        Text(stringResource(Res.string.song_chart_empty), modifier, style = body, color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
     val section = MaterialTheme.typography.labelLarge.scaled(scale)
